@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <_WebToolingArtifacts Remove="Properties\PublishProfiles\FolderProfile_Development.pubxml" />
+    <_WebToolingArtifacts Remove="Properties\PublishProfiles\FolderProfile_Production.pubxml" />
+    <_WebToolingArtifacts Remove="Properties\PublishProfiles\FolderProfile_Qa.pubxml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GraphQL" Version="7.6.1" />
+    <PackageReference Include="GraphQL.Client" Version="6.0.1" />
+    <PackageReference Include="GraphQL.Client.Serializer.Newtonsoft" Version="6.0.1" />
+    <PackageReference Include="GraphQL.NewtonsoftJson" Version="7.6.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.9" />
+    <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="7.0.9" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.9" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.9" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.9">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Stripe.net" Version="43.3.0" />
+    <PackageReference Include="Serilog.Extensions.Logging.File" Version="3.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AddOptimization.Contracts\AddOptimization.Contracts.csproj" />
+    <ProjectReference Include="..\AddOptimization.Data\AddOptimization.Data.csproj" />
+    <ProjectReference Include="..\AddOptimization.Services\AddOptimization.Services.csproj" />
+    <ProjectReference Include="..\AddOptimization.Utilities\AddOptimization.Utilities.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,7 @@
+.vs
+bin
+debug
+obj
+wwwroot
+logs
+/ShopMetrics.API/ShopMetrics.API.csproj.user
