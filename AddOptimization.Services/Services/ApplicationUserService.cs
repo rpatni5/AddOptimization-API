@@ -141,12 +141,12 @@ public class ApplicationUserService : IApplicationUserService
             {
                 await _userRoleRepository.BulkDeleteAsync(entitiesToDelete);
             }
-            var entitiesToInsert = roles.Where(r => !currentRoles.Exists(ur => ur.RoleId == r)).Select(r => new UserRole
+            var entitiesToInsert = roles?.Where(r => !currentRoles.Exists(ur => ur.RoleId == r)).Select(r => new UserRole
             {
                 UserId = userId,
                 RoleId = r
             }).ToList();
-            if (entitiesToInsert.Any())
+            if (entitiesToInsert !=null && entitiesToInsert.Any())
             {
                 await _userRoleRepository.BulkInsertAsync(entitiesToInsert);
             }

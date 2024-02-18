@@ -7,4 +7,4 @@ public class ApplicationUserDto :UserSummaryDto
     public bool IsActive { get; set; }
     public bool? IsLocked { get; set; }
     public List<RoleDto> Roles { get; set; }
-    }
+}
