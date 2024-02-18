@@ -2,18 +2,18 @@
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace AddOptimization.API.Extensions;
-public class SwaggerHeaderParameterFilter : IOperationFilter
+public class SwaggerHeaderParameterFilter //: IOperationFilter
 {
-    public void Apply(OpenApiOperation operation, OperationFilterContext context)
-    {
-        operation.Parameters ??= new List<OpenApiParameter>();
-        operation.Parameters.Add(new OpenApiParameter()
-        {
-            Name = "Branch",
-            In = ParameterLocation.Header,
-            Required = false
-        });
-    }
+    //public void Apply(OpenApiOperation operation, OperationFilterContext context)
+    //{
+    //    operation.Parameters ??= new List<OpenApiParameter>();
+    //    operation.Parameters.Add(new OpenApiParameter()
+    //    {
+    //        Name = "Branch",
+    //        In = ParameterLocation.Header,
+    //        Required = false
+    //    });
+    //}
 }
 public static class ServiceCollectionSwaggerExtension
 {
@@ -31,7 +31,7 @@ public static class ServiceCollectionSwaggerExtension
                 BearerFormat = "JWT",
                 Scheme = "Bearer"
             });
-            option.OperationFilter<SwaggerHeaderParameterFilter>();
+           // option.OperationFilter<SwaggerHeaderParameterFilter>();
             option.AddSecurityRequirement(new OpenApiSecurityRequirement
             {
                 {
