@@ -14,5 +14,17 @@ public class UsersController : CustomApiControllerBase
         _usersService = usersService;
     }
 
-
+    [HttpPost("search")]
+    public async Task<IActionResult> Get()
+    {
+        try
+        {
+            var retVal = await _usersService.Search();
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
 }

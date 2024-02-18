@@ -21,7 +21,7 @@ public static class ServiceCollectionSwaggerExtension
     {
         services.AddSwaggerGen(option =>
         {
-            option.SwaggerDoc("v1", new OpenApiInfo { Title = "Shop Metrics API", Version = "v1" });
+            option.SwaggerDoc("v1", new OpenApiInfo { Title = "Add Optimization API", Version = "v1" });
             option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 In = ParameterLocation.Header,

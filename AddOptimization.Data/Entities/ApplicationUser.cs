@@ -1,4 +1,5 @@
-﻿using AddOptimization.Data.Common;
+﻿using AddOptimization.Contracts.Constants;
+using AddOptimization.Data.Common;
 using System.ComponentModel.DataAnnotations;
 
 namespace AddOptimization.Data.Entities
@@ -28,6 +29,7 @@ namespace AddOptimization.Data.Entities
         public bool? IsEmailsEnabled { get; set; }
         public int? FailedLoginAttampts { get; set; }
         public DateTime? LastLogin { get; set; }
+        public virtual ICollection<UserRole> UserRoles { get; set; }
 
     }
 }

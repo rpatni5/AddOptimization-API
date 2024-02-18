@@ -22,10 +22,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Constants\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\AddOptimization.Contracts\AddOptimization.Contracts.csproj" />
     <ProjectReference Include="..\AddOptimization.Data\AddOptimization.Data.csproj" />
     <ProjectReference Include="..\AddOptimization.Utilities\AddOptimization.Utilities.csproj" />
