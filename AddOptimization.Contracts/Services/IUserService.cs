@@ -5,4 +5,5 @@ namespace AddOptimization.Contracts.Services;
 
 public interface IUserService
 {
+    Task<ApiResult<List<UserSummaryDto>>> Search();
 }

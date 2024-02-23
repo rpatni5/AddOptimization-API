@@ -17,12 +17,23 @@ public partial class AddOptimizationContext : DbContext
     }
 
     public virtual DbSet<ApplicationUser> ApplicationUsers { get; set; }
+    public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
+    public virtual DbSet<Role> Roles { get; set; }
+    public virtual DbSet<UserRole> UserRoles { get; set; }
+    public virtual DbSet<Screen> Screens { get; set; }
+    public virtual DbSet<Field> Fields { get; set; }
+    public virtual DbSet<RolePermission> RolePermissions { get; set; }
+    public virtual DbSet<User> Users { get; set; }
+    public virtual DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.UseCollation("Latin1_General_CI_AS");
         modelBuilder.ApplyBaseEntityConfiguration();
-        
+        modelBuilder.Entity<ApplicationUser>(entity =>
+        { 
+            entity.HasMany(e => e.UserRoles).WithOne(c => c.User);
+        });
         OnModelCreatingPartial(modelBuilder);
     }
 

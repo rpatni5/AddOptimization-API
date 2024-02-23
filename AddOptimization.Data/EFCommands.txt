@@ -1,0 +1,6 @@
+﻿ Scaffold-DbContext "Server=DESKTOP-5UT47KL;Database=AddOptimization;Trusted_Connection=True;Encrypt=False;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Models
+
+// Code First Add Fresh Migration
+Add-Migration InitialCreate  -Project AddOptimization.Data -StartupProject AddOptimization.API
+
+Update-Database -Project AddOptimization.Data -StartupProject AddOptimization.API

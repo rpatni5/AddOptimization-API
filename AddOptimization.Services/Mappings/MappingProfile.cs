@@ -13,7 +13,10 @@ namespace AddOptimization.Services.Mappings
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
-            CreateMap<ApplicationUser, ApplicationUserDto>();
+            CreateMap<ApplicationUser, UserSummaryDto>();
+            CreateMap<UserCreateDto, ApplicationUser>().ForMember(dst => dst.Password, opt => opt.Ignore());
+            CreateMap<RoleCreateDto, Role>();
+            CreateMap<Role, RoleDto>();
         }
     }
 }
