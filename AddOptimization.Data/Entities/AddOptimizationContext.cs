@@ -25,6 +25,10 @@ public partial class AddOptimizationContext : DbContext
     public virtual DbSet<RolePermission> RolePermissions { get; set; }
     public virtual DbSet<User> Users { get; set; }
     public virtual DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+    public virtual DbSet<Customer> Customers { get; set; }
+    public virtual DbSet<CustomerStatus> CustomerStatuses { get; set; }
+    public virtual DbSet<Address> Addresses { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -33,6 +37,10 @@ public partial class AddOptimizationContext : DbContext
         modelBuilder.Entity<ApplicationUser>(entity =>
         { 
             entity.HasMany(e => e.UserRoles).WithOne(c => c.User);
+        });
+        modelBuilder.Entity<Address>(entity =>
+        {
+            entity.HasOne(e => e.Customer).WithMany(c => c.Addresses);
         });
         OnModelCreatingPartial(modelBuilder);
     }
