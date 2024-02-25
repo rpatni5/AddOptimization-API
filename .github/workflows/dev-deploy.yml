@@ -1,8 +1,8 @@
 on: 
   push:
     branches:
-      - dev 
-name: 🚀 DEV:Deploy API on push
+      - master 
+name: 🚀 PROD:Deploy API on push
        
 jobs:
   build_and_deploy_to_ftp:
@@ -33,7 +33,7 @@ jobs:
           username: ${{ secrets.DEV_USERNAME }}
           password: ${{ secrets.DEV_PASSWORD }}
           local-dir: ./stop_app/
-          server-dir: /shopmetr/   
+          server-dir: /indianki/addoptimization/   
           
       - name: Publish application
         run: |
@@ -46,7 +46,7 @@ jobs:
           username: ${{ secrets.DEV_USERNAME }}
           password: ${{ secrets.DEV_PASSWORD }}
           local-dir: ./publish/
-          server-dir: /shopmetr/
+          server-dir: /indianki/addoptimization/
           exclude: |
             **/.git*
             **/.git*/**
