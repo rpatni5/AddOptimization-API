@@ -1,7 +1,7 @@
 on: 
   push:
     branches:
-      - master 
+      - master_ 
 name: 🚀 PROD:Deploy API on push
        
 jobs:
