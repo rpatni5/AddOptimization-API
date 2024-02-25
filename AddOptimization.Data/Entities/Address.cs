@@ -40,7 +40,6 @@ public partial class Address: BaseEntityNew<Guid>
 
     [MaxLength(5)]
     public string CountryCode { get; set; }
-    public Guid? BranchId { get; set; }
     public Guid? CustomerId { get; set; }
     public int? ExternalId { get; set; }
     public bool IsDeleted { get; set; }

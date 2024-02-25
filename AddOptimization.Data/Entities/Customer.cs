@@ -13,33 +13,16 @@ public partial class Customer : BaseEntityNew<Guid>
     public string Email { get; set; }
 
     [MaxLength(200)]
-    public string Company { get; set; }
-
-    [MaxLength(200)]
     public string Phone { get; set; }
 
     [MaxLength(200)]
     public string Birthday { get; set; }
-
-    [MaxLength(100)]
-    public string Color { get; set; }
-
-    [MaxLength(2000)]
-    public string Photos { get; set; }
 
     [MaxLength(500)]
     public string ContactInfo { get; set; }
 
     [MaxLength(2000)]
     public string Organizations { get; set; }
-
-    [MaxLength(2000)]
-    public string Demographics { get; set; }
-
-    [MaxLength]
-    public string SocialProfiles { get; set; }
-    public Guid? TaxRateId { get; set; }
-    public Guid? BranchId { get; set; }
     public Guid? BillingAddressId { get; set; }
     public Guid CustomerStatusId { get; set; }
     public string Notes { get; set; }
