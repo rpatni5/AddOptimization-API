@@ -63,10 +63,8 @@ public class AuthService : IAuthService
                     new Claim(JwtRegisteredClaimNames.Jti,
                     Guid.NewGuid().ToString())
             };
-            var roleClaims = entity.UserRoles.Select(ur => new Claim(ClaimTypes.Role, ur.Role.Name)).ToArray();
-           // var departmentClaims = entity.UserDepartments.Select(ur => new Claim(CustomClaimType.Department, ur.DepartmentId.ToString())).ToArray();
+            var roleClaims = entity.UserRoles.Select(ur => new Claim(ClaimTypes.Role, ur.Role.Name)).ToArray(); 
             claims = claims.Concat(roleClaims).ToArray();
-           // claims = claims.Concat(departmentClaims).ToArray();
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),

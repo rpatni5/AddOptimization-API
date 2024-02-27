@@ -9,7 +9,6 @@
     [BillingAddressId] UNIQUEIDENTIFIER NULL,
     [CustomerStatusId] UNIQUEIDENTIFIER NOT NULL,
     [Notes]            NVARCHAR (MAX)   NULL,
-    [BillingStatusId]  UNIQUEIDENTIFIER NULL,
     [ExternalId]       INT              NULL,
     [CreatedAt]        DATETIME2 (7)    NULL,
     [CreatedByUserId]  INT              NULL,

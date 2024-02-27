@@ -10,10 +10,7 @@ public class CustomerCreateDto:BaseDto<Guid?>
     public string Phone { get; set; }
     public string Notes { get; set; }
     public Guid? BillingAddressId { get; set; }
-    [Required(ErrorMessage ="Tax rate is required")]
-    public Guid? TaxRateId { get; set; }
     public Guid CustomerStatusId { get; set; }
     public bool IsDeleted { get; set; }
-    public Guid? BillingStatusId { get; set; }
     public List<AddressCreateDto> Addresses { get; set; }
 }

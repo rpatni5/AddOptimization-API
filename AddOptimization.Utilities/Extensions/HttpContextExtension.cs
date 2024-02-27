@@ -38,8 +38,4 @@ public static class HttpContextExtension
     {
         return httpContext.User?.FindAll(ClaimTypes.Role)?.Select(c=> c.Value)?.ToList() ?? new List<string>();
     }
-    public static List<Guid> GetCurrentUserDepartments(this HttpContext httpContext)
-    {
-        return httpContext.User?.FindAll(CustomClaimType.Department)?.Select(c => Guid.Parse(c.Value))?.ToList() ?? new List<Guid>();
-    }
 }

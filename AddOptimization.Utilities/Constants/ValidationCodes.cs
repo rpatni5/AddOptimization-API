@@ -27,8 +27,6 @@ public class ValidationCodes
     public const string InternalServerError = "InternalServerError";
     public const string PermissionDenied = "PermissionDenied";
     public const string TagInUseDeleteNotAllowed = "TagInUseDeleteNotAllowed";
-    public const string TaxRateInUseDeleteNotAllowed = "TaxRateInUseDeleteNotAllowed";
-    public const string DefaultTaxRateAlreadyExists = "DefaultTaxRateAlreadyExists";
     public const string RoleInUseDeleteNotAllowed = "RoleInUseDeleteNotAllowed";
     public const string SystemRoleModificationNotAllowed = "SystemRoleModificationNotAllowed";
     public const string StripeError = "StripeError";

@@ -149,8 +149,7 @@ public class ApplicationUserService : IApplicationUserService
             if (entitiesToInsert !=null && entitiesToInsert.Any())
             {
                 await _userRoleRepository.BulkInsertAsync(entitiesToInsert);
-            }
-            var departments = model.Departments;           
+            }         
             await _unitOfWork.CommitTransactionAsync();
             return ApiResult<bool>.Success(true);
         }
