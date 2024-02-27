@@ -16,7 +16,16 @@ namespace AddOptimization.Services.Mappings
             CreateMap<ApplicationUser, UserSummaryDto>();
             CreateMap<UserCreateDto, ApplicationUser>().ForMember(dst => dst.Password, opt => opt.Ignore());
             CreateMap<RoleCreateDto, Role>();
-            CreateMap<Role, RoleDto>();
+            CreateMap<Role, RoleDto>(); 
+            CreateMap<Screen, ScreenDto>(); 
+            CreateMap<ScreenDto, Screen>();
+            CreateMap<Screen, ScreenCreateDto>();
+            CreateMap<ScreenCreateDto, Screen>().AfterMap((s, d) =>
+            {
+                d.ScreenKey = s.Name.Trim().Replace(' ', '_').ToLower();
+            });
+            CreateMap<Field, FieldDto>(); 
+            CreateMap<FieldDto, Field>(); 
         }
     }
 }
