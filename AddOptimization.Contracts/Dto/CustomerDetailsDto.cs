@@ -7,6 +7,5 @@ public class CustomerDetailsDto:CustomerDto
     public DateTime? CreatedAt { get; set; }
     public DateTime? LastOrdered { get; set; }
     public int OrderCount { get; set; }
-    public Guid? TaxRateId { get; set; } 
     public int AverageOrderAmount { get; set; }
 }

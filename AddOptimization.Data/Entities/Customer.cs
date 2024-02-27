@@ -26,7 +26,6 @@ public partial class Customer : BaseEntityNew<Guid>
     public Guid? BillingAddressId { get; set; }
     public Guid CustomerStatusId { get; set; }
     public string Notes { get; set; }
-    public Guid? BillingStatusId { get; set; }
     public int? ExternalId { get; set; }
 
     [ForeignKey(nameof(CustomerStatusId))]
