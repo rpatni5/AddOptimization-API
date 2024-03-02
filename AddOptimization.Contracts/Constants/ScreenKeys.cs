@@ -2,7 +2,7 @@
 
 public class ScreenKeys
 {
-    public const string Orders = "orders";
+    public const string Licenses = "licenses";
     public const string Permissions = "permissions";
     public const string Screens = "screens";
     public const string Users = "users";

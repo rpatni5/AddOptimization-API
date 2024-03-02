@@ -2,8 +2,6 @@
 
 public class AddressCreateDto:BaseDto<Guid?>
 {
-    public string TargetType { get; set; }
-    public int? TargetId { get; set; }
     public string Phone { get; set; }
     public string Address1 { get; set; }
     public string Address2 { get; set; }

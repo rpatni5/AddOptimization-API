@@ -10,7 +10,6 @@ public class CustomerCreateDto:BaseDto<Guid?>
     public string Phone { get; set; }
     public string Notes { get; set; }
     public Guid? BillingAddressId { get; set; }
-    public Guid CustomerStatusId { get; set; }
     public bool IsDeleted { get; set; }
     public List<AddressCreateDto> Addresses { get; set; }
 }

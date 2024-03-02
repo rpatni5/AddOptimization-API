@@ -25,7 +25,27 @@ namespace AddOptimization.Services.Mappings
                 d.ScreenKey = s.Name.Trim().Replace(' ', '_').ToLower();
             });
             CreateMap<Field, FieldDto>(); 
-            CreateMap<FieldDto, Field>(); 
+            CreateMap<FieldDto, Field>();
+
+            CreateMap<Customer, CustomerDto>().AfterMap((s, d) =>
+            {
+                d.CustomerStatusName = s.CustomerStatus?.Name;
+                d.BillingAddressString = s.BillingAddress == null ? null : $"{s.BillingAddress.Address1},{s.BillingAddress.Zip},{s.BillingAddress.City}";
+            });
+            CreateMap<Customer, CustomerDetailsDto>();
+            CreateMap<CustomerCreateDto, Customer>().ForMember(c => c.Addresses, opt => opt.Ignore());
+            CreateMap<CustomerStatus, CustomerStatusDto>();
+
+            CreateMap<AddressCreateDto, Address>().AfterMap((s, d) =>
+            {
+                d.Country = s.Country ?? "United States"; //TODO
+                d.CountryCode = s.CountryCode ?? "+1";
+                d.ProvinceCode = s.Province;
+            });
+            CreateMap<Address, AddressDto>().AfterMap((s, d) =>
+            {
+                d.CreatedAt = s.CreatedAt?.Date;
+            });
         }
     }
 }

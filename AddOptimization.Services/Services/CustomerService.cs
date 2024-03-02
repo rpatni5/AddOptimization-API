@@ -116,7 +116,6 @@ public class CustomerService : ICustomerService
                 model.Addresses.ForEach(a =>
                 {
                     a.CustomerId = entity.Id;
-                    a.TargetId = entity.ExternalId;
                 });
                 await _addressService.BulkCreate(model.Addresses);
                 if(billingAddressId != null)

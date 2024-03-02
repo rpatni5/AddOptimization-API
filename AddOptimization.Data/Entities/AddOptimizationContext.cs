@@ -28,6 +28,8 @@ public partial class AddOptimizationContext : DbContext
     public virtual DbSet<Customer> Customers { get; set; }
     public virtual DbSet<CustomerStatus> CustomerStatuses { get; set; }
     public virtual DbSet<Address> Addresses { get; set; }
+    public virtual DbSet<License> Licenses { get; set; }
+    public virtual DbSet<LicenseDevice> LicenseDevices { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -42,6 +44,11 @@ public partial class AddOptimizationContext : DbContext
         {
             entity.HasOne(e => e.Customer).WithMany(c => c.Addresses);
         });
+        //modelBuilder.Entity<License>(entity =>
+        //{
+        //    entity.HasOne(e => e.Customer).WithMany(c => c.Licenses);
+        //});
+
         OnModelCreatingPartial(modelBuilder);
     }
 

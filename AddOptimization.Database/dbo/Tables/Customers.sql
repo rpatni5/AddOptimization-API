@@ -1,5 +1,5 @@
 ﻿CREATE TABLE [dbo].[Customers] (
-    [Id]               UNIQUEIDENTIFIER NOT NULL,
+    [Id]               UNIQUEIDENTIFIER CONSTRAINT [DF_Customers_Id] DEFAULT (newid()) NOT NULL,
     [Name]             NVARCHAR (200)   NULL,
     [Email]            NVARCHAR (200)   NULL,
     [Phone]            NVARCHAR (200)   NULL,
@@ -7,7 +7,7 @@
     [ContactInfo]      NVARCHAR (500)   NULL,
     [Organizations]    NVARCHAR (2000)  NULL,
     [BillingAddressId] UNIQUEIDENTIFIER NULL,
-    [CustomerStatusId] UNIQUEIDENTIFIER NOT NULL,
+    [CustomerStatusId] UNIQUEIDENTIFIER CONSTRAINT [DF_Customers_CustomerStatusId] DEFAULT ('17756728-9DE6-409F-9D23-B8B5BA253F0E') NOT NULL,
     [Notes]            NVARCHAR (MAX)   NULL,
     [ExternalId]       INT              NULL,
     [CreatedAt]        DATETIME2 (7)    NULL,
@@ -20,6 +20,8 @@
     CONSTRAINT [FK_Customers_ApplicationUsers_UpdatedByUserId] FOREIGN KEY ([UpdatedByUserId]) REFERENCES [dbo].[ApplicationUsers] ([Id]),
     CONSTRAINT [FK_Customers_CustomerStatuses_CustomerStatusId] FOREIGN KEY ([CustomerStatusId]) REFERENCES [dbo].[CustomerStatuses] ([Id]) ON DELETE CASCADE
 );
+
+
 
 
 GO
