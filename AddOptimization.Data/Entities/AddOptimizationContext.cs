@@ -44,6 +44,9 @@ public partial class AddOptimizationContext : DbContext
         {
             entity.HasOne(e => e.Customer).WithMany(c => c.Addresses);
         });
+        modelBuilder.Entity<Customer>().Property(b => b.CustomerStatusId)
+    .IsRequired()
+    .HasDefaultValue(new Guid("17756728-9DE6-409F-9D23-B8B5BA253F0E"));
         //modelBuilder.Entity<License>(entity =>
         //{
         //    entity.HasOne(e => e.Customer).WithMany(c => c.Licenses);

@@ -33,7 +33,8 @@ namespace AddOptimization.Services.Mappings
                 d.BillingAddressString = s.BillingAddress == null ? null : $"{s.BillingAddress.Address1},{s.BillingAddress.Zip},{s.BillingAddress.City}";
             });
             CreateMap<Customer, CustomerDetailsDto>();
-            CreateMap<CustomerCreateDto, Customer>().ForMember(c => c.Addresses, opt => opt.Ignore());
+            CreateMap<CustomerCreateDto, Customer>()
+                .ForMember(c => c.Addresses, opt => opt.Ignore());
             CreateMap<CustomerStatus, CustomerStatusDto>();
 
             CreateMap<AddressCreateDto, Address>().AfterMap((s, d) =>
