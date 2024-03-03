@@ -6,11 +6,6 @@ namespace AddOptimization.Data.Entities;
 
 public partial class Address: BaseEntityNew<Guid>
 {
-    [MaxLength(50)]
-    public string TargetType { get; set; }
-
-    public int? TargetId { get; set; }
-
     [MaxLength(200)]
     public string Name { get; set; }
 

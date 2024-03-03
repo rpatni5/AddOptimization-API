@@ -1,7 +1,5 @@
 ﻿CREATE TABLE [dbo].[Addresses] (
     [Id]              UNIQUEIDENTIFIER NOT NULL,
-    [TargetType]      NVARCHAR (50)    NULL,
-    [TargetId]        INT              NULL,
     [Name]            NVARCHAR (200)   NULL,
     [Phone]           NVARCHAR (50)    NULL,
     [Address1]        NVARCHAR (200)   NULL,

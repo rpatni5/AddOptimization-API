@@ -1,6 +1,16 @@
-﻿ Scaffold-DbContext "Server=DESKTOP-5UT47KL;Database=AddOptimization;Trusted_Connection=True;Encrypt=False;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Models
-
+﻿ 
+Scaffold-DbContext "Server=DESKTOP-5UT47KL;Database=AddOptimization;Trusted_Connection=True;Encrypt=False;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Models
 // Code First Add Fresh Migration
 Add-Migration InitialCreate  -Project AddOptimization.Data -StartupProject AddOptimization.API
 
 Update-Database -Project AddOptimization.Data -StartupProject AddOptimization.API
+
+Scaffold-DbContext -Project AddOptimization.Data -StartupProject AddOptimization.API
+
+
+
+Insert into  [AddOptimization].[dbo].[CustomerStatuses]
+Values('17756728-9DE6-409F-9D23-B8B5BA253F0E','Active')
+
+Insert into  [AddOptimization].[dbo].[CustomerStatuses]
+Values('4F71A57F-2135-4B17-AA60-BA40913FE69A','Inactive')
