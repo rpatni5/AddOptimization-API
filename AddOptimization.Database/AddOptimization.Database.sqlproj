@@ -75,7 +75,7 @@
     <Build Include="dbo\Tables\CustomerStatuses.sql" />
     <Build Include="dbo\Tables\Addresses.sql" />
     <Build Include="dbo\Tables\Customers.sql" />
-    <Build Include="dbo\Tables\LicenseDevice.sql" />
-    <Build Include="dbo\Tables\License.sql" />
+    <Build Include="dbo\Tables\LicenseDevices.sql" />
+    <Build Include="dbo\Tables\Licenses.sql" />
   </ItemGroup>
 </Project>
