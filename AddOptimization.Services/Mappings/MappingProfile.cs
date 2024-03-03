@@ -47,6 +47,9 @@ namespace AddOptimization.Services.Mappings
             {
                 d.CreatedAt = s.CreatedAt?.Date;
             });
+
+            CreateMap<LicenseCreateDto, License>();
+            CreateMap<License,LicenseDetailsDto>();
         }
     }
 }
