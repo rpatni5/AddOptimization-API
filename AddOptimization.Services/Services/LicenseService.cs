@@ -64,7 +64,8 @@ public class LicenseService : ILicenseService
         try
         {
             var entity = _mapper.Map<License>(model);
-            entity.LicenseKey = GenerateLicenseKey(); _httpContextAccessor.HttpContext.GetCurrentUserFullName();
+            entity.LicenseKey = "ASU76-NDHE7-MJDNF-YHT65-876BA"; //GenerateLicenseKey(); 
+            _httpContextAccessor.HttpContext.GetCurrentUserFullName();
             entity.ExpirationDate = CalculateExpirationDateTime();
             //entity.Id = Guid.NewGuid();
             await _licenseRepository.InsertAsync(entity);
