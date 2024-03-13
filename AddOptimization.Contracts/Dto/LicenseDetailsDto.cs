@@ -10,7 +10,7 @@ namespace AddOptimization.Contracts.Dto
 {
     public class LicenseDetailsDto
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public string LicenseKey { get; set; }
         public bool IsExpired { get; set; }
         public DateTime? ExpirationDate { get; set; }
