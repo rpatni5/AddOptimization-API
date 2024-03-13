@@ -9,7 +9,11 @@ public class CustomerCreateDto:BaseDto<Guid?>
     public string Company { get; set; }
     public string Phone { get; set; }
     public string Notes { get; set; }
+    public DateTime Birthday { get; set; }
+    public string ContactInfo { get; set; }
     public Guid? BillingAddressId { get; set; }
     public bool IsDeleted { get; set; }
+
+    public Guid? CustomerStatusId { get; set; }
     public List<AddressCreateDto> Addresses { get; set; }
 }

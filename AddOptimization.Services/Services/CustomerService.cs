@@ -54,12 +54,12 @@ public class CustomerService : ICustomerService
     {
         try
         {
-            var entities = await _customerRepository.QueryAsync(include:entities=> entities.Include(c=> c.BillingAddress)
+            var entities = await _customerRepository.QueryAsync(include:entities=> entities
             .Include(e=> e.CustomerStatus),orderBy: (entities) => entities.OrderBy(t => t.Name));
             var mappedEntities = _mapper.Map<List<CustomerDto>>(entities.ToList());
             return ApiResult<List<CustomerDto>>.Success(mappedEntities);
         }
-        catch (Exception ex)
+        catch (Exception ex) 
         {
             _logger.LogException(ex);
             throw;

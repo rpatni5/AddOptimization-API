@@ -11,7 +11,7 @@ namespace AddOptimization.Services.Mappings
         {
             JsonSerializerOptions jsonOptions = new()
             {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase 
             };
             CreateMap<ApplicationUser, UserSummaryDto>();
             CreateMap<UserCreateDto, ApplicationUser>().ForMember(dst => dst.Password, opt => opt.Ignore());
@@ -20,6 +20,19 @@ namespace AddOptimization.Services.Mappings
             CreateMap<Screen, ScreenDto>(); 
             CreateMap<ScreenDto, Screen>();
             CreateMap<Screen, ScreenCreateDto>();
+            CreateMap<Customer, CustomerDto>().AfterMap((s, d) =>
+            {
+                d.Company = s.Organizations;
+                d.CustomerStatusName = s.CustomerStatus?.Name;
+                d.BillingAddressString = s.BillingAddress == null ? null : $"{s.BillingAddress.Address1},{s.BillingAddress.Zip},{s.BillingAddress.City}";
+            });
+            CreateMap<Customer, CustomerDetailsDto>().AfterMap((s, d) => {
+            
+            });
+            CreateMap<CustomerCreateDto, Customer>().ForMember(c => c.Addresses, opt => opt.Ignore()).AfterMap((s,d) => {
+                d.Organizations = s.Company;
+            });
+            CreateMap<CustomerStatus, CustomerStatusDto>();
             CreateMap<ScreenCreateDto, Screen>().AfterMap((s, d) =>
             {
                 d.ScreenKey = s.Name.Trim().Replace(' ', '_').ToLower();
@@ -28,7 +41,7 @@ namespace AddOptimization.Services.Mappings
             CreateMap<FieldDto, Field>();
 
             CreateMap<Customer, CustomerDto>().AfterMap((s, d) =>
-            {
+            { 
                 d.CustomerStatusName = s.CustomerStatus?.Name;
                 d.BillingAddressString = s.BillingAddress == null ? null : $"{s.BillingAddress.Address1},{s.BillingAddress.Zip},{s.BillingAddress.City}";
             });
