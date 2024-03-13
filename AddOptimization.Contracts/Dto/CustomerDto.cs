@@ -4,7 +4,7 @@
     {
         public string Email { get; set; }
 
-        public DateTime BirthDay { get; set; }
+        public string BirthDay { get; set; }
         public string Company { get; set; }
         public string Phone { get; set; }
         public string BillingAddressString { get; set; }
