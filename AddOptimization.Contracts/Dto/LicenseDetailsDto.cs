@@ -12,14 +12,17 @@ namespace AddOptimization.Contracts.Dto
     {
         public Guid Id { get; set; }
         public string LicenseKey { get; set; }
-        public bool IsExpired { get; set; }
-        public DateTime? ExpirationDate { get; set; }
-        public int NoOfInstance { get; set; }
-        public Guid? CustomerId { get; set; }
+
+        public int LicenseDuration { get; set; }
+        public DateTime ExpirationDate { get; set; }
+        public int NoOfDevices { get; set; }
+        public Guid CustomerId { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
-        public CustomerDto Customers { get; set; }
-        public LicenseDeviceDto LicenseDeviceDto { get; set; }
+
+        public string CustomerEmail { get; set; }
+        public string CustomerName { get; set; }
+        public List<LicenseDeviceDto> LicenseDevices { get; set; }
 
     }
 }

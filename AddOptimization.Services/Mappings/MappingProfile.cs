@@ -52,8 +52,8 @@ namespace AddOptimization.Services.Mappings
 
             CreateMap<AddressCreateDto, Address>().AfterMap((s, d) =>
             {
-                d.Country = s.Country ?? "United States"; //TODO
-                d.CountryCode = s.CountryCode ?? "+1";
+                d.Country = s.Country;
+                d.CountryCode = s.CountryCode;
                 d.ProvinceCode = s.Province;
             });
             CreateMap<Address, AddressDto>().AfterMap((s, d) =>
@@ -63,6 +63,8 @@ namespace AddOptimization.Services.Mappings
 
             CreateMap<LicenseCreateDto, License>();
             CreateMap<License,LicenseDetailsDto>();
+            CreateMap<LicenseDevice, LicenseDeviceDto>();
+
         }
     }
 }

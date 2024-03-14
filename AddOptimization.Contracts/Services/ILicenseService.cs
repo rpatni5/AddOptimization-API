@@ -6,6 +6,7 @@ namespace AddOptimization.Contracts.Services;
 
 public interface ILicenseService
 {
+    Task<PagedApiResult<LicenseDetailsDto>> Search(PageQueryFiterBase filter);
     Task<ApiResult<LicenseDetailsDto>> Get(Guid orderId);
     Task<ApiResult<LicenseDetailsDto>> Update(Guid id,LicenseUpdateDto model);
     Task<ApiResult<LicenseDetailsDto>> Create(LicenseCreateDto model);
