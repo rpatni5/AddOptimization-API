@@ -23,8 +23,8 @@ public class LicenseController : CustomApiControllerBase
     {
         try
         {
-           // var retVal = await _licensesService.Search(filters);
-            return HandleResponse(string.Empty);
+            var retVal = await _licensesService.Search(filters);
+            return HandleResponse(retVal);
         }
         catch (Exception ex)
         {
