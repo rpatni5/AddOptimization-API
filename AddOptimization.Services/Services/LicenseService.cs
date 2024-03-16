@@ -84,6 +84,25 @@ public class LicenseService : ILicenseService
             throw;
         }
     }
+
+    public async Task<ApiResult<List<LicenseDetailsDto>>> GetByCustomerId(Guid customerId)
+    {
+        try
+        {
+            var entity = await _licenseRepository.QueryAsync(o => o.CustomerId == customerId, include: source => source.Include(o => o.Customer).Include(e => e.LicenseDevices), ignoreGlobalFilter: true);     
+            if (entity == null || !entity.Any())
+            {
+                return ApiResult<List<LicenseDetailsDto>>.NotFound("License");
+            }
+            var mappedEntity = _mapper.Map<List<LicenseDetailsDto>>(entity);
+            return ApiResult<List<LicenseDetailsDto>>.Success(mappedEntity);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            throw;
+        }
+    }
     public async Task<ApiResult<LicenseDetailsDto>> Create(LicenseCreateDto model)
     {
         try

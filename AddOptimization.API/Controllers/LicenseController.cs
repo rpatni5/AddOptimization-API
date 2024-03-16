@@ -46,6 +46,20 @@ public class LicenseController : CustomApiControllerBase
         }
     }
 
+    [HttpGet("license/{customerId}")]
+    public async Task<IActionResult> GetByCustomerId(Guid customerId)
+    {
+        try
+        {
+            var retVal = await _licensesService.GetByCustomerId(customerId);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id,[FromBody]LicenseUpdateDto model)
     {
