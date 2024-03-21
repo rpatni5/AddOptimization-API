@@ -5,3 +5,4 @@ obj
 wwwroot
 logs
 /ShopMetrics.API/ShopMetrics.API.csproj.user
+/AddOptimization.Database

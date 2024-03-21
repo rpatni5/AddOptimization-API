@@ -12,6 +12,8 @@ using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Mvc;
+using AddOptimization.Contracts.Constants;
 
 namespace AddOptimization.Services.Services;
 public class LicenseService : ILicenseService
@@ -125,6 +127,28 @@ public class LicenseService : ILicenseService
             //_mapper.Map(model, entity);
             await _licenseRepository.UpdateAsync(entity);
             return await Get(id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            throw;
+        }
+    }
+
+  
+
+    public async Task<ApiResult<bool>> Delete(Guid id)
+    {
+        try
+        {
+            var entity = await _licenseRepository.FirstOrDefaultAsync(t => t.Id == id);
+            if (entity == null)
+            {
+                return ApiResult<bool>.NotFound("License");
+            }
+
+            await _licenseRepository.DeleteAsync(entity);
+            return ApiResult<bool>.Success(true);
         }
         catch (Exception ex)
         {
