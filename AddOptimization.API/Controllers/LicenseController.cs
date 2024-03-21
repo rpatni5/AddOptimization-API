@@ -74,4 +74,20 @@ public class LicenseController : CustomApiControllerBase
             return HandleException(ex);
         }
     }
+
+    [HttpDelete("{id}")]
+    [HasPermission(ScreenKeys.Licenses, GlobalFields.Delete)]
+    public async Task<IActionResult> Delete(Guid Id )
+    {
+        try
+        {
+            var retVal = await _licensesService.Delete(Id);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+  
 }

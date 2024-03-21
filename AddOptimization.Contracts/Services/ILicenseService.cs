@@ -10,4 +10,6 @@ public interface ILicenseService
     Task<ApiResult<LicenseDetailsDto>> Get(Guid orderId);
     Task<ApiResult<LicenseDetailsDto>> Update(Guid id,LicenseUpdateDto model);
     Task<ApiResult<LicenseDetailsDto>> Create(LicenseCreateDto model);
+    Task<ApiResult<bool>> Delete(Guid id);
+
 }
