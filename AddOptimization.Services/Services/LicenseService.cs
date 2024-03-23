@@ -56,6 +56,7 @@ public class LicenseService : ILicenseService
                 LicenseKey = e.LicenseKey,
                 ExpirationDate = e.ExpirationDate,
                 CustomerEmail = e.Customer.Email,
+                LicenseDuration = e.LicenseDuration,
                 CustomerName = e.Customer.Name,
                 LicenseDevices = _mapper.Map<List<LicenseDeviceDto>>(e.LicenseDevices),
             }).ToList());

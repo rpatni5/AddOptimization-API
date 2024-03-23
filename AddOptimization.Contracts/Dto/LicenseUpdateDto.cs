@@ -7,11 +7,10 @@ using System.Threading.Tasks;
 
 namespace AddOptimization.Contracts.Dto
 {
-    public class LicenseUpdateDto
+    public class LicenseUpdateDto : BaseDto<Guid>
     {
-        public int Id { get; set; }
         public bool ExpireLicense { get; set; }
-        public LicenseDuration LicenseDuration { get; set; } // Is this required?
+        public LicenseDuration LicenseDuration { get; set; }
         public int NoOfDevices { get; set; } = 1;
         public Guid CustomerId { get; set; }
     }
