@@ -165,9 +165,9 @@ public class LicenseService : ILicenseService
             entities = entities.Where(e => e.Customer != null && e.Customer.Name.ToLower().Contains(v.ToLower()));
         });
 
-        filter.GetValue<Guid>("customerId", (v) =>
+        filter.GetValue<string>("customerId", (v) =>
         {
-            entities = entities.Where(e => e.CustomerId == v);
+            entities = entities.Where(e => e.CustomerId.ToString() ==v);
         });
 
         filter.GetValue<DateTime>("createdAt", (v) =>
