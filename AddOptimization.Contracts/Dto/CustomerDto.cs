@@ -3,7 +3,7 @@
     public class CustomerDto: CustomerSummaryDto
     {
         public string Email { get; set; }
-
+        
         public string BirthDay { get; set; }
         public string Company { get; set; }
         public string Phone { get; set; }
@@ -14,5 +14,7 @@
 
         public string ContactInfo { get; set; }
         public CustomerStatusDto CustomerStatus { get; set; }
+
+        public List<LicenseDetailsDto>  Licenses{  get; set; }  
     }
 }

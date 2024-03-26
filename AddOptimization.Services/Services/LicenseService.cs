@@ -12,6 +12,8 @@ using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Mvc;
+using AddOptimization.Contracts.Constants;
 
 namespace AddOptimization.Services.Services;
 public class LicenseService : ILicenseService
@@ -54,6 +56,7 @@ public class LicenseService : ILicenseService
                 LicenseKey = e.LicenseKey,
                 ExpirationDate = e.ExpirationDate,
                 CustomerEmail = e.Customer.Email,
+                LicenseDuration = e.LicenseDuration,
                 CustomerName = e.Customer.Name,
                 LicenseDevices = _mapper.Map<List<LicenseDeviceDto>>(e.LicenseDevices),
             }).ToList());
@@ -152,6 +155,28 @@ public class LicenseService : ILicenseService
         }
     }
 
+  
+
+    public async Task<ApiResult<bool>> Delete(Guid id)
+    {
+        try
+        {
+            var entity = await _licenseRepository.FirstOrDefaultAsync(t => t.Id == id);
+            if (entity == null)
+            {
+                return ApiResult<bool>.NotFound("License");
+            }
+
+            await _licenseRepository.DeleteAsync(entity);
+            return ApiResult<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            throw;
+        }
+    }
+
     private IQueryable<License> ApplyFilters(IQueryable<License> entities, PageQueryFiterBase filter)
     {
 
@@ -160,9 +185,9 @@ public class LicenseService : ILicenseService
             entities = entities.Where(e => e.Customer != null && e.Customer.Name.ToLower().Contains(v.ToLower()));
         });
 
-        filter.GetValue<Guid>("customerId", (v) =>
+        filter.GetValue<string>("customerId", (v) =>
         {
-            entities = entities.Where(e => e.CustomerId == v);
+            entities = entities.Where(e => e.CustomerId.ToString() ==v);
         });
 
         filter.GetValue<DateTime>("createdAt", (v) =>
