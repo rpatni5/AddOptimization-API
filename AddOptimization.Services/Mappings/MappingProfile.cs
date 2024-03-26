@@ -41,7 +41,9 @@ namespace AddOptimization.Services.Mappings
             CreateMap<FieldDto, Field>();
 
             CreateMap<Customer, CustomerDto>().AfterMap((s, d) =>
-            { 
+            {
+                d.Company = s.Organizations;
+                d.BirthDay = string.IsNullOrEmpty(s.Birthday) ? s.Birthday : ( DateTime.Parse(s.Birthday)).ToString("yyyy-MM-dd");
                 d.CustomerStatusName = s.CustomerStatus?.Name;
                 d.BillingAddressString = s.BillingAddress == null ? null : $"{s.BillingAddress.Address1},{s.BillingAddress.Zip},{s.BillingAddress.City}";
             });
