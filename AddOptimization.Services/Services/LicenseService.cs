@@ -187,6 +187,11 @@ public class LicenseService : ILicenseService
         {
             entities = entities.Where(e => e.LicenseKey != null && e.LicenseKey == v);
         });
+
+        filter.GetValue<string>("licenseId", (v) =>
+        {
+            entities = entities.Where(e => e.Id.ToString() == v);
+        });
         return entities;
     }
     private IQueryable<License> ApplySorting(IQueryable<License> orders, SortModel sort)
