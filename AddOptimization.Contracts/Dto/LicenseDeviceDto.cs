@@ -1,7 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel;
-
-namespace AddOptimization.Contracts.Dto
+﻿namespace AddOptimization.Contracts.Dto
 {
     public class LicenseDeviceDto
     {
