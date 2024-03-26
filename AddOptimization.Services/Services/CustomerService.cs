@@ -55,7 +55,7 @@ public class CustomerService : ICustomerService
         try
         {
             var entities = await _customerRepository.QueryAsync(include:entities=> entities
-            .Include(e=> e.CustomerStatus),orderBy: (entities) => entities.OrderBy(t => t.Name));
+            .Include(e=> e.CustomerStatus).Include(e=>e.Licenses),orderBy: (entities) => entities.OrderBy(t => t.Name));
             var mappedEntities = _mapper.Map<List<CustomerDto>>(entities.ToList());
             return ApiResult<List<CustomerDto>>.Success(mappedEntities);
         }

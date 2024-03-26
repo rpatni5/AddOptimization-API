@@ -6,3 +6,6 @@ wwwroot
 logs
 /ShopMetrics.API/ShopMetrics.API.csproj.user
 /AddOptimization.Database
+/AddOptimization.Database/AddOptimization.Database.dbmdl
+/AddOptimization.Database/AddOptimization.Database.jfm
+

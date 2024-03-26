@@ -87,6 +87,25 @@ public class LicenseService : ILicenseService
             throw;
         }
     }
+
+    public async Task<ApiResult<List<LicenseDetailsDto>>> GetByCustomerId(Guid customerId)
+    {
+        try
+        {
+            var entity = await _licenseRepository.QueryAsync(o => o.CustomerId == customerId, include: source => source.Include(o => o.Customer).Include(e => e.LicenseDevices), ignoreGlobalFilter: true);     
+            if (entity == null || !entity.Any())
+            {
+                return ApiResult<List<LicenseDetailsDto>>.NotFound("License");
+            }
+            var mappedEntity = _mapper.Map<List<LicenseDetailsDto>>(entity);
+            return ApiResult<List<LicenseDetailsDto>>.Success(mappedEntity);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            throw;
+        }
+    }
     public async Task<ApiResult<LicenseDetailsDto>> Create(LicenseCreateDto model)
     {
         try
@@ -166,9 +185,9 @@ public class LicenseService : ILicenseService
             entities = entities.Where(e => e.Customer != null && e.Customer.Name.ToLower().Contains(v.ToLower()));
         });
 
-        filter.GetValue<Guid>("customerId", (v) =>
+        filter.GetValue<string>("customerId", (v) =>
         {
-            entities = entities.Where(e => e.CustomerId == v);
+            entities = entities.Where(e => e.CustomerId.ToString() ==v);
         });
 
         filter.GetValue<DateTime>("createdAt", (v) =>
@@ -186,6 +205,11 @@ public class LicenseService : ILicenseService
         filter.GetValue<string>("licenseKey", (v) =>
         {
             entities = entities.Where(e => e.LicenseKey != null && e.LicenseKey == v);
+        });
+
+        filter.GetValue<string>("licenseId", (v) =>
+        {
+            entities = entities.Where(e => e.Id.ToString() == v);
         });
         return entities;
     }

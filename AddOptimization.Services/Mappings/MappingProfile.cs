@@ -20,12 +20,7 @@ namespace AddOptimization.Services.Mappings
             CreateMap<Screen, ScreenDto>(); 
             CreateMap<ScreenDto, Screen>();
             CreateMap<Screen, ScreenCreateDto>();
-            CreateMap<Customer, CustomerDto>().AfterMap((s, d) =>
-            {
-                d.Company = s.Organizations;
-                d.CustomerStatusName = s.CustomerStatus?.Name;
-                d.BillingAddressString = s.BillingAddress == null ? null : $"{s.BillingAddress.Address1},{s.BillingAddress.Zip},{s.BillingAddress.City}";
-            });
+            
             CreateMap<Customer, CustomerDetailsDto>().AfterMap((s, d) => {
             
             });
