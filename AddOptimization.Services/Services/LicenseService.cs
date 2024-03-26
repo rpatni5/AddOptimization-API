@@ -139,12 +139,14 @@ public class LicenseService : ILicenseService
             {
                 entity.ExpirationDate = DateTime.UtcNow;
             }
-            if(entity.LicenseDuration != (int)model.LicenseDuration)
+            if (entity.LicenseDuration != (int)model.LicenseDuration)
             {
-                //Calculate New License ExpirationTime
+                var licenseDuration = TimeSpan.FromDays((int)model.LicenseDuration);
+                entity.ExpirationDate = entity.CreatedAt.Value.Add(licenseDuration);
             }
             entity.NoOfDevices = model.NoOfDevices;
-            //_mapper.Map(model, entity);
+            entity.CustomerId = model.CustomerId;
+            entity.LicenseDuration = (int)model.LicenseDuration;
             await _licenseRepository.UpdateAsync(entity);
             return await Get(id);
         }

@@ -26,6 +26,7 @@ namespace AddOptimization.Services.Mappings
             });
             CreateMap<CustomerCreateDto, Customer>().ForMember(c => c.Addresses, opt => opt.Ignore()).AfterMap((s,d) => {
                 d.Organizations = s.Company;
+                d.Birthday = s.Birthday != DateTime.MinValue ? s.Birthday.ToString("yyyy-MM-dd") : null; 
             });
             CreateMap<CustomerStatus, CustomerStatusDto>();
             CreateMap<ScreenCreateDto, Screen>().AfterMap((s, d) =>
@@ -42,9 +43,11 @@ namespace AddOptimization.Services.Mappings
                 d.CustomerStatusName = s.CustomerStatus?.Name;
                 d.BillingAddressString = s.BillingAddress == null ? null : $"{s.BillingAddress.Address1},{s.BillingAddress.Zip},{s.BillingAddress.City}";
             });
+            CreateMap<CustomerDto,Customer>().AfterMap((s, d) =>
+            {
+                d.Organizations = s.Company;
+            });
             CreateMap<Customer, CustomerDetailsDto>();
-            CreateMap<CustomerCreateDto, Customer>()
-                .ForMember(c => c.Addresses, opt => opt.Ignore());
             CreateMap<CustomerStatus, CustomerStatusDto>();
 
             CreateMap<AddressCreateDto, Address>().AfterMap((s, d) =>
@@ -59,6 +62,7 @@ namespace AddOptimization.Services.Mappings
             });
 
             CreateMap<LicenseCreateDto, License>();
+            CreateMap<LicenseUpdateDto, License>();
             CreateMap<License,LicenseDetailsDto>();
             CreateMap<LicenseDevice, LicenseDeviceDto>();
 
