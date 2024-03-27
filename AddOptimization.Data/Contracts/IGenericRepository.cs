@@ -24,24 +24,24 @@ namespace AddOptimization.Data.Contracts
         Task<TEntity> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate = null,
                                                        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
                                                        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null,
-                                                       bool disableTracking = true,bool ignoreGlobalFilter = false);
+                                                       bool disableTracking = true,bool ignoreGlobalFilter = true);
         Task<IQueryable<TEntity>> QueryAsync(Expression<Func<TEntity, bool>> predicate = null,
                                                   Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
                                                   Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null,
                                                   Expression<Func<TEntity, TEntity>> select = null,
-                                                  bool disableTracking = true, bool ignoreGlobalFilter = false);
+                                                  bool disableTracking = true, bool ignoreGlobalFilter = true);
         Task<IQueryable<TResult>> QueryMappedAsync<TResult>(Expression<Func<TEntity, TResult>> select, Expression<Func<TEntity, bool>> predicate = null,
                                                  Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
                                                  Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null,
-                                                 bool disableTracking = true, bool ignoreGlobalFilter = false);
+                                                 bool disableTracking = true, bool ignoreGlobalFilter = true);
         Task<TEntity> InsertAsync(TEntity entity);
         Task<List<TEntity>> BulkInsertAsync(List<TEntity> entities);
         Task<TEntity> UpdateAsync(TEntity entity);
         Task<List<TEntity>> BulkUpdateAsync(List<TEntity> entities);
         Task DeleteAsync(TEntity entity);
         Task BulkDeleteAsync(IList<TEntity> data);
-        Task<bool> IsExist(Expression<Func<TEntity, bool>> predicate = null, bool ignoreGlobalFilter = false, params Expression<Func<TEntity, object>>[] includes);
-        Task<int> MaxAsync(Expression<Func<TEntity, int>> select,Expression < Func<TEntity, bool>> predicate = null, bool ignoreGlobalFilter = false);
+        Task<bool> IsExist(Expression<Func<TEntity, bool>> predicate = null, bool ignoreGlobalFilter = true, params Expression<Func<TEntity, object>>[] includes);
+        Task<int> MaxAsync(Expression<Func<TEntity, int>> select,Expression < Func<TEntity, bool>> predicate = null, bool ignoreGlobalFilter = true);
         Task<int> ExecuteSqlAsync(FormattableString sql);
         /// <summary>
         /// Trun on identity insert on for TEntity
