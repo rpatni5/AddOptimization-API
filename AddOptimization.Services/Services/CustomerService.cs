@@ -44,7 +44,7 @@ public class CustomerService : ICustomerService
             {
                 Id = s.Id,
                 Name = s.Name,
-            }, e => includeDeleted || (e.CustomerStatus != null && e.CustomerStatus.Name != CustomerStatuses.Inactive), orderBy: (entities) => entities.OrderBy(c => c.Name));
+            }, e => includeDeleted || (e.CustomerStatus != null && e.CustomerStatus.Name != CustomerStatuses.Inactive), orderBy: (entities) => entities.OrderBy(c => c.Name),ignoreGlobalFilter:true);
             return ApiResult<List<CustomerSummaryDto>>.Success(entities.ToList());
         }
         catch (Exception ex)
@@ -73,7 +73,7 @@ public class CustomerService : ICustomerService
     {
         try
         {
-            var entity = await _customerRepository.FirstOrDefaultAsync(t => t.Id == id, include: entity => entity.Include(e => e.Addresses.Where(a => !a.IsDeleted).OrderByDescending(e => e.CreatedAt)).Include(e => e.CustomerStatus));
+            var entity = await _customerRepository.FirstOrDefaultAsync(t => t.Id == id, include: entity => entity.Include(e => e.Addresses.Where(a => !a.IsDeleted).OrderByDescending(e => e.CreatedAt)).Include(e => e.CustomerStatus),ignoreGlobalFilter:true);
             if (entity == null)
             {
                 return ApiResult<CustomerDetailsDto>.NotFound("Customer");
@@ -106,7 +106,7 @@ public class CustomerService : ICustomerService
         await _unitOfWork.BeginTransactionAsync();
         try
         {
-            var isExists = await _customerRepository.IsExist(t => t.Name.ToLower() == model.Name.ToLower() || (t.Email != null && t.Email.ToLower() == model.Email.ToLower()));
+            var isExists = await _customerRepository.IsExist(t => t.Name.ToLower() == model.Name.ToLower() || (t.Email != null && t.Email.ToLower() == model.Email.ToLower()), ignoreGlobalFilter: true);
             if (isExists)
             {
                 return ApiResult<CustomerDto>.EntityAlreadyExists("Customer", "name or email");
@@ -144,13 +144,13 @@ public class CustomerService : ICustomerService
     {
         try
         {
-            var isExists = await _customerRepository.IsExist(t => t.Id != id && t.Name.ToLower() == model.Name.ToLower());
+            var isExists = await _customerRepository.IsExist(t => t.Id != id && t.Name.ToLower() == model.Name.ToLower(),ignoreGlobalFilter:true);
             if (isExists)
             {
                 return ApiResult<CustomerDto>.EntityAlreadyExists("Customer", "name");
             }
 
-            var entity = await _customerRepository.FirstOrDefaultAsync(t => t.Id == id);
+            var entity = await _customerRepository.FirstOrDefaultAsync(t => t.Id == id, ignoreGlobalFilter: true);
             if (entity == null)
             {
                 return ApiResult<CustomerDto>.NotFound("Customer");
@@ -171,7 +171,7 @@ public class CustomerService : ICustomerService
     {
         try
         {
-            var entity = await _customerRepository.FirstOrDefaultAsync(t => t.Id == id);
+            var entity = await _customerRepository.FirstOrDefaultAsync(t => t.Id == id, ignoreGlobalFilter: true);
             if (entity == null)
             {
                 return ApiResult<bool>.NotFound("Customer");
