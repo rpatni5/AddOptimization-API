@@ -9,19 +9,21 @@ using AddOptimization.Contracts.Constants;
 using AddOptimization.Utilities.Models;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 
 namespace AddOptimization.Services.Services;
 public class CustomerService : ICustomerService
 {
     private readonly IGenericRepository<Customer> _customerRepository;
-   // private readonly IGenericRepository<License> _licenseRepository;
+    // private readonly IGenericRepository<License> _licenseRepository;
     private readonly IGenericRepository<CustomerStatus> _customerStatusRepository;
     private readonly ILogger<CustomerService> _logger;
     private readonly IMapper _mapper;
+    private readonly List<string> _currentUserRoles;
     private readonly IAddressService _addressService;
     private readonly IUnitOfWork _unitOfWork;
-    public CustomerService(IGenericRepository<Customer> customerRepository, ILogger<CustomerService> logger, IMapper mapper, 
-        IAddressService addressService, IUnitOfWork unitOfWork, IGenericRepository<CustomerStatus> customerStatusRepository)//, IGenericRepository<Order> orderRepository)
+    public CustomerService(IGenericRepository<Customer> customerRepository, ILogger<CustomerService> logger, IMapper mapper,
+        IAddressService addressService, IUnitOfWork unitOfWork, IGenericRepository<CustomerStatus> customerStatusRepository, IHttpContextAccessor httpContextAccessor)//, IGenericRepository<Order> orderRepository)
     {
         _customerRepository = customerRepository;
         _logger = logger;
@@ -29,7 +31,8 @@ public class CustomerService : ICustomerService
         _addressService = addressService;
         _unitOfWork = unitOfWork;
         _customerStatusRepository = customerStatusRepository;
-       // _orderRepository = orderRepository;
+        _currentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
+        // _orderRepository = orderRepository;
     }
     public async Task<ApiResult<List<CustomerSummaryDto>>> GetSummary(PageQueryFiterBase filter)
     {
@@ -41,7 +44,7 @@ public class CustomerService : ICustomerService
             {
                 Id = s.Id,
                 Name = s.Name,
-            }, e => includeDeleted || (e.CustomerStatus != null && e.CustomerStatus.Name != CustomerStatuses.Inactive), orderBy:(entities)=> entities.OrderBy(c=> c.Name));
+            }, e => includeDeleted || (e.CustomerStatus != null && e.CustomerStatus.Name != CustomerStatuses.Inactive), orderBy: (entities) => entities.OrderBy(c => c.Name));
             return ApiResult<List<CustomerSummaryDto>>.Success(entities.ToList());
         }
         catch (Exception ex)
@@ -54,27 +57,28 @@ public class CustomerService : ICustomerService
     {
         try
         {
-            var entities = await _customerRepository.QueryAsync(include:entities=> entities
-            .Include(e=> e.CustomerStatus).Include(e=>e.Licenses),orderBy: (entities) => entities.OrderBy(t => t.Name));
+            var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin")).ToList();
+            var entities = await _customerRepository.QueryAsync(include: entities => entities
+            .Include(e => e.CustomerStatus).Include(e => e.Licenses), orderBy: (entities) => entities.OrderBy(t => t.Name), ignoreGlobalFilter: superAdminRole.Count != 0);
             var mappedEntities = _mapper.Map<List<CustomerDto>>(entities.ToList());
             return ApiResult<List<CustomerDto>>.Success(mappedEntities);
         }
-        catch (Exception ex) 
+        catch (Exception ex)
         {
             _logger.LogException(ex);
             throw;
         }
     }
-    public async Task<ApiResult<CustomerDetailsDto>> Get(Guid id,bool includeOrderStats)
+    public async Task<ApiResult<CustomerDetailsDto>> Get(Guid id, bool includeOrderStats)
     {
         try
         {
-            var entity = await _customerRepository.FirstOrDefaultAsync(t => t.Id == id,include:entity=> entity.Include(e=> e.Addresses.Where(a=> !a.IsDeleted).OrderByDescending(e=> e.CreatedAt)).Include(e => e.CustomerStatus));
+            var entity = await _customerRepository.FirstOrDefaultAsync(t => t.Id == id, include: entity => entity.Include(e => e.Addresses.Where(a => !a.IsDeleted).OrderByDescending(e => e.CreatedAt)).Include(e => e.CustomerStatus));
             if (entity == null)
             {
                 return ApiResult<CustomerDetailsDto>.NotFound("Customer");
             }
-            var mappedEntity=_mapper.Map<CustomerDetailsDto>(entity);
+            var mappedEntity = _mapper.Map<CustomerDetailsDto>(entity);
             if (includeOrderStats)
             {
                 //var ordersData = (await _orderRepository.QueryMappedAsync(e => new {
@@ -102,7 +106,7 @@ public class CustomerService : ICustomerService
         await _unitOfWork.BeginTransactionAsync();
         try
         {
-            var isExists = await _customerRepository.IsExist(t => t.Name.ToLower() == model.Name.ToLower() || (t.Email!= null && t.Email.ToLower() == model.Email.ToLower()));
+            var isExists = await _customerRepository.IsExist(t => t.Name.ToLower() == model.Name.ToLower() || (t.Email != null && t.Email.ToLower() == model.Email.ToLower()));
             if (isExists)
             {
                 return ApiResult<CustomerDto>.EntityAlreadyExists("Customer", "name or email");
@@ -118,7 +122,7 @@ public class CustomerService : ICustomerService
                     a.CustomerId = entity.Id;
                 });
                 await _addressService.BulkCreate(model.Addresses);
-                if(billingAddressId != null)
+                if (billingAddressId != null)
                 {
                     entity.BillingAddressId = billingAddressId;
                     await _customerRepository.UpdateAsync(entity);
@@ -172,12 +176,12 @@ public class CustomerService : ICustomerService
             {
                 return ApiResult<bool>.NotFound("Customer");
             }
-            var inActiveStatus =await _customerStatusRepository.FirstOrDefaultAsync(e => e.Name == CustomerStatuses.Inactive);
+            var inActiveStatus = await _customerStatusRepository.FirstOrDefaultAsync(e => e.Name == CustomerStatuses.Inactive);
             if (inActiveStatus == null)
             {
                 return ApiResult<bool>.NotFound("Customer Status");
             }
-            entity.CustomerStatusId=inActiveStatus.Id;
+            entity.CustomerStatusId = inActiveStatus.Id;
             await _customerRepository.UpdateAsync(entity);
             return ApiResult<bool>.Success(true);
         }
@@ -205,7 +209,7 @@ public class CustomerService : ICustomerService
     //            City = e.ShippingAddress==null?null: e.ShippingAddress.city,
     //            Total = e.Totals==null ? null :e.Totals.total/100
     //        },e=> e.CustomerId==customerId,include: source => source.Include(o => o.OrderStatus),orderBy:entities=> entities.OrderByDescending(o=> o.CreatedAt));
-        
+
     //        return ApiResult<List<CustomerOrderDto>>.Success(entities.ToList());
     //    }
     //    catch (Exception ex)
@@ -215,5 +219,5 @@ public class CustomerService : ICustomerService
     //    }
     //}
 
-   
+
 }

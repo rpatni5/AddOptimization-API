@@ -43,7 +43,7 @@ public class LicenseService : ILicenseService
     {
         try
         {
-            var entities = await _licenseRepository.QueryAsync(include: source => source.Include(o => o.LicenseDevices).Include(o => o.Customer), ignoreGlobalFilter: true);
+            var entities = await _licenseRepository.QueryAsync(include: source => source.Include(o => o.LicenseDevices).Include(o => o.Customer));
             entities = ApplySorting(entities, filter?.Sorted?.FirstOrDefault());
             entities = ApplyFilters(entities, filter);
             var pagedResult = PageHelper<License, LicenseDetailsDto>.ApplyPaging(entities, filter, entities => entities.Select(e => new LicenseDetailsDto

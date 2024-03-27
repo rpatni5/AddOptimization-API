@@ -26,6 +26,19 @@ public static class HttpContextExtension
         }
         return null;
     }
+    public static string GetCurrentUserEmail(this HttpContext httpContext)
+    {
+        if (httpContext.User == null)
+        {
+            return null;
+        }
+        var claimVal = httpContext.User.FindFirst(ClaimTypes.Email)?.Value;
+        if (claimVal == null)
+        {
+            return null;
+        }
+        return claimVal;
+    }
     public static string GetCurrentUserFullName(this HttpContext httpContext)
     {
         return httpContext.User?.FindFirst(ClaimTypes.Name)?.Value;
