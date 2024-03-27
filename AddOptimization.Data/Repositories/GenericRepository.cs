@@ -199,11 +199,16 @@ namespace AddOptimization.Data.Repositories
         }
 
 
-        public async Task<bool> IsExist(Expression<Func<TEntity, bool>> predicate = null, params Expression<Func<TEntity, object>>[] includes)
+        public async Task<bool> IsExist(Expression<Func<TEntity, bool>> predicate = null, bool ignoreGlobalFilter = false, params Expression<Func<TEntity, object>>[] includes)
         {
             try
             {
                 var query = entities.AsQueryable();
+                if (ignoreGlobalFilter)
+                {
+                    query = entities.IgnoreQueryFilters();
+                }
+
                 if (includes != null)
                 {
                     query = includes.Aggregate(query,
