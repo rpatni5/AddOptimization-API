@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+https://go.microsoft.com/fwlink/?LinkID=208121.
+-->
+<Project>
+  <PropertyGroup>
+    <TimeStampOfAssociatedLegacyPublishXmlFile />
+    <_PublishTargetUrl>C:\Users\rpatn\source\repos\Add-Optimization-Deploy</_PublishTargetUrl>
+    <History>True|2024-03-27T15:44:56.3485536Z;</History>
+    <LastFailureDetails />
+  </PropertyGroup>
+  <ItemGroup>
+    <DestinationConnectionStrings Include="DefaultConnection">
+      <Value>Data Source=tcp:s23.winhost.com%3bInitial Catalog=DB_163003_addoptimizat%3bUser ID=DB_163003_addoptimizat_user%3bPassword=Welcome%40007%3bIntegrated Security=False%3bTrustServerCertificate=true%3b</Value>
+    </DestinationConnectionStrings>
+  </ItemGroup>
+</Project>
