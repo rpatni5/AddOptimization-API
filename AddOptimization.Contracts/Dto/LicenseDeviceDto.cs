@@ -1,6 +1,6 @@
 ﻿namespace AddOptimization.Contracts.Dto
 {
-    public class LicenseDeviceDto
+    public class LicenseDeviceDto : BaseDto<Guid>
     {
         public Guid CustomerId { get; set; }
         public string MotherBoardId { get; set; }
