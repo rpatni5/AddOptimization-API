@@ -6,7 +6,7 @@ by editing this MSBuild file. In order to learn more about this please visit htt
 <Project>
   <PropertyGroup>
     <_PublishTargetUrl>D:\code\Builds\shop-metrics\build</_PublishTargetUrl>
-    <History>True|2023-10-18T12:19:28.5974552Z;True|2023-10-18T12:32:24.5306636+05:30;True|2023-10-17T20:37:13.3527313+05:30;True|2023-10-16T18:21:50.7334504+05:30;True|2023-10-13T12:35:35.7291544+05:30;</History>
+    <History>False|2024-03-27T15:41:14.8376160Z;True|2023-10-18T17:49:28.5974552+05:30;True|2023-10-18T12:32:24.5306636+05:30;True|2023-10-17T20:37:13.3527313+05:30;True|2023-10-16T18:21:50.7334504+05:30;True|2023-10-13T12:35:35.7291544+05:30;</History>
     <LastFailureDetails />
   </PropertyGroup>
 </Project>
