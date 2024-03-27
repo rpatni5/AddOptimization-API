@@ -8,6 +8,7 @@ using AddOptimization.Utilities.Common;
 using AddOptimization.Utilities.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
 
 namespace AddOptimization.Services.Services;
 public class LicenseDeviceService : ILicenseDeviceService
@@ -21,7 +22,7 @@ public class LicenseDeviceService : ILicenseDeviceService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPermissionService _permissionService;
     public LicenseDeviceService(IGenericRepository<LicenseDevice> licenseDeviceRepository, ILogger<LicenseService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor,
-        IGenericRepository<Customer> customerRepository,IConfiguration configuration, IUnitOfWork unitOfWork,IPermissionService permissionService)
+        IGenericRepository<Customer> customerRepository, IConfiguration configuration, IUnitOfWork unitOfWork, IPermissionService permissionService)
     {
         _licenseDeviceRepository = licenseDeviceRepository;
         _logger = logger;
@@ -37,7 +38,9 @@ public class LicenseDeviceService : ILicenseDeviceService
     {
         try
         {
-            var entity = await _licenseDeviceRepository.QueryAsync(o => o.LicenseId == licenseId, ignoreGlobalFilter: true);
+            var entity = await _licenseDeviceRepository.QueryAsync(include: entities => entities
+            .Include(e => e.CreatedByUser), predicate: o => o.LicenseId == licenseId, ignoreGlobalFilter: true);
+
             if (entity == null)
             {
                 return ApiResult<List<LicenseDeviceDto>>.NotFound("License Devices");
