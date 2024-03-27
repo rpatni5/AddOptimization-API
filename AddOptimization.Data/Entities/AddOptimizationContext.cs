@@ -66,6 +66,12 @@ public partial class AddOptimizationContext : DbContext
               {
                   entity.HasQueryFilter(e => e.Email == CurrentUserEmail);
               });
+
+        modelBuilder.Entity<License>(entity =>
+        {
+            entity.HasQueryFilter(e => e.Customer != null ? e.Customer.Email == CurrentUserEmail : true);
+        });
+
         OnModelCreatingPartial(modelBuilder);
     }
 
