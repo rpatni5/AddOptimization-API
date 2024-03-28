@@ -114,7 +114,7 @@ namespace AddOptimization.Data.Repositories
                                                  Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
                                                  Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null,
                                                  Expression<Func<TEntity, TEntity>> select = null,
-                                                 bool disableTracking = true, bool ignoreGlobalFilter = false)
+                                                 bool disableTracking = true, bool ignoreGlobalFilter = true)
         {
             try
             {
@@ -157,7 +157,7 @@ namespace AddOptimization.Data.Repositories
         public async Task<IQueryable<TResult>> QueryMappedAsync<TResult>(Expression<Func<TEntity, TResult>> select, Expression<Func<TEntity, bool>> predicate = null,
                                                Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
                                                Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null,
-                                               bool disableTracking = true, bool ignoreGlobalFilter = false)
+                                               bool disableTracking = true, bool ignoreGlobalFilter = true)
         {
             try
             {
@@ -199,11 +199,16 @@ namespace AddOptimization.Data.Repositories
         }
 
 
-        public async Task<bool> IsExist(Expression<Func<TEntity, bool>> predicate = null, params Expression<Func<TEntity, object>>[] includes)
+        public async Task<bool> IsExist(Expression<Func<TEntity, bool>> predicate = null, bool ignoreGlobalFilter = true, params Expression<Func<TEntity, object>>[] includes)
         {
             try
             {
                 var query = entities.AsQueryable();
+                if (ignoreGlobalFilter)
+                {
+                    query = entities.IgnoreQueryFilters();
+                }
+
                 if (includes != null)
                 {
                     query = includes.Aggregate(query,
@@ -262,7 +267,7 @@ namespace AddOptimization.Data.Repositories
         public async Task<TEntity> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate = null,
                                                   Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
                                                   Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null,
-                                                  bool disableTracking = true, bool ignoreGlobalFilter = false)
+                                                  bool disableTracking = true, bool ignoreGlobalFilter = true)
         {
             try
             {
@@ -486,7 +491,7 @@ namespace AddOptimization.Data.Repositories
         }
 
 
-        public async Task<int> MaxAsync(Expression<Func<TEntity, int>> select, Expression<Func<TEntity, bool>> predicate = null, bool ignoreGlobalFilter = false)
+        public async Task<int> MaxAsync(Expression<Func<TEntity, int>> select, Expression<Func<TEntity, bool>> predicate = null, bool ignoreGlobalFilter = true)
         {
             try
             {

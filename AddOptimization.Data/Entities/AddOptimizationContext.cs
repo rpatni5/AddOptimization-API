@@ -2,18 +2,28 @@
 using Microsoft.EntityFrameworkCore;
 using AddOptimization.Data.Common;
 using AddOptimization.Data.Extensions;
+using AddOptimization.Utilities.Extensions;
+using NPOI.SS.UserModel;
 
 namespace AddOptimization.Data.Entities;
 
 public partial class AddOptimizationContext : DbContext
 {
+    public string CurrentUserEmail { get; set; }
+    public List<string> CurrentUserRoles { get; set; }
+
     public AddOptimizationContext(IHttpContextAccessor httpContextAccessor)
     {
+        CurrentUserEmail = httpContextAccessor.HttpContext.GetCurrentUserEmail();
+        CurrentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
+
     }
 
     public AddOptimizationContext(DbContextOptions<AddOptimizationContext> options, IHttpContextAccessor httpContextAccessor)
         : base(options)
     {
+        CurrentUserEmail = httpContextAccessor.HttpContext.GetCurrentUserEmail();
+        CurrentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
     }
 
     public virtual DbSet<ApplicationUser> ApplicationUsers { get; set; }
@@ -37,7 +47,7 @@ public partial class AddOptimizationContext : DbContext
         modelBuilder.UseCollation("Latin1_General_CI_AS");
         modelBuilder.ApplyBaseEntityConfiguration();
         modelBuilder.Entity<ApplicationUser>(entity =>
-        { 
+        {
             entity.HasMany(e => e.UserRoles).WithOne(c => c.User);
         });
         modelBuilder.Entity<Address>(entity =>
@@ -51,6 +61,16 @@ public partial class AddOptimizationContext : DbContext
         //{
         //    entity.HasOne(e => e.Customer).WithMany(c => c.Licenses);
         //});
+
+        modelBuilder.Entity<Customer>(entity =>
+              {
+                  entity.HasQueryFilter(e => e.Email == CurrentUserEmail);
+              });
+
+        modelBuilder.Entity<License>(entity =>
+        {
+            entity.HasQueryFilter(e => e.Customer != null ? e.Customer.Email == CurrentUserEmail : true);
+        });
 
         OnModelCreatingPartial(modelBuilder);
     }

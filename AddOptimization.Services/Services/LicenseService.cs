@@ -26,6 +26,7 @@ public class LicenseService : ILicenseService
     private readonly IConfiguration _configuration;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPermissionService _permissionService;
+    private readonly List<string> _currentUserRoles;
     public LicenseService(IGenericRepository<License> licenseRepository, ILogger<LicenseService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor,
         IGenericRepository<Customer> customerRepository,IConfiguration configuration, IUnitOfWork unitOfWork,IPermissionService permissionService)
     {
@@ -37,6 +38,7 @@ public class LicenseService : ILicenseService
         _configuration = configuration;
         _unitOfWork = unitOfWork;
         _permissionService = permissionService;
+        _currentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
     }
 
     public async Task<PagedApiResult<LicenseDetailsDto>> Search(PageQueryFiterBase filter)
@@ -44,6 +46,9 @@ public class LicenseService : ILicenseService
         try
         {
             var entities = await _licenseRepository.QueryAsync(include: source => source.Include(o => o.LicenseDevices).Include(o => o.Customer).Include(e => e.CreatedByUser), ignoreGlobalFilter: true);
+            var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin")).ToList();
+            //var entities = await _licenseRepository.QueryAsync(include: source => source.Include(o => o.LicenseDevices).Include(o => o.Customer), ignoreGlobalFilter: superAdminRole.Count != 0);
+//>>>>>>> 0bfeb243875bba302056e36a954fc1b70586a202
             entities = ApplySorting(entities, filter?.Sorted?.FirstOrDefault());
             entities = ApplyFilters(entities, filter);
             var pagedResult = PageHelper<License, LicenseDetailsDto>.ApplyPaging(entities, filter, entities => entities.Select(e => new LicenseDetailsDto
