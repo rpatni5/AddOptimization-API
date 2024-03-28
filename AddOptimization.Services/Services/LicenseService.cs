@@ -43,7 +43,7 @@ public class LicenseService : ILicenseService
     {
         try
         {
-            var entities = await _licenseRepository.QueryAsync(include: source => source.Include(o => o.LicenseDevices).Include(o => o.Customer), ignoreGlobalFilter: true);
+            var entities = await _licenseRepository.QueryAsync(include: source => source.Include(o => o.LicenseDevices).Include(o => o.Customer).Include(e => e.CreatedByUser), ignoreGlobalFilter: true);
             entities = ApplySorting(entities, filter?.Sorted?.FirstOrDefault());
             entities = ApplyFilters(entities, filter);
             var pagedResult = PageHelper<License, LicenseDetailsDto>.ApplyPaging(entities, filter, entities => entities.Select(e => new LicenseDetailsDto
@@ -58,6 +58,7 @@ public class LicenseService : ILicenseService
                 CustomerEmail = e.Customer.Email,
                 LicenseDuration = e.LicenseDuration,
                 CustomerName = e.Customer.Name,
+                CreatedBy=e.CreatedByUser.FullName,
                 LicenseDevices = _mapper.Map<List<LicenseDeviceDto>>(e.LicenseDevices),
             }).ToList());
             var retVal = pagedResult;
