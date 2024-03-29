@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace AddOptimization.Contracts.Dto
 {
-    public class LicenseDetailsDto
+    public class LicenseDetailsDto : BaseDto<Guid>
     {
         public Guid Id { get; set; }
         public string LicenseKey { get; set; }
@@ -19,6 +19,8 @@ namespace AddOptimization.Contracts.Dto
         public Guid CustomerId { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public string CreatedBy { get; set; }
+
 
         public string CustomerEmail { get; set; }
         public string CustomerName { get; set; }
