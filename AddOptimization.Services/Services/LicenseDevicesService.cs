@@ -34,6 +34,7 @@ public class LicenseDeviceService : ILicenseDeviceService
         _permissionService = permissionService;
     }
 
+    #region Public Methods
     public async Task<ApiResult<List<LicenseDeviceDto>>> GetByLicenseId(Guid licenseId)
     {
         try
@@ -73,4 +74,6 @@ public class LicenseDeviceService : ILicenseDeviceService
             throw;
         }
     }
+
+    #endregion
 }
