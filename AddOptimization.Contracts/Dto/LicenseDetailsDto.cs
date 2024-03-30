@@ -16,6 +16,9 @@ namespace AddOptimization.Contracts.Dto
         public int LicenseDuration { get; set; }
         public DateTime ExpirationDate { get; set; }
         public int NoOfDevices { get; set; }
+
+        public int ActivatedDevicesCount { get; set; }
+        public int PendingDevicesCount { get; set; }
         public Guid CustomerId { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }

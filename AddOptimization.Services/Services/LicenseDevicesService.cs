@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 namespace AddOptimization.Services.Services;
 public class LicenseDeviceService : ILicenseDeviceService
 {
+    #region Private Fields
     private readonly IGenericRepository<LicenseDevice> _licenseDeviceRepository;
     private readonly IGenericRepository<Customer> _customerRepository;
     private readonly ILogger<LicenseService> _logger;
@@ -21,6 +22,9 @@ public class LicenseDeviceService : ILicenseDeviceService
     private readonly IConfiguration _configuration;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPermissionService _permissionService;
+    #endregion
+
+    #region Constructor
     public LicenseDeviceService(IGenericRepository<LicenseDevice> licenseDeviceRepository, ILogger<LicenseService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor,
         IGenericRepository<Customer> customerRepository, IConfiguration configuration, IUnitOfWork unitOfWork, IPermissionService permissionService)
     {
@@ -34,6 +38,9 @@ public class LicenseDeviceService : ILicenseDeviceService
         _permissionService = permissionService;
     }
 
+    #endregion
+
+    #region Public Methods
     public async Task<ApiResult<List<LicenseDeviceDto>>> GetByLicenseId(Guid licenseId)
     {
         try
@@ -73,4 +80,6 @@ public class LicenseDeviceService : ILicenseDeviceService
             throw;
         }
     }
+
+    #endregion
 }

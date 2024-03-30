@@ -28,7 +28,7 @@ public class LicenseService : ILicenseService
     private readonly IPermissionService _permissionService;
     private readonly List<string> _currentUserRoles;
     public LicenseService(IGenericRepository<License> licenseRepository, ILogger<LicenseService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor,
-        IGenericRepository<Customer> customerRepository,IConfiguration configuration, IUnitOfWork unitOfWork,IPermissionService permissionService)
+        IGenericRepository<Customer> customerRepository, IConfiguration configuration, IUnitOfWork unitOfWork, IPermissionService permissionService)
     {
         _licenseRepository = licenseRepository;
         _logger = logger;
@@ -45,10 +45,10 @@ public class LicenseService : ILicenseService
     {
         try
         {
-            var entities = await _licenseRepository.QueryAsync(include: source => source.Include(o => o.LicenseDevices).Include(o => o.Customer).Include(e => e.CreatedByUser), ignoreGlobalFilter: true);
             var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin")).ToList();
-            //var entities = await _licenseRepository.QueryAsync(include: source => source.Include(o => o.LicenseDevices).Include(o => o.Customer), ignoreGlobalFilter: superAdminRole.Count != 0);
-//>>>>>>> 0bfeb243875bba302056e36a954fc1b70586a202
+
+            var entities = await _licenseRepository.QueryAsync(include: source => source.Include(o => o.LicenseDevices).Include(o => o.Customer).Include(e => e.CreatedByUser), ignoreGlobalFilter: superAdminRole.Count != 0);
+
             entities = ApplySorting(entities, filter?.Sorted?.FirstOrDefault());
             entities = ApplyFilters(entities, filter);
             var pagedResult = PageHelper<License, LicenseDetailsDto>.ApplyPaging(entities, filter, entities => entities.Select(e => new LicenseDetailsDto
@@ -63,8 +63,10 @@ public class LicenseService : ILicenseService
                 CustomerEmail = e.Customer.Email,
                 LicenseDuration = e.LicenseDuration,
                 CustomerName = e.Customer.Name,
-                CreatedBy=e.CreatedByUser.FullName,
+                CreatedBy = e.CreatedByUser.FullName,
                 LicenseDevices = _mapper.Map<List<LicenseDeviceDto>>(e.LicenseDevices),
+                ActivatedDevicesCount = e.LicenseDevices.Any() ? e.LicenseDevices.Count() : 0,
+                PendingDevicesCount = e.NoOfDevices - (e.LicenseDevices.Any() ? e.LicenseDevices.Count() : 0),
             }).ToList());
             var retVal = pagedResult;
             return PagedApiResult<LicenseDetailsDto>.Success(retVal);
@@ -98,7 +100,7 @@ public class LicenseService : ILicenseService
     {
         try
         {
-            var entity = await _licenseRepository.QueryAsync(o => o.CustomerId == customerId, include: source => source.Include(o => o.Customer).Include(e => e.LicenseDevices), ignoreGlobalFilter: true);     
+            var entity = await _licenseRepository.QueryAsync(o => o.CustomerId == customerId, include: source => source.Include(o => o.Customer).Include(e => e.LicenseDevices), ignoreGlobalFilter: true);
             if (entity == null || !entity.Any())
             {
                 return ApiResult<List<LicenseDetailsDto>>.NotFound("License");
@@ -136,12 +138,12 @@ public class LicenseService : ILicenseService
     {
         try
         {
-            var entity = await _licenseRepository.FirstOrDefaultAsync(o => o.Id == id, disableTracking: false,ignoreGlobalFilter:true);
+            var entity = await _licenseRepository.FirstOrDefaultAsync(o => o.Id == id, disableTracking: false, ignoreGlobalFilter: true);
             if (entity == null)
             {
                 return ApiResult<LicenseDetailsDto>.NotFound("License");
             }
-            if(model.ExpireLicense)
+            if (model.ExpireLicense)
             {
                 entity.ExpirationDate = DateTime.UtcNow;
             }
@@ -163,7 +165,7 @@ public class LicenseService : ILicenseService
         }
     }
 
-  
+
 
     public async Task<ApiResult<bool>> Delete(Guid id)
     {
@@ -195,7 +197,7 @@ public class LicenseService : ILicenseService
 
         filter.GetValue<string>("customerId", (v) =>
         {
-            entities = entities.Where(e => e.CustomerId.ToString() ==v);
+            entities = entities.Where(e => e.CustomerId.ToString() == v);
         });
 
         filter.GetValue<DateTime>("createdAt", (v) =>
@@ -266,8 +268,8 @@ public class LicenseService : ILicenseService
                 }
                 if (columnName == nameof(LicenseDetailsDto.ExpirationDate).ToUpper())
                 {
-                    orders = orders.OrderByDescending(e =>  e.ExpirationDate);
-                }                
+                    orders = orders.OrderByDescending(e => e.ExpirationDate);
+                }
             }
             return orders;
 
