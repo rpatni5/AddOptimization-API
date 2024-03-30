@@ -66,7 +66,10 @@ namespace AddOptimization.Services.Mappings
 
             CreateMap<LicenseCreateDto, License>();
             CreateMap<LicenseUpdateDto, License>();
-            CreateMap<License,LicenseDetailsDto>();
+            CreateMap<License,LicenseDetailsDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser?.FullName;
+            });
             CreateMap<LicenseDevice, LicenseDeviceDto>().AfterMap((s, d) =>
             {
                 d.CreatedAt = s.CreatedAt?.Date;
