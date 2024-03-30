@@ -36,6 +36,9 @@ namespace AddOptimization.Services.Mappings
             CreateMap<Field, FieldDto>(); 
             CreateMap<FieldDto, Field>();
 
+            CreateMap<Field, FieldCreateDto>();
+            CreateMap<FieldCreateDto, Field>();
+
             CreateMap<Customer, CustomerDto>().AfterMap((s, d) =>
             {
                 d.Company = s.Organizations;
