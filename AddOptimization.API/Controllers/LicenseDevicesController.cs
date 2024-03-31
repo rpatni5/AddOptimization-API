@@ -3,9 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using AddOptimization.API.Common;
 using AddOptimization.Contracts.Constants;
 using AddOptimization.Contracts.Services;
+using AddOptimization.Contracts.Dto;
 
 namespace AddOptimization.API.Controllers;
-[Authorize]
+
 public class LicenseDevicesController : CustomApiControllerBase
 {
 
@@ -15,7 +16,8 @@ public class LicenseDevicesController : CustomApiControllerBase
         _licensesDeviceService = licensesDeviceService;
     }
 
-    [HttpGet("license/{licenseId}")]
+    [Authorize]
+    [HttpGet("licensedevice/{licenseId}")]
     public async Task<IActionResult> GetByLicenseId(Guid licenseId)
     {
         try
@@ -29,6 +31,37 @@ public class LicenseDevicesController : CustomApiControllerBase
         }
     }
 
+    [AllowAnonymous]
+    [HttpPost("activate")]
+    public async Task<IActionResult> ActivateLicenseByLicenseId(LicenseDeviceManagementDto request)
+    {
+        try
+        {
+            var retVal = await _licensesDeviceService.ActivateLicense(request);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    [AllowAnonymous]
+    [HttpPost("validate")]
+    public async Task<IActionResult> ValidateLicenseByLicenseId(LicenseDeviceManagementDto request)
+    {
+        try
+        {
+            var retVal = await _licensesDeviceService.ValidateLicense(request);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    [Authorize]
     [HttpDelete("{id}")]
     [HasPermission(ScreenKeys.Licenses, GlobalFields.Delete)]
     public async Task<IActionResult> Delete(Guid id )

@@ -72,7 +72,7 @@ namespace AddOptimization.Services.Mappings
                 d.CreatedAt = s.CreatedAt?.Date;
                 d.CreatedBy = s.CreatedByUser?.FullName;
             });
-
+            CreateMap<LicenseDeviceManagementDto, LicenseDevice>();
         }
     }
 }
