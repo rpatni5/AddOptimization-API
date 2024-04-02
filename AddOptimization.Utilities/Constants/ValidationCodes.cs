@@ -35,4 +35,6 @@ public class ValidationCodes
     public const string OnlyInvoicedOrdersCopy = "OnlyInvoicedOrdersCopy";
     public const string OrderThresholdReached = "OrderThresholdReached";
     public const string OrderInprogressRequiredFields = "OrderInprogressRequiredFields";
+    public const string CannotActivateLicense = "CannotActivateLicense";
+    public const string InvalidLicense = "InvalidLicense";
 }

@@ -16,6 +16,7 @@ public class CustomerService : ICustomerService
 {
     private readonly IGenericRepository<Customer> _customerRepository;
     // private readonly IGenericRepository<License> _licenseRepository;
+    private readonly IGenericRepository<ApplicationUser> _applicationUserRepository;
     private readonly IGenericRepository<CustomerStatus> _customerStatusRepository;
     private readonly ILogger<CustomerService> _logger;
     private readonly IMapper _mapper;
@@ -23,9 +24,11 @@ public class CustomerService : ICustomerService
     private readonly IAddressService _addressService;
     private readonly IUnitOfWork _unitOfWork;
     public CustomerService(IGenericRepository<Customer> customerRepository, ILogger<CustomerService> logger, IMapper mapper,
-        IAddressService addressService, IUnitOfWork unitOfWork, IGenericRepository<CustomerStatus> customerStatusRepository, IHttpContextAccessor httpContextAccessor)//, IGenericRepository<Order> orderRepository)
+        IAddressService addressService, IUnitOfWork unitOfWork, IGenericRepository<CustomerStatus> customerStatusRepository,
+        IGenericRepository<ApplicationUser> applicationUserRepository, IHttpContextAccessor httpContextAccessor)//, IGenericRepository<Order> orderRepository)
     {
         _customerRepository = customerRepository;
+        _applicationUserRepository = applicationUserRepository;
         _logger = logger;
         _mapper = mapper;
         _addressService = addressService;
@@ -128,7 +131,23 @@ public class CustomerService : ICustomerService
                     await _customerRepository.UpdateAsync(entity);
                 }
             }
+            var names = model.Name.Split(' ');
+            string firstName = names[0] != null ? names[0]:null;
+            string lastName = names.Length > 1 ? names[names.Count()-1] : null;
+            var appUserEntity = new ApplicationUser
+            {
+                Email = model.Email,
+                FirstName = firstName,
+                LastName = lastName,
+                FullName = model.Name,
+                IsEmailsEnabled = true,
+                IsActive = true,
+                IsLocked = false,
+                UserName = model.Email
+            };
+            await _applicationUserRepository.InsertAsync(appUserEntity);
             await _unitOfWork.CommitTransactionAsync();
+            //Send email notification for email verificaion and reset password.
             var mappedEntity = _mapper.Map<CustomerDto>(entity);
             return ApiResult<CustomerDto>.Success(mappedEntity);
         }
