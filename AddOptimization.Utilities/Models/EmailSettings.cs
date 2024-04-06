@@ -1,7 +1,7 @@
 ﻿
 namespace AddOptimization.Utilities.Models;
 
-public class EmalSettings
+public class EmailSettings
 {
     public string SMTPServer { get; set; }
     public int SMTPPort { get; set; }
