@@ -100,6 +100,10 @@ public class PermissionService: IPermissionService
                     FieldKey = ag.FirstOrDefault().Field.FieldKey,
                     Id = ag.Key
                 }).ToList();
+                if (fields != null && fields.Any())
+                {
+                    fields.Sort((a, b) => string.Compare(a.Name, b.Name));
+                }
                 return new PermissionDto
                 {
                     RoleId = g.Key.RoleId,
