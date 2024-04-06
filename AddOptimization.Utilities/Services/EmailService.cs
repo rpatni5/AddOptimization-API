@@ -34,7 +34,7 @@ public  class EmailService: IEmailService
     {
         try
         {
-            var emailSettings = _configuration.ReadSection<EmalSettings>(AppSettingsSections.EmailSettings);
+            var emailSettings = _configuration.ReadSection<EmailSettings>(AppSettingsSections.EmailSettings);
             string smtpServer = emailSettings.SMTPServer;
             int smtpPort = emailSettings.SMTPPort;
             string senderEmail = emailSettings.SenderEmail;
@@ -44,7 +44,7 @@ public  class EmailService: IEmailService
                 UseDefaultCredentials = false,
                 Credentials = new NetworkCredential(senderEmail, senderPassword),
                 EnableSsl = true,
-                Timeout=10000
+                Timeout=60000
             };
             using var mailMessage = new MailMessage()
             {
