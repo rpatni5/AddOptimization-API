@@ -6,12 +6,497 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
   <PropertyGroup>
     <TimeStampOfAssociatedLegacyPublishXmlFile />
     <_PublishTargetUrl>C:\Users\rpatn\source\repos\Add-Optimization-Deploy</_PublishTargetUrl>
-    <History>True|2024-03-29T04:02:54.5207201Z;True|2024-03-27T23:43:07.4978278+05:30;True|2024-03-27T23:35:56.8476232+05:30;True|2024-03-27T23:16:09.5663430+05:30;True|2024-03-27T22:59:46.1068535+05:30;False|2024-03-27T22:58:28.0594217+05:30;False|2024-03-27T22:58:10.4426068+05:30;False|2024-03-27T22:57:26.5355401+05:30;True|2024-03-27T21:14:56.3485536+05:30;</History>
+    <History>True|2024-04-06T17:18:41.3276802Z;True|2024-03-29T09:32:54.5207201+05:30;True|2024-03-27T23:43:07.4978278+05:30;True|2024-03-27T23:35:56.8476232+05:30;True|2024-03-27T23:16:09.5663430+05:30;True|2024-03-27T22:59:46.1068535+05:30;False|2024-03-27T22:58:28.0594217+05:30;False|2024-03-27T22:58:10.4426068+05:30;False|2024-03-27T22:57:26.5355401+05:30;True|2024-03-27T21:14:56.3485536+05:30;</History>
     <LastFailureDetails />
   </PropertyGroup>
   <ItemGroup>
     <DestinationConnectionStrings Include="DefaultConnection">
       <Value>Data Source=tcp:s23.winhost.com%3bInitial Catalog=DB_163003_addoptimizat%3bUser ID=DB_163003_addoptimizat_user%3bPassword=Welcome%40007%3bIntegrated Security=False%3bTrustServerCertificate=true%3b</Value>
     </DestinationConnectionStrings>
+  </ItemGroup>
+  <ItemGroup>
+    <File Include="wwwroot/117.501e3f5f6656153b.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/13.c14d7f362b4ddcf1.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/204.64f63da31c00911c.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/207.2dd35e8c025c81e1.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/21.5ad657dbf86e2c54.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/247.e1c9261fc3ff5789.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/271.808b3545c9cb9467.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/296.f1a809990a0d93f1.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/313.6799cbf88a18b779.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/32.4b609872bad82368.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/328.b58b73e3fb409514.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/330.c37975355c054224.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/34.724e62db60a06648.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/349.45f378ce30790b69.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/354.16921ef4750085a0.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/37.b61e84abece99b11.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/379.420ff8410cefa8ce.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/393.4e29c7dc97fc6b05.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/3rdpartylicenses.txt">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/4.b451426c8ba5b3c5.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/443.2d135613865f2f6d.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/444.0977e329b23c5f20.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/45.c054635cb841c159.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/450.79859a9f574c1981.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/485.7cbd5e82e901389d.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/525.77490215eca9465e.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/543.8355b7248f0b1901.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/577.027dc1ba3cd3ea7c.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/596.184b94692f88cc91.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/617.a9c94e781503a1d7.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/651.de2cd6413adcdf1c.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/672.f1486bb7d2e699ea.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/677.c0d9c1db38be65f5.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/7.546aefc8a1de20fe.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/700.f63f88b296400dc2.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/701.13c23f5a0974e12e.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/816.ea0abed0d0d9e027.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/827.4f5c188188c892b7.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/855.904d7c4218857def.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/867.6e7a4d5796273392.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/897.afa926f25ba7c8a9.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/898.ccca5d9da137709f.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/939.b8ae0618068ad05c.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/962.762806bb5e4cb270.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/986.cd47156cf8724a76.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/991.0e463db3b3c8a69d.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/dripicons-v2.eot">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/dripicons-v2.svg">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/dripicons-v2.ttf">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/dripicons-v2.woff">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/fa-brands-400.eot">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/fa-brands-400.svg">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/fa-brands-400.ttf">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/fa-brands-400.woff">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/fa-brands-400.woff2">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/fa-regular-400.eot">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/fa-regular-400.svg">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/fa-regular-400.ttf">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/fa-regular-400.woff">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/fa-regular-400.woff2">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/fa-solid-900.eot">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/fa-solid-900.svg">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/fa-solid-900.ttf">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/fa-solid-900.woff">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/fa-solid-900.woff2">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/inter-bold.woff">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/inter-bold.woff2">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/inter-light.woff">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/inter-light.woff2">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/inter-medium.woff">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/inter-medium.woff2">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/inter-regular.woff">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/inter-regular.woff2">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/materialdesignicons-webfont.eot">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/materialdesignicons-webfont.ttf">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/materialdesignicons-webfont.woff">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/materialdesignicons-webfont.woff2">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/remixicon.eot">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/remixicon.svg">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/remixicon.symbol.svg">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/remixicon.ttf">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/remixicon.woff">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/fonts/remixicon.woff2">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/images/add_optimizaton_menu_item.png">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/images/auth.png">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/images/D&amp;R_logo_350x350.svg">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/images/dashboard.png">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/images/DNR_Logo.png">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/images/login-overlay.png">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/images/Logo_AddOptimization.png">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/images/Logo_AddOptimization_blue.png">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/images/Logo_AddOptimization_white.png">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/images/shop-metrics-favicon-white.png">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/images/shop-metrics-favicon.png">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/images/shop-metrics-logo-white.png">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/images/shop-metrics-logo.png">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/images/xls.ico">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/scss/components/avatar/avatar.scss">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/scss/components/_alerts.scss">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/scss/components/_avatar.scss">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/scss/components/_badge.scss">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/scss/components/_breadcrumb.scss">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/scss/components/_buttons.scss">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/scss/components/_card.scss">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/scss/components/_forms.scss">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/scss/components/_helper.scss">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/scss/components/_modal.scss">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/scss/components/_reboot.scss">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/scss/components/_table.scss">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/scss/icons/_dripicons.scss">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/scss/icons/_fontawesome-all.scss">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/scss/icons/_materialdesignicons.scss">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/scss/icons/_remixicon.scss">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/scss/structure/_common_structure.scss">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/scss/structure/_footer.scss">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/scss/structure/_page-head.scss">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/scss/structure/_topbar.scss">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/scss/structure/_vertical.scss">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/scss/styles.scss">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/scss/variables.scss">
+      <publishTime>03/26/2024 14:08:12</publishTime>
+    </File>
+    <File Include="wwwroot/assets/scss/_variables-dark.scss">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/styles/base.scss">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/assets/styles/loader.scss">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/auth.f273f589895113da.png">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/common.2988df47ab084b80.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/dripicons-v2.081218667d14a9fa.ttf">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/dripicons-v2.e83118957a3a726c.eot">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/dripicons-v2.e923caf443d19d52.svg">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/dripicons-v2.f9bdedcac28235e7.woff">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/fa-brands-400.146274823d5b50cf.ttf">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/fa-brands-400.1ddffb8e9c33e386.woff">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/fa-brands-400.20c5d8537e184adc.eot">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/fa-brands-400.ee871f24e453a47e.svg">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/fa-brands-400.f874043461350620.woff2">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/fa-regular-400.2390df3a894fa674.svg">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/fa-regular-400.71d4b1845c593377.ttf">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/fa-regular-400.79dac627edd5ebd3.woff2">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/fa-regular-400.9ec493ef0b1ce1af.woff">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/fa-regular-400.f49e57ac7533f741.eot">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/fa-solid-900.631e7c263e81c4bb.woff2">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/fa-solid-900.685ff6c35eb6c335.svg">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/fa-solid-900.9384bfb43ab9685d.eot">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/fa-solid-900.d8dbd7fc102b7173.ttf">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/fa-solid-900.e2efc4219f5490da.woff">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/favicon.ico">
+      <publishTime>03/26/2024 10:22:58</publishTime>
+    </File>
+    <File Include="wwwroot/index.html">
+      <publishTime>04/06/2024 22:10:30</publishTime>
+    </File>
+    <File Include="wwwroot/login-overlay.e2d207a35c323cae.png">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/main.ec4dc1193b741574.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/materialdesignicons-webfont.21f691f0c66fe18d.ttf">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/materialdesignicons-webfont.54b0f60dbe53b0de.woff2">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/materialdesignicons-webfont.5d87535077fc5b70.eot">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/materialdesignicons-webfont.d671cbf6d2480713.woff">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/polyfills.6d209f9dea6aefed.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/remixicon.1e0fb76ba013b0d6.woff">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/remixicon.5400338c84024be0.woff2">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/remixicon.e313410cccf5d407.ttf">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/remixicon.e931095fe0700119.svg">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/remixicon.f12fd1a060b1bad6.eot">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/runtime.83580967df0e139f.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/scripts.1ac6d0d02f230370.js">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
+    <File Include="wwwroot/styles.27195b97221a3329.css">
+      <publishTime>04/06/2024 22:10:14</publishTime>
+    </File>
   </ItemGroup>
 </Project>
