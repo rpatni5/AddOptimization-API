@@ -235,40 +235,64 @@ public class LicenseService : ILicenseService
             var columnName = sort.Name.ToUpper();
             if (sort.Direction == SortDirection.ascending.ToString())
             {
-                if (columnName == nameof(LicenseDetailsDto.NoOfDevices).ToUpper())
+                if (columnName.ToUpper() == nameof(LicenseDetailsDto.NoOfDevices).ToUpper())
                 {
                     orders = orders.OrderBy(o => o.NoOfDevices);
                 }
-                if (columnName == nameof(LicenseDetailsDto.CustomerId).ToUpper())
+                if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerId).ToUpper())
                 {
                     orders = orders.OrderBy(o => o.Customer.Id);
                 }
-                if (columnName == nameof(LicenseDetailsDto.CreatedAt).ToUpper())
+                if (columnName.ToUpper() == nameof(LicenseDetailsDto.CreatedAt).ToUpper())
                 {
                     orders = orders.OrderBy(o => o.CreatedAt);
                 }
-                if (columnName == nameof(LicenseDetailsDto.ExpirationDate).ToUpper())
+                if (columnName.ToUpper() == nameof(LicenseDetailsDto.ExpirationDate).ToUpper())
                 {
                     orders = orders.OrderBy(e => e.ExpirationDate);
+                }
+                if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerName).ToUpper())
+                {
+                    orders = orders.OrderBy(o => o.Customer.Name);
+                }
+                if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerEmail).ToUpper())
+                {
+                    orders = orders.OrderBy(o => o.Customer.Email);
+                }
+                if (columnName.ToUpper() == nameof(LicenseDetailsDto.LicenseDuration).ToUpper())
+                {
+                    orders = orders.OrderBy(o => o.LicenseDuration);
                 }
             }
             else
             {
-                if (columnName == nameof(LicenseDetailsDto.NoOfDevices).ToUpper())
+                if (columnName.ToUpper() == nameof(LicenseDetailsDto.NoOfDevices).ToUpper())
                 {
                     orders = orders.OrderByDescending(o => o.NoOfDevices);
                 }
-                if (columnName == nameof(LicenseDetailsDto.CustomerId).ToUpper())
+                if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerId).ToUpper())
                 {
                     orders = orders.OrderByDescending(o => o.Customer.Id);
                 }
-                if (columnName == nameof(LicenseDetailsDto.CreatedAt).ToUpper())
+                if (columnName.ToUpper() == nameof(LicenseDetailsDto.CreatedAt).ToUpper())
                 {
                     orders = orders.OrderByDescending(o => o.CreatedAt);
                 }
-                if (columnName == nameof(LicenseDetailsDto.ExpirationDate).ToUpper())
+                if (columnName.ToUpper() == nameof(LicenseDetailsDto.ExpirationDate).ToUpper())
                 {
-                    orders = orders.OrderByDescending(e => e.ExpirationDate);
+                    orders = orders.OrderByDescending(e =>  e.ExpirationDate);
+                }
+                if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerName).ToUpper())
+                {
+                    orders = orders.OrderByDescending(o => o.Customer.Name);
+                }
+                if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerEmail).ToUpper())
+                {
+                    orders = orders.OrderByDescending(o => o.Customer.Email);
+                }
+                if (columnName.ToUpper() == nameof(LicenseDetailsDto.LicenseDuration).ToUpper())
+                {
+                    orders = orders.OrderByDescending(o => o.LicenseDuration);
                 }
             }
             return orders;
