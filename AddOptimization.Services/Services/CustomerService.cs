@@ -11,6 +11,7 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using AddOptimization.Utilities.Enums;
+using AddOptimization.Utilities.Helpers;
 
 namespace AddOptimization.Services.Services;
 public class CustomerService : ICustomerService
@@ -57,7 +58,7 @@ public class CustomerService : ICustomerService
             throw;
         }
     }
-    public async Task<ApiResult<List<CustomerDto>>> Search(PageQueryFiterBase filter)
+    public async Task<PagedApiResult<CustomerDto>> Search(PageQueryFiterBase filter)
     {
         try
         {
@@ -67,9 +68,24 @@ public class CustomerService : ICustomerService
 
             entities = ApplySorting(entities, filter?.Sorted?.FirstOrDefault());
             entities = ApplyFilters(entities, filter);
-
-            var mappedEntities = _mapper.Map<List<CustomerDto>>(entities.ToList());
-            return ApiResult<List<CustomerDto>>.Success(mappedEntities);
+            var pagedResult = PageHelper<Customer,CustomerDto>.ApplyPaging(entities, filter, entities => entities.Select(e => new CustomerDto
+            {
+                Id = e.Id,
+                Name = e.Name,
+                Email = e.Email,
+                BirthDay = e.Birthday,
+                Company = e.Organizations,
+                Notes =e.Notes,
+                Phone =e.Phone,
+                CustomerStatusId = e.CustomerStatusId,
+                ContactInfo = e.ContactInfo,
+                Licenses = _mapper.Map<List<LicenseDetailsDto>>(e.Licenses),
+                CountryCode = e.CountryCode
+            }).ToList());
+            var retVal = pagedResult;
+            return PagedApiResult<CustomerDto>.Success(retVal);
+            //var mappedEntities = _mapper.Map<List<CustomerDto>>(entities.ToList());
+            //return ApiResult<List<CustomerDto>>.Success(mappedEntities);
         }
         catch (Exception ex)
         {
