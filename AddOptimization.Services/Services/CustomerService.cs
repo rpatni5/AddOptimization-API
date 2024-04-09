@@ -10,6 +10,7 @@ using AddOptimization.Utilities.Models;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
+using AddOptimization.Utilities.Enums;
 
 namespace AddOptimization.Services.Services;
 public class CustomerService : ICustomerService
@@ -63,6 +64,10 @@ public class CustomerService : ICustomerService
             var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin")).ToList();
             var entities = await _customerRepository.QueryAsync(include: entities => entities
             .Include(e => e.CustomerStatus).Include(e => e.Licenses), orderBy: (entities) => entities.OrderBy(t => t.Name), ignoreGlobalFilter: superAdminRole.Count != 0);
+
+            entities = ApplySorting(entities, filter?.Sorted?.FirstOrDefault());
+            entities = ApplyFilters(entities, filter);
+
             var mappedEntities = _mapper.Map<List<CustomerDto>>(entities.ToList());
             return ApiResult<List<CustomerDto>>.Success(mappedEntities);
         }
@@ -238,5 +243,86 @@ public class CustomerService : ICustomerService
     //    }
     //}
 
+    private IQueryable<Customer> ApplyFilters(IQueryable<Customer> entities, PageQueryFiterBase filter)
+    {
+
+        filter.GetValue<string>("Name", (v) =>
+        {
+            entities = entities.Where(e => e.Name != null && e.Name.ToLower().Contains(v.ToLower()));
+        });
+        filter.GetValue<string>("Email", (v) =>
+        {
+            entities = entities.Where(e => e.Email != null && e.Email.ToLower().Contains(v.ToLower()));
+        });
+
+        filter.GetValue<string>("Phone", (v) =>
+        {
+            entities = entities.Where(e => e.Phone != null && e.Phone.ToLower().Contains(v.ToLower()));
+        });
+        filter.GetValue<Guid>("CustomerStatusId", (v) =>
+        {
+            entities = entities.Where(e => e.CustomerStatusId == v);
+        });
+        return entities;
+    }
+
+    private IQueryable<Customer> ApplySorting(IQueryable<Customer> orders, SortModel sort)
+    {
+        try
+        {
+            if (sort?.Name == null)
+            {
+                orders = orders.OrderByDescending(o => o.CreatedAt);
+                return orders;
+            }
+            var columnName = sort.Name.ToUpper();
+            if (sort.Direction == SortDirection.ascending.ToString())
+            {
+                if (columnName.ToUpper() == nameof(CustomerDto.Name).ToUpper())
+                {
+                    orders = orders.OrderBy(o => o.Name);
+                }
+                if (columnName.ToUpper() == nameof(CustomerDto.Email).ToUpper())
+                {
+                    orders = orders.OrderBy(o => o.Email);
+                }
+                if (columnName.ToUpper() == nameof(CustomerDto.Phone).ToUpper())
+                {
+                    orders = orders.OrderBy(o => o.Phone);
+                }
+                if (columnName.ToUpper() == nameof(CustomerDto.CustomerStatus).ToUpper())
+                {
+                    orders = orders.OrderBy(o => o.CustomerStatus);
+                }
+               
+            }
+            else
+            {
+                if (columnName.ToUpper() == nameof(CustomerDto.Name).ToUpper())
+                {
+                    orders = orders.OrderByDescending(o => o.Name);
+                }
+                if (columnName.ToUpper() == nameof(CustomerDto.Email).ToUpper())
+                {
+                    orders = orders.OrderByDescending(o => o.Email);
+                }
+                if (columnName.ToUpper() == nameof(CustomerDto.Phone).ToUpper())
+                {
+                    orders = orders.OrderByDescending(o => o.Phone);
+                }
+                if (columnName.ToUpper() == nameof(CustomerDto.CustomerStatus).ToUpper())
+                {
+                    orders = orders.OrderByDescending(o => o.CustomerStatus);
+                }
+            }
+            return orders;
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            return orders;
+        }
+    }
 
 }
