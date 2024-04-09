@@ -16,5 +16,7 @@
         public CustomerStatusDto CustomerStatus { get; set; }
 
         public List<LicenseDetailsDto>  Licenses{  get; set; }  
+        
+        public string CountryCode {  get; set; }
     }
 }
