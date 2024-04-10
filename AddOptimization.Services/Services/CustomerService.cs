@@ -49,7 +49,7 @@ public class CustomerService : ICustomerService
             {
                 Id = s.Id,
                 Name = s.Name,
-            }, e => includeDeleted || (e.CustomerStatus != null && e.CustomerStatus.Name != CustomerStatuses.Inactive), orderBy: (entities) => entities.OrderBy(c => c.Name),ignoreGlobalFilter:true);
+            }, e => includeDeleted || (e.CustomerStatus != null && e.CustomerStatus.Name != CustomerStatuses.Inactive), orderBy: (entities) => entities.OrderBy(c => c.Name), ignoreGlobalFilter: true);
             return ApiResult<List<CustomerSummaryDto>>.Success(entities.ToList());
         }
         catch (Exception ex)
@@ -64,23 +64,26 @@ public class CustomerService : ICustomerService
         {
             var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin")).ToList();
             var entities = await _customerRepository.QueryAsync(include: entities => entities
-            .Include(e => e.CustomerStatus).Include(e => e.Licenses), orderBy: (entities) => entities.OrderBy(t => t.Name), ignoreGlobalFilter: superAdminRole.Count != 0);
+            .Include(e => e.CustomerStatus).Include(e => e.Licenses).Include(e => e.BillingAddress), orderBy: (entities) => entities.OrderBy(t => t.Name), ignoreGlobalFilter: superAdminRole.Count != 0);
 
             entities = ApplySorting(entities, filter?.Sorted?.FirstOrDefault());
             entities = ApplyFilters(entities, filter);
-            var pagedResult = PageHelper<Customer,CustomerDto>.ApplyPaging(entities, filter, entities => entities.Select(e => new CustomerDto
+            var pagedResult = PageHelper<Customer, CustomerDto>.ApplyPaging(entities, filter, entities => entities.Select(e => new CustomerDto
             {
                 Id = e.Id,
                 Name = e.Name,
                 Email = e.Email,
                 BirthDay = e.Birthday,
                 Company = e.Organizations,
-                Notes =e.Notes,
-                Phone =e.Phone,
+                Notes = e.Notes,
+                Phone = e.Phone,
                 CustomerStatusId = e.CustomerStatusId,
                 ContactInfo = e.ContactInfo,
                 Licenses = _mapper.Map<List<LicenseDetailsDto>>(e.Licenses),
-                CountryCode = e.CountryCode
+                CountryCode = e.CountryCode,
+                CustomerStatusName = e.CustomerStatus.Name,
+                BillingAddressString = e.BillingAddress == null ? null : $"{e.BillingAddress.Address1},{e.BillingAddress.Zip},{e.BillingAddress.City}",
+
             }).ToList());
             var retVal = pagedResult;
             return PagedApiResult<CustomerDto>.Success(retVal);
@@ -97,7 +100,7 @@ public class CustomerService : ICustomerService
     {
         try
         {
-            var entity = await _customerRepository.FirstOrDefaultAsync(t => t.Id == id, include: entity => entity.Include(e => e.Addresses.Where(a => !a.IsDeleted).OrderByDescending(e => e.CreatedAt)).Include(e => e.CustomerStatus),ignoreGlobalFilter:true);
+            var entity = await _customerRepository.FirstOrDefaultAsync(t => t.Id == id, include: entity => entity.Include(e => e.Addresses.Where(a => !a.IsDeleted).OrderByDescending(e => e.CreatedAt)).Include(e => e.CustomerStatus), ignoreGlobalFilter: true);
             if (entity == null)
             {
                 return ApiResult<CustomerDetailsDto>.NotFound("Customer");
@@ -153,8 +156,8 @@ public class CustomerService : ICustomerService
                 }
             }
             var names = model.Name.Split(' ');
-            string firstName = names[0] != null ? names[0]:null;
-            string lastName = names.Length > 1 ? names[names.Count()-1] : null;
+            string firstName = names[0] != null ? names[0] : null;
+            string lastName = names.Length > 1 ? names[names.Count() - 1] : null;
             var appUserEntity = new ApplicationUser
             {
                 Email = model.Email,
@@ -184,7 +187,7 @@ public class CustomerService : ICustomerService
     {
         try
         {
-            var isExists = await _customerRepository.IsExist(t => t.Id != id && t.Name.ToLower() == model.Name.ToLower(),ignoreGlobalFilter:true);
+            var isExists = await _customerRepository.IsExist(t => t.Id != id && t.Name.ToLower() == model.Name.ToLower(), ignoreGlobalFilter: true);
             if (isExists)
             {
                 return ApiResult<CustomerDto>.EntityAlreadyExists("Customer", "name");
@@ -310,7 +313,7 @@ public class CustomerService : ICustomerService
                 {
                     orders = orders.OrderBy(o => o.CustomerStatus);
                 }
-               
+
             }
             else
             {
