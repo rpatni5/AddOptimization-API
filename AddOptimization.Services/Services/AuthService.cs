@@ -18,6 +18,7 @@ using AddOptimization.Utilities.Interface;
 using AddOptimization.Contracts.Constants;
 using AddOptimization.Utilities.Models;
 using System.Security.Cryptography;
+using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 
 namespace AddOptimization.Services.Services;
 
@@ -63,7 +64,7 @@ public class AuthService : IAuthService
                     new Claim(JwtRegisteredClaimNames.Jti,
                     Guid.NewGuid().ToString())
             };
-            var roleClaims = entity.UserRoles.Select(ur => new Claim(ClaimTypes.Role, ur.Role.Name)).ToArray(); 
+            var roleClaims = entity.UserRoles.Select(ur => new Claim(ClaimTypes.Role, ur.Role.Name)).ToArray();
             claims = claims.Concat(roleClaims).ToArray();
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -199,6 +200,71 @@ public class AuthService : IAuthService
         {
             _logger.LogException(ex);
             throw;
+        }
+    }
+
+    public async Task<ApiResult<AuthResponseDto>> MicrosoftLogin(MicrosoftLoginDto model)
+    {
+
+        var issuer = "https://login.microsoftonline.com/9188040d-6c67-4c5b-b112-36a304b66dad/v2.0";
+        var audience = "53d94795-ad71-4076-92ff-557b4c7632ee";
+        var isTokenValid = ValidateMicrsoftLoginIdToken(model.IdToken,issuer,audience,out var token, out var preferredUsername);
+        if (!isTokenValid)
+            return null;
+
+        var email = preferredUsername;
+        var entity = await _applicationUserRepository.FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower(), disableTracking: false, include: entities => entities.Include(u => u.UserRoles).ThenInclude(r => r.Role));
+        if (entity == null)
+        {
+            return ApiResult<AuthResponseDto>.Failure(ValidationCodes.InvalidUserName);
+        }
+        if (!entity.IsActive)
+        {
+            return ApiResult<AuthResponseDto>.Failure(ValidationCodes.InactiveUserAccount);
+        }
+        if (entity.IsLocked ?? false)
+        {
+            return ApiResult<AuthResponseDto>.Failure(ValidationCodes.LockedUserAccount);
+        }
+        var resp = await BuildResponse(entity);
+        entity.LastLogin = DateTime.UtcNow;
+        entity.FailedLoginAttampts = 0;
+        await _applicationUserRepository.UpdateAsync(entity);
+        return ApiResult<AuthResponseDto>.Success(resp);
+    }
+
+    public bool ValidateMicrsoftLoginIdToken( string token, string issuer, string audience, out JwtSecurityToken jwt, out string preferredUsername)
+    {
+        var validationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = issuer,
+            ValidateAudience = true,
+            ValidAudience = audience,
+            ValidateIssuerSigningKey = false,
+            ValidateLifetime = true,
+        };
+
+        try
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var claimsPrincipal = tokenHandler.ValidateToken(token, validationParameters, out SecurityToken validatedToken);
+            jwt = (JwtSecurityToken)validatedToken;
+            var preferredUsernameValue = claimsPrincipal.Claims.FirstOrDefault(c => c.Type == "preferred_username")?.Value;
+            if (string.IsNullOrEmpty(preferredUsernameValue))
+            {
+                preferredUsername = null;
+                return false;  // preferred_username claim is missing
+            }
+            preferredUsername = preferredUsernameValue;
+            return true;
+        }
+        catch (SecurityTokenValidationException ex)
+        {
+            // Log the reason why the token is not valid
+            jwt = null;
+            preferredUsername = null;
+            return false;
         }
     }
     private static string GenerateToken()
