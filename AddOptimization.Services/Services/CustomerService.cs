@@ -10,6 +10,8 @@ using AddOptimization.Utilities.Models;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
+using AddOptimization.Utilities.Enums;
+using AddOptimization.Utilities.Helpers;
 
 namespace AddOptimization.Services.Services;
 public class CustomerService : ICustomerService
@@ -47,7 +49,7 @@ public class CustomerService : ICustomerService
             {
                 Id = s.Id,
                 Name = s.Name,
-            }, e => includeDeleted || (e.CustomerStatus != null && e.CustomerStatus.Name != CustomerStatuses.Inactive), orderBy: (entities) => entities.OrderBy(c => c.Name),ignoreGlobalFilter:true);
+            }, e => includeDeleted || (e.CustomerStatus != null && e.CustomerStatus.Name != CustomerStatuses.Inactive), orderBy: (entities) => entities.OrderBy(c => c.Name), ignoreGlobalFilter: true);
             return ApiResult<List<CustomerSummaryDto>>.Success(entities.ToList());
         }
         catch (Exception ex)
@@ -56,15 +58,37 @@ public class CustomerService : ICustomerService
             throw;
         }
     }
-    public async Task<ApiResult<List<CustomerDto>>> Search(PageQueryFiterBase filter)
+    public async Task<PagedApiResult<CustomerDto>> Search(PageQueryFiterBase filter)
     {
         try
         {
             var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin")).ToList();
             var entities = await _customerRepository.QueryAsync(include: entities => entities
-            .Include(e => e.CustomerStatus).Include(e => e.Licenses), orderBy: (entities) => entities.OrderBy(t => t.Name), ignoreGlobalFilter: superAdminRole.Count != 0);
-            var mappedEntities = _mapper.Map<List<CustomerDto>>(entities.ToList());
-            return ApiResult<List<CustomerDto>>.Success(mappedEntities);
+            .Include(e => e.CustomerStatus).Include(e => e.Licenses).Include(e => e.BillingAddress), orderBy: (entities) => entities.OrderBy(t => t.Name), ignoreGlobalFilter: superAdminRole.Count != 0);
+
+            entities = ApplySorting(entities, filter?.Sorted?.FirstOrDefault());
+            entities = ApplyFilters(entities, filter);
+            var pagedResult = PageHelper<Customer, CustomerDto>.ApplyPaging(entities, filter, entities => entities.Select(e => new CustomerDto
+            {
+                Id = e.Id,
+                Name = e.Name,
+                Email = e.Email,
+                BirthDay = e.Birthday,
+                Company = e.Organizations,
+                Notes = e.Notes,
+                Phone = e.Phone,
+                CustomerStatusId = e.CustomerStatusId,
+                ContactInfo = e.ContactInfo,
+                Licenses = _mapper.Map<List<LicenseDetailsDto>>(e.Licenses),
+                CountryCode = e.CountryCode,
+                CustomerStatusName = e.CustomerStatus.Name,
+                BillingAddressString = e.BillingAddress == null ? null : $"{e.BillingAddress.Address1},{e.BillingAddress.Zip},{e.BillingAddress.City}",
+
+            }).ToList());
+            var retVal = pagedResult;
+            return PagedApiResult<CustomerDto>.Success(retVal);
+            //var mappedEntities = _mapper.Map<List<CustomerDto>>(entities.ToList());
+            //return ApiResult<List<CustomerDto>>.Success(mappedEntities);
         }
         catch (Exception ex)
         {
@@ -76,7 +100,7 @@ public class CustomerService : ICustomerService
     {
         try
         {
-            var entity = await _customerRepository.FirstOrDefaultAsync(t => t.Id == id, include: entity => entity.Include(e => e.Addresses.Where(a => !a.IsDeleted).OrderByDescending(e => e.CreatedAt)).Include(e => e.CustomerStatus),ignoreGlobalFilter:true);
+            var entity = await _customerRepository.FirstOrDefaultAsync(t => t.Id == id, include: entity => entity.Include(e => e.Addresses.Where(a => !a.IsDeleted).OrderByDescending(e => e.CreatedAt)).Include(e => e.CustomerStatus), ignoreGlobalFilter: true);
             if (entity == null)
             {
                 return ApiResult<CustomerDetailsDto>.NotFound("Customer");
@@ -132,8 +156,8 @@ public class CustomerService : ICustomerService
                 }
             }
             var names = model.Name.Split(' ');
-            string firstName = names[0] != null ? names[0]:null;
-            string lastName = names.Length > 1 ? names[names.Count()-1] : null;
+            string firstName = names[0] != null ? names[0] : null;
+            string lastName = names.Length > 1 ? names[names.Count() - 1] : null;
             var appUserEntity = new ApplicationUser
             {
                 Email = model.Email,
@@ -163,7 +187,7 @@ public class CustomerService : ICustomerService
     {
         try
         {
-            var isExists = await _customerRepository.IsExist(t => t.Id != id && t.Name.ToLower() == model.Name.ToLower(),ignoreGlobalFilter:true);
+            var isExists = await _customerRepository.IsExist(t => t.Id != id && t.Name.ToLower() == model.Name.ToLower(), ignoreGlobalFilter: true);
             if (isExists)
             {
                 return ApiResult<CustomerDto>.EntityAlreadyExists("Customer", "name");
@@ -238,5 +262,86 @@ public class CustomerService : ICustomerService
     //    }
     //}
 
+    private IQueryable<Customer> ApplyFilters(IQueryable<Customer> entities, PageQueryFiterBase filter)
+    {
+
+        filter.GetValue<string>("Name", (v) =>
+        {
+            entities = entities.Where(e => e.Name != null && e.Name.ToLower().Contains(v.ToLower()));
+        });
+        filter.GetValue<string>("Email", (v) =>
+        {
+            entities = entities.Where(e => e.Email != null && e.Email.ToLower().Contains(v.ToLower()));
+        });
+
+        filter.GetValue<string>("Phone", (v) =>
+        {
+            entities = entities.Where(e => e.Phone != null && e.Phone.ToLower().Contains(v.ToLower()));
+        });
+        filter.GetValue<Guid>("CustomerStatusId", (v) =>
+        {
+            entities = entities.Where(e => e.CustomerStatusId == v);
+        });
+        return entities;
+    }
+
+    private IQueryable<Customer> ApplySorting(IQueryable<Customer> orders, SortModel sort)
+    {
+        try
+        {
+            if (sort?.Name == null)
+            {
+                orders = orders.OrderByDescending(o => o.CreatedAt);
+                return orders;
+            }
+            var columnName = sort.Name.ToUpper();
+            if (sort.Direction == SortDirection.ascending.ToString())
+            {
+                if (columnName.ToUpper() == nameof(CustomerDto.Name).ToUpper())
+                {
+                    orders = orders.OrderBy(o => o.Name);
+                }
+                if (columnName.ToUpper() == nameof(CustomerDto.Email).ToUpper())
+                {
+                    orders = orders.OrderBy(o => o.Email);
+                }
+                if (columnName.ToUpper() == nameof(CustomerDto.Phone).ToUpper())
+                {
+                    orders = orders.OrderBy(o => o.Phone);
+                }
+                if (columnName.ToUpper() == nameof(CustomerDto.CustomerStatus).ToUpper())
+                {
+                    orders = orders.OrderBy(o => o.CustomerStatus);
+                }
+
+            }
+            else
+            {
+                if (columnName.ToUpper() == nameof(CustomerDto.Name).ToUpper())
+                {
+                    orders = orders.OrderByDescending(o => o.Name);
+                }
+                if (columnName.ToUpper() == nameof(CustomerDto.Email).ToUpper())
+                {
+                    orders = orders.OrderByDescending(o => o.Email);
+                }
+                if (columnName.ToUpper() == nameof(CustomerDto.Phone).ToUpper())
+                {
+                    orders = orders.OrderByDescending(o => o.Phone);
+                }
+                if (columnName.ToUpper() == nameof(CustomerDto.CustomerStatus).ToUpper())
+                {
+                    orders = orders.OrderByDescending(o => o.CustomerStatus);
+                }
+            }
+            return orders;
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            return orders;
+        }
+    }
 
 }

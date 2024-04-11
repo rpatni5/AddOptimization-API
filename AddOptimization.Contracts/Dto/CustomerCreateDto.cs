@@ -16,4 +16,6 @@ public class CustomerCreateDto:BaseDto<Guid?>
 
     public Guid? CustomerStatusId { get; set; }
     public List<AddressCreateDto> Addresses { get; set; }
+
+    public string CountryCode { get; set; }
 }
