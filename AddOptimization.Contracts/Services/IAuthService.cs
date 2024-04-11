@@ -6,6 +6,7 @@ namespace AddOptimization.Contracts.Services;
 public interface IAuthService
 {    
     Task<ApiResult<AuthResponseDto>> Login(LoginDto model);
+    Task<ApiResult<AuthResponseDto>> MicrosoftLogin(MicrosoftLoginDto model);
     Task<ApiResult<AuthResponseDto>> RefreshToken(Guid refreshToken);
     Task<ApiResult<bool>> Logout(int? applicationUserId = null);
     Task<ApiResult<bool>> SendForgotPasswordLink(ForgotPasswordDto model);
