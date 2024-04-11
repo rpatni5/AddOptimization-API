@@ -205,8 +205,8 @@ public class AuthService : IAuthService
 
     public async Task<ApiResult<AuthResponseDto>> MicrosoftLogin(MicrosoftLoginDto model)
     {
-        var issuer = "https://login.microsoftonline.com"; // Read from config
-        var audience = "53d94795-ad71-4076-92ff-557b4c7632ee"; // Read from config
+        var issuer = _configuration["Issuer"]; // Read from config
+        var audience = _configuration["MicrosoftClientId"];
         var isTokenValid = ValidateIdToken(model?.IdToken, issuer, audience, out var preferredUsername);
         if (!isTokenValid)
             return null;
