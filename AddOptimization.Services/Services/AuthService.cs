@@ -18,6 +18,7 @@ using AddOptimization.Utilities.Interface;
 using AddOptimization.Contracts.Constants;
 using AddOptimization.Utilities.Models;
 using System.Security.Cryptography;
+using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 
 namespace AddOptimization.Services.Services;
 
@@ -63,7 +64,7 @@ public class AuthService : IAuthService
                     new Claim(JwtRegisteredClaimNames.Jti,
                     Guid.NewGuid().ToString())
             };
-            var roleClaims = entity.UserRoles.Select(ur => new Claim(ClaimTypes.Role, ur.Role.Name)).ToArray(); 
+            var roleClaims = entity.UserRoles.Select(ur => new Claim(ClaimTypes.Role, ur.Role.Name)).ToArray();
             claims = claims.Concat(roleClaims).ToArray();
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -201,6 +202,86 @@ public class AuthService : IAuthService
             throw;
         }
     }
+
+    public async Task<ApiResult<AuthResponseDto>> MicrosoftLogin(MicrosoftLoginDto model)
+    {
+        var issuer = "https://login.microsoftonline.com"; // Read from config
+        var audience = "53d94795-ad71-4076-92ff-557b4c7632ee"; // Read from config
+        var isTokenValid = ValidateIdToken(model?.IdToken, issuer, audience, out var preferredUsername);
+        if (!isTokenValid)
+            return null;
+
+        var email = preferredUsername;
+        var entity = await _applicationUserRepository.FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower(), disableTracking: false, include: entities => entities.Include(u => u.UserRoles).ThenInclude(r => r.Role));
+        if (entity == null)
+        {
+            return ApiResult<AuthResponseDto>.Failure(ValidationCodes.InvalidUserName);
+        }
+        if (!entity.IsActive)
+        {
+            return ApiResult<AuthResponseDto>.Failure(ValidationCodes.InactiveUserAccount);
+        }
+        if (entity.IsLocked ?? false)
+        {
+            return ApiResult<AuthResponseDto>.Failure(ValidationCodes.LockedUserAccount);
+        }
+        var resp = await BuildResponse(entity);
+        entity.LastLogin = DateTime.UtcNow;
+        entity.FailedLoginAttampts = 0;
+        await _applicationUserRepository.UpdateAsync(entity);
+        return ApiResult<AuthResponseDto>.Success(resp);
+    }
+
+    public bool ValidateIdToken(string token, string expectedIssuer, string expectedAudience, out string preferredUsername)
+    {
+        try
+        {
+            // Decode the token
+            var handler = new JwtSecurityTokenHandler();
+            var parsedToken = handler.ReadJwtToken(token);
+
+            // Validate required fields
+            if (!parsedToken.Issuer.Contains(expectedIssuer))
+            {
+                preferredUsername = "";
+                return false;
+            }
+
+            if (parsedToken.Audiences.FirstOrDefault() != expectedAudience)
+            {
+                preferredUsername = "";
+                return false;
+            }
+
+            var claims = (List<Claim>)parsedToken.Claims;
+            var preferredUsernameValue = claims.FirstOrDefault(c => c.Type == "preferred_username")?.Value;
+            if (preferredUsernameValue == null || preferredUsernameValue == "")
+            {
+                preferredUsername = "";
+                return false;
+            }
+            var expiry = claims.FirstOrDefault(c => c.Type == "exp")?.Value;
+            DateTimeOffset expiryTime = DateTimeOffset.FromUnixTimeSeconds(long.Parse(expiry));
+            if (expiryTime < DateTime.UtcNow)
+            {
+                preferredUsername = "";
+                return false; // Token has expired
+            }
+
+            // Add additional validation for custom fields if needed
+            preferredUsername = preferredUsernameValue;
+            return true; // All validations passed
+        }
+        catch (SecurityTokenException ex)
+        {
+            // Handle token validation errors
+            Console.WriteLine($"Token validation failed: {ex.Message}");
+            preferredUsername = "";
+            return false;
+        }
+    }
+
+
     private static string GenerateToken()
     {
         byte[] guidBytes = Guid.NewGuid().ToByteArray();

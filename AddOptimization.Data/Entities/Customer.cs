@@ -35,5 +35,6 @@ public partial class Customer : BaseEntityNew<Guid>
     public virtual Address BillingAddress { get; set; }
     public virtual ICollection<License> Licenses { get; set; }
     public virtual ICollection<Address> Addresses { get; set; }
+    public string CountryCode { get; set; }
 
 }

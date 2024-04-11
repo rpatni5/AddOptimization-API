@@ -28,6 +28,20 @@ public class AuthController : CustomApiControllerBase
             return HandleException(ex);
         }
     }
+
+    [HttpPost("microsoftlogin")]
+    public async Task<IActionResult> MicrosoftLogin([FromBody] MicrosoftLoginDto model)
+    {
+        try
+        {
+            var retVal = await _authService.MicrosoftLogin(model);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
     [HttpPost("forgotpassword")]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto model)
     {
