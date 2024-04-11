@@ -205,10 +205,9 @@ public class AuthService : IAuthService
 
     public async Task<ApiResult<AuthResponseDto>> MicrosoftLogin(MicrosoftLoginDto model)
     {
-
-        var issuer = "https://login.microsoftonline.com/9188040d-6c67-4c5b-b112-36a304b66dad/v2.0";
-        var audience = "53d94795-ad71-4076-92ff-557b4c7632ee";
-        var isTokenValid = ValidateMicrsoftLoginIdToken(model.IdToken,issuer,audience,out var token, out var preferredUsername);
+        var issuer = "https://login.microsoftonline.com"; // Read from config
+        var audience = "53d94795-ad71-4076-92ff-557b4c7632ee"; // Read from config
+        var isTokenValid = ValidateIdToken(model?.IdToken, issuer, audience, out var preferredUsername);
         if (!isTokenValid)
             return null;
 
@@ -233,40 +232,56 @@ public class AuthService : IAuthService
         return ApiResult<AuthResponseDto>.Success(resp);
     }
 
-    public bool ValidateMicrsoftLoginIdToken( string token, string issuer, string audience, out JwtSecurityToken jwt, out string preferredUsername)
+    public bool ValidateIdToken(string token, string expectedIssuer, string expectedAudience, out string preferredUsername)
     {
-        var validationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = issuer,
-            ValidateAudience = true,
-            ValidAudience = audience,
-            ValidateIssuerSigningKey = false,
-            ValidateLifetime = true,
-        };
-
         try
         {
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var claimsPrincipal = tokenHandler.ValidateToken(token, validationParameters, out SecurityToken validatedToken);
-            jwt = (JwtSecurityToken)validatedToken;
-            var preferredUsernameValue = claimsPrincipal.Claims.FirstOrDefault(c => c.Type == "preferred_username")?.Value;
-            if (string.IsNullOrEmpty(preferredUsernameValue))
+            // Decode the token
+            var handler = new JwtSecurityTokenHandler();
+            var parsedToken = handler.ReadJwtToken(token);
+
+            // Validate required fields
+            if (!parsedToken.Issuer.Contains(expectedIssuer))
             {
-                preferredUsername = null;
-                return false;  // preferred_username claim is missing
+                preferredUsername = "";
+                return false;
             }
+
+            if (parsedToken.Audiences.FirstOrDefault() != expectedAudience)
+            {
+                preferredUsername = "";
+                return false;
+            }
+
+            var claims = (List<Claim>)parsedToken.Claims;
+            var preferredUsernameValue = claims.FirstOrDefault(c => c.Type == "preferred_username")?.Value;
+            if (preferredUsernameValue == null || preferredUsernameValue == "")
+            {
+                preferredUsername = "";
+                return false;
+            }
+            var expiry = claims.FirstOrDefault(c => c.Type == "exp")?.Value;
+            DateTimeOffset expiryTime = DateTimeOffset.FromUnixTimeSeconds(long.Parse(expiry));
+            if (expiryTime < DateTime.UtcNow)
+            {
+                preferredUsername = "";
+                return false; // Token has expired
+            }
+
+            // Add additional validation for custom fields if needed
             preferredUsername = preferredUsernameValue;
-            return true;
+            return true; // All validations passed
         }
-        catch (SecurityTokenValidationException ex)
+        catch (SecurityTokenException ex)
         {
-            // Log the reason why the token is not valid
-            jwt = null;
-            preferredUsername = null;
+            // Handle token validation errors
+            Console.WriteLine($"Token validation failed: {ex.Message}");
+            preferredUsername = "";
             return false;
         }
     }
+
+
     private static string GenerateToken()
     {
         byte[] guidBytes = Guid.NewGuid().ToByteArray();
