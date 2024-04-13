@@ -12,23 +12,26 @@ using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
-using Microsoft.AspNetCore.Mvc;
 using AddOptimization.Contracts.Constants;
+using AddOptimization.Utilities.Interface;
+using AddOptimization.Utilities.Services;
 
 namespace AddOptimization.Services.Services;
 public class LicenseService : ILicenseService
 {
+    private readonly IConfiguration _configuration;
+    private readonly ITemplateService _templateService;
     private readonly IGenericRepository<License> _licenseRepository;
     private readonly IGenericRepository<Customer> _customerRepository;
     private readonly ILogger<LicenseService> _logger;
     private readonly IMapper _mapper;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly IConfiguration _configuration;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IEmailService _emailService;
     private readonly IPermissionService _permissionService;
     private readonly List<string> _currentUserRoles;
     public LicenseService(IGenericRepository<License> licenseRepository, ILogger<LicenseService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor,
-        IGenericRepository<Customer> customerRepository, IConfiguration configuration, IUnitOfWork unitOfWork, IPermissionService permissionService)
+        IGenericRepository<Customer> customerRepository, IConfiguration configuration, ITemplateService templateService, IEmailService emailService, IUnitOfWork unitOfWork, IPermissionService permissionService)
     {
         _licenseRepository = licenseRepository;
         _logger = logger;
@@ -38,6 +41,9 @@ public class LicenseService : ILicenseService
         _configuration = configuration;
         _unitOfWork = unitOfWork;
         _permissionService = permissionService;
+        _templateService = templateService;
+        _configuration = configuration;
+        _emailService = emailService;
         _currentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
     }
 
@@ -125,6 +131,7 @@ public class LicenseService : ILicenseService
             entity.ExpirationDate = licenseKey.ExpirationDate;
             _httpContextAccessor.HttpContext.GetCurrentUserFullName();
             await _licenseRepository.InsertAsync(entity);
+            await SendCustomerCreatedEmail(entity.Customer.Name, entity.Customer.Email);
             return await Get(entity.Id);
         }
         catch (Exception ex)
@@ -302,6 +309,22 @@ public class LicenseService : ILicenseService
         {
             _logger.LogException(ex);
             return orders;
+        }
+    }
+
+    private async Task<bool> SendCustomerCreatedEmail(string userFullName, string email)
+    {
+        try
+        {
+            var subject = "Customer license added successfully";
+            var emailTemplate = _templateService.ReadTemplate(EmailTemplates.CreateLicense);
+            emailTemplate = emailTemplate.Replace("[UserFullName]", userFullName);
+            return await _emailService.SendEmail(email, subject, emailTemplate);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            return false;
         }
     }
 }

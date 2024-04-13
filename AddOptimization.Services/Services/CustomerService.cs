@@ -12,23 +12,31 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using AddOptimization.Utilities.Enums;
 using AddOptimization.Utilities.Helpers;
+using AddOptimization.Utilities.Interface;
+using AddOptimization.Utilities.Constants;
+using AddOptimization.Utilities.Services;
+using Microsoft.Extensions.Configuration;
 
 namespace AddOptimization.Services.Services;
 public class CustomerService : ICustomerService
 {
     private readonly IGenericRepository<Customer> _customerRepository;
-    // private readonly IGenericRepository<License> _licenseRepository;
     private readonly IGenericRepository<ApplicationUser> _applicationUserRepository;
     private readonly IGenericRepository<CustomerStatus> _customerStatusRepository;
     private readonly ILogger<CustomerService> _logger;
     private readonly IMapper _mapper;
     private readonly List<string> _currentUserRoles;
     private readonly IAddressService _addressService;
+    private readonly IEmailService _emailService;
+    private readonly ITemplateService _templateService;
+    private readonly IConfiguration _configuration;
+
     private readonly IUnitOfWork _unitOfWork;
     public CustomerService(IGenericRepository<Customer> customerRepository, ILogger<CustomerService> logger, IMapper mapper,
-        IAddressService addressService, IUnitOfWork unitOfWork, IGenericRepository<CustomerStatus> customerStatusRepository,
-        IGenericRepository<ApplicationUser> applicationUserRepository, IHttpContextAccessor httpContextAccessor)//, IGenericRepository<Order> orderRepository)
+        IAddressService addressService, IUnitOfWork unitOfWork, IEmailService emailService, ITemplateService templateService, IGenericRepository<CustomerStatus> customerStatusRepository,
+        IGenericRepository<ApplicationUser> applicationUserRepository, IConfiguration configuration,IHttpContextAccessor httpContextAccessor)
     {
+        _configuration = configuration;
         _customerRepository = customerRepository;
         _applicationUserRepository = applicationUserRepository;
         _logger = logger;
@@ -37,7 +45,8 @@ public class CustomerService : ICustomerService
         _unitOfWork = unitOfWork;
         _customerStatusRepository = customerStatusRepository;
         _currentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
-        // _orderRepository = orderRepository;
+        _emailService = emailService;
+        _templateService = templateService;
     }
     public async Task<ApiResult<List<CustomerSummaryDto>>> GetSummary(PageQueryFiterBase filter)
     {
@@ -171,7 +180,7 @@ public class CustomerService : ICustomerService
             };
             await _applicationUserRepository.InsertAsync(appUserEntity);
             await _unitOfWork.CommitTransactionAsync();
-            //Send email notification for email verificaion and reset password.
+            await SendCustomerCreatedEmail(entity.Name, entity.Email);
             var mappedEntity = _mapper.Map<CustomerDto>(entity);
             return ApiResult<CustomerDto>.Success(mappedEntity);
         }
@@ -344,4 +353,19 @@ public class CustomerService : ICustomerService
         }
     }
 
+    private async Task<bool> SendCustomerCreatedEmail(string userFullName, string email)
+    {
+        try
+        {
+            var subject = "Customer added successfully";
+            var emailTemplate = _templateService.ReadTemplate(EmailTemplates.CreateCustomer);
+            emailTemplate = emailTemplate.Replace("[UserFullName]", userFullName);
+            return await _emailService.SendEmail(email, subject, emailTemplate);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            return false;
+        }
+    }
 }
