@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Enums;
+using AddOptimization.Contracts.Constants;
 
 namespace AddOptimization.Services.Services;
 public class LicenseDeviceService : ILicenseDeviceService
@@ -163,5 +164,29 @@ public class LicenseDeviceService : ILicenseDeviceService
         }
     }
 
+    #endregion
+
+    #region Private Methods
+    private async Task<bool> SendCustomerDeviceActivatedEmail(string email, string userFullName, License license)
+    {
+        try
+        {
+            var subject = "Add optimization new license details";
+            var message = "A new license has been created for your account. Please find the details below.";
+            var emailTemplate = _templateService.ReadTemplate(EmailTemplates.DeviceRegister);
+            emailTemplate = emailTemplate
+                            .Replace("[CustomerName]", userFullName)
+                            .Replace("[Message]", message)
+                            .Replace("[LicenseKey]", license.LicenseKey)
+                            .Replace("[NoOfDevices]", license.NoOfDevices.ToString())
+                            .Replace("[ExpirationDate]", license.ExpirationDate.ToString());
+            return await _emailService.SendEmail(email, subject, emailTemplate);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            return false;
+        }
+    }
     #endregion
 }

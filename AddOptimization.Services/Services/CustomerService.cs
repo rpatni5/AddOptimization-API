@@ -30,10 +30,12 @@ public class CustomerService : ICustomerService
     private readonly IEmailService _emailService;
     private readonly ITemplateService _templateService;
     private readonly IConfiguration _configuration;
+    private readonly IGenericRepository<PasswordResetToken> _passwordResetTokenRepository;
 
     private readonly IUnitOfWork _unitOfWork;
     public CustomerService(IGenericRepository<Customer> customerRepository, ILogger<CustomerService> logger, IMapper mapper,
-        IAddressService addressService, IUnitOfWork unitOfWork, IEmailService emailService, ITemplateService templateService, IGenericRepository<CustomerStatus> customerStatusRepository,
+        IAddressService addressService, IUnitOfWork unitOfWork, IEmailService emailService, ITemplateService templateService,
+        IGenericRepository<PasswordResetToken> passwordResetTokenRepository, IGenericRepository<CustomerStatus> customerStatusRepository,
         IGenericRepository<ApplicationUser> applicationUserRepository, IConfiguration configuration,IHttpContextAccessor httpContextAccessor)
     {
         _configuration = configuration;
@@ -47,6 +49,7 @@ public class CustomerService : ICustomerService
         _currentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
         _emailService = emailService;
         _templateService = templateService;
+        _passwordResetTokenRepository = passwordResetTokenRepository;
     }
     public async Task<ApiResult<List<CustomerSummaryDto>>> GetSummary(PageQueryFiterBase filter)
     {
@@ -178,9 +181,29 @@ public class CustomerService : ICustomerService
                 IsLocked = false,
                 UserName = model.Email
             };
-            await _applicationUserRepository.InsertAsync(appUserEntity);
+            var appUserEntityValue = await _applicationUserRepository.InsertAsync(appUserEntity);
             await _unitOfWork.CommitTransactionAsync();
-            await SendCustomerCreatedEmail(entity.Name, entity.Email);
+            var isLimitReached = (await _passwordResetTokenRepository.QueryAsync(e => e.CreatedByUserId == appUserEntityValue.Id && !e.IsExpired
+           && e.CreatedAt > DateTime.UtcNow.Date)).Count() >= 3;
+            if (isLimitReached)
+            {
+                return ApiResult<CustomerDto>.Failure(ValidationCodes.PasswordResetLinkLimitReached);
+            }
+            string token = GenerateToken();
+            var resetToken = new PasswordResetToken
+            {
+                Token = token,
+                ExpiryDate = DateTime.UtcNow.AddDays(1),
+                CreatedByUserId = appUserEntityValue.Id
+            };
+            resetToken = await _passwordResetTokenRepository.InsertAsync(resetToken);
+            var isEmailSent = await SendCustomerCreatedAndResetPasswordEmail(token, appUserEntityValue.FullName, appUserEntityValue.Email);
+            if (!isEmailSent)
+            {
+                await _passwordResetTokenRepository.DeleteAsync(resetToken);
+                return ApiResult<CustomerDto>.Failure(ValidationCodes.IssueSendingEmail);
+
+            }
             var mappedEntity = _mapper.Map<CustomerDto>(entity);
             return ApiResult<CustomerDto>.Success(mappedEntity);
         }
@@ -353,13 +376,19 @@ public class CustomerService : ICustomerService
         }
     }
 
-    private async Task<bool> SendCustomerCreatedEmail(string userFullName, string email)
+    private static string GenerateToken()
+    {
+        byte[] guidBytes = Guid.NewGuid().ToByteArray();
+        return Convert.ToBase64String(guidBytes);
+    }
+    private async Task<bool> SendCustomerCreatedAndResetPasswordEmail(string token, string userFullName, string email)
     {
         try
         {
-            var subject = "Customer added successfully";
-            var emailTemplate = _templateService.ReadTemplate(EmailTemplates.CreateCustomer);
-            emailTemplate = emailTemplate.Replace("[UserFullName]", userFullName);
+            var subject = "Create your account Password";
+            var emailTemplate = _templateService.ReadTemplate(EmailTemplates.AccountCreateResetPassword);
+            var resetLink = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).ResetPassword).Replace("[token]", token);
+            emailTemplate = emailTemplate.Replace("[UserFullName]", userFullName).Replace("[PasswordResetLink]", resetLink);
             return await _emailService.SendEmail(email, subject, emailTemplate);
         }
         catch (Exception ex)

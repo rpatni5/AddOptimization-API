@@ -130,8 +130,11 @@ public class LicenseService : ILicenseService
             entity.LicenseKey = licenseKey.Key;
             entity.ExpirationDate = licenseKey.ExpirationDate;
             _httpContextAccessor.HttpContext.GetCurrentUserFullName();
-            await _licenseRepository.InsertAsync(entity);
-            await SendCustomerCreatedEmail(entity.Customer.Name, entity.Customer.Email);
+            var licenseResult = await _licenseRepository.InsertAsync(entity);
+            if (licenseResult != null)
+            {
+                await SendCustomerLicenseAddedEmail(entity.Customer.Name, entity.Customer.Email, licenseResult);
+            }
             return await Get(entity.Id);
         }
         catch (Exception ex)
@@ -287,7 +290,7 @@ public class LicenseService : ILicenseService
                 }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.ExpirationDate).ToUpper())
                 {
-                    orders = orders.OrderByDescending(e =>  e.ExpirationDate);
+                    orders = orders.OrderByDescending(e => e.ExpirationDate);
                 }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerName).ToUpper())
                 {
@@ -312,13 +315,19 @@ public class LicenseService : ILicenseService
         }
     }
 
-    private async Task<bool> SendCustomerCreatedEmail(string userFullName, string email)
+    private async Task<bool> SendCustomerLicenseAddedEmail(string email, string userFullName, License license)
     {
         try
         {
-            var subject = "Customer license added successfully";
+            var subject = "Add optimization new license details";
+            var message = "A new license has been created for your account. Please find the details below.";
             var emailTemplate = _templateService.ReadTemplate(EmailTemplates.CreateLicense);
-            emailTemplate = emailTemplate.Replace("[UserFullName]", userFullName);
+            emailTemplate = emailTemplate
+                            .Replace("[CustomerName]", userFullName)
+                            .Replace("[Message]", message)
+                            .Replace("[LicenseKey]", license.LicenseKey)
+                            .Replace("[NoOfDevices]", license.NoOfDevices.ToString())
+                            .Replace("[ExpirationDate]", license.ExpirationDate.ToString());
             return await _emailService.SendEmail(email, subject, emailTemplate);
         }
         catch (Exception ex)

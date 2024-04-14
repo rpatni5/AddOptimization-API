@@ -149,8 +149,4 @@
     <ProjectReference Include="..\AddOptimization.Utilities\AddOptimization.Utilities.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Assets\Images\" />
-  </ItemGroup>
-
 </Project>
