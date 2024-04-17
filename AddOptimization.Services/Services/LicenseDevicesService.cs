@@ -12,6 +12,8 @@ using Microsoft.EntityFrameworkCore;
 using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Enums;
 using AddOptimization.Contracts.Constants;
+using AddOptimization.Utilities.Interface;
+using AddOptimization.Utilities.Services;
 
 namespace AddOptimization.Services.Services;
 public class LicenseDeviceService : ILicenseDeviceService
@@ -26,11 +28,15 @@ public class LicenseDeviceService : ILicenseDeviceService
     private readonly IConfiguration _configuration;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPermissionService _permissionService;
+    private readonly ITemplateService _templateService;
+    private readonly IEmailService _emailService;
+
+
     #endregion
 
     #region Constructor
     public LicenseDeviceService(IGenericRepository<License> licenseRepository, IGenericRepository<LicenseDevice> licenseDeviceRepository, ILogger<LicenseService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor,
-        IGenericRepository<Customer> customerRepository, IConfiguration configuration, IUnitOfWork unitOfWork, IPermissionService permissionService)
+        IGenericRepository<Customer> customerRepository, IConfiguration configuration, IEmailService emailService, ITemplateService templateService, IUnitOfWork unitOfWork, IPermissionService permissionService)
     {
         _licenseRepository = licenseRepository;
         _licenseDeviceRepository = licenseDeviceRepository;
@@ -40,7 +46,9 @@ public class LicenseDeviceService : ILicenseDeviceService
         _customerRepository = customerRepository;
         _configuration = configuration;
         _unitOfWork = unitOfWork;
+        _emailService = emailService;
         _permissionService = permissionService;
+        _templateService = templateService;
     }
 
     #endregion
@@ -173,7 +181,7 @@ public class LicenseDeviceService : ILicenseDeviceService
         {
             var subject = "Add optimization new license details";
             var message = "A new license has been created for your account. Please find the details below.";
-            var emailTemplate = _templateService.ReadTemplate(EmailTemplates.DeviceRegister);
+            var emailTemplate = _templateService.ReadTemplate(EmailTemplates.DeviceActivated);
             emailTemplate = emailTemplate
                             .Replace("[CustomerName]", userFullName)
                             .Replace("[Message]", message)
