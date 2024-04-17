@@ -33,7 +33,7 @@ public class LicenseDevicesController : CustomApiControllerBase
 
     [AllowAnonymous]
     [HttpPost("activate")]
-    public async Task<IActionResult> ActivateLicenseByLicenseId(LicenseDeviceManagementDto request)
+    public async Task<IActionResult> ActivateLicenseByLicenseKey(LicenseDeviceManagementDto request)
     {
         try
         {
@@ -48,11 +48,26 @@ public class LicenseDevicesController : CustomApiControllerBase
 
     [AllowAnonymous]
     [HttpPost("validate")]
-    public async Task<IActionResult> ValidateLicenseByLicenseId(LicenseDeviceManagementDto request)
+    public async Task<IActionResult> ValidateLicenseByLicenseKey(LicenseDeviceManagementDto request)
     {
         try
         {
             var retVal = await _licensesDeviceService.ValidateLicense(request);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    [AllowAnonymous]
+    [HttpPost("remove")]
+    public async Task<IActionResult> RemoveLicenseByLicenseKey(LicenseDeviceManagementDto request)
+    {
+        try
+        {
+            var retVal = await _licensesDeviceService.RemoveLicense(request);
             return HandleResponse(retVal);
         }
         catch (Exception ex)
@@ -76,5 +91,5 @@ public class LicenseDevicesController : CustomApiControllerBase
             return HandleException(ex);
         }
     }
-  
+
 }
