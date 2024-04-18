@@ -10,7 +10,6 @@ public class Role :BaseEntityNew<Guid>
     [Required]
     [MaxLength(100)]
     public string Name { get; set; }
-    public Guid? DepartmentId { get; set; }
     public virtual ICollection<UserRole> UserRoles { get; set; }
     public virtual ICollection<RolePermission> RolePermissions { get; set; }
 }
