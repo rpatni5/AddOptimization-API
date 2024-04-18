@@ -147,10 +147,10 @@ public class CustomerService : ICustomerService
         await _unitOfWork.BeginTransactionAsync();
         try
         {
-            var isExists = await _customerRepository.IsExist(t => t.Name.ToLower() == model.Name.ToLower() || (t.Email != null && t.Email.ToLower() == model.Email.ToLower()), ignoreGlobalFilter: true);
+            var isExists = await _customerRepository.IsExist(t =>  (t.Email != null && t.Email.ToLower() == model.Email.ToLower()), ignoreGlobalFilter: true);
             if (isExists)
             {
-                return ApiResult<CustomerDto>.EntityAlreadyExists("Customer", "name or email");
+                return ApiResult<CustomerDto>.EntityAlreadyExists("Customer", "email");
             }
             var entity = _mapper.Map<Customer>(model);
             var billingAddressId = entity.BillingAddressId;
