@@ -78,18 +78,17 @@ public class LicenseDeviceService : ILicenseDeviceService
     {
         try
         {
-            var entity = await _licenseRepository.QueryAsync(include: entities => entities
+            var license = (await _licenseRepository.QueryAsync(include: entities => entities
             .Include(
                 e => e.CreatedByUser).
                 Include(c => c.Customer).
                 Include(c => c.Customer.CustomerStatus).
-                Include(l => l.LicenseDevices), predicate: o => o.LicenseKey == request.LicenseKey && o.Customer.CustomerStatus.Name == nameof(CustomerStatusEnum.Active), ignoreGlobalFilter: true);
-            if (!entity.Any())
+                Include(l => l.LicenseDevices), predicate: o => o.LicenseKey == request.LicenseKey && o.Customer.CustomerStatus.Name == nameof(CustomerStatusEnum.Active), ignoreGlobalFilter: true)).FirstOrDefault();
+            if (license == null || license.LicenseDevices.Any(c => c.MachineName == request.MachineName))
             {
                 var message = "Cannot activate license to this device.Please connect with the System Administrator.";
                 return ApiResult<LicenseDeviceDto>.Failure(ValidationCodes.CannotActivateLicense, message);
             }
-            var license = entity.FirstOrDefault();
             var activeDevices = license.LicenseDevices.Any() ? license.LicenseDevices.Count() : 0;
             var remainingLicense = license.NoOfDevices - activeDevices;
             if (remainingLicense > 0)
@@ -120,18 +119,17 @@ public class LicenseDeviceService : ILicenseDeviceService
     {
         try
         {
-            var entity = await _licenseRepository.QueryAsync(include: entities => entities
+            var license = (await _licenseRepository.QueryAsync(include: entities => entities
             .Include(
                 e => e.CreatedByUser).
                 Include(c => c.Customer).
                 Include(c => c.Customer.CustomerStatus).
-                Include(l => l.LicenseDevices), predicate: o => o.LicenseKey == request.LicenseKey && o.Customer.CustomerStatus.Name == nameof(CustomerStatusEnum.Active), ignoreGlobalFilter: true);
-            if (!entity.Any())
+                Include(l => l.LicenseDevices), predicate: o => o.LicenseKey == request.LicenseKey && o.Customer.CustomerStatus.Name == nameof(CustomerStatusEnum.Active), ignoreGlobalFilter: true)).FirstOrDefault();
+            if (license == null || (license.LicenseDevices != null && !license.LicenseDevices.Any(x => x.MachineName == request.MachineName)))
             {
                 var message = "License invalid.Please connect with the System Administrator.";
                 return ApiResult<bool>.Failure(ValidationCodes.InvalidLicense, message);
             }
-            var license = entity.FirstOrDefault();
             var activeDevices = license.LicenseDevices.Any() ? license.LicenseDevices.Count() : 0;
             var remainingLicense = license.NoOfDevices - activeDevices;
             if (remainingLicense >= 0)
@@ -145,6 +143,38 @@ public class LicenseDeviceService : ILicenseDeviceService
                 }
             }
             return ApiResult<bool>.Failure(ValidationCodes.InvalidLicense, "License invalid.Please connect with the System Administrator.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            throw;
+        }
+    }
+
+    public async Task<ApiResult<bool>> RemoveLicense(LicenseDeviceManagementDto request)
+    {
+        try
+        {
+            var license = (await _licenseRepository.QueryAsync(include: entities => entities
+            .Include(
+                e => e.CreatedByUser).
+                Include(c => c.Customer).
+                Include(c => c.Customer.CustomerStatus).
+                Include(l => l.LicenseDevices),
+                predicate: o => o.LicenseKey == request.LicenseKey &&
+                           o.Customer.CustomerStatus.Name == nameof(CustomerStatusEnum.Active), ignoreGlobalFilter: true)).FirstOrDefault();
+            if (license == null)
+            {
+                var message = "Cannot remove license. Please connect with the System Administrator.";
+                return ApiResult<bool>.Failure(ValidationCodes.CannotActivateLicense, message);
+            }
+            if (license != null && license.LicenseDevices.Any())
+            {
+                var licenseId = license.LicenseDevices.FirstOrDefault(c => c.MachineName == request.MachineName).Id;
+                var isDeleted = await Delete(licenseId);
+                return ApiResult<bool>.Success(true);
+            }
+            return ApiResult<bool>.Failure(ValidationCodes.CannotActivateLicense, "Cannot remove license to this device.Please connect with the System Administrator.");
         }
         catch (Exception ex)
         {
