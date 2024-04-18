@@ -34,8 +34,7 @@ public class RoleService : IRoleService
                 Id = s.Id,
                 Name = s.Name,
                 IsDeleted = s.IsDeleted,
-                DepartmentId = s.DepartmentId,
-                //DepartmentName=s.Department==null? null : s.Department.Name,
+               
                 UserCount=s.UserRoles.Count
             }, orderBy: (entities) => entities.OrderBy(c => c.Name),include:entities=> entities.Include(r=> r.UserRoles));
             filter.GetValue<bool>("activeRolesOnly", (val) =>
