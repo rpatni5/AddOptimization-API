@@ -16,6 +16,8 @@ using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Services;
 using Microsoft.Extensions.Configuration;
+using System;
+using iText.StyledXmlParser.Css.Selector.Item;
 
 namespace AddOptimization.Services.Services;
 public class CustomerService : ICustomerService
@@ -310,9 +312,13 @@ public class CustomerService : ICustomerService
         {
             entities = entities.Where(e => e.Phone != null && e.Phone.ToLower().Contains(v.ToLower()));
         });
-        filter.GetValue<Guid>("CustomerStatusId", (v) =>
+        filter.GetValue<string>("CustomerStatusId", (v) =>
         {
-            entities = entities.Where(e => e.CustomerStatusId == v);
+            if (v != (new Guid()).ToString())
+            {
+                Guid statusId = new Guid(v);
+                entities = entities.Where(e => e.CustomerStatusId == statusId);
+            }
         });
         return entities;
     }
