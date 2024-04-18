@@ -12,23 +12,33 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using AddOptimization.Utilities.Enums;
 using AddOptimization.Utilities.Helpers;
+using AddOptimization.Utilities.Interface;
+using AddOptimization.Utilities.Constants;
+using AddOptimization.Utilities.Services;
+using Microsoft.Extensions.Configuration;
 
 namespace AddOptimization.Services.Services;
 public class CustomerService : ICustomerService
 {
     private readonly IGenericRepository<Customer> _customerRepository;
-    // private readonly IGenericRepository<License> _licenseRepository;
     private readonly IGenericRepository<ApplicationUser> _applicationUserRepository;
     private readonly IGenericRepository<CustomerStatus> _customerStatusRepository;
     private readonly ILogger<CustomerService> _logger;
     private readonly IMapper _mapper;
     private readonly List<string> _currentUserRoles;
     private readonly IAddressService _addressService;
+    private readonly IEmailService _emailService;
+    private readonly ITemplateService _templateService;
+    private readonly IConfiguration _configuration;
+    private readonly IGenericRepository<PasswordResetToken> _passwordResetTokenRepository;
+
     private readonly IUnitOfWork _unitOfWork;
     public CustomerService(IGenericRepository<Customer> customerRepository, ILogger<CustomerService> logger, IMapper mapper,
-        IAddressService addressService, IUnitOfWork unitOfWork, IGenericRepository<CustomerStatus> customerStatusRepository,
-        IGenericRepository<ApplicationUser> applicationUserRepository, IHttpContextAccessor httpContextAccessor)//, IGenericRepository<Order> orderRepository)
+        IAddressService addressService, IUnitOfWork unitOfWork, IEmailService emailService, ITemplateService templateService,
+        IGenericRepository<PasswordResetToken> passwordResetTokenRepository, IGenericRepository<CustomerStatus> customerStatusRepository,
+        IGenericRepository<ApplicationUser> applicationUserRepository, IConfiguration configuration,IHttpContextAccessor httpContextAccessor)
     {
+        _configuration = configuration;
         _customerRepository = customerRepository;
         _applicationUserRepository = applicationUserRepository;
         _logger = logger;
@@ -37,7 +47,9 @@ public class CustomerService : ICustomerService
         _unitOfWork = unitOfWork;
         _customerStatusRepository = customerStatusRepository;
         _currentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
-        // _orderRepository = orderRepository;
+        _emailService = emailService;
+        _templateService = templateService;
+        _passwordResetTokenRepository = passwordResetTokenRepository;
     }
     public async Task<ApiResult<List<CustomerSummaryDto>>> GetSummary(PageQueryFiterBase filter)
     {
@@ -169,9 +181,29 @@ public class CustomerService : ICustomerService
                 IsLocked = false,
                 UserName = model.Email
             };
-            await _applicationUserRepository.InsertAsync(appUserEntity);
+            var appUserEntityValue = await _applicationUserRepository.InsertAsync(appUserEntity);
             await _unitOfWork.CommitTransactionAsync();
-            //Send email notification for email verificaion and reset password.
+            var isLimitReached = (await _passwordResetTokenRepository.QueryAsync(e => e.CreatedByUserId == appUserEntityValue.Id && !e.IsExpired
+           && e.CreatedAt > DateTime.UtcNow.Date)).Count() >= 3;
+            if (isLimitReached)
+            {
+                return ApiResult<CustomerDto>.Failure(ValidationCodes.PasswordResetLinkLimitReached);
+            }
+            string token = GenerateToken();
+            var resetToken = new PasswordResetToken
+            {
+                Token = token,
+                ExpiryDate = DateTime.UtcNow.AddDays(1),
+                CreatedByUserId = appUserEntityValue.Id
+            };
+            resetToken = await _passwordResetTokenRepository.InsertAsync(resetToken);
+            var isEmailSent = await SendCustomerCreatedAndResetPasswordEmail(token, appUserEntityValue.FullName, appUserEntityValue.Email);
+            if (!isEmailSent)
+            {
+                await _passwordResetTokenRepository.DeleteAsync(resetToken);
+                return ApiResult<CustomerDto>.Failure(ValidationCodes.IssueSendingEmail);
+
+            }
             var mappedEntity = _mapper.Map<CustomerDto>(entity);
             return ApiResult<CustomerDto>.Success(mappedEntity);
         }
@@ -344,4 +376,25 @@ public class CustomerService : ICustomerService
         }
     }
 
+    private static string GenerateToken()
+    {
+        byte[] guidBytes = Guid.NewGuid().ToByteArray();
+        return Convert.ToBase64String(guidBytes);
+    }
+    private async Task<bool> SendCustomerCreatedAndResetPasswordEmail(string token, string userFullName, string email)
+    {
+        try
+        {
+            var subject = "Create your account Password";
+            var emailTemplate = _templateService.ReadTemplate(EmailTemplates.AccountCreateResetPassword);
+            var resetLink = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).ResetPassword).Replace("[token]", token);
+            emailTemplate = emailTemplate.Replace("[UserFullName]", userFullName).Replace("[PasswordResetLink]", resetLink);
+            return await _emailService.SendEmail(email, subject, emailTemplate);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            return false;
+        }
+    }
 }
