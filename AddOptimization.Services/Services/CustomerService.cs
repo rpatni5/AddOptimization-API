@@ -33,12 +33,17 @@ public class CustomerService : ICustomerService
     private readonly ITemplateService _templateService;
     private readonly IConfiguration _configuration;
     private readonly IGenericRepository<PasswordResetToken> _passwordResetTokenRepository;
+    private readonly IGenericRepository<Role> _roleRepository;
+    private readonly IGenericRepository<UserRole> _userRoleRepository;
+
 
     private readonly IUnitOfWork _unitOfWork;
     public CustomerService(IGenericRepository<Customer> customerRepository, ILogger<CustomerService> logger, IMapper mapper,
         IAddressService addressService, IUnitOfWork unitOfWork, IEmailService emailService, ITemplateService templateService,
         IGenericRepository<PasswordResetToken> passwordResetTokenRepository, IGenericRepository<CustomerStatus> customerStatusRepository,
-        IGenericRepository<ApplicationUser> applicationUserRepository, IConfiguration configuration,IHttpContextAccessor httpContextAccessor)
+        IGenericRepository<UserRole> userRoleRepository,
+        IGenericRepository<Role> roleRepository,
+        IGenericRepository<ApplicationUser> applicationUserRepository, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
     {
         _configuration = configuration;
         _customerRepository = customerRepository;
@@ -52,6 +57,8 @@ public class CustomerService : ICustomerService
         _emailService = emailService;
         _templateService = templateService;
         _passwordResetTokenRepository = passwordResetTokenRepository;
+        _userRoleRepository = userRoleRepository;
+        _roleRepository = roleRepository;
     }
     public async Task<ApiResult<List<CustomerSummaryDto>>> GetSummary(PageQueryFiterBase filter)
     {
@@ -147,7 +154,7 @@ public class CustomerService : ICustomerService
         await _unitOfWork.BeginTransactionAsync();
         try
         {
-            var isExists = await _customerRepository.IsExist(t =>  (t.Email != null && t.Email.ToLower() == model.Email.ToLower()), ignoreGlobalFilter: true);
+            var isExists = await _customerRepository.IsExist(t => t.Email.ToLower() == model.Email.ToLower(), ignoreGlobalFilter: true);
             if (isExists)
             {
                 return ApiResult<CustomerDto>.EntityAlreadyExists("Customer", "email");
@@ -184,7 +191,30 @@ public class CustomerService : ICustomerService
                 UserName = model.Email
             };
             var appUserEntityValue = await _applicationUserRepository.InsertAsync(appUserEntity);
+
+            //Get Roles
+            var roles = (await _roleRepository.QueryAsync(x => !x.IsDeleted)).ToList();
+            var customerRole = roles?.FirstOrDefault(x => x.Name == "Customer" && !x.IsDeleted);
+            if (customerRole != null)
+            {
+                var defaultRole = new UserRole
+                {
+                    CreatedAt = DateTime.Now,
+                    CreatedByUserId = appUserEntityValue.CreatedByUserId,
+                    UserId = appUserEntityValue.Id,
+                    RoleId = customerRole.Id
+                };
+
+                //Add default roles for customer
+                await _userRoleRepository.InsertAsync(defaultRole);
+            }
+            else
+            {
+                _logger.LogInformation("Unable to find customer role or it is deleted.");
+            }
+
             await _unitOfWork.CommitTransactionAsync();
+
             var isLimitReached = (await _passwordResetTokenRepository.QueryAsync(e => e.CreatedByUserId == appUserEntityValue.Id && !e.IsExpired
            && e.CreatedAt > DateTime.UtcNow.Date)).Count() >= 3;
             if (isLimitReached)
@@ -199,6 +229,8 @@ public class CustomerService : ICustomerService
                 CreatedByUserId = appUserEntityValue.Id
             };
             resetToken = await _passwordResetTokenRepository.InsertAsync(resetToken);
+
+            //Send password reset email
             var isEmailSent = await SendCustomerCreatedAndResetPasswordEmail(token, appUserEntityValue.FullName, appUserEntityValue.Email);
             if (!isEmailSent)
             {
@@ -219,12 +251,13 @@ public class CustomerService : ICustomerService
 
     public async Task<ApiResult<CustomerDto>> Update(Guid id, CustomerCreateDto model)
     {
+        await _unitOfWork.BeginTransactionAsync();
         try
         {
-            var isExists = await _customerRepository.IsExist(t => t.Id != id && t.Name.ToLower() == model.Name.ToLower(), ignoreGlobalFilter: true);
+            var isExists = await _customerRepository.IsExist(t => t.Id != id && t.Email.ToLower() == model.Email.ToLower(), ignoreGlobalFilter: true);
             if (isExists)
             {
-                return ApiResult<CustomerDto>.EntityAlreadyExists("Customer", "name");
+                return ApiResult<CustomerDto>.EntityAlreadyExists("Customer", "email");
             }
 
             var entity = await _customerRepository.FirstOrDefaultAsync(t => t.Id == id, ignoreGlobalFilter: true);
@@ -232,8 +265,19 @@ public class CustomerService : ICustomerService
             {
                 return ApiResult<CustomerDto>.NotFound("Customer");
             }
+
+            //Update application user
+            if (entity.Email != model.Email || entity.Name != model.Name)
+            {
+                var appUserEntityValue = (await _applicationUserRepository.QueryAsync(c => c.Email == entity.Email && c.IsActive)).FirstOrDefault();
+                appUserEntityValue.FullName = model.Name;
+                appUserEntityValue.Email = model.Email;
+                await _applicationUserRepository.UpdateAsync(appUserEntityValue);
+            }
             _mapper.Map(model, entity);
             await _customerRepository.UpdateAsync(entity);
+            await _unitOfWork.CommitTransactionAsync();
+
             var mappedEntity = _mapper.Map<CustomerDto>(entity);
             return ApiResult<CustomerDto>.Success(mappedEntity);
         }
