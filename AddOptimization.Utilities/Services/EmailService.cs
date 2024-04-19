@@ -24,8 +24,8 @@ public  class EmailService: IEmailService
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="recipientEmails">Semicolon seprated list of email address</param>
-    /// <param name="cc">Semicolon seprated list of email address</param>
+    /// <param name="recipientEmails">Semicolon separated list of email address</param>
+    /// <param name="cc">Semicolon separated list of email address</param>
     /// <param name="subject"></param>
     /// <param name="body"></param>
     /// <param name="hasHtml"></param>
