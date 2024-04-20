@@ -21,6 +21,7 @@ jobs:
         with:
           dotnet-version: '7.0.x'
           include-prerelease: true
+          configurationFile: 'appsettings.Test.json'
 
       - name: Build with dotnet
         run: dotnet build --configuration Release
