@@ -133,7 +133,8 @@ public class LicenseService : ILicenseService
             var licenseResult = await _licenseRepository.InsertAsync(entity);
             if (licenseResult != null)
             {
-                await SendCustomerLicenseAddedEmail(entity.Customer.Name, entity.Customer.Email, licenseResult);
+                var customer = await _customerRepository.FirstOrDefaultAsync(x => x.Id == licenseResult.CustomerId);
+                await SendCustomerLicenseAddedEmail(customer.Name, customer.Email, licenseResult);
             }
             return await Get(entity.Id);
         }
@@ -216,7 +217,7 @@ public class LicenseService : ILicenseService
             if (!string.IsNullOrEmpty(v))
             {
                 entities = entities.Where(e => e.NoOfDevices == Convert.ToInt32(v));
-            }             
+            }
         });
 
         filter.GetValue<string>("activatedDevicesCount", (v) =>
@@ -232,12 +233,12 @@ public class LicenseService : ILicenseService
             if (!string.IsNullOrEmpty(v))
             {
                 entities = entities.Where(e => e.NoOfDevices - (e.LicenseDevices.Any() ? e.LicenseDevices.Count() : 0) == Convert.ToInt32(v));
-            } 
+            }
         });
 
         filter.GetValue<string>("licenseDuration", (v) =>
         {
-            if(!string.IsNullOrEmpty(v))
+            if (!string.IsNullOrEmpty(v))
             {
                 entities = entities.Where(e => e.LicenseDuration == Convert.ToInt32(v));
             }
@@ -261,7 +262,7 @@ public class LicenseService : ILicenseService
 
         filter.GetValue<string>("expirationDate", (v) =>
         {
-            if(!string.IsNullOrEmpty(v))
+            if (!string.IsNullOrEmpty(v))
             {
                 var expirationDate = DateTime.Parse(v).Date;
                 entities = entities.Where(e =>
