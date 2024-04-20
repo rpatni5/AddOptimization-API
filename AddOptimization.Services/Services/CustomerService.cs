@@ -12,23 +12,40 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using AddOptimization.Utilities.Enums;
 using AddOptimization.Utilities.Helpers;
+using AddOptimization.Utilities.Interface;
+using AddOptimization.Utilities.Constants;
+using AddOptimization.Utilities.Services;
+using Microsoft.Extensions.Configuration;
+using System;
+using iText.StyledXmlParser.Css.Selector.Item;
 
 namespace AddOptimization.Services.Services;
 public class CustomerService : ICustomerService
 {
     private readonly IGenericRepository<Customer> _customerRepository;
-    // private readonly IGenericRepository<License> _licenseRepository;
     private readonly IGenericRepository<ApplicationUser> _applicationUserRepository;
     private readonly IGenericRepository<CustomerStatus> _customerStatusRepository;
     private readonly ILogger<CustomerService> _logger;
     private readonly IMapper _mapper;
     private readonly List<string> _currentUserRoles;
     private readonly IAddressService _addressService;
+    private readonly IEmailService _emailService;
+    private readonly ITemplateService _templateService;
+    private readonly IConfiguration _configuration;
+    private readonly IGenericRepository<PasswordResetToken> _passwordResetTokenRepository;
+    private readonly IGenericRepository<Role> _roleRepository;
+    private readonly IGenericRepository<UserRole> _userRoleRepository;
+
+
     private readonly IUnitOfWork _unitOfWork;
     public CustomerService(IGenericRepository<Customer> customerRepository, ILogger<CustomerService> logger, IMapper mapper,
-        IAddressService addressService, IUnitOfWork unitOfWork, IGenericRepository<CustomerStatus> customerStatusRepository,
-        IGenericRepository<ApplicationUser> applicationUserRepository, IHttpContextAccessor httpContextAccessor)//, IGenericRepository<Order> orderRepository)
+        IAddressService addressService, IUnitOfWork unitOfWork, IEmailService emailService, ITemplateService templateService,
+        IGenericRepository<PasswordResetToken> passwordResetTokenRepository, IGenericRepository<CustomerStatus> customerStatusRepository,
+        IGenericRepository<UserRole> userRoleRepository,
+        IGenericRepository<Role> roleRepository,
+        IGenericRepository<ApplicationUser> applicationUserRepository, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
     {
+        _configuration = configuration;
         _customerRepository = customerRepository;
         _applicationUserRepository = applicationUserRepository;
         _logger = logger;
@@ -37,7 +54,11 @@ public class CustomerService : ICustomerService
         _unitOfWork = unitOfWork;
         _customerStatusRepository = customerStatusRepository;
         _currentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
-        // _orderRepository = orderRepository;
+        _emailService = emailService;
+        _templateService = templateService;
+        _passwordResetTokenRepository = passwordResetTokenRepository;
+        _userRoleRepository = userRoleRepository;
+        _roleRepository = roleRepository;
     }
     public async Task<ApiResult<List<CustomerSummaryDto>>> GetSummary(PageQueryFiterBase filter)
     {
@@ -133,10 +154,10 @@ public class CustomerService : ICustomerService
         await _unitOfWork.BeginTransactionAsync();
         try
         {
-            var isExists = await _customerRepository.IsExist(t => t.Name.ToLower() == model.Name.ToLower() || (t.Email != null && t.Email.ToLower() == model.Email.ToLower()), ignoreGlobalFilter: true);
+            var isExists = await _customerRepository.IsExist(t => t.Email.ToLower() == model.Email.ToLower(), ignoreGlobalFilter: true);
             if (isExists)
             {
-                return ApiResult<CustomerDto>.EntityAlreadyExists("Customer", "name or email");
+                return ApiResult<CustomerDto>.EntityAlreadyExists("Customer", "email");
             }
             var entity = _mapper.Map<Customer>(model);
             var billingAddressId = entity.BillingAddressId;
@@ -169,9 +190,54 @@ public class CustomerService : ICustomerService
                 IsLocked = false,
                 UserName = model.Email
             };
-            await _applicationUserRepository.InsertAsync(appUserEntity);
+            var appUserEntityValue = await _applicationUserRepository.InsertAsync(appUserEntity);
+
+            //Get Roles
+            var roles = (await _roleRepository.QueryAsync(x => !x.IsDeleted)).ToList();
+            var customerRole = roles?.FirstOrDefault(x => x.Name == "Customer" && !x.IsDeleted);
+            if (customerRole != null)
+            {
+                var defaultRole = new UserRole
+                {
+                    CreatedAt = DateTime.Now,
+                    CreatedByUserId = appUserEntityValue.CreatedByUserId,
+                    UserId = appUserEntityValue.Id,
+                    RoleId = customerRole.Id
+                };
+
+                //Add default roles for customer
+                await _userRoleRepository.InsertAsync(defaultRole);
+            }
+            else
+            {
+                _logger.LogInformation("Unable to find customer role or it is deleted.");
+            }
+
             await _unitOfWork.CommitTransactionAsync();
-            //Send email notification for email verificaion and reset password.
+
+            var isLimitReached = (await _passwordResetTokenRepository.QueryAsync(e => e.CreatedByUserId == appUserEntityValue.Id && !e.IsExpired
+           && e.CreatedAt > DateTime.UtcNow.Date)).Count() >= 3;
+            if (isLimitReached)
+            {
+                return ApiResult<CustomerDto>.Failure(ValidationCodes.PasswordResetLinkLimitReached);
+            }
+            string token = GenerateToken();
+            var resetToken = new PasswordResetToken
+            {
+                Token = token,
+                ExpiryDate = DateTime.UtcNow.AddDays(1),
+                CreatedByUserId = appUserEntityValue.Id
+            };
+            resetToken = await _passwordResetTokenRepository.InsertAsync(resetToken);
+
+            //Send password reset email
+            var isEmailSent = await SendCustomerCreatedAndResetPasswordEmail(token, appUserEntityValue.FullName, appUserEntityValue.Email);
+            if (!isEmailSent)
+            {
+                await _passwordResetTokenRepository.DeleteAsync(resetToken);
+                return ApiResult<CustomerDto>.Failure(ValidationCodes.IssueSendingEmail);
+
+            }
             var mappedEntity = _mapper.Map<CustomerDto>(entity);
             return ApiResult<CustomerDto>.Success(mappedEntity);
         }
@@ -185,12 +251,13 @@ public class CustomerService : ICustomerService
 
     public async Task<ApiResult<CustomerDto>> Update(Guid id, CustomerCreateDto model)
     {
+        await _unitOfWork.BeginTransactionAsync();
         try
         {
-            var isExists = await _customerRepository.IsExist(t => t.Id != id && t.Name.ToLower() == model.Name.ToLower(), ignoreGlobalFilter: true);
+            var isExists = await _customerRepository.IsExist(t => t.Id != id && t.Email.ToLower() == model.Email.ToLower(), ignoreGlobalFilter: true);
             if (isExists)
             {
-                return ApiResult<CustomerDto>.EntityAlreadyExists("Customer", "name");
+                return ApiResult<CustomerDto>.EntityAlreadyExists("Customer", "email");
             }
 
             var entity = await _customerRepository.FirstOrDefaultAsync(t => t.Id == id, ignoreGlobalFilter: true);
@@ -198,8 +265,19 @@ public class CustomerService : ICustomerService
             {
                 return ApiResult<CustomerDto>.NotFound("Customer");
             }
+
+            //Update application user
+            if (entity.Email != model.Email || entity.Name != model.Name)
+            {
+                var appUserEntityValue = (await _applicationUserRepository.QueryAsync(c => c.Email == entity.Email && c.IsActive)).FirstOrDefault();
+                appUserEntityValue.FullName = model.Name;
+                appUserEntityValue.Email = model.Email;
+                await _applicationUserRepository.UpdateAsync(appUserEntityValue);
+            }
             _mapper.Map(model, entity);
             await _customerRepository.UpdateAsync(entity);
+            await _unitOfWork.CommitTransactionAsync();
+
             var mappedEntity = _mapper.Map<CustomerDto>(entity);
             return ApiResult<CustomerDto>.Success(mappedEntity);
         }
@@ -278,9 +356,13 @@ public class CustomerService : ICustomerService
         {
             entities = entities.Where(e => e.Phone != null && e.Phone.ToLower().Contains(v.ToLower()));
         });
-        filter.GetValue<Guid>("CustomerStatusId", (v) =>
+        filter.GetValue<string>("CustomerStatusId", (v) =>
         {
-            entities = entities.Where(e => e.CustomerStatusId == v);
+            if (v != (new Guid()).ToString())
+            {
+                Guid statusId = new Guid(v);
+                entities = entities.Where(e => e.CustomerStatusId == statusId);
+            }
         });
         return entities;
     }
@@ -344,4 +426,25 @@ public class CustomerService : ICustomerService
         }
     }
 
+    private static string GenerateToken()
+    {
+        byte[] guidBytes = Guid.NewGuid().ToByteArray();
+        return Convert.ToBase64String(guidBytes);
+    }
+    private async Task<bool> SendCustomerCreatedAndResetPasswordEmail(string token, string userFullName, string email)
+    {
+        try
+        {
+            var subject = "Create your account Password";
+            var emailTemplate = _templateService.ReadTemplate(EmailTemplates.AccountCreateResetPassword);
+            var resetLink = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).ResetPassword).Replace("[token]", token);
+            emailTemplate = emailTemplate.Replace("[UserFullName]", userFullName).Replace("[PasswordResetLink]", resetLink);
+            return await _emailService.SendEmail(email, subject, emailTemplate);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            return false;
+        }
+    }
 }
