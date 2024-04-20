@@ -215,7 +215,7 @@ public class LicenseService : ILicenseService
         {
             if (!string.IsNullOrEmpty(v))
             {
-                entities = entities.Where(e => e.Customer != null && e.NoOfDevices == Convert.ToInt32(v));
+                entities = entities.Where(e => e.NoOfDevices == Convert.ToInt32(v));
             }             
         });
 
