@@ -9,6 +9,7 @@
     [CreatedByUserId] INT              NULL,
     [UpdatedAt]       DATETIME2 (7)    NULL,
     [UpdatedByUserId] INT              NULL,
+    [isDeleted]       BIT              DEFAULT ((0)) NULL,
     CONSTRAINT [PK_Licenses] PRIMARY KEY CLUSTERED ([Id] ASC),
     CONSTRAINT [FK_Licenses_ApplicationUsers_CreatedByUserId] FOREIGN KEY ([CreatedByUserId]) REFERENCES [dbo].[ApplicationUsers] ([Id]),
     CONSTRAINT [FK_Licenses_ApplicationUsers_UpdatedByUserId] FOREIGN KEY ([UpdatedByUserId]) REFERENCES [dbo].[ApplicationUsers] ([Id]),

@@ -14,14 +14,13 @@
     [CreatedByUserId]  INT              NULL,
     [UpdatedAt]        DATETIME2 (7)    NULL,
     [UpdatedByUserId]  INT              NULL,
+    [CountryCode]      NVARCHAR (50)    NULL,
     CONSTRAINT [PK_Customers] PRIMARY KEY CLUSTERED ([Id] ASC),
     CONSTRAINT [FK_Customers_Addresses_BillingAddressId] FOREIGN KEY ([BillingAddressId]) REFERENCES [dbo].[Addresses] ([Id]),
     CONSTRAINT [FK_Customers_ApplicationUsers_CreatedByUserId] FOREIGN KEY ([CreatedByUserId]) REFERENCES [dbo].[ApplicationUsers] ([Id]),
     CONSTRAINT [FK_Customers_ApplicationUsers_UpdatedByUserId] FOREIGN KEY ([UpdatedByUserId]) REFERENCES [dbo].[ApplicationUsers] ([Id]),
     CONSTRAINT [FK_Customers_CustomerStatuses_CustomerStatusId] FOREIGN KEY ([CustomerStatusId]) REFERENCES [dbo].[CustomerStatuses] ([Id]) ON DELETE CASCADE
 );
-
-
 
 
 GO

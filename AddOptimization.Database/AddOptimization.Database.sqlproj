@@ -60,22 +60,25 @@
     <Folder Include="Properties" />
     <Folder Include="dbo\" />
     <Folder Include="dbo\Tables\" />
+    <Folder Include="Scripts" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="dbo\Tables\__EFMigrationsHistory.sql" />
+    <Build Include="dbo\Tables\Addresses.sql" />
     <Build Include="dbo\Tables\ApplicationUsers.sql" />
-    <Build Include="dbo\Tables\Screens.sql" />
-    <Build Include="dbo\Tables\Users.sql" />
+    <Build Include="dbo\Tables\Customers.sql" />
+    <Build Include="dbo\Tables\CustomerStatuses.sql" />
+    <Build Include="dbo\Tables\Fields.sql" />
     <Build Include="dbo\Tables\PasswordResetTokens.sql" />
     <Build Include="dbo\Tables\RefreshTokens.sql" />
-    <Build Include="dbo\Tables\Roles.sql" />
-    <Build Include="dbo\Tables\Fields.sql" />
-    <Build Include="dbo\Tables\UserRoles.sql" />
     <Build Include="dbo\Tables\RolePermissions.sql" />
-    <Build Include="dbo\Tables\CustomerStatuses.sql" />
-    <Build Include="dbo\Tables\Addresses.sql" />
-    <Build Include="dbo\Tables\Customers.sql" />
+    <Build Include="dbo\Tables\Roles.sql" />
+    <Build Include="dbo\Tables\Screens.sql" />
+    <Build Include="dbo\Tables\UserRoles.sql" />
     <Build Include="dbo\Tables\LicenseDevices.sql" />
     <Build Include="dbo\Tables\Licenses.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <PostDeploy Include="Scripts\SeedData_Script.PostDeployment.sql" />
   </ItemGroup>
 </Project>
