@@ -25,17 +25,16 @@ namespace AddOptimization.Services.Services;
 public class AuthService : IAuthService
 {
     private readonly IConfiguration _configuration;
+    private readonly ITemplateService _templateService;
     private readonly ILogger<AuthService> _logger;
     private readonly IMapper _mapper;
     private readonly IGenericRepository<ApplicationUser> _applicationUserRepository;
     private readonly IGenericRepository<RefreshToken> _refreshTokenRepository;
     private readonly IGenericRepository<PasswordResetToken> _passwordResetTokenRepository;
     private readonly IEmailService _emailService;
-    private readonly ITemplateService _templateService;
     private readonly IPermissionService _permissionService;
     public AuthService(IConfiguration configuration, ILogger<AuthService> logger, IGenericRepository<ApplicationUser> applicationUserRepository, IMapper mapper, IGenericRepository<RefreshToken> tokenRepository, IGenericRepository<PasswordResetToken> passwordResetTokenRepository, IEmailService emailService, ITemplateService templateService, IPermissionService permissionService)
     {
-        _configuration = configuration;
         _logger = logger;
         _applicationUserRepository = applicationUserRepository;
         _mapper = mapper;
@@ -43,6 +42,7 @@ public class AuthService : IAuthService
         _passwordResetTokenRepository = passwordResetTokenRepository;
         _emailService = emailService;
         _templateService = templateService;
+        _configuration = configuration;
         _permissionService = permissionService;
     }
 

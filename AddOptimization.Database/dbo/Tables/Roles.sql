@@ -2,7 +2,6 @@
     [Id]              UNIQUEIDENTIFIER NOT NULL,
     [IsDeleted]       BIT              NOT NULL,
     [Name]            NVARCHAR (100)   NOT NULL,
-    [DepartmentId]    UNIQUEIDENTIFIER NULL,
     [CreatedAt]       DATETIME2 (7)    NULL,
     [CreatedByUserId] INT              NULL,
     [UpdatedAt]       DATETIME2 (7)    NULL,
