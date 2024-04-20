@@ -5,7 +5,7 @@ IF NOT EXISTS (SELECT 1 FROM ApplicationUsers Where Email= 'stein@addoptimizatio
 BEGIN 
     INSERT INTO ApplicationUsers(FirstName, LastName, Email, FullName,UserName,Password,IsActive,IsLocked,IsEmailsEnabled,CreatedAt)
     VALUES
-        ('Stein','','stein@addoptimization.com','','','ADAot9CKJUhGJu0rG1je4A6BBiyURsKiQPCA2NvDYKhi61C998K5B8mdLMqK3F0DnA==',1,0,1,GETUTCDATE())
+        ('Stein','Geerinck','stein@addoptimization.com','Stein Geerinck','stein@addoptimization.com','ADAot9CKJUhGJu0rG1je4A6BBiyURsKiQPCA2NvDYKhi61C998K5B8mdLMqK3F0DnA==',1,0,0,GETUTCDATE())
 END
 
 /* Adding Active status data in Customer Status */
