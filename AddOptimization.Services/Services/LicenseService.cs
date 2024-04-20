@@ -205,23 +205,76 @@ public class LicenseService : ILicenseService
             entities = entities.Where(e => e.Customer != null && e.Customer.Name.ToLower().Contains(v.ToLower()));
         });
 
+        filter.GetValue<string>("customerEmail", (v) =>
+        {
+            entities = entities.Where(e => e.Customer != null && e.Customer.Email.ToLower().Contains(v.ToLower()));
+        });
+
+
+        filter.GetValue<string>("noOfDevices", (v) =>
+        {
+            if (!string.IsNullOrEmpty(v))
+            {
+                entities = entities.Where(e => e.Customer != null && e.NoOfDevices == Convert.ToInt32(v));
+            }             
+        });
+
+        filter.GetValue<string>("activatedDevicesCount", (v) =>
+        {
+            if (!string.IsNullOrEmpty(v))
+            {
+                entities = entities.Where(e => e.LicenseDevices.Count() == Convert.ToInt32(v));
+            }
+        });
+
+        filter.GetValue<string>("pendingDevicesCount", (v) =>
+        {
+            if (!string.IsNullOrEmpty(v))
+            {
+                entities = entities.Where(e => e.NoOfDevices - (e.LicenseDevices.Any() ? e.LicenseDevices.Count() : 0) == Convert.ToInt32(v));
+            } 
+        });
+
+        filter.GetValue<string>("licenseDuration", (v) =>
+        {
+            if(!string.IsNullOrEmpty(v))
+            {
+                entities = entities.Where(e => e.LicenseDuration == Convert.ToInt32(v));
+            }
+        });
+
+
         filter.GetValue<string>("customerId", (v) =>
         {
             entities = entities.Where(e => e.CustomerId.ToString() == v);
         });
 
-        filter.GetValue<DateTime>("createdAt", (v) =>
+        filter.GetValue<string>("createdAt", (v) =>
         {
-            entities = entities.Where(e => e.CreatedAt != null && e.CreatedAt < v);
-        }, OperatorType.lessthan, true);
-        filter.GetValue<DateTime>("createdAt", (v) =>
-        {
-            entities = entities.Where(e => e.CreatedAt != null && e.CreatedAt > v);
-        }, OperatorType.greaterthan, true);
-        filter.GetValue<DateTime>("expirationTime", (v) =>
-        {
-            entities = entities.Where(e => e.ExpirationDate != DateTime.MinValue ? e.ExpirationDate.Date == v.Date : e.ExpirationDate.Date == DateTime.MinValue);
+            if (!string.IsNullOrEmpty(v))
+            {
+                var createdDate = DateTime.Parse(v).Date;
+                entities = entities.Where(e => e.CreatedAt != null && e.CreatedAt.Value.Date == createdDate);
+            }
         });
+
+        // filter.GetValue<DateTime>("expirationTime", (v) =>
+        //{
+        //  entities = entities.Where(e => e.ExpirationDate != DateTime.MinValue ? e.ExpirationDate.Date == v.Date : e.ExpirationDate.Date == DateTime.MinValue);
+        //});
+
+        filter.GetValue<string>("expirationDate", (v) =>
+        {
+            if(!string.IsNullOrEmpty(v))
+            {
+                var expirationDate = DateTime.Parse(v).Date;
+                entities = entities.Where(e =>
+                    e.ExpirationDate != DateTime.MinValue ?
+                    e.ExpirationDate.Date == expirationDate :
+                    e.ExpirationDate.Date == DateTime.MinValue.Date);
+            }
+        });
+
         filter.GetValue<string>("licenseKey", (v) =>
         {
             entities = entities.Where(e => e.LicenseKey != null && e.LicenseKey == v);
