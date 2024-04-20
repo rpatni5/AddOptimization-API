@@ -258,10 +258,6 @@ public class LicenseService : ILicenseService
             }
         });
 
-        // filter.GetValue<DateTime>("expirationTime", (v) =>
-        //{
-        //  entities = entities.Where(e => e.ExpirationDate != DateTime.MinValue ? e.ExpirationDate.Date == v.Date : e.ExpirationDate.Date == DateTime.MinValue);
-        //});
 
         filter.GetValue<string>("expirationDate", (v) =>
         {
