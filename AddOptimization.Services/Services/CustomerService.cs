@@ -155,9 +155,12 @@ public class CustomerService : ICustomerService
         try
         {
             var isExists = await _customerRepository.IsExist(t => t.Email.ToLower() == model.Email.ToLower(), ignoreGlobalFilter: true);
-            if (isExists)
+            var isExistInAppUser = await _applicationUserRepository.IsExist(t => t.Email.ToLower() == model.Email.ToLower(), ignoreGlobalFilter: true);
+
+            if (isExists || isExistInAppUser)
             {
-                return ApiResult<CustomerDto>.EntityAlreadyExists("Customer", "email");
+                var errorMessage = isExistInAppUser ? "User already exists with some other role in the system." : "Customer already exists with same email.";
+                return ApiResult<CustomerDto>.Failure(ValidationCodes.EmailUserNameAlreadyExists, errorMessage);
             }
             var entity = _mapper.Map<Customer>(model);
             var billingAddressId = entity.BillingAddressId;
@@ -255,9 +258,12 @@ public class CustomerService : ICustomerService
         try
         {
             var isExists = await _customerRepository.IsExist(t => t.Id != id && t.Email.ToLower() == model.Email.ToLower(), ignoreGlobalFilter: true);
-            if (isExists)
+            var isExistInAppUser = await _applicationUserRepository.IsExist(t => t.Email.ToLower() == model.Email.ToLower(), ignoreGlobalFilter: true);
+
+            if (isExists || isExistInAppUser)
             {
-                return ApiResult<CustomerDto>.EntityAlreadyExists("Customer", "email");
+                var errorMessage = isExistInAppUser ? "User already exists with some other role in the system." : "Customer already exists with same email.";
+                return ApiResult<CustomerDto>.Failure(ValidationCodes.EmailUserNameAlreadyExists, errorMessage);
             }
 
             var entity = await _customerRepository.FirstOrDefaultAsync(t => t.Id == id, ignoreGlobalFilter: true);
