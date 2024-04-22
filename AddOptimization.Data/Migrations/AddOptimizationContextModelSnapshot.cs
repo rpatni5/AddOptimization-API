@@ -371,10 +371,6 @@ namespace AddOptimization.Data.Migrations
 
                     b.Property<string>("MachineName")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("MotherBoardId")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 

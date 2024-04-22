@@ -6,7 +6,6 @@ namespace AddOptimization.Contracts.Dto
     {
         [Required]
         public string LicenseKey { get; set; }
-        public string MotherBoardId { get; set; }
         public string MachineName { get; set; }
     }
 }
