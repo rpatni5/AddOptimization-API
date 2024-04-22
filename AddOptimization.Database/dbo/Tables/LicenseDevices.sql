@@ -1,7 +1,6 @@
 ﻿CREATE TABLE [dbo].[LicenseDevices] (
     [Id]              UNIQUEIDENTIFIER NOT NULL,
     [CustomerId]      UNIQUEIDENTIFIER NOT NULL,
-    [MotherBoardId]   NVARCHAR (MAX)   NULL,
     [MachineName]     NVARCHAR (MAX)   NULL,
     [LicenseId]       UNIQUEIDENTIFIER NOT NULL,
     [CreatedAt]       DATETIME2 (7)    NULL,

@@ -3,7 +3,6 @@
     public class LicenseDeviceDto : BaseDto<Guid>
     {
         public Guid CustomerId { get; set; }
-        public string MotherBoardId { get; set; }
         public string MachineName { get; set; }
         public Guid LicenseId { get; set; }
         public DateTime? CreatedAt { get; set; }

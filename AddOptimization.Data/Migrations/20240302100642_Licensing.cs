@@ -54,7 +54,6 @@ namespace AddOptimization.Data.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CustomerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    MotherBoardId = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     MachineName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     LicenseId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
