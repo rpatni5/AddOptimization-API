@@ -258,11 +258,10 @@ public class CustomerService : ICustomerService
         try
         {
             var isExists = await _customerRepository.IsExist(t => t.Id != id && t.Email.ToLower() == model.Email.ToLower(), ignoreGlobalFilter: true);
-            var isExistInAppUser = await _applicationUserRepository.IsExist(t => t.Email.ToLower() == model.Email.ToLower(), ignoreGlobalFilter: true);
 
-            if (isExists || isExistInAppUser)
+            if (isExists)
             {
-                var errorMessage = isExistInAppUser ? "User already exists with some other role in the system." : "Customer already exists with same email.";
+                var errorMessage = "Customer already exists with same email.";
                 return ApiResult<CustomerDto>.Failure(ValidationCodes.EmailUserNameAlreadyExists, errorMessage);
             }
 
