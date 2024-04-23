@@ -76,6 +76,14 @@ namespace AddOptimization.Services.Mappings
                 d.CreatedBy = s.CreatedByUser?.FullName;
             });
             CreateMap<LicenseDeviceManagementDto, LicenseDevice>();
+
+            CreateMap<GuiVersion, GuiVersionResponseDto>().AfterMap((s, d) =>
+            {
+                d.CreatedAt = s.CreatedAt?.Date;
+                d.CreatedBy = s.CreatedByUser?.FullName;
+            });
+
+
         }
     }
 }
