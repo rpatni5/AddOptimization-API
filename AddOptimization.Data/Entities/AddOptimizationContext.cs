@@ -42,6 +42,8 @@ public partial class AddOptimizationContext : DbContext
     public virtual DbSet<LicenseDevice> LicenseDevices { get; set; }
     public virtual DbSet<GuiVersion> GuiVersions { get; set; }
 
+    public virtual DbSet<PublicHoliday> PublicHolidays { get; set; }
+    public virtual DbSet<Country> Country { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
