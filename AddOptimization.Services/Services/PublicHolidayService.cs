@@ -10,6 +10,7 @@ using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Models;
 using AutoMapper;
 using iText.StyledXmlParser.Jsoup.Nodes;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NPOI.SS.Formula.Functions;
@@ -39,11 +40,12 @@ namespace AddOptimization.Services.Services
             _mapper = mapper;
         }
 
-        public async Task<ApiResult<List<PublicHolidayDto>>> Search()
+        public async Task<ApiResult<List<PublicHolidayDto>>> Search( PageQueryFiterBase filters)
         {
             try
             {
                 var entities = await _publicholidayRepository.QueryAsync(include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Date));
+                entities = entities.Where(x => !x.IsDeleted);
                 var mappedEntities = _mapper.Map<List<PublicHolidayDto>>(entities);
                 return ApiResult<List<PublicHolidayDto>>.Success(mappedEntities);
             }
@@ -144,7 +146,7 @@ namespace AddOptimization.Services.Services
             try
             {
                 var entity = await _publicholidayRepository.FirstOrDefaultAsync(t => t.Id == id);
-               
+                entity.IsDeleted = true;
                 await _publicholidayRepository.UpdateAsync(entity);
                 return ApiResult<bool>.Success(true);
             }

@@ -2,6 +2,7 @@
 using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Services.Services;
+using AddOptimization.Utilities.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -19,11 +20,11 @@ namespace AddOptimization.API.Controllers
         }
 
         [HttpPost("search")]
-        public async Task<IActionResult> Search()
+        public async Task<IActionResult> Search([FromBody] PageQueryFiterBase filters)
         {
             try
             {
-                var retVal = await _timesheetService.Search();
+                var retVal = await _timesheetService.Search(filters);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
