@@ -124,5 +124,19 @@ namespace AddOptimization.API.Controllers
             }
         }
 
+        [HttpPost("GetCountries")]
+        public async Task<IActionResult> GetCountries()
+        {
+            try
+            {
+                var result = await _timesheetService.GetCountries();
+                return HandleResponse(result);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
     }
 }

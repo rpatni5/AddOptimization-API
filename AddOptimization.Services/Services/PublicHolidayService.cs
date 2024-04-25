@@ -16,6 +16,7 @@ using Microsoft.Extensions.Logging;
 using NPOI.SS.Formula.Functions;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
@@ -44,9 +45,33 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _publicholidayRepository.QueryAsync(include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Date));
+                var entities = await _publicholidayRepository.QueryAsync(include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(o => o.Country), orderBy: x => x.OrderBy(x => x.Date));
                 entities = entities.Where(x => !x.IsDeleted);
-                var mappedEntities = _mapper.Map<List<PublicHolidayDto>>(entities);
+
+                var response = entities.Select(e => new PublicHolidayDto
+                {
+                    Title = e.Title,
+                    Id = e.Id,
+                    Info = e.Info,
+                    CreatedAt = e.CreatedAt,
+                    UpdatedAt = e.UpdatedAt,
+                    UpdatedBy = e.UpdatedByUser.FullName,
+                    Date = e.Date,
+                    CountryName = e.Country.CountryName,
+                    CountryId = e.CountryId,
+                    CreatedBy = e.CreatedByUser.FullName,
+
+
+                }).ToList();
+
+
+                //Country=entities.Country.CountryName;
+
+                //response = (List<PublicHolidayDto>)response.Where(x => !x.IsDeleted);
+
+
+
+                var mappedEntities = _mapper.Map<List<PublicHolidayDto>>(response);
                 return ApiResult<List<PublicHolidayDto>>.Success(mappedEntities);
             }
             catch (Exception ex)
@@ -194,6 +219,21 @@ namespace AddOptimization.Services.Services
             {
                 var entities = await _countryRepository.QueryAsync(include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Id));
                 var mappedEntities = _mapper.Map<List<CountryDto>>(entities);
+                return ApiResult<List<CountryDto>>.Success(mappedEntities);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+        public async Task<ApiResult<List<CountryDto>>> GetCountries()
+        {
+            try
+            {
+                var entities = await _countryRepository.QueryAsync();
+                var mappedEntities = _mapper.Map<List<CountryDto>>(entities.ToList());
                 return ApiResult<List<CountryDto>>.Success(mappedEntities);
             }
             catch (Exception ex)

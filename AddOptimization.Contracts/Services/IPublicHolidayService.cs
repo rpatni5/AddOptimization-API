@@ -19,7 +19,7 @@ namespace AddOptimization.Contracts.Services;
         Task<ApiResult<List<PublicHolidayDto>>> GetByCountryId(Guid countryid);
          Task<ApiResult<List<CountryDto>>> GetAllCountry();
 
+    Task<ApiResult<List<CountryDto>>> GetCountries();
 
-
-    }
+}
 
