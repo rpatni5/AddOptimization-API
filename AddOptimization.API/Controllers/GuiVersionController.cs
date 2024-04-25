@@ -1,7 +1,9 @@
 ﻿using AddOptimization.API.Common;
+using AddOptimization.Contracts.Constants;
 using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Services.Services;
+using AddOptimization.Utilities.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -30,5 +32,48 @@ namespace AddOptimization.API.Controllers
             }
         }
 
+        [HttpPost("search")]
+        public async Task<IActionResult> Get([FromBody] GuiVersionResponseDto filter)
+        {
+            try
+            {
+                var retVal = await _guiVersionService.Search();
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(Guid Id)
+        {
+            try
+            {
+                var retVal = await _guiVersionService.Delete(Id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpPut("toogleActiveEnabled/{id}")]
+        public async Task<IActionResult> ToggleEmailsEnabled(Guid id)
+        {
+            try
+            {
+                var retVal = await _guiVersionService.ToggleActiveEnabled(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+       
     }
 }

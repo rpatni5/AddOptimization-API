@@ -18,6 +18,8 @@ namespace AddOptimization.Contracts.Dto
         [Required]
         public IFormFile VersionFile { get; set; }
 
+        public bool IsLatest { get; set; }
+
     }
 }
 

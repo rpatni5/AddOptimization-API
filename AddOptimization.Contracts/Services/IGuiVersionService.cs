@@ -1,5 +1,6 @@
 ﻿using AddOptimization.Contracts.Dto;
 using AddOptimization.Utilities.Common;
+using AddOptimization.Utilities.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,5 +12,8 @@ namespace AddOptimization.Contracts.Services
     public interface IGuiVersionService
     {
         Task<ApiResult<GuiVersionResponseDto>> Create(GuiVersionCreateDto model);
+        Task<ApiResult<List<GuiVersionResponseDto>>> Search();
+        Task<ApiResult<bool>> Delete(Guid id);
+        Task<ApiResult<bool>> ToggleActiveEnabled(Guid id);
     }
 }

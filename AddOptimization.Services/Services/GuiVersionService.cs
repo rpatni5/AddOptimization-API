@@ -4,6 +4,7 @@ using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
 using AddOptimization.Utilities.Common;
 using AddOptimization.Utilities.Extensions;
+using AddOptimization.Utilities.Models;
 using AutoMapper;
 using iText.StyledXmlParser.Jsoup.Nodes;
 using Microsoft.AspNetCore.Hosting;
@@ -14,6 +15,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using AddOptimization.Services.Constants;
+using Microsoft.IdentityModel.Tokens;
 
 namespace AddOptimization.Services.Services
 {
@@ -36,18 +40,47 @@ namespace AddOptimization.Services.Services
         {
             try
             {
+                if (model.IsLatest)
+                {
+                    var entities =(await _versionRepository.QueryAsync(x=>x.IsLatest && !x.IsDeleted)).FirstOrDefault();
+                    entities.IsLatest = !model.IsLatest;
+                    await _versionRepository.UpdateAsync(entities);
+                }
+
                 GuiVersion entity = new GuiVersion();
                 entity.FrameworkVersionNo = model.FrameworkVersionNo;
                 entity.GuiVersionNo = model.GuiVersionNo;
                 entity.IsActive = true;
                 entity.IsDeleted = false;
+                entity.IsLatest = model.IsLatest;
                 //save & get download path
                 entity.DownloadPath = await SaveVersionAndGenerateDownloadUrl(model);
                 await _versionRepository.InsertAsync(entity);
 
+               
+                
+
                 var mappedEntity = _mapper.Map<GuiVersionResponseDto>(entity);
 
                 return ApiResult<GuiVersionResponseDto>.Success(mappedEntity);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+        public async Task<ApiResult<List<GuiVersionResponseDto>>> Search()
+        {
+            try
+            {
+                var entities = await _versionRepository.QueryAsync(include: entities => entities.Include(e => e.CreatedByUser),orderBy: (entities) => entities.OrderByDescending(c => c.CreatedAt));
+                entities = entities.Where(e => !e.IsDeleted);
+              
+                                
+                var mappedEntities = _mapper.Map<List<GuiVersionResponseDto>>(entities.ToList());
+                return ApiResult<List<GuiVersionResponseDto>>.Success(mappedEntities);
             }
             catch (Exception ex)
             {
@@ -85,6 +118,49 @@ namespace AddOptimization.Services.Services
             }
 
             return downloadUrl;
+        }
+
+       
+
+        public async Task<ApiResult<bool>> Delete(Guid id)
+        {
+            try
+            {
+                var entity = await _versionRepository.FirstOrDefaultAsync(t => t.Id == id);
+                if (entity == null)
+                {
+                    return ApiResult<bool>.NotFound("Version");
+                }
+                entity.IsDeleted = true;
+
+                await _versionRepository.UpdateAsync(entity);
+                return ApiResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+        public async Task<ApiResult<bool>> ToggleActiveEnabled(Guid id)
+        {
+            try
+            {
+                var entity = await _versionRepository.FirstOrDefaultAsync(u => u.Id == id, disableTracking: false);
+                if (entity == null)
+                {
+                    return ApiResult<bool>.NotFound("version");
+                }
+                entity.IsActive = !(entity.IsActive ?? false);
+                await _versionRepository.UpdateAsync(entity);
+                return ApiResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
         }
 
     }
