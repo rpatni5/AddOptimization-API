@@ -60,12 +60,12 @@ namespace AddOptimization.API.Controllers
             }
         }
 
-        [HttpPut("toogleActiveEnabled/{id}")]
+        [HttpPut("updateStatus/{id}")]
         public async Task<IActionResult> ToggleEmailsEnabled(Guid id)
         {
             try
             {
-                var retVal = await _guiVersionService.ToggleActiveEnabled(id);
+                var retVal = await _guiVersionService.UpdateStatus(id);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -82,7 +82,7 @@ namespace AddOptimization.API.Controllers
         {
             try
             {
-                var retVal = await _guiVersionService.LatestVersionSearch();
+                var retVal = await _guiVersionService.GetLatestversion();
                 return HandleResponse(retVal);
             }
             catch (Exception ex)

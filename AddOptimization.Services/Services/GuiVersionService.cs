@@ -42,9 +42,13 @@ namespace AddOptimization.Services.Services
             {
                 if (model.IsLatest)
                 {
-                    var entities =(await _versionRepository.QueryAsync(x=>x.IsLatest && !x.IsDeleted)).FirstOrDefault();
-                    entities.IsLatest = !model.IsLatest;
-                    await _versionRepository.UpdateAsync(entities);
+                    var entities = (await _versionRepository.QueryAsync(x => x.IsLatest && !x.IsDeleted)).ToList();
+
+                    foreach (var item in entities)
+                    {
+                        item.IsLatest = false;
+                    }
+                    await _versionRepository.BulkUpdateAsync(entities);
                 }
 
                 GuiVersion entity = new GuiVersion();
@@ -56,10 +60,6 @@ namespace AddOptimization.Services.Services
                 //save & get download path
                 entity.DownloadPath = await SaveVersionAndGenerateDownloadUrl(model);
                 await _versionRepository.InsertAsync(entity);
-
-               
-                
-
                 var mappedEntity = _mapper.Map<GuiVersionResponseDto>(entity);
 
                 return ApiResult<GuiVersionResponseDto>.Success(mappedEntity);
@@ -75,10 +75,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _versionRepository.QueryAsync(include: entities => entities.Include(e => e.CreatedByUser),orderBy: (entities) => entities.OrderByDescending(c => c.CreatedAt));
-                entities = entities.Where(e => !e.IsDeleted);
-              
-                                
+                var entities = await _versionRepository.QueryAsync((e => !e.IsDeleted),include: entities => entities.Include(e => e.CreatedByUser), orderBy: (entities) => entities.OrderByDescending(c => c.CreatedAt));
                 var mappedEntities = _mapper.Map<List<GuiVersionResponseDto>>(entities.ToList());
                 return ApiResult<List<GuiVersionResponseDto>>.Success(mappedEntities);
             }
@@ -120,7 +117,7 @@ namespace AddOptimization.Services.Services
             return downloadUrl;
         }
 
-       
+
 
         public async Task<ApiResult<bool>> Delete(Guid id)
         {
@@ -143,7 +140,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        public async Task<ApiResult<bool>> ToggleActiveEnabled(Guid id)
+        public async Task<ApiResult<bool>> UpdateStatus(Guid id)
         {
             try
             {
@@ -164,14 +161,11 @@ namespace AddOptimization.Services.Services
         }
 
 
-        public async Task<ApiResult<List<GuiVersionResponseDto>>> LatestVersionSearch()
+        public async Task<ApiResult<List<GuiVersionResponseDto>>> GetLatestversion()
         {
             try
             {
-                var entities = await _versionRepository.QueryAsync(include: entities => entities.Include(e => e.CreatedByUser));
-                entities = entities.Where(e => !e.IsDeleted && e.IsLatest);
-
-
+                var entities = await _versionRepository.QueryAsync((e => !e.IsDeleted && e.IsLatest) ,include: entities => entities.Include(e => e.CreatedByUser));
                 var mappedEntities = _mapper.Map<List<GuiVersionResponseDto>>(entities.ToList());
                 return ApiResult<List<GuiVersionResponseDto>>.Success(mappedEntities);
             }

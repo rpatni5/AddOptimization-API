@@ -14,7 +14,7 @@ namespace AddOptimization.Contracts.Services
         Task<ApiResult<GuiVersionResponseDto>> Create(GuiVersionCreateDto model);
         Task<ApiResult<List<GuiVersionResponseDto>>> Search();
         Task<ApiResult<bool>> Delete(Guid id);
-        Task<ApiResult<bool>> ToggleActiveEnabled(Guid id);
-        Task<ApiResult<List<GuiVersionResponseDto>>>LatestVersionSearch();
+        Task<ApiResult<bool>> UpdateStatus(Guid id);
+        Task<ApiResult<List<GuiVersionResponseDto>>>GetLatestversion();
     }
 }
