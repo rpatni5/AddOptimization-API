@@ -15,5 +15,6 @@ namespace AddOptimization.Contracts.Services
         Task<ApiResult<List<GuiVersionResponseDto>>> Search();
         Task<ApiResult<bool>> Delete(Guid id);
         Task<ApiResult<bool>> ToggleActiveEnabled(Guid id);
+        Task<ApiResult<List<GuiVersionResponseDto>>>LatestVersionSearch();
     }
 }

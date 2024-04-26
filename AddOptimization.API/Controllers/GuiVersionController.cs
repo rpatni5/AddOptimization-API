@@ -74,6 +74,21 @@ namespace AddOptimization.API.Controllers
             }
         }
 
-       
+
+
+        [AllowAnonymous]
+        [HttpGet("search")]
+        public async Task<IActionResult>GetLatestVersion()
+        {
+            try
+            {
+                var retVal = await _guiVersionService.LatestVersionSearch();
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
     }
 }

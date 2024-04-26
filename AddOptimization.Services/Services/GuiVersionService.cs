@@ -163,5 +163,25 @@ namespace AddOptimization.Services.Services
             }
         }
 
+
+        public async Task<ApiResult<List<GuiVersionResponseDto>>> LatestVersionSearch()
+        {
+            try
+            {
+                var entities = await _versionRepository.QueryAsync(include: entities => entities.Include(e => e.CreatedByUser));
+                entities = entities.Where(e => !e.IsDeleted && e.IsLatest);
+
+
+                var mappedEntities = _mapper.Map<List<GuiVersionResponseDto>>(entities.ToList());
+                return ApiResult<List<GuiVersionResponseDto>>.Success(mappedEntities);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+
     }
 }
