@@ -40,6 +40,8 @@ public partial class AddOptimizationContext : DbContext
     public virtual DbSet<Address> Addresses { get; set; }
     public virtual DbSet<License> Licenses { get; set; }
     public virtual DbSet<LicenseDevice> LicenseDevices { get; set; }
+    public virtual DbSet<GuiVersion> GuiVersions { get; set; }
+
     public virtual DbSet<PublicHoliday> PublicHolidays { get; set; }
     public virtual DbSet<Country> Country { get; set; }
 
