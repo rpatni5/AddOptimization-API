@@ -95,7 +95,7 @@ namespace AddOptimization.API.Controllers
         }
 
 
-        [HttpGet("GetByCountryId")]
+        [HttpGet("get-by-countryid")]
         public async Task<IActionResult> GetByCountryId(Guid countryid)
         {
             try
@@ -110,7 +110,7 @@ namespace AddOptimization.API.Controllers
         }
 
 
-        [HttpGet("GetAllCountry")]
+        [HttpGet("get-all-countries")]
         public async Task<IActionResult> GetAllCountry()
         {
             try

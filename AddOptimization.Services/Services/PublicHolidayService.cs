@@ -45,33 +45,8 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _publicholidayRepository.QueryAsync(include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(o => o.Country), orderBy: x => x.OrderBy(x => x.Date));
-                entities = entities.Where(x => !x.IsDeleted);
-
-                var response = entities.Select(e => new PublicHolidayDto
-                {
-                    Title = e.Title,
-                    Id = e.Id,
-                    Info = e.Info,
-                    CreatedAt = e.CreatedAt,
-                    UpdatedAt = e.UpdatedAt,
-                    UpdatedBy = e.UpdatedByUser.FullName,
-                    Date = e.Date,
-                    CountryName = e.Country.CountryName,
-                    CountryId = e.CountryId,
-                    CreatedBy = e.CreatedByUser.FullName,
-
-
-                }).ToList();
-
-
-                //Country=entities.Country.CountryName;
-
-                //response = (List<PublicHolidayDto>)response.Where(x => !x.IsDeleted);
-
-
-
-                var mappedEntities = _mapper.Map<List<PublicHolidayDto>>(response);
+                var entities = await _publicholidayRepository.QueryAsync(include: entities => entities.Include(e => e.Country).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Date));
+                var mappedEntities = _mapper.Map<List<PublicHolidayDto>>(entities);
                 return ApiResult<List<PublicHolidayDto>>.Success(mappedEntities);
             }
             catch (Exception ex)
@@ -80,11 +55,6 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-
-
-
-
-
         public async Task<ApiResult<bool>> Create(PublicHolidayDto model)
         {
             try
@@ -94,14 +64,8 @@ namespace AddOptimization.Services.Services
                 {
                     return ApiResult<bool>.Failure(ValidationCodes.FieldNameAlreadyExists);
                 }
-             
-                //var entities = await _publicholidayRepository.QueryAsync(include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Date));
                 var entities = _mapper.Map<PublicHoliday>(model);
-               //model.CreatedBy = entities.CreatedByUser != null ? entities.CreatedByUser.FullName : string.Empty;
-               // model.UpdatedBy = entities.UpdatedByUser != null ? entities.UpdatedByUser.FullName : string.Empty;
-              
                 await _publicholidayRepository.InsertAsync(entities);
-                //var mappedEntities = _mapper.Map<PublicHolidayDto>(entities);
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -110,12 +74,6 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-
-
-      
-
-
-
         public async Task<ApiResult<PublicHolidayDto>> Get(Guid id)
         {
             try
@@ -134,10 +92,6 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-
-
-
-
         public async Task<ApiResult<PublicHolidayDto>> Update(Guid id, PublicHolidayDto model)
         {
             try
@@ -159,13 +113,6 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-
-
-
-
-
-
-
         public async Task<ApiResult<bool>> Delete(Guid id)
         {
             try
@@ -181,12 +128,6 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-
-
-
-
-         
-
         public async Task<ApiResult<List<PublicHolidayDto>>> GetByCountryId(Guid countryid)
         {
             try
@@ -208,11 +149,6 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-
-
-      
-
-
         public async Task<ApiResult<List<CountryDto>>> GetAllCountry()
         {
             try

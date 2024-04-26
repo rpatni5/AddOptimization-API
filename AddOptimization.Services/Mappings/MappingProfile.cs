@@ -78,10 +78,19 @@ namespace AddOptimization.Services.Mappings
                 d.CreatedBy = s.CreatedByUser?.FullName;
             });
             CreateMap<LicenseDeviceManagementDto, LicenseDevice>();
+
+            CreateMap<GuiVersion, GuiVersionResponseDto>().AfterMap((s, d) =>
+            {
+                d.CreatedAt = s.CreatedAt?.Date;
+                d.CreatedBy = s.CreatedByUser?.FullName;
+            });
+
+
             CreateMap<PublicHoliday, PublicHolidayDto>().AfterMap((s, d) =>
             {
                 d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
                 d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.CountryName = s.Country?.CountryName ?? string.Empty;
             });
             CreateMap<PublicHolidayDto, PublicHoliday>();
 

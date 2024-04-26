@@ -11,13 +11,7 @@ namespace AddOptimization.Data.Entities
 {
     public class Country : BaseEntityNew<Guid>
     {
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public Guid Id { get; set; }
-
-        [MaxLength(100)]
         public string CountryName { get; set; }
-
         public string Code { get; set; }
     }
 }
