@@ -90,6 +90,7 @@ namespace AddOptimization.Services.Mappings
             {
                 d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
                 d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.CountryName = s.Country?.CountryName ?? string.Empty;
             });
             CreateMap<PublicHolidayDto, PublicHoliday>();
 
