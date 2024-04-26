@@ -60,7 +60,7 @@ namespace AddOptimization.API.Controllers
             }
         }
 
-        [HttpPut("updateStatus/{id}")]
+        [HttpPut("update-status/{id}")]
         public async Task<IActionResult> ToggleEmailsEnabled(Guid id)
         {
             try
@@ -77,8 +77,8 @@ namespace AddOptimization.API.Controllers
 
 
         [AllowAnonymous]
-        [HttpGet("search")]
-        public async Task<IActionResult>GetLatestVersion()
+        [HttpGet("latest-version")]
+        public async Task<IActionResult> GetLatestVersion()
         {
             try
             {
