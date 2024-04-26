@@ -1,4 +1,5 @@
 ﻿using AddOptimization.Data.Common;
+using Stripe;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace AddOptimization.Contracts.Dto
 {
-    public class CountryDto : BaseDto<Guid>
+    public class CountryDto 
     {
         public string CountryName { get; set; }
         public string Code { get; set; }

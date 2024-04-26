@@ -10,11 +10,13 @@ using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Models;
 using AutoMapper;
 using iText.StyledXmlParser.Jsoup.Nodes;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NPOI.SS.Formula.Functions;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
@@ -39,7 +41,7 @@ namespace AddOptimization.Services.Services
             _mapper = mapper;
         }
 
-        public async Task<ApiResult<List<PublicHolidayDto>>> Search()
+        public async Task<ApiResult<List<PublicHolidayDto>>> Search( PageQueryFiterBase filters)
         {
             try
             {
@@ -116,7 +118,7 @@ namespace AddOptimization.Services.Services
             try
             {
                 var entity = await _publicholidayRepository.FirstOrDefaultAsync(t => t.Id == id);
-               
+                entity.IsDeleted = true;
                 await _publicholidayRepository.UpdateAsync(entity);
                 return ApiResult<bool>.Success(true);
             }
@@ -153,6 +155,21 @@ namespace AddOptimization.Services.Services
             {
                 var entities = await _countryRepository.QueryAsync(include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Id));
                 var mappedEntities = _mapper.Map<List<CountryDto>>(entities);
+                return ApiResult<List<CountryDto>>.Success(mappedEntities);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+        public async Task<ApiResult<List<CountryDto>>> GetCountries()
+        {
+            try
+            {
+                var entities = await _countryRepository.QueryAsync();
+                var mappedEntities = _mapper.Map<List<CountryDto>>(entities.ToList());
                 return ApiResult<List<CountryDto>>.Success(mappedEntities);
             }
             catch (Exception ex)
