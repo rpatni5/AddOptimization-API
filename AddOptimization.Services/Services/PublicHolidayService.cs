@@ -164,20 +164,5 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        public async Task<ApiResult<List<CountryDto>>> GetCountries()
-        {
-            try
-            {
-                var entities = await _countryRepository.QueryAsync();
-                var mappedEntities = _mapper.Map<List<CountryDto>>(entities.ToList());
-                return ApiResult<List<CountryDto>>.Success(mappedEntities);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
-                throw;
-            }
-        }
-
     }
 }

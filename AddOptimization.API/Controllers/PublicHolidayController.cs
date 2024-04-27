@@ -76,10 +76,6 @@ namespace AddOptimization.API.Controllers
         }
 
 
-       
-
-
-
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
@@ -117,20 +113,6 @@ namespace AddOptimization.API.Controllers
             {
                 var retVal = await _timesheetService.GetAllCountry();
                 return HandleResponse(retVal);
-            }
-            catch (Exception ex)
-            {
-                return HandleException(ex);
-            }
-        }
-
-        [HttpPost("GetCountries")]
-        public async Task<IActionResult> GetCountries()
-        {
-            try
-            {
-                var result = await _timesheetService.GetCountries();
-                return HandleResponse(result);
             }
             catch (Exception ex)
             {
