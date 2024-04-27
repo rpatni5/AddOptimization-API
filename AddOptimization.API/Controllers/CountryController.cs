@@ -10,18 +10,18 @@ namespace AddOptimization.API.Controllers
     [Authorize]
     public class CountryController : CustomApiControllerBase
     {
-        private readonly ICountryCodeService _countryCodeService;
-        public CountryController(ILogger<CountryController> logger, ICountryCodeService countryCodeService) : base(logger)
+        private readonly ICountryService _countryService;
+        public CountryController(ILogger<CountryController> logger, ICountryService countryService) : base(logger)
         {
-            _countryCodeService = countryCodeService;
+            _countryService = countryService;
         }
 
         [HttpGet("get-by-countryid")]
-        public async Task<IActionResult> GetByCountryId(Guid countryid)
+        public async Task<IActionResult> GetByCountryId(Guid countryId)
         {
             try
             {
-                var retVal = await _countryCodeService.GetByCountryId(countryid);
+                var retVal = await _countryService.GetCountriesById(countryId);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -31,11 +31,11 @@ namespace AddOptimization.API.Controllers
         }
 
         [HttpGet("get-all-countries")]
-        public async Task<IActionResult> GetAllCountry()
+        public async Task<IActionResult> GetAllCountries()
         {
             try
             {
-                var retVal = await _countryCodeService.GetAllCountry();
+                var retVal = await _countryService.GetAllCountries();
                 return HandleResponse(retVal);
             }
             catch (Exception ex)

@@ -17,14 +17,14 @@ using System.Threading.Tasks;
 
 namespace AddOptimization.Services.Services
 {
-    public class CountryCodeService : ICountryCodeService
+    public class CountryService : ICountryService
     {
         private readonly IGenericRepository<Country> _countryRepository;
-        private readonly ILogger<CountryCodeService> _logger;
+        private readonly ILogger<CountryService> _logger;
         private readonly IMapper _mapper;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public CountryCodeService(IGenericRepository<Country> countryRepository, ILogger<CountryCodeService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor)
+        public CountryService(IGenericRepository<Country> countryRepository, ILogger<CountryService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor)
         {
             _countryRepository = countryRepository;
             _logger = logger;
@@ -32,19 +32,18 @@ namespace AddOptimization.Services.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<ApiResult<List<CountryDto>>> GetByCountryId(Guid countryid)
+        public async Task<ApiResult<CountryDto>> GetCountriesById(Guid countryId)
         {
             try
             {
-                var entity = await _countryRepository.QueryAsync(o => o.Id == countryid && !o.IsDeleted, ignoreGlobalFilter: true);
+                var entity = (await _countryRepository.QueryAsync(o => o.Id == countryId && !o.IsDeleted, ignoreGlobalFilter: true)).FirstOrDefault();
                 if (entity == null)
                 {
-                    return ApiResult<List<CountryDto>>.NotFound("Country");
+                    return ApiResult<CountryDto>.NotFound("Country");
                 }
 
-
-                var mappedEntity = _mapper.Map<List<CountryDto>>(entity);
-                return ApiResult<List<CountryDto>>.Success(mappedEntity);
+                var mappedEntity = _mapper.Map<CountryDto>(entity);
+                return ApiResult<CountryDto>.Success(mappedEntity);
             }
 
             catch (Exception ex)
@@ -53,7 +52,7 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-        public async Task<ApiResult<List<CountryDto>>> GetAllCountry()
+        public async Task<ApiResult<List<CountryDto>>> GetAllCountries()
         {
             try
             {
