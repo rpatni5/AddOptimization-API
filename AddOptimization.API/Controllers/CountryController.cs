@@ -16,21 +16,6 @@ namespace AddOptimization.API.Controllers
             _countryCodeService = countryCodeService;
         }
 
-
-        [HttpGet("countries")]
-        public async Task<IActionResult> GetCountries()
-        {
-            try
-            {
-                var result = await _countryCodeService.GetCountries();
-                return HandleResponse(result);
-            }
-            catch (Exception ex)
-            {
-                return HandleException(ex);
-            }
-        }
-
         [HttpGet("get-by-countryid")]
         public async Task<IActionResult> GetByCountryId(Guid countryid)
         {
@@ -45,7 +30,6 @@ namespace AddOptimization.API.Controllers
             }
         }
 
-
         [HttpGet("get-all-countries")]
         public async Task<IActionResult> GetAllCountry()
         {
@@ -59,7 +43,6 @@ namespace AddOptimization.API.Controllers
                 return HandleException(ex);
             }
         }
-
 
     }
 }

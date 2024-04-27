@@ -32,21 +32,6 @@ namespace AddOptimization.Services.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<ApiResult<List<CountryDto>>> GetCountries()
-        {
-            try
-            {
-                var entities = await _countryRepository.QueryAsync();
-                var mappedEntities = _mapper.Map<List<CountryDto>>(entities.ToList());
-                return ApiResult<List<CountryDto>>.Success(mappedEntities);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
-                throw;
-            }
-        }
-
         public async Task<ApiResult<List<CountryDto>>> GetByCountryId(Guid countryid)
         {
             try
@@ -72,7 +57,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _countryRepository.QueryAsync(include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Id));
+                var entities = await _countryRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Id));
                 var mappedEntities = _mapper.Map<List<CountryDto>>(entities);
                 return ApiResult<List<CountryDto>>.Success(mappedEntities);
             }
