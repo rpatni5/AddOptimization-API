@@ -36,7 +36,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entity = await _countryRepository.QueryAsync(o => o.Id == countryid, ignoreGlobalFilter: true);
+                var entity = await _countryRepository.QueryAsync(o => o.Id == countryid && !o.IsDeleted, ignoreGlobalFilter: true);
                 if (entity == null)
                 {
                     return ApiResult<List<CountryDto>>.NotFound("Country");
