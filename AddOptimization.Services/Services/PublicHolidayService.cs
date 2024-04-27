@@ -43,9 +43,9 @@ namespace AddOptimization.Services.Services
 
         public async Task<ApiResult<List<PublicHolidayDto>>> Search( PageQueryFiterBase filters)
         {
-            try
+            try 
             {
-                var entities = await _publicholidayRepository.QueryAsync(include: entities => entities.Include(e => e.Country).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Date));
+                var entities = await _publicholidayRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.Country).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Date));
                 var mappedEntities = _mapper.Map<List<PublicHolidayDto>>(entities);
                 return ApiResult<List<PublicHolidayDto>>.Success(mappedEntities);
             }
