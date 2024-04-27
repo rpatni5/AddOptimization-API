@@ -44,6 +44,11 @@ public partial class AddOptimizationContext : DbContext
 
     public virtual DbSet<PublicHoliday> PublicHolidays { get; set; }
     public virtual DbSet<Country> Country { get; set; }
+    public virtual DbSet<Schedulers> SchedulerEvents { get; set; }
+    public virtual DbSet<SchedulerStatus> SchedulerStatus { get; set; }
+    public virtual DbSet<SchedulerEventType> SchedulerEventType { get; set; }
+
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

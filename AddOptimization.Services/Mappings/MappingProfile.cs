@@ -100,6 +100,35 @@ namespace AddOptimization.Services.Mappings
                 d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
             });
             CreateMap<CountryDto, Country>();
+
+            CreateMap<Schedulers, SchedulersDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.CreatedAt = s.CreatedAt?.Date;
+
+            });
+            CreateMap<SchedulersDto, Schedulers>();
+
+
+
+            CreateMap<SchedulerStatus, SchedulerStatusDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+
+            });
+            CreateMap<SchedulerStatusDto, SchedulerStatus>();
+
+
+
+            CreateMap<SchedulerEventType, SchedulerEventTypeDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+
+            });
+            CreateMap<SchedulerEventTypeDto, SchedulerEventType>();
         }
     }
 }
