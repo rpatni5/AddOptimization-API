@@ -31,6 +31,36 @@ namespace AddOptimization.API.Controllers
             }
         }
 
+        [HttpGet("get-by-countryid")]
+        public async Task<IActionResult> GetByCountryId(Guid countryid)
+        {
+            try
+            {
+                var retVal = await _countryCodeService.GetByCountryId(countryid);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+
+        [HttpGet("get-all-countries")]
+        public async Task<IActionResult> GetAllCountry()
+        {
+            try
+            {
+                var retVal = await _countryCodeService.GetAllCountry();
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+
     }
 }
 

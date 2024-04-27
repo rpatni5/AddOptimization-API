@@ -6,6 +6,7 @@ using AddOptimization.Utilities.Common;
 using AddOptimization.Utilities.Extensions;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -37,6 +38,42 @@ namespace AddOptimization.Services.Services
             {
                 var entities = await _countryRepository.QueryAsync();
                 var mappedEntities = _mapper.Map<List<CountryDto>>(entities.ToList());
+                return ApiResult<List<CountryDto>>.Success(mappedEntities);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+        public async Task<ApiResult<List<CountryDto>>> GetByCountryId(Guid countryid)
+        {
+            try
+            {
+                var entity = await _countryRepository.QueryAsync(o => o.Id == countryid, ignoreGlobalFilter: true);
+                if (entity == null)
+                {
+                    return ApiResult<List<CountryDto>>.NotFound("Country");
+                }
+
+
+                var mappedEntity = _mapper.Map<List<CountryDto>>(entity);
+                return ApiResult<List<CountryDto>>.Success(mappedEntity);
+            }
+
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+        public async Task<ApiResult<List<CountryDto>>> GetAllCountry()
+        {
+            try
+            {
+                var entities = await _countryRepository.QueryAsync(include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Id));
+                var mappedEntities = _mapper.Map<List<CountryDto>>(entities);
                 return ApiResult<List<CountryDto>>.Success(mappedEntities);
             }
             catch (Exception ex)
