@@ -43,9 +43,9 @@ namespace AddOptimization.Services.Services
 
         public async Task<ApiResult<List<PublicHolidayDto>>> Search( PageQueryFiterBase filters)
         {
-            try
+            try 
             {
-                var entities = await _publicholidayRepository.QueryAsync(include: entities => entities.Include(e => e.Country).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Date));
+                var entities = await _publicholidayRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.Country).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Date));
                 var mappedEntities = _mapper.Map<List<PublicHolidayDto>>(entities);
                 return ApiResult<List<PublicHolidayDto>>.Success(mappedEntities);
             }
@@ -128,56 +128,7 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-        public async Task<ApiResult<List<PublicHolidayDto>>> GetByCountryId(Guid countryid)
-        {
-            try
-            {
-                var entity = await _publicholidayRepository.QueryAsync(o => o.CountryId == countryid, ignoreGlobalFilter: true);
-                if (entity == null)
-                {
-                    return ApiResult<List<PublicHolidayDto>>.NotFound("Country");
-                }
-
-
-                var mappedEntity = _mapper.Map<List<PublicHolidayDto>>(entity);
-                return ApiResult<List<PublicHolidayDto>>.Success(mappedEntity);
-            }
-
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
-                throw;
-            }
-        }
-        public async Task<ApiResult<List<CountryDto>>> GetAllCountry()
-        {
-            try
-            {
-                var entities = await _countryRepository.QueryAsync(include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Id));
-                var mappedEntities = _mapper.Map<List<CountryDto>>(entities);
-                return ApiResult<List<CountryDto>>.Success(mappedEntities);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
-                throw;
-            }
-        }
-
-        public async Task<ApiResult<List<CountryDto>>> GetCountries()
-        {
-            try
-            {
-                var entities = await _countryRepository.QueryAsync();
-                var mappedEntities = _mapper.Map<List<CountryDto>>(entities.ToList());
-                return ApiResult<List<CountryDto>>.Success(mappedEntities);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
-                throw;
-            }
-        }
+       
 
     }
 }
