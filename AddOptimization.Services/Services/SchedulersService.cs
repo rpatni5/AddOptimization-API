@@ -13,24 +13,28 @@ using Microsoft.Extensions.Logging;
 
 namespace AddOptimization.Services.Services
 {
-    public class SchedulersService:ISchedulersService
+    public class SchedulersService : ISchedulersService
     {
         private readonly IGenericRepository<Schedulers> _schedulersRepository;
 
         private readonly ILogger<SchedulersService> _logger;
         private readonly IMapper _mapper;
-        public SchedulersService(IGenericRepository<Schedulers> schedulersRepository, ILogger<SchedulersService> logger, IMapper mapper)
+        private readonly IUnitOfWork _unitOfWork;
+
+        public SchedulersService(IGenericRepository<Schedulers> schedulersRepository, ILogger<SchedulersService> logger, IMapper mapper, IUnitOfWork unitOfWork)
         {
             _schedulersRepository = schedulersRepository;
-          
+
             _logger = logger;
             _mapper = mapper;
+            _unitOfWork = unitOfWork;
+
         }
         public async Task<PagedApiResult<SchedulersDto>> Search(PageQueryFiterBase filters)
         {
             try
             {
-                var entities = await _schedulersRepository.QueryAsync((e => !e.IsDeleted),  include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e=>e.SchedulerStatus).Include(e=>e.SchedulerEventType), orderBy: x => x.OrderBy(x => x.Date));
+                var entities = await _schedulersRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.SchedulerStatus).Include(e => e.SchedulerEventType).Include(e => e.ApplicationUser), orderBy: x => x.OrderBy(x => x.Date));
 
                 entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
                 entities = ApplyFilters(entities, filters);
@@ -44,12 +48,14 @@ namespace AddOptimization.Services.Services
                     Summary = e.Summary,
                     CreatedAt = e.CreatedAt,
                     CreatedBy = e.CreatedByUser.FullName,
-               
+                    StatusID = e.SchedulerStatus.Id,
+                    EventTypeID = e.SchedulerEventType.Id,
+                    UserID = e.ApplicationUser.Id,
+
                 }).ToList());
                 var retVal = pagedResult;
                 return PagedApiResult<SchedulersDto>.Success(retVal);
 
-              
             }
             catch (Exception ex)
             {
@@ -58,46 +64,48 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        public async Task<ApiResult<bool>> Create(SchedulersDto model)
+
+        public async Task<ApiResult<bool>> Upsert(List<SchedulersDto> model)
         {
+            await _unitOfWork.BeginTransactionAsync();
+            var schedluesToUpdate = new List<Schedulers>();
+            var schedluesToInsert = new List<Schedulers>();
+
             try
             {
-                
-                var entities = _mapper.Map<Schedulers>(model);
-                await _schedulersRepository.InsertAsync(entities);
-                return ApiResult<bool>.Success(true);
+                foreach (var item in model)
+                {
+                    var entity = _mapper.Map<Schedulers>(item);
+                    if (item.Id != Guid.Empty)
+                    {
+                        schedluesToUpdate.Add(entity);
+                        await _schedulersRepository.BulkUpdateAsync(schedluesToUpdate);
+                        await _unitOfWork.CommitTransactionAsync();
+
+                        return ApiResult<bool>.Success(true);
+                    }
+                    else
+                    {
+
+                        schedluesToInsert.Add(entity);
+                        await _schedulersRepository.BulkInsertAsync(schedluesToInsert);
+                        await _unitOfWork.CommitTransactionAsync();
+
+                        return ApiResult<bool>.Success(true);
+                    }
+                }
+
             }
+
             catch (Exception ex)
             {
+                await _unitOfWork.RollbackTransactionAsync();
                 _logger.LogException(ex);
                 throw;
             }
+            return ApiResult<bool>.Success(true);
         }
 
-
-        public async Task<ApiResult<SchedulersDto>> Update(Guid id, SchedulersDto model)
-        {
-            try
-            {
-                var entity = await _schedulersRepository.FirstOrDefaultAsync(o => o.Id == id);
-
-
-                entity.Duration = model.Duration;
-                entity.Date = model.Date;
-                entity.Summary = model.Summary;
-                entity.IsDeleted   = model.IsDeleted;
-
-
-                await _schedulersRepository.UpdateAsync(entity);
-                var mappedEntity = _mapper.Map<SchedulersDto>(entity);
-                return ApiResult<SchedulersDto>.Success(mappedEntity);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
-                throw;
-            }
-        }
 
         public async Task<ApiResult<bool>> Delete(Guid id)
         {
@@ -116,10 +124,6 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-
-
-
-
 
 
         private IQueryable<Schedulers> ApplyFilters(IQueryable<Schedulers> entities, PageQueryFiterBase filter)
@@ -146,11 +150,9 @@ namespace AddOptimization.Services.Services
                 entities = entities.Where(e => e.Summary != null && e.Summary.ToLower().Contains(v.ToLower()));
             });
 
-          
+
             return entities;
         }
-
-
 
 
         private IQueryable<Schedulers> ApplySorting(IQueryable<Schedulers> orders, SortModel sort)
@@ -176,7 +178,7 @@ namespace AddOptimization.Services.Services
                     if (columnName.ToUpper() == nameof(SchedulersDto.Summary).ToUpper())
                     {
                         orders = orders.OrderBy(o => o.Summary);
-                    }                  
+                    }
 
                 }
                 else
@@ -193,7 +195,7 @@ namespace AddOptimization.Services.Services
                     {
                         orders = orders.OrderByDescending(o => o.Summary);
                     }
-                   
+
                 }
                 return orders;
 

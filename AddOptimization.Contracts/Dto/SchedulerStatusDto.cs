@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace AddOptimization.Contracts.Dto
 {
-    public class SchedulerStatusDto : BaseDto<Guid?>
+    public class SchedulerStatusDto : BaseDto<Guid>
     {
         public string CreatedBy { get; set; }
         public string UpdatedBy { get; set; }

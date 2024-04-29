@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using AddOptimization.API.Common;
 using AddOptimization.Contracts.Services;
@@ -17,8 +16,7 @@ namespace AddOptimization.API.Controllers
             _schedulersService = schedulersService;
         }
 
-
-        [HttpPost("search")]
+        [HttpGet("search")]
         public async Task<IActionResult> Search([FromBody] PageQueryFiterBase filters)
         {
             try
@@ -32,12 +30,12 @@ namespace AddOptimization.API.Controllers
             }
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] SchedulersDto model)
+        [HttpPost("upsert")]
+        public async Task<IActionResult> Upsert( [FromBody] List<SchedulersDto> model)
         {
             try
             {
-                var retVal = await _schedulersService.Create(model);
+                var retVal = await _schedulersService.Upsert( model);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -45,21 +43,6 @@ namespace AddOptimization.API.Controllers
                 return HandleException(ex);
             }
         }
-
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] SchedulersDto model)
-        {
-            try
-            {
-                var retVal = await _schedulersService.Update(id, model);
-                return HandleResponse(retVal);
-            }
-            catch (Exception ex)
-            {
-                return HandleException(ex);
-            }
-        }
-
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)

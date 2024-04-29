@@ -16,8 +16,7 @@ namespace AddOptimization.API.Controllers
             _schedulersStatusService = schedulersStatusService;
         }
 
-
-        [HttpPost("search")]
+        [HttpGet("search")]
         public async Task<IActionResult> Search()
         {
             try

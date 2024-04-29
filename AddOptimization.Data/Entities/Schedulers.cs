@@ -1,10 +1,5 @@
 ﻿using AddOptimization.Data.Common;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+using System.ComponentModel.DataAnnotations.Schema;
 namespace AddOptimization.Data.Entities
 {
     public class Schedulers : BaseEntityNew<Guid>
@@ -29,10 +24,19 @@ namespace AddOptimization.Data.Entities
 
         public bool IsActive { get; set; }
 
+        [ForeignKey(nameof(StatusID))]
         public virtual SchedulerStatus SchedulerStatus { get; set; }
+
+
+        [ForeignKey(nameof(EventTypeID))]
 
         public virtual SchedulerEventType SchedulerEventType { get; set; }
 
+
+        [ForeignKey(nameof(UserID))]
+
+        public virtual ApplicationUser ApplicationUser { get; set; }
+
     }
-    
+
 }

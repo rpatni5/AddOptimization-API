@@ -1,7 +1,6 @@
 ﻿using AddOptimization.API.Common;
 using AddOptimization.Contracts.Services;
 using GraphQL;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AddOptimization.API.Controllers
@@ -16,7 +15,7 @@ namespace AddOptimization.API.Controllers
         }
 
 
-        [HttpPost("search")]
+        [HttpGet("search")]
         public async Task<IActionResult> Search()
         {
             try
