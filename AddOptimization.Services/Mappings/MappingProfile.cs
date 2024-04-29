@@ -2,6 +2,7 @@
 using AddOptimization.Data.Entities;
 using AddOptimization.Contracts.Dto;
 using System.Text.Json;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace AddOptimization.Services.Mappings
 {
@@ -101,6 +102,26 @@ namespace AddOptimization.Services.Mappings
             });
             CreateMap<CountryDto, Country>();
 
+
+            CreateMap<ClientRequestDto, Client>().AfterMap((s, d) =>
+            {
+                d.Organization = s.Company;
+            }); 
+            
+            CreateMap<Client, ClientResponseDto>().AfterMap((s, d) =>
+            {
+                d.CreatedAt = s.CreatedAt?.Date;
+                d.CreatedBy = s.CreatedByUser?.FullName;
+                d.UpdatedAt = s.UpdatedAt?.Date;
+                d.UpdatedBy = s.UpdatedByUser?.FullName;
+            });
+
+            CreateMap<Client, ClientResponseDto>().AfterMap((s, d) =>
+            {
+                d.Company = s.Organization;
+            });
+
+
             CreateMap<Schedulers, SchedulersDto>().AfterMap((s, d) =>
             {
                 d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
@@ -129,6 +150,9 @@ namespace AddOptimization.Services.Mappings
 
             });
             CreateMap<SchedulerEventTypeDto, SchedulerEventType>();
+
         }
     }
 }
+
+
