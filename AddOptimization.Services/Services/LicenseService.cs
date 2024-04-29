@@ -15,6 +15,7 @@ using Microsoft.Extensions.Configuration;
 using AddOptimization.Contracts.Constants;
 using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Services;
+using Microsoft.AspNetCore.Hosting;
 
 namespace AddOptimization.Services.Services;
 public class LicenseService : ILicenseService
@@ -30,7 +31,9 @@ public class LicenseService : ILicenseService
     private readonly IEmailService _emailService;
     private readonly IPermissionService _permissionService;
     private readonly List<string> _currentUserRoles;
-    public LicenseService(IGenericRepository<License> licenseRepository, ILogger<LicenseService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor,
+    private readonly IHostingEnvironment _hostingEnvironment;
+
+    public LicenseService(IGenericRepository<License> licenseRepository, ILogger<LicenseService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, IHostingEnvironment hostingEnvironment,
         IGenericRepository<Customer> customerRepository, IConfiguration configuration, ITemplateService templateService, IEmailService emailService, IUnitOfWork unitOfWork, IPermissionService permissionService)
     {
         _licenseRepository = licenseRepository;
@@ -45,6 +48,7 @@ public class LicenseService : ILicenseService
         _configuration = configuration;
         _emailService = emailService;
         _currentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
+        _hostingEnvironment = hostingEnvironment;
     }
 
     public async Task<PagedApiResult<LicenseDetailsDto>> Search(PageQueryFiterBase filter)
@@ -134,7 +138,7 @@ public class LicenseService : ILicenseService
             if (licenseResult != null)
             {
                 var customer = await _customerRepository.FirstOrDefaultAsync(x => x.Id == licenseResult.CustomerId);
-                await SendCustomerLicenseAddedEmail(customer.Name, customer.Email, licenseResult);
+                await SendCustomerLicenseAddedEmail(customer.Email, customer.Name, licenseResult);
             }
             return await Get(entity.Id);
         }
@@ -369,6 +373,9 @@ public class LicenseService : ILicenseService
     {
         try
         {
+            //string path = Path.Combine(_hostingEnvironment.ContentRootPath, "Assets\\Images");
+            //var fileName = "Logo_AddOptimization_blue.png";
+            //var imagePath = $"\"{path}\\{fileName}\"";
             var subject = "Add optimization new license details";
             var message = "A new license has been created for your account. Please find the details below.";
             var emailTemplate = _templateService.ReadTemplate(EmailTemplates.CreateLicense);
@@ -378,6 +385,7 @@ public class LicenseService : ILicenseService
                             .Replace("[LicenseKey]", license.LicenseKey)
                             .Replace("[NoOfDevices]", license.NoOfDevices.ToString())
                             .Replace("[ExpirationDate]", license.ExpirationDate.ToString());
+                            //.Replace("[ImageTag]", $"<img src={imagePath} height=\"20\" width=\"120\" />");
             return await _emailService.SendEmail(email, subject, emailTemplate);
         }
         catch (Exception ex)
