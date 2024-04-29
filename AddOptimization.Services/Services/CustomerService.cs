@@ -443,7 +443,9 @@ public class CustomerService : ICustomerService
             var subject = "Create your account Password";
             var emailTemplate = _templateService.ReadTemplate(EmailTemplates.AccountCreateResetPassword);
             var resetLink = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).ResetPassword).Replace("[token]", token);
-            emailTemplate = emailTemplate.Replace("[UserFullName]", userFullName).Replace("[PasswordResetLink]", resetLink);
+            emailTemplate = emailTemplate.Replace("[UserFullName]", userFullName)
+                                         .Replace("[CreateNewPasswordLink]", resetLink)
+                                         .Replace("[PasswordResetLink]", resetLink);
             return await _emailService.SendEmail(email, subject, emailTemplate);
         }
         catch (Exception ex)

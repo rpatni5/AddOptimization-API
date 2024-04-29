@@ -14,9 +14,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Assets\Images\Logo_AddOptimization_blue.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <_WebToolingArtifacts Remove="Properties\PublishProfiles\FolderProfile_Development.pubxml" />
     <_WebToolingArtifacts Remove="Properties\PublishProfiles\FolderProfile_Production.pubxml" />
     <_WebToolingArtifacts Remove="Properties\PublishProfiles\FolderProfile_Qa.pubxml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\Images\Logo_AddOptimization_blue.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
@@ -42,10 +52,6 @@
     <ProjectReference Include="..\AddOptimization.Data\AddOptimization.Data.csproj" />
     <ProjectReference Include="..\AddOptimization.Services\AddOptimization.Services.csproj" />
     <ProjectReference Include="..\AddOptimization.Utilities\AddOptimization.Utilities.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="wwwroot\" />
   </ItemGroup>
 
 </Project>
