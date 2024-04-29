@@ -1,4 +1,6 @@
 ﻿
+using System;
+
 namespace AddOptimization.Utilities.Common;
 
 public class ApiResult<TModel> 
@@ -57,4 +59,4 @@ public class ApiResult<TModel>
         return result;
     }
 
-}
+   }
