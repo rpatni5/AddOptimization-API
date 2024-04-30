@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 namespace AddOptimization.Data.Entities
 {
-    public class Schedulers : BaseEntityNew<Guid>
+    public class SchedulerEvent : BaseEntityNew<Guid>
     {
         public decimal Duration { get; set; }
 
@@ -10,13 +10,13 @@ namespace AddOptimization.Data.Entities
 
         public string Summary { get; set; }
 
-        public Guid EventTypeID { get; set; }
+        public Guid EventTypeId { get; set; }
 
-        public Guid StatusID { get; set; }
+        public Guid StatusId { get; set; }
 
-        public Guid ClientID { get; set; }
+        public Guid ClientId { get; set; }
 
-        public int UserID { get; set; }
+        public int UserId { get; set; }
 
         public bool IsDraft { get; set; }
 
@@ -24,16 +24,16 @@ namespace AddOptimization.Data.Entities
 
         public bool IsActive { get; set; }
 
-        [ForeignKey(nameof(StatusID))]
+        [ForeignKey(nameof(StatusId))]
         public virtual SchedulerStatus SchedulerStatus { get; set; }
 
 
-        [ForeignKey(nameof(EventTypeID))]
+        [ForeignKey(nameof(EventTypeId))]
 
         public virtual SchedulerEventType SchedulerEventType { get; set; }
 
 
-        [ForeignKey(nameof(UserID))]
+        [ForeignKey(nameof(UserId))]
 
         public virtual ApplicationUser ApplicationUser { get; set; }
 

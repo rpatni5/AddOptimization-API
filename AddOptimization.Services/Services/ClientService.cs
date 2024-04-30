@@ -31,7 +31,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var isExists = await _clientRepository.IsExist(t => t.ClientEmail.ToLower() == model.ClientEmail.ToLower(), ignoreGlobalFilter: true);
+                var isExists = await _clientRepository.IsExist(t => t.Email.ToLower() == model.ClientEmail.ToLower(), ignoreGlobalFilter: true);
                 if (isExists)
                 {
                     var errorMessage = isExists? "User already exists with some other role in the system." : "Client already exists with same email.";
@@ -43,7 +43,7 @@ namespace AddOptimization.Services.Services
                 entity.LastName = model.LastName;
                 entity.Organization = model.Company;
                 entity.ManagerName = model.ManagerName;
-                entity.ClientEmail = model.ClientEmail;
+                entity.Email = model.ClientEmail;
                 entity.IsActive = true;
                 entity.IsDeleted = false;
                 entity.CountryId =model.CountryId;

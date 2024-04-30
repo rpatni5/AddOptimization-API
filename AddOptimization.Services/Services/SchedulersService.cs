@@ -15,13 +15,13 @@ namespace AddOptimization.Services.Services
 {
     public class SchedulersService : ISchedulersService
     {
-        private readonly IGenericRepository<Schedulers> _schedulersRepository;
+        private readonly IGenericRepository<SchedulerEvent> _schedulersRepository;
 
         private readonly ILogger<SchedulersService> _logger;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
 
-        public SchedulersService(IGenericRepository<Schedulers> schedulersRepository, ILogger<SchedulersService> logger, IMapper mapper, IUnitOfWork unitOfWork)
+        public SchedulersService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulersService> logger, IMapper mapper, IUnitOfWork unitOfWork)
         {
             _schedulersRepository = schedulersRepository;
 
@@ -40,7 +40,7 @@ namespace AddOptimization.Services.Services
                 entities = ApplyFilters(entities, filters);
 
 
-                var pagedResult = PageHelper<Schedulers, SchedulersDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new SchedulersDto
+                var pagedResult = PageHelper<SchedulerEvent, SchedulersDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new SchedulersDto
                 {
                     Id = e.Id,
                     Duration = e.Duration,
@@ -68,14 +68,14 @@ namespace AddOptimization.Services.Services
         public async Task<ApiResult<bool>> Upsert(List<SchedulersDto> model)
         {
             await _unitOfWork.BeginTransactionAsync();
-            var schedluesToUpdate = new List<Schedulers>();
-            var schedluesToInsert = new List<Schedulers>();
+            var schedluesToUpdate = new List<SchedulerEvent>();
+            var schedluesToInsert = new List<SchedulerEvent>();
 
             try
             {
                 foreach (var item in model)
                 {
-                    var entity = _mapper.Map<Schedulers>(item);
+                    var entity = _mapper.Map<SchedulerEvent>(item);
                     if (item.Id != Guid.Empty)
                     {
                         schedluesToUpdate.Add(entity);
@@ -126,7 +126,7 @@ namespace AddOptimization.Services.Services
         }
 
 
-        private IQueryable<Schedulers> ApplyFilters(IQueryable<Schedulers> entities, PageQueryFiterBase filter)
+        private IQueryable<SchedulerEvent> ApplyFilters(IQueryable<SchedulerEvent> entities, PageQueryFiterBase filter)
         {
             filter.GetValue<string>("Date", (v) =>
             {
@@ -155,7 +155,7 @@ namespace AddOptimization.Services.Services
         }
 
 
-        private IQueryable<Schedulers> ApplySorting(IQueryable<Schedulers> orders, SortModel sort)
+        private IQueryable<SchedulerEvent> ApplySorting(IQueryable<SchedulerEvent> orders, SortModel sort)
         {
             try
             {

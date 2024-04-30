@@ -149,7 +149,7 @@ namespace AddOptimization.Services.Services
                 {
                     return ApiResult<bool>.NotFound("version");
                 }
-                entity.IsActive = !(entity.IsActive ?? false);
+                entity.IsActive = !entity.IsActive;
                 await _versionRepository.UpdateAsync(entity);
                 return ApiResult<bool>.Success(true);
             }

@@ -18,7 +18,7 @@ namespace AddOptimization.Data.Entities
 
         [MaxLength(100)]
         public string DownloadPath { get; set; }
-        public bool? IsActive { get; set; }
+        public bool IsActive { get; set; }
         public bool IsDeleted { get; set; }
 
         public bool IsLatest {  get; set; }
