@@ -87,5 +87,19 @@ namespace AddOptimization.API.Controllers
             }
         }
 
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(Guid id, ClientRequestDto model)
+        {
+            try
+            {
+                var retVal = await _clientService.Update(id , model);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
     }
 }

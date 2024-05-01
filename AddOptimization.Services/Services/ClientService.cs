@@ -65,7 +65,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _clientRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser));
+                var entities = await _clientRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.Country));
                 var mappedEntities = _mapper.Map<List<ClientResponseDto>>(entities.ToList());
                 return ApiResult<List<ClientResponseDto>>.Success(mappedEntities);
             }
@@ -123,6 +123,44 @@ namespace AddOptimization.Services.Services
 
                 await _clientRepository.DeleteAsync(entity);
                 return ApiResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+        public async Task<ApiResult<ClientResponseDto>> Update(Guid id, ClientRequestDto model)
+        {
+            try
+            {
+                var isExists = await _clientRepository.IsExist(t => t.Id != id && t.ClientEmail.ToLower() == model.ClientEmail.ToLower(), ignoreGlobalFilter: true);
+
+                if (isExists)
+                {
+                    var errorMessage = "Client already exists with same email.";
+                    return ApiResult<ClientResponseDto>.Failure(ValidationCodes.EmailUserNameAlreadyExists, errorMessage);
+                }
+
+                var entity = await _clientRepository.FirstOrDefaultAsync(t => t.Id == id, ignoreGlobalFilter: true);
+                if (entity == null)
+                {
+                    return ApiResult<ClientResponseDto>.NotFound("Client");
+                }
+
+                entity.FirstName = model.FirstName;
+                entity.LastName = model.LastName;
+                entity.Organization = model.Company;
+                entity.ManagerName = model.ManagerName;
+                entity.ClientEmail = model.ClientEmail;
+                entity.CountryId = model.CountryId;
+                entity.IsApprovalRequired = model.IsApprovalRequired;
+                entity = await _clientRepository.UpdateAsync(entity);
+               
+
+                var mappedEntity = _mapper.Map<ClientResponseDto>(entity);
+                return ApiResult<ClientResponseDto>.Success(mappedEntity);
             }
             catch (Exception ex)
             {

@@ -17,5 +17,7 @@ namespace AddOptimization.Contracts.Services
 
         Task<ApiResult<List<ClientResponseDto>>> GetAllClients();
         Task<ApiResult<bool>> Delete(Guid id);
+
+        Task<ApiResult<ClientResponseDto>> Update(Guid id, ClientRequestDto model);
     }
 }
