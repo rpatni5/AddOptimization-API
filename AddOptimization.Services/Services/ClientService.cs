@@ -39,15 +39,8 @@ namespace AddOptimization.Services.Services
                 }
 
                 Client entity = new Client();
-                entity.FirstName = model.FirstName;
-                entity.LastName = model.LastName;
-                entity.Organization = model.Company;
-                entity.ManagerName = model.ManagerName;
-                entity.ClientEmail = model.ClientEmail;
-                entity.IsActive = true;
-                entity.IsDeleted = false;
-                entity.CountryId =model.CountryId;
-                entity.IsApprovalRequired = model.IsApprovalRequired;
+               
+                _mapper.Map(model, entity);
                 await _clientRepository.InsertAsync(entity);
 
                 var mappedEntity = _mapper.Map<ClientResponseDto>(entity);
@@ -149,13 +142,7 @@ namespace AddOptimization.Services.Services
                     return ApiResult<ClientResponseDto>.NotFound("Client");
                 }
 
-                entity.FirstName = model.FirstName;
-                entity.LastName = model.LastName;
-                entity.Organization = model.Company;
-                entity.ManagerName = model.ManagerName;
-                entity.ClientEmail = model.ClientEmail;
-                entity.CountryId = model.CountryId;
-                entity.IsApprovalRequired = model.IsApprovalRequired;
+                _mapper.Map(model, entity);
                 entity = await _clientRepository.UpdateAsync(entity);
                
 
