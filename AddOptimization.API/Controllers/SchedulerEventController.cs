@@ -8,12 +8,12 @@ using AddOptimization.Contracts.Dto;
 namespace AddOptimization.API.Controllers
 {
     [Authorize]
-    public class SchedulersController : CustomApiControllerBase
+    public class SchedulerEventController : CustomApiControllerBase
     {
-        private readonly ISchedulersService _schedulersService;
-        public SchedulersController(ILogger<SchedulersController> logger, ISchedulersService schedulersService) : base(logger)
+        private readonly ISchedulerEventService _schedulerEventService;
+        public SchedulerEventController(ILogger<SchedulerEventController> logger, ISchedulerEventService schedulerEventService) : base(logger)
         {
-            _schedulersService = schedulersService;
+            _schedulerEventService = schedulerEventService;
         }
 
         [HttpGet("search")]
@@ -21,7 +21,7 @@ namespace AddOptimization.API.Controllers
         {
             try
             {
-                var retVal = await _schedulersService.Search( filters);
+                var retVal = await _schedulerEventService.Search( filters);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -35,7 +35,7 @@ namespace AddOptimization.API.Controllers
         {
             try
             {
-                var retVal = await _schedulersService.Upsert( model);
+                var retVal = await _schedulerEventService.Upsert( model);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -49,7 +49,7 @@ namespace AddOptimization.API.Controllers
         {
             try
             {
-                var retVal = await _schedulersService.Delete(id);
+                var retVal = await _schedulerEventService.Delete(id);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)

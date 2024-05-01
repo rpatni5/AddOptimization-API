@@ -37,6 +37,10 @@ namespace AddOptimization.Data.Entities
 
         public virtual ApplicationUser ApplicationUser { get; set; }
 
+        [ForeignKey(nameof(ClientId))]
+
+        public virtual Client Client { get; set; }
+
     }
 
 }

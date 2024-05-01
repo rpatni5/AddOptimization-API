@@ -13,15 +13,15 @@ using Microsoft.Extensions.Logging;
 
 namespace AddOptimization.Services.Services
 {
-    public class SchedulersService : ISchedulersService
+    public class SchedulerEventService : ISchedulerEventService
     {
         private readonly IGenericRepository<SchedulerEvent> _schedulersRepository;
 
-        private readonly ILogger<SchedulersService> _logger;
+        private readonly ILogger<SchedulerEventService> _logger;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
 
-        public SchedulersService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulersService> logger, IMapper mapper, IUnitOfWork unitOfWork)
+        public SchedulerEventService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulerEventService> logger, IMapper mapper, IUnitOfWork unitOfWork)
         {
             _schedulersRepository = schedulersRepository;
 
@@ -34,7 +34,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _schedulersRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.SchedulerStatus).Include(e => e.SchedulerEventType).Include(e => e.ApplicationUser), orderBy: x => x.OrderBy(x => x.Date));
+                var entities = await _schedulersRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.SchedulerStatus).Include(e => e.SchedulerEventType).Include(e => e.ApplicationUser).Include(e => e.Client), orderBy: x => x.OrderBy(x => x.Date));
 
                 entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
                 entities = ApplyFilters(entities, filters);
@@ -68,8 +68,8 @@ namespace AddOptimization.Services.Services
         public async Task<ApiResult<bool>> Upsert(List<SchedulersDto> model)
         {
             await _unitOfWork.BeginTransactionAsync();
-            var schedluesToUpdate = new List<SchedulerEvent>();
-            var schedluesToInsert = new List<SchedulerEvent>();
+            var schedluerEventsToUpdate = new List<SchedulerEvent>();
+            var schedluerEventsToInsert = new List<SchedulerEvent>();
 
             try
             {
@@ -78,8 +78,8 @@ namespace AddOptimization.Services.Services
                     var entity = _mapper.Map<SchedulerEvent>(item);
                     if (item.Id != Guid.Empty)
                     {
-                        schedluesToUpdate.Add(entity);
-                        await _schedulersRepository.BulkUpdateAsync(schedluesToUpdate);
+                        schedluerEventsToUpdate.Add(entity);
+                        await _schedulersRepository.BulkUpdateAsync(schedluerEventsToUpdate);
                         await _unitOfWork.CommitTransactionAsync();
 
                         return ApiResult<bool>.Success(true);
@@ -87,8 +87,8 @@ namespace AddOptimization.Services.Services
                     else
                     {
 
-                        schedluesToInsert.Add(entity);
-                        await _schedulersRepository.BulkInsertAsync(schedluesToInsert);
+                        schedluerEventsToInsert.Add(entity);
+                        await _schedulersRepository.BulkInsertAsync(schedluerEventsToInsert);
                         await _unitOfWork.CommitTransactionAsync();
 
                         return ApiResult<bool>.Success(true);
