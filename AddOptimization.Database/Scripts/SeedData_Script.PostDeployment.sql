@@ -26,6 +26,80 @@ BEGIN
         ('4F71A57F-2135-4B17-AA60-BA40913FE69A','Inactive')
 END
 
+/* Adding Timesheet EventType data in Scheduler Event Types */
+
+IF NOT EXISTS (SELECT 1 FROM SchedulerEventTypes Where Name= 'Timesheet')
+BEGIN 
+    INSERT INTO SchedulerEventTypes(Id,Name)
+    VALUES
+        ('C20BA494-469D-4A1F-864F-472DA6351084','Timesheet')
+END
+
+/* Adding Overlap EventType data in Scheduler Event Types */
+
+IF NOT EXISTS (SELECT 1 FROM SchedulerEventTypes Where Name= 'Overlap')
+BEGIN 
+    INSERT INTO SchedulerEventTypes(Id,Name)
+    VALUES
+        ('D4E69B78-10BF-4B9B-8072-8CEF20ECAAA3','Overlap')
+END
+
+/* Adding Absence Request EventType data in Scheduler Event Types */
+
+IF NOT EXISTS (SELECT 1 FROM SchedulerEventTypes Where Name= 'Absence Request')
+BEGIN 
+    INSERT INTO SchedulerEventTypes(Id,Name)
+    VALUES
+        ('45F8C755-E930-4372-96C7-8DE02FDDFDF6','Absence Request')
+END
+
+/* Adding Pending for accountant approval Scheduler Status data in Scheduler Status */
+
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatus Where Name= 'Pending for accountant approval')
+BEGIN 
+    INSERT INTO SchedulerStatus(Id,Name)
+    VALUES
+        ('B39271A8-EB3A-42DC-A079-1C76F4A75668','Pending for accountant approval')
+END
+
+/* Adding Draft Scheduler Status data in Scheduler Status */
+
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatus Where Name= 'Draft')
+BEGIN 
+    INSERT INTO SchedulerStatus(Id,Name)
+    VALUES
+        ('905729F2-E9A6-4640-BC04-37A189D77628','Draft')
+END
+
+/* Adding Pending for invoicing Scheduler Status data in Scheduler Status */
+
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatus Where Name= 'Pending for invoicing')
+BEGIN 
+    INSERT INTO SchedulerStatus(Id,Name)
+    VALUES
+        ('0AAD8336-A223-42F4-B6FE-4EDD97ADEDC3','Pending for invoicing')
+END
+
+/* Adding Paid by client Scheduler Status data in Scheduler Status */
+
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatus Where Name= 'Paid by client')
+BEGIN 
+    INSERT INTO SchedulerStatus(Id,Name)
+    VALUES
+        ('F69D2DD9-0165-4CAA-BD6D-96FF663309AF','Paid by client')
+END
+
+/* Adding Pending for client appproval Scheduler Status data in Scheduler Status */
+
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatus Where Name= 'Pending for client appproval')
+BEGIN 
+    INSERT INTO SchedulerStatus(Id,Name)
+    VALUES
+        ('2DB8D005-90BB-40ED-B35E-ACC37B15787E','Pending for client appproval')
+END
+
+
+
 /* Adding Roles data in Roles */
 
 IF NOT EXISTS (SELECT 1 FROM Roles Where Name= 'Super Admin')
