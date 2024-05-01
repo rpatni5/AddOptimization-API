@@ -34,7 +34,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _schedulersRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.SchedulerStatus).Include(e => e.SchedulerEventType).Include(e => e.ApplicationUser), orderBy: x => x.OrderBy(x => x.Date));
+                var entities = await _schedulersRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.SchedulerStatus).Include(e => e.SchedulerEventType).Include(e => e.ApplicationUser).Include(e => e.Client), orderBy: x => x.OrderBy(x => x.Date));
 
                 entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
                 entities = ApplyFilters(entities, filters);
@@ -51,6 +51,7 @@ namespace AddOptimization.Services.Services
                     StatusID = e.SchedulerStatus.Id,
                     EventTypeID = e.SchedulerEventType.Id,
                     UserID = e.ApplicationUser.Id,
+                    ClientID = e.Client.Id,
 
                 }).ToList());
                 var retVal = pagedResult;
