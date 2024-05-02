@@ -10,7 +10,7 @@ namespace AddOptimization.Contracts.Services
      
         Task<ApiResult<bool>> Delete(Guid id);
 
-        Task<ApiResult<bool>> Upsert(List<SchedulersDto> model);
+        Task<ApiResult<bool>> Save(List<SchedulersDto> model);
 
     }
 }

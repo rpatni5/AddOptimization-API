@@ -51,6 +51,7 @@ namespace AddOptimization.Services.Services
                     StatusID = e.SchedulerStatus.Id,
                     EventTypeID = e.SchedulerEventType.Id,
                     UserID = e.ApplicationUser.Id,
+                    ClientID = e.Client.Id,
 
                 }).ToList());
                 var retVal = pagedResult;
@@ -65,7 +66,7 @@ namespace AddOptimization.Services.Services
         }
 
 
-        public async Task<ApiResult<bool>> Upsert(List<SchedulersDto> model)
+        public async Task<ApiResult<bool>> Save(List<SchedulersDto> model)
         {
             await _unitOfWork.BeginTransactionAsync();
             var schedluerEventsToUpdate = new List<SchedulerEvent>();
@@ -79,21 +80,24 @@ namespace AddOptimization.Services.Services
                     if (item.Id != Guid.Empty)
                     {
                         schedluerEventsToUpdate.Add(entity);
-                        await _schedulersRepository.BulkUpdateAsync(schedluerEventsToUpdate);
-                        await _unitOfWork.CommitTransactionAsync();
-
-                        return ApiResult<bool>.Success(true);
                     }
                     else
                     {
-
                         schedluerEventsToInsert.Add(entity);
-                        await _schedulersRepository.BulkInsertAsync(schedluerEventsToInsert);
-                        await _unitOfWork.CommitTransactionAsync();
-
-                        return ApiResult<bool>.Success(true);
                     }
                 }
+
+                if (schedluerEventsToUpdate.Count() > 0)
+                {
+                    await _schedulersRepository.BulkUpdateAsync(schedluerEventsToUpdate);
+
+                }
+                if (schedluerEventsToInsert.Count() > 0)
+                {
+                    await _schedulersRepository.BulkInsertAsync(schedluerEventsToInsert);
+                }
+                await _unitOfWork.CommitTransactionAsync();
+                return ApiResult<bool>.Success(true);
 
             }
 
@@ -103,7 +107,6 @@ namespace AddOptimization.Services.Services
                 _logger.LogException(ex);
                 throw;
             }
-            return ApiResult<bool>.Success(true);
         }
 
 

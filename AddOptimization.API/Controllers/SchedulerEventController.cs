@@ -16,10 +16,11 @@ namespace AddOptimization.API.Controllers
             _schedulerEventService = schedulerEventService;
         }
 
-        [HttpGet("search")]
+        [HttpPost("search")]
         public async Task<IActionResult> Search([FromBody] PageQueryFiterBase filters)
         {
             try
+            
             {
                 var retVal = await _schedulerEventService.Search( filters);
                 return HandleResponse(retVal);
@@ -30,12 +31,12 @@ namespace AddOptimization.API.Controllers
             }
         }
 
-        [HttpPost("upsert")]
-        public async Task<IActionResult> Upsert( [FromBody] List<SchedulersDto> model)
+        [HttpPost]
+        public async Task<IActionResult> Save( [FromBody] List<SchedulersDto> model)
         {
             try
             {
-                var retVal = await _schedulerEventService.Upsert( model);
+                var retVal = await _schedulerEventService.Save( model);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)

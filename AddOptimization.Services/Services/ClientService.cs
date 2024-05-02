@@ -34,20 +34,13 @@ namespace AddOptimization.Services.Services
                 var isExists = await _clientRepository.IsExist(t => t.Email.ToLower() == model.ClientEmail.ToLower(), ignoreGlobalFilter: true);
                 if (isExists)
                 {
-                    var errorMessage = isExists? "User already exists with some other role in the system." : "Client already exists with same email.";
+                    var errorMessage = isExists ? "User already exists with some other role in the system." : "Client already exists with same email.";
                     return ApiResult<ClientResponseDto>.Failure(ValidationCodes.EmailUserNameAlreadyExists, errorMessage);
                 }
 
                 Client entity = new Client();
-                entity.FirstName = model.FirstName;
-                entity.LastName = model.LastName;
-                entity.Organization = model.Company;
-                entity.ManagerName = model.ManagerName;
-                entity.Email = model.ClientEmail;
-                entity.IsActive = true;
-                entity.IsDeleted = false;
-                entity.CountryId =model.CountryId;
-                entity.IsApprovalRequired = model.IsApprovalRequired;
+
+                _mapper.Map(model, entity);
                 await _clientRepository.InsertAsync(entity);
 
                 var mappedEntity = _mapper.Map<ClientResponseDto>(entity);
@@ -65,7 +58,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _clientRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser));
+                var entities = await _clientRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.Country));
                 var mappedEntities = _mapper.Map<List<ClientResponseDto>>(entities.ToList());
                 return ApiResult<List<ClientResponseDto>>.Success(mappedEntities);
             }
@@ -86,7 +79,7 @@ namespace AddOptimization.Services.Services
                     return ApiResult<ClientResponseDto>.NotFound("Client");
                 }
                 var mappedEntity = _mapper.Map<ClientResponseDto>(entity);
-               
+
                 return ApiResult<ClientResponseDto>.Success(mappedEntity);
             }
             catch (Exception ex)
@@ -120,9 +113,41 @@ namespace AddOptimization.Services.Services
                 {
                     return ApiResult<bool>.NotFound("Client");
                 }
-
-                await _clientRepository.DeleteAsync(entity);
+                entity.IsDeleted = true;
+                await _clientRepository.UpdateAsync(entity);
                 return ApiResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+        public async Task<ApiResult<ClientResponseDto>> Update(Guid id, ClientRequestDto model)
+        {
+            try
+            {
+                var isExists = await _clientRepository.IsExist(t => t.Id != id && t.Email.ToLower() == model.ClientEmail.ToLower(), ignoreGlobalFilter: true);
+
+                if (isExists)
+                {
+                    var errorMessage = "Client already exists with same email.";
+                    return ApiResult<ClientResponseDto>.Failure(ValidationCodes.EmailUserNameAlreadyExists, errorMessage);
+                }
+
+                var entity = await _clientRepository.FirstOrDefaultAsync(t => t.Id == id, ignoreGlobalFilter: true);
+                if (entity == null)
+                {
+                    return ApiResult<ClientResponseDto>.NotFound("Client");
+                }
+
+                _mapper.Map(model, entity);
+                entity = await _clientRepository.UpdateAsync(entity);
+
+
+                var mappedEntity = _mapper.Map<ClientResponseDto>(entity);
+                return ApiResult<ClientResponseDto>.Success(mappedEntity);
             }
             catch (Exception ex)
             {
