@@ -90,15 +90,14 @@ namespace AddOptimization.Services.Services
                 if (schedluesToUpdate.Count() > 0)
                 {
                     await _schedulersRepository.BulkUpdateAsync(schedluesToUpdate);
-                    await _unitOfWork.CommitTransactionAsync();
-                    return ApiResult<bool>.Success(true);
+                    
                 }
                 if (schedluesToInsert.Count() > 0)
                 {
                     await _schedulersRepository.BulkInsertAsync(schedluesToInsert);
-                    await _unitOfWork.CommitTransactionAsync();
-                    return ApiResult<bool>.Success(true);
                 }
+                await _unitOfWork.CommitTransactionAsync();
+                return ApiResult<bool>.Success(true);
 
             }
 
