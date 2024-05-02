@@ -34,12 +34,12 @@ namespace AddOptimization.Services.Services
                 var isExists = await _clientRepository.IsExist(t => t.ClientEmail.ToLower() == model.ClientEmail.ToLower(), ignoreGlobalFilter: true);
                 if (isExists)
                 {
-                    var errorMessage = isExists? "User already exists with some other role in the system." : "Client already exists with same email.";
+                    var errorMessage = isExists ? "User already exists with some other role in the system." : "Client already exists with same email.";
                     return ApiResult<ClientResponseDto>.Failure(ValidationCodes.EmailUserNameAlreadyExists, errorMessage);
                 }
 
                 Client entity = new Client();
-               
+
                 _mapper.Map(model, entity);
                 await _clientRepository.InsertAsync(entity);
 
@@ -79,7 +79,7 @@ namespace AddOptimization.Services.Services
                     return ApiResult<ClientResponseDto>.NotFound("Client");
                 }
                 var mappedEntity = _mapper.Map<ClientResponseDto>(entity);
-               
+
                 return ApiResult<ClientResponseDto>.Success(mappedEntity);
             }
             catch (Exception ex)
@@ -113,8 +113,8 @@ namespace AddOptimization.Services.Services
                 {
                     return ApiResult<bool>.NotFound("Client");
                 }
-
-                await _clientRepository.DeleteAsync(entity);
+                entity.IsDeleted = true;
+                await _clientRepository.UpdateAsync(entity);
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -144,7 +144,7 @@ namespace AddOptimization.Services.Services
 
                 _mapper.Map(model, entity);
                 entity = await _clientRepository.UpdateAsync(entity);
-               
+
 
                 var mappedEntity = _mapper.Map<ClientResponseDto>(entity);
                 return ApiResult<ClientResponseDto>.Success(mappedEntity);
