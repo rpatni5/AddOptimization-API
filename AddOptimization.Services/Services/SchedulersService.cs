@@ -66,7 +66,7 @@ namespace AddOptimization.Services.Services
         }
 
 
-        public async Task<ApiResult<bool>> Upsert(List<SchedulersDto> model)
+        public async Task<ApiResult<bool>> Save(List<SchedulersDto> model)
         {
             await _unitOfWork.BeginTransactionAsync();
             var schedluesToUpdate = new List<Schedulers>();
@@ -80,21 +80,24 @@ namespace AddOptimization.Services.Services
                     if (item.Id != Guid.Empty)
                     {
                         schedluesToUpdate.Add(entity);
-                        await _schedulersRepository.BulkUpdateAsync(schedluesToUpdate);
-                        await _unitOfWork.CommitTransactionAsync();
-
-                        return ApiResult<bool>.Success(true);
                     }
                     else
                     {
-
                         schedluesToInsert.Add(entity);
-                        await _schedulersRepository.BulkInsertAsync(schedluesToInsert);
-                        await _unitOfWork.CommitTransactionAsync();
-
-                        return ApiResult<bool>.Success(true);
                     }
                 }
+
+                if (schedluesToUpdate.Count() > 0)
+                {
+                    await _schedulersRepository.BulkUpdateAsync(schedluesToUpdate);
+                    
+                }
+                if (schedluesToInsert.Count() > 0)
+                {
+                    await _schedulersRepository.BulkInsertAsync(schedluesToInsert);
+                }
+                await _unitOfWork.CommitTransactionAsync();
+                return ApiResult<bool>.Success(true);
 
             }
 
