@@ -17,7 +17,7 @@ namespace AddOptimization.Contracts.Dto
         public string UpdatedBy { get; set; }
         public bool IsDeleted { get; set; }
         public string DownloadPath { get; set; }
-        public bool Islatest { get; set; }  
+        public bool IsLatest { get; set; }  
 
     }
 }

@@ -16,7 +16,7 @@ namespace AddOptimization.Data.Entities
         public string Title { get; set; }
         [MaxLength(200)]
         public string Description { get; set; }
-        public DateTime? Date { get; set; } 
+        public DateTime Date { get; set; } 
         public bool IsDeleted { get; set; }
         public Guid CountryId { get; set; }
         [ForeignKey(nameof(CountryId))]

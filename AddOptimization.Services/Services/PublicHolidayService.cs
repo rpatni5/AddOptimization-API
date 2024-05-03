@@ -100,7 +100,7 @@ namespace AddOptimization.Services.Services
 
 
                 entity.Title = model.Title;
-                entity.Description = model.Info;
+                entity.Description = model.Description;
                
 
                 await _publicholidayRepository.UpdateAsync(entity);
