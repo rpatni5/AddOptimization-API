@@ -34,7 +34,7 @@ namespace AddOptimization.API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] PublicHolidayDto model)
+        public async Task<IActionResult> Create([FromBody] PublicHolidayRequestDto model)
         {
             try
             {
@@ -62,7 +62,7 @@ namespace AddOptimization.API.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] PublicHolidayDto model)
+        public async Task<IActionResult> Update(Guid id, [FromBody] PublicHolidayRequestDto model)
         {
             try
             {
