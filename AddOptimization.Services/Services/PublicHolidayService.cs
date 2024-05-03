@@ -41,9 +41,9 @@ namespace AddOptimization.Services.Services
             _mapper = mapper;
         }
 
-        public async Task<ApiResult<List<PublicHolidayResponseDto>>> Search( PageQueryFiterBase filters)
+        public async Task<ApiResult<List<PublicHolidayResponseDto>>> Search(PageQueryFiterBase filters)
         {
-            try 
+            try
             {
                 var entities = await _publicholidayRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.Country).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Date));
                 var mappedEntities = _mapper.Map<List<PublicHolidayResponseDto>>(entities);
@@ -64,16 +64,10 @@ namespace AddOptimization.Services.Services
                 {
                     return ApiResult<PublicHolidayResponseDto>.Failure(ValidationCodes.FieldNameAlreadyExists);
                 }
-
-                PublicHoliday entity = new PublicHoliday();
-
-                _mapper.Map(model, entity);
+                var entity = _mapper.Map<PublicHoliday>(model);
                 await _publicholidayRepository.InsertAsync(entity);
-
                 var mappedEntity = _mapper.Map<PublicHolidayResponseDto>(entity);
-
                 return ApiResult<PublicHolidayResponseDto>.Success(mappedEntity);
-
             }
             catch (Exception ex)
             {
@@ -81,8 +75,8 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-            
-public async Task<ApiResult<PublicHolidayResponseDto>> Get(Guid id)
+
+        public async Task<ApiResult<PublicHolidayResponseDto>> Get(Guid id)
         {
             try
             {
@@ -131,7 +125,7 @@ public async Task<ApiResult<PublicHolidayResponseDto>> Get(Guid id)
                 throw;
             }
         }
-       
+
 
     }
 }
