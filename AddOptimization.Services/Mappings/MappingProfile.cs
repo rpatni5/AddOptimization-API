@@ -122,14 +122,14 @@ namespace AddOptimization.Services.Mappings
             });
 
 
-            CreateMap<Schedulers, SchedulersDto>().AfterMap((s, d) =>
+            CreateMap<SchedulerEvent, SchedulersDto>().AfterMap((s, d) =>
             {
                 d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
                 d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
                 d.CreatedAt = s.CreatedAt?.Date;
 
             });
-            CreateMap<SchedulersDto, Schedulers>();
+            CreateMap<SchedulersDto, SchedulerEvent>();
 
 
 

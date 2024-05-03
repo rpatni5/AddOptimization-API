@@ -15,8 +15,8 @@ namespace AddOptimization.Contracts.Dto
         public string LastName { get; set; }
         public string Company { get; set; }
         public string ManagerName { get; set; }
-        public string ClientEmail { get; set; }
-        public Guid? CountryId { get; set; }
+        public string Email { get; set; }
+        public Guid CountryId { get; set; }
         public bool IsApprovalRequired { get; set; }
         public bool IsActive { get; set; }
         public bool IsDeleted { get; set; }

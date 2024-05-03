@@ -47,9 +47,9 @@ public partial class AddOptimizationContext : DbContext
     public virtual DbSet<Country> Countries { get; set; }
     public virtual DbSet<Client>  Clients { get; set; }
 
-    public virtual DbSet<Schedulers> SchedulerEvents { get; set; }
-    public virtual DbSet<SchedulerStatus> SchedulerStatus { get; set; }
-    public virtual DbSet<SchedulerEventType> schedulereventtypes { get; set; }
+    public virtual DbSet<SchedulerEvent> SchedulerEvents { get; set; }
+    public virtual DbSet<SchedulerStatus> SchedulerStatuses { get; set; }
+    public virtual DbSet<SchedulerEventType> SchedulerEventTypes { get; set; }
     
 
 

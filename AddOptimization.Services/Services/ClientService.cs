@@ -31,7 +31,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var isExists = await _clientRepository.IsExist(t => t.ClientEmail.ToLower() == model.ClientEmail.ToLower(), ignoreGlobalFilter: true);
+                var isExists = await _clientRepository.IsExist(t => t.Email.ToLower() == model.Email.ToLower(), ignoreGlobalFilter: true);
                 if (isExists)
                 {
                     var errorMessage = isExists ? "User already exists with some other role in the system." : "Client already exists with same email.";
@@ -128,7 +128,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var isExists = await _clientRepository.IsExist(t => t.Id != id && t.ClientEmail.ToLower() == model.ClientEmail.ToLower(), ignoreGlobalFilter: true);
+                var isExists = await _clientRepository.IsExist(t => t.Id != id && t.Email.ToLower() == model.Email.ToLower(), ignoreGlobalFilter: true);
 
                 if (isExists)
                 {
