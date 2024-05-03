@@ -41,13 +41,13 @@ namespace AddOptimization.Services.Services
             _mapper = mapper;
         }
 
-        public async Task<ApiResult<List<PublicHolidayDto>>> Search( PageQueryFiterBase filters)
+        public async Task<ApiResult<List<PublicHolidayResponseDto>>> Search( PageQueryFiterBase filters)
         {
             try 
             {
                 var entities = await _publicholidayRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.Country).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Date));
-                var mappedEntities = _mapper.Map<List<PublicHolidayDto>>(entities);
-                return ApiResult<List<PublicHolidayDto>>.Success(mappedEntities);
+                var mappedEntities = _mapper.Map<List<PublicHolidayResponseDto>>(entities);
+                return ApiResult<List<PublicHolidayResponseDto>>.Success(mappedEntities);
             }
             catch (Exception ex)
             {
@@ -55,18 +55,25 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-        public async Task<ApiResult<bool>> Create(PublicHolidayDto model)
+        public async Task<ApiResult<PublicHolidayResponseDto>> Create(PublicHolidayRequestDto model)
         {
             try
             {
                 var isExisting = await _publicholidayRepository.IsExist(s => s.Title.ToLower() == model.Title.ToLower());
                 if (isExisting)
                 {
-                    return ApiResult<bool>.Failure(ValidationCodes.FieldNameAlreadyExists);
+                    return ApiResult<PublicHolidayResponseDto>.Failure(ValidationCodes.FieldNameAlreadyExists);
                 }
-                var entities = _mapper.Map<PublicHoliday>(model);
-                await _publicholidayRepository.InsertAsync(entities);
-                return ApiResult<bool>.Success(true);
+
+                PublicHoliday entity = new PublicHoliday();
+
+                _mapper.Map(model, entity);
+                await _publicholidayRepository.InsertAsync(entity);
+
+                var mappedEntity = _mapper.Map<PublicHolidayResponseDto>(entity);
+
+                return ApiResult<PublicHolidayResponseDto>.Success(mappedEntity);
+
             }
             catch (Exception ex)
             {
@@ -74,17 +81,18 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-        public async Task<ApiResult<PublicHolidayDto>> Get(Guid id)
+            
+public async Task<ApiResult<PublicHolidayResponseDto>> Get(Guid id)
         {
             try
             {
                 var entity = await _publicholidayRepository.FirstOrDefaultAsync(o => o.Id == id, ignoreGlobalFilter: true);
                 if (entity == null)
                 {
-                    return ApiResult<PublicHolidayDto>.NotFound("Public Holiday");
+                    return ApiResult<PublicHolidayResponseDto>.NotFound("Public Holiday");
                 }
-                var mappedEntity = _mapper.Map<PublicHolidayDto>(entity);
-                return ApiResult<PublicHolidayDto>.Success(mappedEntity);
+                var mappedEntity = _mapper.Map<PublicHolidayResponseDto>(entity);
+                return ApiResult<PublicHolidayResponseDto>.Success(mappedEntity);
             }
             catch (Exception ex)
             {
@@ -92,20 +100,15 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-        public async Task<ApiResult<PublicHolidayDto>> Update(Guid id, PublicHolidayDto model)
+        public async Task<ApiResult<PublicHolidayResponseDto>> Update(Guid id, PublicHolidayRequestDto model)
         {
             try
             {
                 var entity = await _publicholidayRepository.FirstOrDefaultAsync(o => o.Id == id);
-
-
-                entity.Title = model.Title;
-                entity.Description = model.Description;
-               
-
+                _mapper.Map(model, entity);
                 await _publicholidayRepository.UpdateAsync(entity);
-                var mappedEntity = _mapper.Map<PublicHolidayDto>(entity);
-                return ApiResult<PublicHolidayDto>.Success(mappedEntity);
+                var mappedEntity = _mapper.Map<PublicHolidayResponseDto>(entity);
+                return ApiResult<PublicHolidayResponseDto>.Success(mappedEntity);
             }
             catch (Exception ex)
             {
