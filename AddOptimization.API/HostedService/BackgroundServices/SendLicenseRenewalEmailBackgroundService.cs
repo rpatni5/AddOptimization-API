@@ -3,6 +3,7 @@ using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
+using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
 
@@ -56,9 +57,12 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 var expirationThresholdValue = _configuration.ReadSection<BackgroundServiceSettings>(AppSettingsSections.BackgroundServiceSettings).ExpirationThresholdInDays;
                 var expirationThreshold = DateTime.Today.AddDays(expirationThresholdValue);
                 var licenses = await _license.GetAllLicenseForRenewalNotification(expirationThreshold);
-                foreach (var item in licenses.Result)
+                var groupedResult = licenses.Result.GroupBy(c => c.CustomerId);
+                foreach (var group in groupedResult)
                 {
-                    await SendCustomerLicenseRenewalEmail(item);
+                    var licensesDtoCollection = new List<LicenseDetailsDto>();
+                    licensesDtoCollection.AddRange(group);
+                    await SendCustomerLicenseRenewalEmail(licensesDtoCollection);                    
                 }
                 return true;
             }
@@ -70,18 +74,19 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             }
         }
 
-        private async Task<bool> SendCustomerLicenseRenewalEmail(LicenseDetailsDto license)
+        private async Task<bool> SendCustomerLicenseRenewalEmail(List<LicenseDetailsDto> license)
         {
             try
             {
                 var subject = "Add optimization renew license";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.RenewLicense);
+                //TO DO: Dynamic HTML table records generation code
                 emailTemplate = emailTemplate
-                                .Replace("[CustomerName]", license.CustomerName)
-                                .Replace("[LicenseKey]", license.LicenseKey)
-                                .Replace("[NoOfDevices]", license.NoOfDevices.ToString())
-                                .Replace("[ExpirationDate]", license.ExpirationDate.ToString());
-                return await _emailService.SendEmail(license.CustomerEmail, subject, emailTemplate);
+                                .Replace("[CustomerName]", license.FirstOrDefault().CustomerName)
+                                .Replace("[LicenseKey]", license.FirstOrDefault().LicenseKey)
+                                .Replace("[NoOfDevices]", license.FirstOrDefault().NoOfDevices.ToString())
+                                .Replace("[ExpirationDate]", license.FirstOrDefault().ExpirationDate.ToString());
+                return await _emailService.SendEmail(license.FirstOrDefault().CustomerEmail, subject, emailTemplate);
             }
             catch (Exception ex)
             {
