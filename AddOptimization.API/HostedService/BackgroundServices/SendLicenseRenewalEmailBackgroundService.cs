@@ -3,9 +3,9 @@ using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
-using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
+using System.Text;
 
 namespace AddOptimization.API.HostedService.BackgroundServices
 {
@@ -62,7 +62,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 {
                     var licensesDtoCollection = new List<LicenseDetailsDto>();
                     licensesDtoCollection.AddRange(group);
-                    await SendCustomerLicenseRenewalEmail(licensesDtoCollection);                    
+                    await SendCustomerLicenseRenewalEmail(licensesDtoCollection);
                 }
                 return true;
             }
@@ -80,12 +80,11 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             {
                 var subject = "Add optimization renew license";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.RenewLicense);
-                //TO DO: Dynamic HTML table records generation code
+                string[] tableHeaders = { "S.No", "LicenseKey", "NoOfDevices", "ExpirationDate" };
+                var table = GenerateHtmlTable(tableHeaders, license);
                 emailTemplate = emailTemplate
-                                .Replace("[CustomerName]", license.FirstOrDefault().CustomerName)
-                                .Replace("[LicenseKey]", license.FirstOrDefault().LicenseKey)
-                                .Replace("[NoOfDevices]", license.FirstOrDefault().NoOfDevices.ToString())
-                                .Replace("[ExpirationDate]", license.FirstOrDefault().ExpirationDate.ToString());
+                                .Replace("[CustomerLicensesData]", table)
+                                .Replace("[CustomerName]", license.FirstOrDefault().CustomerName);
                 return await _emailService.SendEmail(license.FirstOrDefault().CustomerEmail, subject, emailTemplate);
             }
             catch (Exception ex)
@@ -94,6 +93,66 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 _logger.LogException(ex);
                 return false;
             }
+        }
+
+        public static string GenerateHtmlTable(string[] headers, List<LicenseDetailsDto> license)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("<table class=\"body-action\" align=\"center\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\">");
+            sb.AppendLine("<tr>");
+            // Generate table headers
+            foreach (string header in headers)
+            {
+                switch (header)
+                {
+                    case "S.No":
+                        sb.AppendFormat("<th width=\"1\">{0}</th>", header);
+                        break;
+                    case "LicenseKey":
+                        sb.AppendFormat("<th width=\"97\">{0}</th>", "License Key");
+                        break;
+                    case "NoOfDevices":
+                        sb.AppendFormat("<th width=\"1\">{0}</th>", "No Of Devices");
+                        break;
+                    case "ExpirationDate":
+                        sb.AppendFormat("<th width=\"1\">{0}</th>", "Expiration Date");
+                        break;
+                    default:
+                        break;
+                }                
+            }
+            sb.AppendLine("</tr>");
+
+            // Generate table data rows
+            var sNoCount = 1;
+            foreach (var rowData in license)
+            {
+                sb.AppendLine("<tr>");
+                foreach (var cellData in headers)
+                {
+                    if (cellData == "S.No")
+                    {
+                        sb.AppendFormat("<td>{0}</td>", sNoCount);
+                    }
+                    if (cellData == nameof(rowData.LicenseKey))
+                    {
+                        sb.AppendFormat("<td>{0}</td>", rowData.LicenseKey);
+                    }
+                    if (cellData == nameof(rowData.NoOfDevices))
+                    {
+                        sb.AppendFormat("<td>{0}</td>", rowData.NoOfDevices);
+                    }
+                    if (cellData == nameof(rowData.ExpirationDate))
+                    {
+                        sb.AppendFormat("<td>{0}</td>", rowData.ExpirationDate);
+                    }
+                }
+                sb.AppendLine("</tr>");
+                sNoCount++;
+            }
+            
+            sb.AppendLine("</table>");
+            return sb.ToString();
         }
         #endregion
     }
