@@ -6,6 +6,7 @@ using AddOptimization.Services.Mappings;
 using AddOptimization.Services;
 using AddOptimization.Utilities;
 using AddOptimization.Data;
+using AddOptimization.API.HostedService.BackgroundServices;
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 var builder = WebApplication.CreateBuilder(args);
@@ -35,6 +36,7 @@ services.AddMemoryCache();
 services.RegisterUtilityServices();
 services.RegisterDomainServices();
 services.RegisterDataServices(connectionString);
+services.AddHostedService<SendLicenseRenewalEmailBackgroundService>();
 services.AddLogging(builder =>
 {
     builder.AddFile($"logs/log_for.txt",LogLevel.Error);

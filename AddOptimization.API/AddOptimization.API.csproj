@@ -14,6 +14,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="HostedService\BackgroundServices\EmailProcessor.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="Assets\Images\Logo_AddOptimization_blue.png" />
   </ItemGroup>
 
