@@ -37,11 +37,11 @@ END
 
 /* Adding Overlap EventType data in Scheduler Event Types */
 
-IF NOT EXISTS (SELECT 1 FROM SchedulerEventTypes Where Name= 'Overlap')
+IF NOT EXISTS (SELECT 1 FROM SchedulerEventTypes Where Name= 'Overtime')
 BEGIN 
     INSERT INTO SchedulerEventTypes(Id,Name)
     VALUES
-        ('D4E69B78-10BF-4B9B-8072-8CEF20ECAAA3','Overlap')
+        ('D4E69B78-10BF-4B9B-8072-8CEF20ECAAA3','Overtime')
 END
 
 /* Adding Absence Request EventType data in Scheduler Event Types */
