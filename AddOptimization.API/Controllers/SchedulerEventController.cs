@@ -4,6 +4,8 @@ using AddOptimization.API.Common;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Utilities.Models;
 using AddOptimization.Contracts.Dto;
+using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
+using AddOptimization.Services.Services;
 
 namespace AddOptimization.API.Controllers
 {
@@ -32,7 +34,7 @@ namespace AddOptimization.API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Save( [FromBody] List<SchedulersDto> model)
+        public async Task<IActionResult> Save( [FromBody] List<SchedulerEventDetailsDto> model)
         {
             try
             {
@@ -51,6 +53,48 @@ namespace AddOptimization.API.Controllers
             try
             {
                 var retVal = await _schedulerEventService.Delete(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpPost("create-timesheet")]
+        public async Task<IActionResult> CreateOrViewTimeSheets([FromBody] CreateViewTimesheetRequestDto model)
+        {
+            try
+            {
+                var retVal = await _schedulerEventService.CreateOrViewTimeSheets(model);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpGet("schedular-event-details/{id}")]
+        public async Task<IActionResult> GetSchedularEventDetails(Guid id)
+        {
+            try
+            {
+                var retVal = await _schedulerEventService.GetSchedularEventDetails(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpGet("schedular-event/{id}")]
+        public async Task<IActionResult> GetSchedularEvent(Guid id)
+        {
+            try
+            {
+                var retVal = await _schedulerEventService.GetSchedulerEvent(id);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)

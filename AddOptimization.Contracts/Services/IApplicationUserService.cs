@@ -12,4 +12,5 @@ public interface IApplicationUserService
     Task<ApiResult<List<ApplicationUserSummaryDto>>> SearchSummary(PageQueryFiterBase filters);
     Task<ApiResult<bool>> ToogleActivationStatus(int id);
     Task<ApiResult<bool>> ToggleEmailsEnabled(int userId);
+    Task<ApiResult<List<ApplicationUserDto>>> GetAccountAdmins();
 }

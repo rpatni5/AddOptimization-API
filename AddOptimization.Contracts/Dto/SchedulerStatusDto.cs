@@ -8,6 +8,7 @@ namespace AddOptimization.Contracts.Dto
 {
     public class SchedulerStatusDto : BaseDto<Guid>
     {
+        public string StatusKey { get; set; }
         public string CreatedBy { get; set; }
         public string UpdatedBy { get; set; }
     }

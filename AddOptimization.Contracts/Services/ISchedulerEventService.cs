@@ -6,11 +6,14 @@ namespace AddOptimization.Contracts.Services
 {
     public interface ISchedulerEventService
     {
-        Task<PagedApiResult<SchedulersDto>> Search(PageQueryFiterBase filter);
+        Task<PagedApiResult<SchedulerEventDetailsDto>> Search(PageQueryFiterBase filter);
      
         Task<ApiResult<bool>> Delete(Guid id);
 
-        Task<ApiResult<bool>> Save(List<SchedulersDto> model);
+        Task<ApiResult<bool>> Save(List<SchedulerEventDetailsDto> model);
 
+        Task<ApiResult<CreateViewTimesheetResponseDto>> CreateOrViewTimeSheets(CreateViewTimesheetRequestDto model);
+        Task<ApiResult<List<SchedulerEventDetailsDto>>> GetSchedularEventDetails(Guid id);
+        Task<ApiResult<CreateViewTimesheetResponseDto>> GetSchedulerEvent(Guid id);
     }
 }
