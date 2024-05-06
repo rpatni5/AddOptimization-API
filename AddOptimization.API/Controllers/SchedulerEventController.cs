@@ -47,6 +47,20 @@ namespace AddOptimization.API.Controllers
             }
         }
 
+        [HttpPost("submit-event-details")]
+        public async Task<IActionResult> SubmitEventDetails([FromBody] List<SchedulerEventDetailsDto> model)
+        {
+            try
+            {
+                var retVal = await _schedulerEventService.SubmitEventDetails(model);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
