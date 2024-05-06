@@ -106,8 +106,8 @@ namespace AddOptimization.Services.Mappings
             CreateMap<ClientRequestDto, Client>().AfterMap((s, d) =>
             {
                 d.Organization = s.Company;
-            }); 
-            
+            });
+
             CreateMap<Client, ClientResponseDto>().AfterMap((s, d) =>
             {
                 d.CreatedAt = s.CreatedAt?.Date;
@@ -122,14 +122,14 @@ namespace AddOptimization.Services.Mappings
             });
 
 
-            CreateMap<SchedulerEvent, SchedulersDto>().AfterMap((s, d) =>
+            CreateMap<SchedulerEvent, SchedulerEventDetailsDto>().AfterMap((s, d) =>
             {
                 d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
-                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+               // d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
                 d.CreatedAt = s.CreatedAt?.Date;
 
             });
-            CreateMap<SchedulersDto, SchedulerEvent>();
+            CreateMap<SchedulerEventDetailsDto, SchedulerEvent>();
 
 
 
@@ -151,6 +151,28 @@ namespace AddOptimization.Services.Mappings
             });
             CreateMap<SchedulerEventTypeDto, SchedulerEventType>();
 
+
+            CreateMap<CreateViewTimesheetRequestDto, SchedulerEvent>().AfterMap((s, d) =>
+            {
+
+            });
+
+            CreateMap<SchedulerEvent, CreateViewTimesheetResponseDto>().AfterMap((s, d) =>
+            {
+                d.ApprovarName = s.Approvar.FullName;
+                d.UserName = s.ApplicationUser.FullName;
+                d.ClientName = $"{s.Client.FirstName} {s.Client.LastName}";
+                d.AdminStatusName = s.AdminStatus.Name;
+                d.UserStatusName = s.UserStatus.Name;
+            });
+
+
+            CreateMap<SchedulerEventDetailsDto, SchedulerEventDetails>().AfterMap((s, d) =>
+            {
+             
+               
+                
+            });
         }
     }
 }

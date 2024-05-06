@@ -23,7 +23,8 @@ public class ApplicationUserService : IApplicationUserService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IGenericRepository<UserRole> _userRoleRepository;
     private readonly IAuthService _authService;
-    public ApplicationUserService(ILogger<ApplicationUserService> logger, IGenericRepository<ApplicationUser> applicationUserRepository, IMapper mapper, IAuthService authService, IUnitOfWork unitOfWork, IGenericRepository<UserRole> userRoleRepository)
+    private readonly IRoleService _roleService;
+    public ApplicationUserService(ILogger<ApplicationUserService> logger, IGenericRepository<ApplicationUser> applicationUserRepository, IMapper mapper, IAuthService authService, IUnitOfWork unitOfWork, IGenericRepository<UserRole> userRoleRepository, IRoleService roleService)
     {
         _logger = logger;
         _applicationUserRepository = applicationUserRepository;
@@ -31,6 +32,7 @@ public class ApplicationUserService : IApplicationUserService
         _authService = authService;
         _unitOfWork = unitOfWork;
         _userRoleRepository = userRoleRepository;
+        _roleService = roleService;
     }
     public async Task<ApiResult<List<ApplicationUserDto>>> Search()
     {
@@ -40,19 +42,19 @@ public class ApplicationUserService : IApplicationUserService
             {
                 Id = s.Id,
                 FullName = s.FullName,
-                FirstName=s.FirstName,
+                FirstName = s.FirstName,
                 UserName = s.UserName,
-                LastName=s.LastName,
-                Email=s.Email,
-                IsActive=s.IsActive,
-                IsLocked=s.IsLocked,
-                IsEmailsEnabled =s.IsEmailsEnabled,
-                Roles=s.UserRoles.Select(ur=>new RoleDto
+                LastName = s.LastName,
+                Email = s.Email,
+                IsActive = s.IsActive,
+                IsLocked = s.IsLocked,
+                IsEmailsEnabled = s.IsEmailsEnabled,
+                Roles = s.UserRoles.Select(ur => new RoleDto
                 {
-                    Id=ur.RoleId,
-                    Name=ur.Role.Name
+                    Id = ur.RoleId,
+                    Name = ur.Role.Name
                 }).ToList()
-            }, orderBy: (entities) => entities.OrderBy(c => c.FullName),include:entities=> entities.Include(e=> e.UserRoles).ThenInclude(ur=> ur.Role));
+            }, orderBy: (entities) => entities.OrderBy(c => c.FullName), include: entities => entities.Include(e => e.UserRoles).ThenInclude(ur => ur.Role));
             return ApiResult<List<ApplicationUserDto>>.Success(entities.ToList());
         }
         catch (Exception ex)
@@ -75,12 +77,12 @@ public class ApplicationUserService : IApplicationUserService
                 Id = s.Id,
                 FullName = s.FullName,
                 Email = s.Email
-            },e=> e.IsActive && (!onlyAccountManagers || e.UserRoles.Any(ur=> ur.Role.Name==UserRoles.AccountManager)), orderBy: (entities) => entities.OrderBy(c => c.FullName));
+            }, e => e.IsActive && (!onlyAccountManagers || e.UserRoles.Any(ur => ur.Role.Name == UserRoles.AccountManager)), orderBy: (entities) => entities.OrderBy(c => c.FullName));
             filters.GetValue<string>("fullname", (v) =>
             {
-                    entities = entities.Where(e => e.FullName != null && e.FullName.ToLower().Contains(v.ToLower()));
-            },operatorType:OperatorType.contains);
-           
+                entities = entities.Where(e => e.FullName != null && e.FullName.ToLower().Contains(v.ToLower()));
+            }, operatorType: OperatorType.contains);
+
             return ApiResult<List<ApplicationUserSummaryDto>>.Success(entities.ToList());
         }
         catch (Exception ex)
@@ -94,7 +96,7 @@ public class ApplicationUserService : IApplicationUserService
     {
         try
         {
-            var existingEntity = await _applicationUserRepository.FirstOrDefaultAsync(u => (model.UserName != null && u.UserName.ToLower() == model.UserName.ToLower()) || (model.Email.ToLower()==u.Email.ToLower()));
+            var existingEntity = await _applicationUserRepository.FirstOrDefaultAsync(u => (model.UserName != null && u.UserName.ToLower() == model.UserName.ToLower()) || (model.Email.ToLower() == u.Email.ToLower()));
             if (existingEntity != null)
             {
                 return ApiResult<bool>.Failure(ValidationCodes.EmailUserNameAlreadyExists);
@@ -111,8 +113,8 @@ public class ApplicationUserService : IApplicationUserService
                 entity.FullName = $"{model.FirstName} {model.LastName}";
             }
             await _applicationUserRepository.InsertAsync(entity);
-           
-            return  ApiResult<bool>.Success(true);
+
+            return ApiResult<bool>.Success(true);
         }
         catch (Exception ex)
         {
@@ -125,18 +127,18 @@ public class ApplicationUserService : IApplicationUserService
         await _unitOfWork.BeginTransactionAsync();
         try
         {
-            var entity=await _applicationUserRepository.FirstOrDefaultAsync(u=> u.Id == userId);
+            var entity = await _applicationUserRepository.FirstOrDefaultAsync(u => u.Id == userId);
             if (entity == null)
             {
                 return ApiResult<bool>.NotFound("User");
             }
             entity.FirstName = model.FirstName;
             entity.LastName = model.LastName;
-            entity.FullName =string.IsNullOrEmpty(model.LastName)?model.FirstName: $"{model.FirstName} {model.LastName}";
+            entity.FullName = string.IsNullOrEmpty(model.LastName) ? model.FirstName : $"{model.FirstName} {model.LastName}";
             await _applicationUserRepository.UpdateAsync(entity);
             var roles = model.Roles;
             var currentRoles = (await _userRoleRepository.QueryAsync(ur => ur.UserId == userId)).ToList();
-            var entitiesToDelete = currentRoles.Where(ur =>!roles.Contains(ur.RoleId)).ToList();
+            var entitiesToDelete = currentRoles.Where(ur => !roles.Contains(ur.RoleId)).ToList();
             if (entitiesToDelete.Any())
             {
                 await _userRoleRepository.BulkDeleteAsync(entitiesToDelete);
@@ -146,10 +148,10 @@ public class ApplicationUserService : IApplicationUserService
                 UserId = userId,
                 RoleId = r
             }).ToList();
-            if (entitiesToInsert !=null && entitiesToInsert.Any())
+            if (entitiesToInsert != null && entitiesToInsert.Any())
             {
                 await _userRoleRepository.BulkInsertAsync(entitiesToInsert);
-            }         
+            }
             await _unitOfWork.CommitTransactionAsync();
             return ApiResult<bool>.Success(true);
         }
@@ -165,14 +167,14 @@ public class ApplicationUserService : IApplicationUserService
     {
         try
         {
-            var entity = await _applicationUserRepository.FirstOrDefaultAsync(u => u.Id==id,disableTracking:false);
-            if (entity==null)
+            var entity = await _applicationUserRepository.FirstOrDefaultAsync(u => u.Id == id, disableTracking: false);
+            if (entity == null)
             {
                 return ApiResult<bool>.NotFound($"User");
             }
             entity.IsActive = !entity.IsActive;
             await _applicationUserRepository.UpdateAsync(entity);
-            if(!entity.IsActive)
+            if (!entity.IsActive)
             {
                 await _authService.Logout(id);
             }
@@ -204,4 +206,34 @@ public class ApplicationUserService : IApplicationUserService
         }
     }
 
+    public async Task<ApiResult<List<ApplicationUserDto>>> GetAccountAdmins()
+    {
+        try
+        {
+            var roleId = (await _roleService.Search(null)).Result.First(x => x.Name == "Account Admin").Id;
+            var entities = await _applicationUserRepository.QueryMappedAsync(s => new ApplicationUserDto
+            {
+                Id = s.Id,
+                FullName = s.FullName,
+                FirstName = s.FirstName,
+                UserName = s.UserName,
+                LastName = s.LastName,
+                Email = s.Email,
+                IsActive = s.IsActive,
+                IsLocked = s.IsLocked,
+                IsEmailsEnabled = s.IsEmailsEnabled,
+                Roles = s.UserRoles.Select(ur => new RoleDto
+                {
+                    Id = ur.RoleId,
+                    Name = ur.Role.Name
+                }).ToList()
+            }, orderBy: (entities) => entities.OrderBy(c => c.FullName), include: entities => entities.Include(e => e.UserRoles).ThenInclude(ur => ur.Role), predicate: x => x.UserRoles.Any(x => x.RoleId == roleId));
+            return ApiResult<List<ApplicationUserDto>>.Success(entities.ToList());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            throw;
+        }
+    }
 }

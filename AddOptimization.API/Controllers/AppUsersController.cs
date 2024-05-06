@@ -44,6 +44,21 @@ public class AppUsersController : CustomApiControllerBase
             return HandleException(ex);
         }
     }
+
+    [HttpGet("account-admins")]
+    public async Task<IActionResult> GetAccountAdmin()
+    {
+        try
+        {
+            var retVal = await _applicationUsersService.GetAccountAdmins();
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
     [HttpPost("searchsummary")]
     public async Task<IActionResult> SearchSummary(PageQueryFiterBase filters)
     {

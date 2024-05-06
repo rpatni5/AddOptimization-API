@@ -50,9 +50,7 @@ public partial class AddOptimizationContext : DbContext
     public virtual DbSet<SchedulerEvent> SchedulerEvents { get; set; }
     public virtual DbSet<SchedulerStatus> SchedulerStatuses { get; set; }
     public virtual DbSet<SchedulerEventType> SchedulerEventTypes { get; set; }
-    
-
-
+    public virtual DbSet<SchedulerEventDetails> SchedulerEventDetails { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
