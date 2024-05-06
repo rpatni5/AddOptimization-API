@@ -7,7 +7,7 @@ namespace AddOptimization.Data.Entities
         public decimal Duration { get; set; }
         public DateTime? Date { get; set; }
         public string Summary { get; set; }
-        public Guid EventTypeID { get; set; }
+        public Guid EventTypeId { get; set; }
         public int UserId { get; set; }
         public Guid SchedulerEventId { get; set; }
 
@@ -17,9 +17,5 @@ namespace AddOptimization.Data.Entities
         [ForeignKey(nameof(SchedulerEventId))]
         public virtual SchedulerEvent SchedulerEvent { get; set; }
 
-
-
-
     }
-
 }

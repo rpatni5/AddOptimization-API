@@ -12,8 +12,8 @@ namespace AddOptimization.Contracts.Dto
         public decimal Duration { get; set; }
         public DateTime? Date { get; set; }
         public string Summary { get; set; }
-        public Guid EventTypeID { get; set; }
-        public int UserID { get; set; }
+        public Guid EventTypeId { get; set; }
+        public int UserId { get; set; }
         public bool IsDeleted { get; set; }
         public bool IsActive { get; set; }
         public string CreatedBy { get; set; }
