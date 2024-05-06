@@ -46,7 +46,7 @@ public class AppUsersController : CustomApiControllerBase
     }
 
     [HttpGet("account-admins")]
-    public async Task<IActionResult> GetAccountAdmin()
+    public async Task<IActionResult> GetAccountAdmins()
     {
         try
         {
