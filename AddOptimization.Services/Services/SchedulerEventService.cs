@@ -52,6 +52,7 @@ namespace AddOptimization.Services.Services
                     EventTypeID = e.SchedulerEventType.Id,
                     UserID = e.ApplicationUser.Id,
                     ClientID = e.Client.Id,
+                    IsDraft = e.IsDraft
 
                 }).ToList());
                 var retVal = pagedResult;
