@@ -45,7 +45,6 @@ public class LicenseService : ILicenseService
         _unitOfWork = unitOfWork;
         _permissionService = permissionService;
         _templateService = templateService;
-        _configuration = configuration;
         _emailService = emailService;
         _currentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
         _hostingEnvironment = hostingEnvironment;
@@ -106,6 +105,24 @@ public class LicenseService : ILicenseService
         }
     }
 
+    public async Task<ApiResult<List<LicenseDetailsDto>>> GetAllLicenseForRenewalNotification(DateTime expirationThreshold)
+    {
+        try
+        {
+            var entities = await _licenseRepository.QueryAsync(o => o.ExpirationDate <= expirationThreshold && o.ExpirationDate >= DateTime.Today, include: source => source.Include(o => o.LicenseDevices).Include(o => o.Customer).Include(e => e.CreatedByUser), ignoreGlobalFilter: true);
+            if (entities == null)
+            {
+                return ApiResult<List<LicenseDetailsDto>>.NotFound("License");
+            }
+            var mappedEntity = _mapper.Map<List<LicenseDetailsDto>>(entities);
+            return ApiResult<List<LicenseDetailsDto>>.Success(mappedEntity);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            throw;
+        }
+    }
     public async Task<ApiResult<List<LicenseDetailsDto>>> GetByCustomerId(Guid customerId)
     {
         try
@@ -385,7 +402,7 @@ public class LicenseService : ILicenseService
                             .Replace("[LicenseKey]", license.LicenseKey)
                             .Replace("[NoOfDevices]", license.NoOfDevices.ToString())
                             .Replace("[ExpirationDate]", license.ExpirationDate.ToString());
-                            //.Replace("[ImageTag]", $"<img src={imagePath} height=\"20\" width=\"120\" />");
+            //.Replace("[ImageTag]", $"<img src={imagePath} height=\"20\" width=\"120\" />");
             return await _emailService.SendEmail(email, subject, emailTemplate);
         }
         catch (Exception ex)
