@@ -76,14 +76,14 @@ namespace AddOptimization.Services.Services
         public async Task<ApiResult<bool>> Save(List<SchedulerEventDetailsDto> model)
         {
             await _unitOfWork.BeginTransactionAsync();
-            var schedluerEventsToUpdate = new List<SchedulerEvent>();
-            var schedluerEventsToInsert = new List<SchedulerEvent>();
+            var schedluerEventsToUpdate = new List<SchedulerEventDetails>();
+            var schedluerEventsToInsert = new List<SchedulerEventDetails>();
 
             try
             {
                 foreach (var item in model)
                 {
-                    var entity = _mapper.Map<SchedulerEvent>(item);
+                    var entity = _mapper.Map<SchedulerEventDetails>(item);
                     if (item.Id != Guid.Empty)
                     {
                         schedluerEventsToUpdate.Add(entity);
@@ -96,12 +96,12 @@ namespace AddOptimization.Services.Services
 
                 if (schedluerEventsToUpdate.Count() > 0)
                 {
-                    await _schedulersRepository.BulkUpdateAsync(schedluerEventsToUpdate);
+                    await _schedulersDetailsRepository.BulkUpdateAsync(schedluerEventsToUpdate);
 
                 }
                 if (schedluerEventsToInsert.Count() > 0)
                 {
-                    await _schedulersRepository.BulkInsertAsync(schedluerEventsToInsert);
+                    await _schedulersDetailsRepository.BulkInsertAsync(schedluerEventsToInsert);
                 }
                 await _unitOfWork.CommitTransactionAsync();
                 return ApiResult<bool>.Success(true);
@@ -203,6 +203,21 @@ namespace AddOptimization.Services.Services
                 _logger.LogException(ex);
                 throw;
             }
+        }
+
+        public async Task<ApiResult<bool>> SubmitEventDetails(List<SchedulerEventDetailsDto> models)
+        {
+            var eventDetails = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == models.First().SchedulerEventId);
+            eventDetails.IsDraft = false;
+            var eventStatus = (await _schedulersStatusService.Search()).Result;
+            var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_ACCOUNT_ADMIN_APPROVAL.ToString()).Id;
+
+            eventDetails.UserStatusId = statusId;
+            eventDetails.AdminStatusId = statusId;
+
+            var result = await _schedulersRepository.UpdateAsync(eventDetails);
+
+            return await Save(models);
         }
     }
 }

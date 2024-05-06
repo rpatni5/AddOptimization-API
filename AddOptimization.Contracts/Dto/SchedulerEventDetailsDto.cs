@@ -18,7 +18,7 @@ namespace AddOptimization.Contracts.Dto
         public bool IsActive { get; set; }
         public string CreatedBy { get; set; }
         public DateTime? CreatedAt { get; set; }
-        public Guid SchedularEventId { get; set;}
+        public Guid SchedulerEventId { get; set;}
         
     }
 }

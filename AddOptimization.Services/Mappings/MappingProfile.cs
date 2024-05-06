@@ -169,9 +169,12 @@ namespace AddOptimization.Services.Mappings
 
             CreateMap<SchedulerEventDetailsDto, SchedulerEventDetails>().AfterMap((s, d) =>
             {
-             
-               
-                
+
+            });
+            CreateMap<SchedulerEventDetails, SchedulerEventDetailsDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+            
             });
         }
     }
