@@ -8,6 +8,7 @@ public interface ILicenseService
 {
     Task<PagedApiResult<LicenseDetailsDto>> Search(PageQueryFiterBase filter);
     Task<ApiResult<LicenseDetailsDto>> Get(Guid licenseId);
+    Task<ApiResult<List<LicenseDetailsDto>>> GetAllLicenseForRenewalNotification(DateTime expirationThreshold);
     Task<ApiResult<List<LicenseDetailsDto>>> GetByCustomerId(Guid customerId);
     Task<ApiResult<LicenseDetailsDto>> Update(Guid id,LicenseUpdateDto model);
     Task<ApiResult<LicenseDetailsDto>> Create(LicenseCreateDto model);

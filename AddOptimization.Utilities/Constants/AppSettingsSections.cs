@@ -4,4 +4,5 @@ public class AppSettingsSections
 {
     public const string EmailSettings = "EmailSettings";
     public const string AppUrls = "AppUrls";
+    public const string BackgroundServiceSettings = "BackgroundServiceSettings";
 }
