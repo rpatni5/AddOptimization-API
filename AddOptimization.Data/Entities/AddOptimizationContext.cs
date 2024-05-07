@@ -90,6 +90,11 @@ public partial class AddOptimizationContext : DbContext
             entity.HasQueryFilter(e => e.UserId == CurrentUserId);
         });
 
+        modelBuilder.Entity<SchedulerEventDetails>(entity =>
+        {
+            entity.HasQueryFilter(e => e.UserId == CurrentUserId);
+        });
+
         OnModelCreatingPartial(modelBuilder);
     }
 

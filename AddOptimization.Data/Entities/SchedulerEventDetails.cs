@@ -17,5 +17,8 @@ namespace AddOptimization.Data.Entities
         [ForeignKey(nameof(SchedulerEventId))]
         public virtual SchedulerEvent SchedulerEvent { get; set; }
 
+        [ForeignKey(nameof(EventTypeId))]
+        public virtual SchedulerEventType EventTypes { get; set; }
+
     }
 }

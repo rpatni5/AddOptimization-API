@@ -31,6 +31,8 @@ namespace AddOptimization.Data.Entities
         [ForeignKey(nameof(ApprovarId))]
         public virtual ApplicationUser Approvar { get; set; }
 
+        public virtual ICollection<SchedulerEventDetails> EventDetails { get; set; }
+
     }
 
 }
