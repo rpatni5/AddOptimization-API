@@ -47,9 +47,8 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin") || c.Contains("Account Admin")).ToList();
 
-                var entities = await _schedulersRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.Approvar).Include(e => e.Client).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser), ignoreGlobalFilter: superAdminRole.Count != 0);
+                var entities = await _schedulersRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.Approvar).Include(e => e.Client).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser));
                 entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
                 entities = ApplyFilters(entities, filters);
 
@@ -68,6 +67,9 @@ namespace AddOptimization.Services.Services
                     AdminStatusId = e.AdminStatusId,
                     AdminStatusName = e.AdminStatus.Name,
                     UserStatusName = e.UserStatus.Name,
+                    WorkDuration = e.EventDetails.Where(x => x.EventTypes.Name == "Timesheet").Sum(x => x.Duration),
+                    Overtime = e.EventDetails.Where(x => x.EventTypes.Name == "Overtime").Sum(x => x.Duration),
+                    Holiday = 0,
                 }).ToList());
                 var retVal = pagedResult;
                 return PagedApiResult<CreateViewTimesheetResponseDto>.Success(retVal);
@@ -82,6 +84,8 @@ namespace AddOptimization.Services.Services
 
         public async Task<ApiResult<bool>> Save(List<SchedulerEventDetailsDto> model)
         {
+            var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
+            model.ForEach(x => x.UserId = userId);
             await _unitOfWork.BeginTransactionAsync();
             var schedluerEventsToUpdate = new List<SchedulerEventDetails>();
             var schedluerEventsToInsert = new List<SchedulerEventDetails>();
@@ -150,7 +154,7 @@ namespace AddOptimization.Services.Services
                 entity.StartDate = new DateTime(model.DateMonth.Year, model.DateMonth.Month, 1);
                 entity.EndDate = entity.StartDate.AddMonths(1).AddDays(-1);
 
-                var response = await _schedulersRepository.FirstOrDefaultAsync(x => x.ClientId == model.ClientId && x.ApprovarId == model.ApprovarId && x.StartDate == entity.StartDate && x.EndDate == entity.EndDate);
+                var response = await _schedulersRepository.FirstOrDefaultAsync(x => x.ClientId == model.ClientId && x.ApprovarId == model.ApprovarId && x.StartDate == entity.StartDate && x.EndDate == entity.EndDate && x.UserId == _httpContextAccessor.HttpContext.GetCurrentUserId().Value);
 
                 if (response != null)
                 {
@@ -195,8 +199,10 @@ namespace AddOptimization.Services.Services
         {
             try
             {
+                var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin") || c.Contains("Account Admin")).ToList();
+
                 var entity = await _schedulersDetailsRepository.QueryAsync(include: entities => entities
-                .Include(e => e.CreatedByUser).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.SchedulerEvent), predicate: o => o.SchedulerEventId == id, ignoreGlobalFilter: true);
+                .Include(e => e.CreatedByUser).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.SchedulerEvent), predicate: o => o.SchedulerEventId == id, ignoreGlobalFilter: superAdminRole.Count != 0);
 
                 if (entity == null)
                 {
@@ -238,10 +244,15 @@ namespace AddOptimization.Services.Services
         private IQueryable<SchedulerEvent> ApplyFilters(IQueryable<SchedulerEvent> entities, PageQueryFiterBase filter)
         {
 
-            filter.GetValue<string>("clientName", (v) =>
+            filter.GetValue<string>("userId", (v) =>
            {
-               entities = entities.Where(e => e.Client != null && (e.Client.FirstName.ToLower().Contains(v.ToLower()) || e.Client.LastName.ToLower().Contains(v.ToLower())));
+               var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
+               entities = entities.Where(e => e.UserId == userId);
            });
+            filter.GetValue<string>("clientName", (v) =>
+            {
+                entities = entities.Where(e => e.Client != null && (e.Client.FirstName.ToLower().Contains(v.ToLower()) || e.Client.LastName.ToLower().Contains(v.ToLower())));
+            });
             filter.GetValue<string>("approvarName", (v) =>
             {
                 entities = entities.Where(e => e.Client != null && (e.Approvar.FirstName.ToLower().Contains(v.ToLower()) || e.Approvar.LastName.ToLower().Contains(v.ToLower())));
@@ -262,7 +273,30 @@ namespace AddOptimization.Services.Services
                 entities = entities.Where(e => e.StartDate > date);
             }, OperatorType.greaterthan, true);
 
-            
+            filter.GetList<DateTime>("startDate", (v) =>
+            {
+                var date = new DateTime(v.Max().Year, v.Max().Month, 1);
+                entities = entities.Where(e => e.StartDate == date);
+            }, OperatorType.lessthan, true);
+
+            filter.GetList<DateTime>("startDate", (v) =>
+            {
+                var date = new DateTime(v.Max().Year, v.Max().Month, 1);
+                entities = entities.Where(e => e.StartDate == date);
+            }, OperatorType.greaterthan, true);
+
+            filter.GetList<DateTime>("endDate", (v) =>
+            {
+                var date = (new DateTime(v.Min().Year, v.Min().Month, 1)).AddMonths(1).AddDays(-1);
+                entities = entities.Where(e => e.EndDate == date);
+            }, OperatorType.lessthan, true);
+
+            filter.GetList<DateTime>("endDate", (v) =>
+            {
+                var date = (new DateTime(v.Min().Year, v.Min().Month, 1)).AddMonths(1).AddDays(-1);
+                entities = entities.Where(e => e.EndDate == date);
+            }, OperatorType.greaterthan, true);
+
 
 
             return entities;
@@ -276,7 +310,7 @@ namespace AddOptimization.Services.Services
                     entities = entities.OrderByDescending(o => o.StartDate);
                     return entities;
                 }
-                
+
                 var columnName = sort.Name.ToUpper();
                 if (sort.Direction == SortDirection.ascending.ToString())
                 {

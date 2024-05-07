@@ -23,6 +23,10 @@ namespace AddOptimization.Contracts.Dto
         public bool IsActive { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
+        public decimal WorkDuration { get; set; }
+        public decimal Overtime { get; set; }
+        public decimal Holiday { get; set; }
+
 
     }
 }
