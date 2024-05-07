@@ -9,18 +9,18 @@ using System.Text;
 
 namespace AddOptimization.API.HostedService.BackgroundServices
 {
-    public class SendLicenseRenewalEmailBackgroundService : BackgroundService
+    public class FillTimesheetReminderEmailBackgroundService : BackgroundService
     {
         #region Private Variables
         private readonly IServiceProvider _serviceProvider;
-        private readonly ILogger<SendLicenseRenewalEmailBackgroundService> _logger;
+        private readonly ILogger<LicenseRenewalEmailBackgroundService> _logger;
         private readonly IEmailService _emailService;
         private readonly ITemplateService _templateService;
         private readonly IConfiguration _configuration;
         #endregion
 
         #region Constructor
-        public SendLicenseRenewalEmailBackgroundService(IConfiguration configuration, IEmailService emailService, ITemplateService templateService, IServiceProvider serviceProvider, ILogger<SendLicenseRenewalEmailBackgroundService> logger)
+        public FillTimesheetReminderEmailBackgroundService(IConfiguration configuration, IEmailService emailService, ITemplateService templateService, IServiceProvider serviceProvider, ILogger<LicenseRenewalEmailBackgroundService> logger)
         {
             _configuration = configuration;
             _serviceProvider = serviceProvider;
@@ -34,21 +34,21 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         #region Protected Methods
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var durationValue = _configuration.ReadSection<BackgroundServiceSettings>(AppSettingsSections.BackgroundServiceSettings).RenewLicenseEmailTriggerDurationInSeconds;
+            var durationValue = _configuration.ReadSection<BackgroundServiceSettings>(AppSettingsSections.BackgroundServiceSettings).FillTimesheetReminderEmailTriggerDurationInSeconds;
             var period = TimeSpan.FromSeconds(durationValue);
             using PeriodicTimer timer = new PeriodicTimer(period);
             while (!stoppingToken.IsCancellationRequested &&
                    await timer.WaitForNextTickAsync(stoppingToken))
             {
-                _logger.LogInformation("Send License Renewal Email BackgroundTask Started.");
-                await GetCustomersWithLicensesExpiringSoon();
-                _logger.LogInformation("Send License Renewal Email BackgroundTask Completed.");
+                _logger.LogInformation("Send Fill Timesheet Reminder Email Background Service Started.");
+                await GetNotFilledTimesheetData();
+                _logger.LogInformation("Send Fill Timesheet Reminder Email Background Service Completed.");
             }
         }
         #endregion
 
         #region Private Methods        
-        private async Task<bool> GetCustomersWithLicensesExpiringSoon()
+        private async Task<bool> GetNotFilledTimesheetData()
         {
             try
             {
