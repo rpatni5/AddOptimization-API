@@ -219,5 +219,11 @@ namespace AddOptimization.Services.Services
 
             return await Save(models);
         }
+
+        public async Task<ApiResult<List<SchedulerEventDetailsDto>>> GetSchedularEventDetails(CreateViewTimesheetRequestDto model)
+        {
+            var eventDetails = (await CreateOrViewTimeSheets(model)).Result;
+            return await GetSchedularEventDetails(eventDetails.Id);
+        }
     }
 }
