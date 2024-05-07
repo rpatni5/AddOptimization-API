@@ -9,6 +9,7 @@ using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Models;
 using AutoMapper;
+using iText.StyledXmlParser.Jsoup.Nodes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -20,7 +21,7 @@ namespace AddOptimization.Services.Services
     {
         private readonly IGenericRepository<SchedulerEvent> _schedulersRepository;
         private readonly IGenericRepository<SchedulerEventDetails> _schedulersDetailsRepository;
-
+        private readonly List<string> _currentUserRoles;
         private readonly ILogger<SchedulerEventService> _logger;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
@@ -37,32 +38,39 @@ namespace AddOptimization.Services.Services
             _httpContextAccessor = httpContextAccessor;
             _schedulersStatusService = schedulersStatusService;
             _schedulersDetailsRepository = schedulersDetailsRepository;
+            _currentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
         }
-        public async Task<PagedApiResult<SchedulerEventDetailsDto>> Search(PageQueryFiterBase filters)
+
+
+
+        public async Task<PagedApiResult<CreateViewTimesheetResponseDto>> Search(PageQueryFiterBase filters)
         {
             try
             {
-                //var entities = await _schedulersRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.Client), orderBy: x => x.OrderBy(x => x.Date));
+                var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin") || c.Contains("Account Admin")).ToList();
 
-                //entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
-                //entities = ApplyFilters(entities, filters);
+                var entities = await _schedulersRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.Approvar).Include(e => e.Client).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser), ignoreGlobalFilter: superAdminRole.Count != 0);
+                entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
+                entities = ApplyFilters(entities, filters);
 
-
-                //var pagedResult = PageHelper<SchedulerEvent, SchedulersDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new SchedulersDto
-                //{
-                //    Id = e.Id,
-                //    Duration = e.Duration,
-                //    Date = e.Date,
-                //    Summary = e.Summary,
-                //    CreatedAt = e.CreatedAt,
-                //    CreatedBy = e.CreatedByUser.FullName,
-                //    StatusID = e.AdminStatus.Id,
-                //    UserID = e.ApplicationUser.Id,
-                //    ClientID = e.Client.Id,
-
-                //}).ToList());
-                //var retVal = pagedResult;
-                return PagedApiResult<SchedulerEventDetailsDto>.Success(null);
+                var pagedResult = PageHelper<SchedulerEvent, CreateViewTimesheetResponseDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new CreateViewTimesheetResponseDto
+                {
+                    Id = e.Id,
+                    ClientId = e.ClientId,
+                    ApprovarId = e.ApprovarId,
+                    ApprovarName = e.Approvar.FullName,
+                    ClientName = $"{e.Client.FirstName} {e.Client.LastName}",
+                    UserId = e.UserId,
+                    UserStatusId = e.UserStatusId,
+                    UserName = e.ApplicationUser.FullName,
+                    StartDate = e.StartDate,
+                    EndDate = e.EndDate,
+                    AdminStatusId = e.AdminStatusId,
+                    AdminStatusName = e.AdminStatus.Name,
+                    UserStatusName = e.UserStatus.Name,
+                }).ToList());
+                var retVal = pagedResult;
+                return PagedApiResult<CreateViewTimesheetResponseDto>.Success(retVal);
 
             }
             catch (Exception ex)
@@ -71,7 +79,6 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-
 
         public async Task<ApiResult<bool>> Save(List<SchedulerEventDetailsDto> model)
         {
@@ -224,6 +231,93 @@ namespace AddOptimization.Services.Services
         {
             var eventDetails = (await CreateOrViewTimeSheets(model)).Result;
             return await GetSchedularEventDetails(eventDetails.Id);
+        }
+
+
+
+        private IQueryable<SchedulerEvent> ApplyFilters(IQueryable<SchedulerEvent> entities, PageQueryFiterBase filter)
+        {
+
+            filter.GetValue<string>("clientName", (v) =>
+           {
+               entities = entities.Where(e => e.Client != null && (e.Client.FirstName.ToLower().Contains(v.ToLower()) || e.Client.LastName.ToLower().Contains(v.ToLower())));
+           });
+            filter.GetValue<string>("approvarName", (v) =>
+            {
+                entities = entities.Where(e => e.Client != null && (e.Approvar.FirstName.ToLower().Contains(v.ToLower()) || e.Approvar.LastName.ToLower().Contains(v.ToLower())));
+            });
+            filter.GetValue<string>("userStatusName", (v) =>
+            {
+                entities = entities.Where(e => e.Client != null && (e.UserStatus.Name.ToLower().Contains(v.ToLower()) || e.UserStatus.Name.ToLower().Contains(v.ToLower())));
+            });
+            filter.GetList<DateTime>("duedateRange", (v) =>
+            {
+                var date = new DateTime(v.Max().Year, v.Max().Month, 1);
+                entities = entities.Where(e => e.EndDate < date);
+            }, OperatorType.lessthan, true);
+
+            filter.GetList<DateTime>("duedateRange", (v) =>
+            {
+                var date = (new DateTime(v.Min().Year, v.Min().Month, 1)).AddMonths(1).AddDays(-1);
+                entities = entities.Where(e => e.StartDate > date);
+            }, OperatorType.greaterthan, true);
+
+            
+
+
+            return entities;
+        }
+        private IQueryable<SchedulerEvent> ApplySorting(IQueryable<SchedulerEvent> entities, SortModel sort)
+        {
+            try
+            {
+                if (sort?.Name == null)
+                {
+                    entities = entities.OrderByDescending(o => o.StartDate);
+                    return entities;
+                }
+                
+                var columnName = sort.Name.ToUpper();
+                if (sort.Direction == SortDirection.ascending.ToString())
+                {
+                    if (columnName.ToUpper() == nameof(CreateViewTimesheetResponseDto.ClientName).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.Client.FirstName);
+                    }
+                    else if (columnName.ToUpper() == nameof(CreateViewTimesheetResponseDto.ApprovarName).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.Approvar.FirstName);
+                    }
+                    else if (columnName.ToUpper() == nameof(CreateViewTimesheetResponseDto.UserStatusName).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.UserStatus.Name);
+                    }
+                }
+
+                else
+                {
+                    if (columnName.ToUpper() == nameof(CreateViewTimesheetResponseDto.ClientName).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.Client.FirstName);
+                    }
+                    else if (columnName.ToUpper() == nameof(CreateViewTimesheetResponseDto.ApprovarName).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.Approvar.FirstName);
+                    }
+                    else if (columnName.ToUpper() == nameof(CreateViewTimesheetResponseDto.UserStatusName).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.UserStatus.Name);
+                    }
+
+                }
+                return entities;
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return entities;
+            }
         }
     }
 }
