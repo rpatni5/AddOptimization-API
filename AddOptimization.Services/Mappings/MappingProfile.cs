@@ -125,7 +125,7 @@ namespace AddOptimization.Services.Mappings
             CreateMap<SchedulerEvent, SchedulerEventDetailsDto>().AfterMap((s, d) =>
             {
                 d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
-               // d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                // d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
                 d.CreatedAt = s.CreatedAt?.Date;
 
             });
@@ -159,11 +159,11 @@ namespace AddOptimization.Services.Mappings
 
             CreateMap<SchedulerEvent, CreateViewTimesheetResponseDto>().AfterMap((s, d) =>
             {
-                d.ApprovarName = s.Approvar.FullName;
-                d.UserName = s.ApplicationUser.FullName;
-                d.ClientName = $"{s.Client.FirstName} {s.Client.LastName}";
-                d.AdminStatusName = s.AdminStatus.Name;
-                d.UserStatusName = s.UserStatus.Name;
+                d.ApprovarName = s.Approvar != null ? s.Approvar.FullName : string.Empty;
+                d.UserName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
+                d.ClientName = s.Client != null ? $"{s.Client.FirstName} {s.Client.LastName}" : string.Empty;
+                d.AdminStatusName = s.AdminStatus != null ? s.AdminStatus.Name : string.Empty;
+                d.UserStatusName = s.UserStatus != null ? s.UserStatus.Name : string.Empty;
             });
 
 
@@ -174,7 +174,7 @@ namespace AddOptimization.Services.Mappings
             CreateMap<SchedulerEventDetails, SchedulerEventDetailsDto>().AfterMap((s, d) =>
             {
                 d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
-            
+
             });
         }
     }
