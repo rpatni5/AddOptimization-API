@@ -103,6 +103,20 @@ namespace AddOptimization.API.Controllers
             }
         }
 
+        [HttpPost("schedular-event-details")]
+        public async Task<IActionResult> GetSchedularEventDetails([FromBody] CreateViewTimesheetRequestDto model)
+        {
+            try
+            {
+                var retVal = await _schedulerEventService.GetSchedularEventDetails(model);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
         [HttpGet("schedular-event/{id}")]
         public async Task<IActionResult> GetSchedularEvent(Guid id)
         {
