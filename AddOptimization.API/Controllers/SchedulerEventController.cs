@@ -22,9 +22,9 @@ namespace AddOptimization.API.Controllers
         public async Task<IActionResult> Search([FromBody] PageQueryFiterBase filters)
         {
             try
-            
+
             {
-                var retVal = await _schedulerEventService.Search( filters);
+                var retVal = await _schedulerEventService.Search(filters);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -34,11 +34,11 @@ namespace AddOptimization.API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Save( [FromBody] List<SchedulerEventDetailsDto> model)
+        public async Task<IActionResult> Save([FromBody] List<SchedulerEventDetailsDto> model)
         {
             try
             {
-                var retVal = await _schedulerEventService.Save( model);
+                var retVal = await _schedulerEventService.Save(model);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -95,6 +95,20 @@ namespace AddOptimization.API.Controllers
             try
             {
                 var retVal = await _schedulerEventService.GetSchedularEventDetails(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpPost("schedular-event-details")]
+        public async Task<IActionResult> GetSchedularEventDetails([FromBody] CreateViewTimesheetRequestDto model)
+        {
+            try
+            {
+                var retVal = await _schedulerEventService.GetSchedularEventDetails(model);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
