@@ -59,6 +59,20 @@ public class AppUsersController : CustomApiControllerBase
         }
     }
 
+    [HttpGet("employees")]
+    public async Task<IActionResult> GetEmployees()
+    {
+        try
+        {
+            var retVal = await _applicationUsersService.GetEmployee();
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
     [HttpPost("searchsummary")]
     public async Task<IActionResult> SearchSummary(PageQueryFiterBase filters)
     {

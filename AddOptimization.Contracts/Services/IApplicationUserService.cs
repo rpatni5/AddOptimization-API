@@ -13,4 +13,5 @@ public interface IApplicationUserService
     Task<ApiResult<bool>> ToogleActivationStatus(int id);
     Task<ApiResult<bool>> ToggleEmailsEnabled(int userId);
     Task<ApiResult<List<ApplicationUserDto>>> GetAccountAdmins();
+    Task<ApiResult<List<ApplicationUserDto>>> GetEmployee();
 }
