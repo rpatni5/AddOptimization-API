@@ -208,9 +208,14 @@ public class ApplicationUserService : IApplicationUserService
 
     public async Task<ApiResult<List<ApplicationUserDto>>> GetAccountAdmins()
     {
+        return await GetRoleSpecificUsers("Account Admin");
+    }
+
+    private async Task<ApiResult<List<ApplicationUserDto>>> GetRoleSpecificUsers(string roleName)
+    {
         try
         {
-            var roleId = (await _roleService.Search(null)).Result.First(x => x.Name == "Account Admin").Id;
+            var roleId = (await _roleService.Search(null)).Result.First(x => x.Name.Equals(roleName, StringComparison.InvariantCultureIgnoreCase)).Id;
             var entities = await _applicationUserRepository.QueryMappedAsync(s => new ApplicationUserDto
             {
                 Id = s.Id,
@@ -236,4 +241,10 @@ public class ApplicationUserService : IApplicationUserService
             throw;
         }
     }
+
+    public async Task<ApiResult<List<ApplicationUserDto>>> GetEmployee()
+    {
+        return await GetRoleSpecificUsers("Employee");
+    }
+
 }

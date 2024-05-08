@@ -245,13 +245,21 @@ namespace AddOptimization.Services.Services
         {
 
             filter.GetValue<string>("userId", (v) =>
-           {
+            {
                var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
                entities = entities.Where(e => e.UserId == userId);
-           });
+            });
             filter.GetValue<string>("clientName", (v) =>
             {
                 entities = entities.Where(e => e.Client != null && (e.Client.FirstName.ToLower().Contains(v.ToLower()) || e.Client.LastName.ToLower().Contains(v.ToLower())));
+            });
+            filter.GetValue<string>("client", (v) =>
+            {
+                entities = entities.Where(e => e.ClientId.ToString() == v);
+            });
+            filter.GetValue<bool>("isDraft", (v) =>
+            {
+                entities = entities.Where(e => e.IsDraft == v);
             });
             filter.GetValue<string>("approvarName", (v) =>
             {
@@ -261,6 +269,28 @@ namespace AddOptimization.Services.Services
             {
                 entities = entities.Where(e => e.Client != null && (e.UserStatus.Name.ToLower().Contains(v.ToLower()) || e.UserStatus.Name.ToLower().Contains(v.ToLower())));
             });
+            filter.GetValue<string>("adminStatusName", (v) =>
+            {
+                entities = entities.Where(e => e.Client != null && (e.AdminStatus.Name.ToLower().Contains(v.ToLower()) || e.AdminStatus.Name.ToLower().Contains(v.ToLower())));
+            });
+            filter.GetValue<string>("adminStatusId", (v) =>
+            {
+                entities = entities.Where(e => e.AdminStatusId.ToString() == v);
+            });
+            filter.GetValue<string>("approvarId", (v) =>
+            {
+                entities = entities.Where(e => e.ApprovarId.ToString() == v);
+            });
+            filter.GetValue<string>("userName", (v) =>
+            {
+                entities = entities.Where(e => e.ApplicationUser != null && (e.ApplicationUser.FullName.ToLower().Contains(v.ToLower())));
+            });
+            filter.GetValue<string>("employeeId", (v) =>
+            {
+                int userId = Convert.ToInt32(v);
+                entities = entities.Where(e => e.UserId == userId);
+            });
+
             filter.GetList<DateTime>("duedateRange", (v) =>
             {
                 var date = new DateTime(v.Max().Year, v.Max().Month, 1);
@@ -352,6 +382,8 @@ namespace AddOptimization.Services.Services
                 _logger.LogException(ex);
                 return entities;
             }
+
+
         }
     }
 }
