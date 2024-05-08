@@ -131,5 +131,33 @@ namespace AddOptimization.API.Controllers
             }
         }
 
+
+        [HttpPost("approve-request")]
+        public async Task<IActionResult> ApproveRequest(CreateViewTimesheetResponseDto model)
+        {
+            try
+            {
+                var retVal = await _schedulerEventService.ApproveRequest(model);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpPost("reject-request")]
+        public async Task<IActionResult> RejectRequest(CreateViewTimesheetResponseDto model)
+        {
+            try
+            {
+                var retVal = await _schedulerEventService.RejectRequest(model);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
     }
 }

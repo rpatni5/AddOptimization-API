@@ -4,6 +4,7 @@ using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
 using AddOptimization.Services.Constants;
 using AddOptimization.Utilities.Common;
+using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Enums;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
@@ -13,6 +14,7 @@ using iText.StyledXmlParser.Jsoup.Nodes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AddOptimization.Services.Services
@@ -246,8 +248,8 @@ namespace AddOptimization.Services.Services
 
             filter.GetValue<string>("userId", (v) =>
             {
-               var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
-               entities = entities.Where(e => e.UserId == userId);
+                var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
+                entities = entities.Where(e => e.UserId == userId);
             });
             filter.GetValue<string>("clientName", (v) =>
             {
@@ -383,7 +385,33 @@ namespace AddOptimization.Services.Services
                 return entities;
             }
 
+        }
 
+        public async Task<ApiResult<bool>> ApproveRequest(CreateViewTimesheetResponseDto model)
+        {
+            try
+            {
+
+                return ApiResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+        public async Task<ApiResult<bool>> RejectRequest(CreateViewTimesheetResponseDto model)
+        {
+            try
+            {
+                return ApiResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
         }
     }
 }
