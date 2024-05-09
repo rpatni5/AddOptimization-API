@@ -14,9 +14,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Assets\Images\Logo_AddOptimization_blue.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <_WebToolingArtifacts Remove="Properties\PublishProfiles\FolderProfile_Development.pubxml" />
     <_WebToolingArtifacts Remove="Properties\PublishProfiles\FolderProfile_Production.pubxml" />
     <_WebToolingArtifacts Remove="Properties\PublishProfiles\FolderProfile_Qa.pubxml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\Images\Logo_AddOptimization_blue.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

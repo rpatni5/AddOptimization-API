@@ -10,11 +10,13 @@ namespace AddOptimization.Data.Entities;
 public partial class AddOptimizationContext : DbContext
 {
     public string CurrentUserEmail { get; set; }
+    public int? CurrentUserId { get; set; }
     public List<string> CurrentUserRoles { get; set; }
 
     public AddOptimizationContext(IHttpContextAccessor httpContextAccessor)
     {
         CurrentUserEmail = httpContextAccessor.HttpContext.GetCurrentUserEmail();
+        CurrentUserId = httpContextAccessor.HttpContext.GetCurrentUserId();
         CurrentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
 
     }
@@ -24,6 +26,7 @@ public partial class AddOptimizationContext : DbContext
     {
         CurrentUserEmail = httpContextAccessor.HttpContext.GetCurrentUserEmail();
         CurrentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
+        CurrentUserId = httpContextAccessor.HttpContext.GetCurrentUserId();
     }
 
     public virtual DbSet<ApplicationUser> ApplicationUsers { get; set; }
@@ -40,7 +43,17 @@ public partial class AddOptimizationContext : DbContext
     public virtual DbSet<Address> Addresses { get; set; }
     public virtual DbSet<License> Licenses { get; set; }
     public virtual DbSet<LicenseDevice> LicenseDevices { get; set; }
+    public virtual DbSet<GuiVersion> GuiVersions { get; set; }
 
+    public virtual DbSet<PublicHoliday> PublicHolidays { get; set; }
+
+    public virtual DbSet<Country> Countries { get; set; }
+    public virtual DbSet<Client> Clients { get; set; }
+
+    public virtual DbSet<SchedulerEvent> SchedulerEvents { get; set; }
+    public virtual DbSet<SchedulerStatus> SchedulerStatuses { get; set; }
+    public virtual DbSet<SchedulerEventType> SchedulerEventTypes { get; set; }
+    public virtual DbSet<SchedulerEventDetails> SchedulerEventDetails { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -63,13 +76,23 @@ public partial class AddOptimizationContext : DbContext
         //});
 
         modelBuilder.Entity<Customer>(entity =>
-              {
-                  entity.HasQueryFilter(e => e.Email == CurrentUserEmail);
-              });
+        {
+            entity.HasQueryFilter(e => e.Email == CurrentUserEmail);
+        });
 
         modelBuilder.Entity<License>(entity =>
         {
             entity.HasQueryFilter(e => e.Customer != null ? e.Customer.Email == CurrentUserEmail : true);
+        });
+
+        modelBuilder.Entity<SchedulerEvent>(entity =>
+        {
+            entity.HasQueryFilter(e => e.UserId == CurrentUserId);
+        });
+
+        modelBuilder.Entity<SchedulerEventDetails>(entity =>
+        {
+            entity.HasQueryFilter(e => e.UserId == CurrentUserId);
         });
 
         OnModelCreatingPartial(modelBuilder);

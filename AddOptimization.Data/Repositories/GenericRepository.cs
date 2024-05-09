@@ -24,8 +24,8 @@ namespace AddOptimization.Data.Repositories
             _context = context;
             _logger = logger;
             entities = context.Set<TEntity>();
-            CurrentUserId = httpContextAccessor.HttpContext.GetCurrentUserId();
-            CurrentBranchId = httpContextAccessor.HttpContext.GetBranchId();
+            CurrentUserId = httpContextAccessor.HttpContext != null ? httpContextAccessor.HttpContext.GetCurrentUserId() : null;
+            CurrentBranchId = httpContextAccessor.HttpContext != null ? httpContextAccessor.HttpContext.GetBranchId() : null;
         }
         private string GetTableName()
         {

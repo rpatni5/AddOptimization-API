@@ -1,0 +1,67 @@
+﻿on: 
+  push:
+    branches:
+      - master 
+name: 🚀 PROD:Deploy API on push
+       
+jobs:
+  build_and_deploy_to_ftp:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '7.0.x'
+      
+      - name: mkdir stop_app
+        run: |
+          mkdir stop_app
+
+      - name: Add app_offline
+        uses: "finnp/create-file-action@master"
+        env:
+          FILE_NAME: "./stop_app/app_offline.htm"
+          FILE_DATA: "<div style='display: flex;justify-content: center;align-items: center;height: 100vh;'><div style='text-align: center;'><h1>Application is Offline</h1><p>Sorry, the application is currently offline for maintenance.</p><p>Please check back later.</p></div></div>"
+
+      - name: Stop App copy offline html
+        uses: SamKirkland/FTP-Deploy-Action@4.3.3
+        with:
+          server: ${{ secrets.PROD_FTP_SERVER_NAME }}
+          username: ${{ secrets.PROD_USERNAME }}
+          password: ${{ secrets.PROD_PASSWORD }}
+          local-dir: ./stop_app/
+          server-dir: /addopti3/ 
+          
+      - name: Publish application
+        run: |
+            dotnet publish -c Release -o ./publish --self-contained false
+
+      - name: FTP Deploy Published application
+        uses: SamKirkland/FTP-Deploy-Action@4.3.3
+        with:
+          server: ${{ secrets.PROD_FTP_SERVER_NAME }}
+          username: ${{ secrets.PROD_USERNAME }}
+          password: ${{ secrets.PROD_PASSWORD }}
+          local-dir: ./publish/
+          server-dir: /addopti3/ 
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/wwwroot/**
+            **/appsettings.json/**
+            app_offline.htm
+
+      - name: rename config & delete app_offline.htm
+        shell: python
+        run: |
+            import ftplib
+            ftp = ftplib.FTP('${{ secrets.PROD_FTP_SERVER_NAME }}')
+            ftp.login('${{ secrets.PROD_USERNAME }}', '${{ secrets.PROD_PASSWORD }}')
+            ftp.delete('appsettings.json')
+            ftp.rename('appsettings.Prod.json', 'appsettings.json')
+            ftp.delete('app_offline.htm')
+            ftp.delete('.ftp-deploy-sync-state.json')
+            ftp.quit()
