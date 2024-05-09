@@ -58,6 +58,7 @@ public partial class AddOptimizationContext : DbContext
 
     public virtual DbSet<LeaveStatuses> LeaveStatuses { get; set; }
 
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.UseCollation("Latin1_General_CI_AS");

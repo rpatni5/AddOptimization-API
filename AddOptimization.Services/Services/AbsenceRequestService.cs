@@ -38,10 +38,18 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var leaveStatusId = (await _leaveStatusesService.Search(null)).Result.First(x => x.Name.Equals("requested", StringComparison.InvariantCultureIgnoreCase)).Id;
                 var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
+                var requestedStatusId = (await _leaveStatusesService.Search(null)).Result.First(x => x.Name.Equals("requested", StringComparison.InvariantCultureIgnoreCase)).Id;
+                var approvedStatusId = (await _leaveStatusesService.Search(null)).Result.First(x => x.Name.Equals("approved", StringComparison.InvariantCultureIgnoreCase)).Id;
+
+                var isExisting = await _absenceRequestRepository.IsExist(s => s.Date == model.Date && s.UserId == userId && (s.LeaveStatusId == requestedStatusId || s.LeaveStatusId == approvedStatusId));
+                if (isExisting)
+                {
+                    return ApiResult<AbsenceRequestResponseDto>.Failure(ValidationCodes.AbsenceRequestedProhibited, "You have already submitted requested for this date.");
+                }
+
                 model.UserId = userId;
-                model.LeaveStatusId = leaveStatusId;
+                model.LeaveStatusId = requestedStatusId;
                 var entity = _mapper.Map<AbsenceRequest>(model);
                 await _absenceRequestRepository.InsertAsync(entity);
                 var mappedEntity = _mapper.Map<AbsenceRequestResponseDto>(entity);
@@ -78,7 +86,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _absenceRequestRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.LeaveStatuses).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Id));
+                var entities = await _absenceRequestRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.LeaveStatuses).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
                 filters.GetValue<string>("userId", (v) =>
                 {
                     var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
