@@ -152,11 +152,13 @@ namespace AddOptimization.Services.Services
         {
             try
             {
+                int userId = model.UserId != null ? model.UserId.Value : _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
+
                 SchedulerEvent entity = new SchedulerEvent();
                 entity.StartDate = new DateTime(model.DateMonth.Year, model.DateMonth.Month, 1);
                 entity.EndDate = entity.StartDate.AddMonths(1).AddDays(-1);
 
-                var response = await _schedulersRepository.FirstOrDefaultAsync(x => x.ClientId == model.ClientId && x.ApprovarId == model.ApprovarId && x.StartDate == entity.StartDate && x.EndDate == entity.EndDate && x.UserId == _httpContextAccessor.HttpContext.GetCurrentUserId().Value);
+                var response = await _schedulersRepository.FirstOrDefaultAsync(x => x.ClientId == model.ClientId && x.ApprovarId == model.ApprovarId && x.StartDate == entity.StartDate && x.EndDate == entity.EndDate && x.UserId == userId);
 
                 if (response != null)
                 {
@@ -167,7 +169,7 @@ namespace AddOptimization.Services.Services
                     var eventStatus = (await _schedulersStatusService.Search()).Result;
                     entity.ApprovarId = model.ApprovarId;
                     entity.ClientId = model.ClientId;
-                    entity.UserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
+                    entity.UserId = userId;
                     var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.DRAFT.ToString()).Id;
                     entity.AdminStatusId = statusId;
                     entity.UserStatusId = statusId;

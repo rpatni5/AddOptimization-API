@@ -9,6 +9,7 @@ namespace AddOptimization.Contracts.Dto
     public class CreateViewTimesheetRequestDto 
     {
         public Guid ClientId { get; set; }
+        public int? UserId { get; set; }
         public int ApprovarId { get; set; }
         public DateTime DateMonth { get; set; }
        
