@@ -1,0 +1,91 @@
+﻿using AddOptimization.API.Common;
+using AddOptimization.Contracts.Dto;
+using AddOptimization.Contracts.Services;
+using AddOptimization.Services.Services;
+using AddOptimization.Utilities.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+namespace AddOptimization.API.Controllers
+{
+    [Authorize]
+    public class AbsenceRequestController : CustomApiControllerBase
+    {
+        private readonly IAbsenceRequestService _absencerequestService;
+        public AbsenceRequestController(ILogger<AbsenceRequestController> logger, IAbsenceRequestService absenceRequestService) : base(logger)
+        {
+            _absencerequestService = absenceRequestService;
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> Post([FromBody] AbsenceRequestRequestDto model)
+        {
+            try
+            {
+                var retVal = await _absencerequestService.Create(model);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(Guid id)
+        {
+            try
+            {
+                var retVal = await _absencerequestService.Get(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpPost("search")]
+        public async Task<IActionResult> Search([FromBody] PageQueryFiterBase filters)
+        {
+            try
+            {
+                var retVal = await _absencerequestService.Search(filters);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(Guid id, AbsenceRequestRequestDto model)
+        {
+            try
+            {
+                var retVal = await _absencerequestService.Update(id, model);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            try
+            {
+                var retVal = await _absencerequestService.Delete(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+    }
+}
