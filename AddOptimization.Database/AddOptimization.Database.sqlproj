@@ -84,6 +84,9 @@
     <Build Include="dbo\Tables\SchedulerEvents.sql" />
     <Build Include="dbo\Tables\SchedulerEventTypes.sql" />
     <Build Include="dbo\Tables\SchedulerStatuses.sql" />
+    <Build Include="dbo\Tables\SchedulerEventDetails.sql" />
+    <Build Include="dbo\Tables\LeaveStatuses.sql" />
+    <Build Include="dbo\Tables\AbsenceRequest.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Scripts\SeedData_Script.PostDeployment.sql" />
