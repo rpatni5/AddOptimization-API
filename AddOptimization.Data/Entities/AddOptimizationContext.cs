@@ -54,6 +54,10 @@ public partial class AddOptimizationContext : DbContext
     public virtual DbSet<SchedulerStatus> SchedulerStatuses { get; set; }
     public virtual DbSet<SchedulerEventType> SchedulerEventTypes { get; set; }
     public virtual DbSet<SchedulerEventDetails> SchedulerEventDetails { get; set; }
+    public virtual DbSet<AbsenceRequest> AbsenceRequest { get; set; }
+
+    public virtual DbSet<LeaveStatuses> LeaveStatuses { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

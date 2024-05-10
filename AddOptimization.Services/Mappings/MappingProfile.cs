@@ -176,6 +176,25 @@ namespace AddOptimization.Services.Mappings
                 d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
 
             });
+
+            CreateMap<AbsenceRequest, AbsenceRequestResponseDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.LeaveStatusName = s.LeaveStatuses != null ? s.LeaveStatuses.Name : string.Empty;
+                d.UserName=s.ApplicationUser!=null ? s.ApplicationUser.FullName : string.Empty;
+
+            });
+            CreateMap<AbsenceRequestRequestDto, AbsenceRequest>();
+
+
+            CreateMap<LeaveStatuses, LeaveStatusesDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+            });
+            CreateMap<LeaveStatusesDto, LeaveStatuses>();
+
         }
     }
 }
