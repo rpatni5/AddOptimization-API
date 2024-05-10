@@ -26,6 +26,9 @@ namespace AddOptimization.Data.Entities
         [ForeignKey(nameof(LeaveStatusId))]
         public virtual LeaveStatuses LeaveStatuses { get; set; }
 
-   
+        [ForeignKey(nameof(UserId))]
+        public virtual ApplicationUser ApplicationUser { get; set; }
+
+
     }
 }

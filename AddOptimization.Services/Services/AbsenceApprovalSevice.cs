@@ -31,19 +31,13 @@ namespace AddOptimization.Services.Services
             _httpContextAccessor = httpContextAccessor;
             _leaveStatusesService = leaveStatusesService;
         }
-
-      
-
-
         public async Task<PagedApiResult<AbsenceRequestResponseDto>> Search(PageQueryFiterBase filters)
         {
             try
             {
-
-                var entities = await _absenceApprovalRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.LeaveStatuses).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser));
+                var entities = await _absenceApprovalRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.LeaveStatuses).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e=>e.ApplicationUser));
                 entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
                 entities = ApplyFilters(entities, filters);
-
                 var pagedResult = PageHelper<AbsenceRequest, AbsenceRequestResponseDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new AbsenceRequestResponseDto
                 {
                     Id = e.Id,
@@ -52,8 +46,9 @@ namespace AddOptimization.Services.Services
                     UserId = e.UserId,
                     LeaveStatusName=e.LeaveStatuses.Name,
                     UpdatedBy=e.CreatedByUser.FullName,
-                    Duration=e.Duration
-                  
+                    Duration=e.Duration,
+                    UserName = e.ApplicationUser.FullName,
+
                 }).ToList());
                 var retVal = pagedResult;
                 return PagedApiResult<AbsenceRequestResponseDto>.Success(retVal);
@@ -76,19 +71,43 @@ namespace AddOptimization.Services.Services
             {
                 if (!string.IsNullOrEmpty(v))
                 {
-                    entities = entities.Where(e => e.Duration == Convert.ToInt32(v));
+                    entities = entities.Where(e => e.Duration == Convert.ToDecimal(v));
                 }
             });
-            filter.GetValue<string>("LeaveStatuses.Name", (v) =>
+            filter.GetValue<string>("leaveStatusName", (v) =>
             {
                 entities = entities.Where(e => e.LeaveStatuses.Name != null && e.LeaveStatuses.Name.ToLower().Contains(v.ToLower()));
             });
-
-            filter.GetValue<string>("CreatedByUser.FullName", (v) =>
+            filter.GetValue<int>("leaveStatusId", (v) =>
             {
-                entities = entities.Where(e => e.CreatedByUser.FullName != null && e.CreatedByUser.FullName.ToLower().Contains(v.ToLower()));
+                entities = entities.Where(e => e.LeaveStatusId == v);
             });
-           
+
+            filter.GetValue<string>("UserName", (v) =>
+            {
+                entities = entities.Where(e => e.ApplicationUser.FullName != null && e.ApplicationUser.FullName.ToLower().Contains(v.ToLower()));
+            });
+
+            filter.GetList<DateTime>("duedateRange", (v) =>
+            {
+                var date = new DateTime(v.Max().Year, v.Max().Month, 1);
+                entities = entities.Where(e => e.Date < date);
+            }, OperatorType.lessthan, true);
+
+            filter.GetList<DateTime>("duedateRange", (v) =>
+            {
+                var date = (new DateTime(v.Min().Year, v.Min().Month, 1)).AddMonths(1).AddDays(-1);
+                entities = entities.Where(e => e.Date > date);
+            }, OperatorType.greaterthan, true);
+
+            filter.GetValue<DateTime>("Date", (v) =>
+            {
+                entities = entities.Where(e => e.Date != null && e.Date < v);
+            }, OperatorType.lessthan, true);
+            filter.GetValue<DateTime>("Date", (v) =>
+            {
+                entities = entities.Where(e => e.Date != null && e.Date > v);
+            }, OperatorType.greaterthan, true);
             return entities;
         }
 
