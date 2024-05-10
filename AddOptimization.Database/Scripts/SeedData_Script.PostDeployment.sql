@@ -100,6 +100,16 @@ END
 
 
 
+/* Adding Declined  Scheduler Status data in Scheduler Status */
+
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Declined')
+BEGIN 
+    INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
+    VALUES
+        ('7FCB2F89-750E-4B76-9B5F-6D944EB58AA2','Declined','DECLINED')
+END
+
+
 /* Adding Roles data in Roles */
 
 IF NOT EXISTS (SELECT 1 FROM Roles Where Name= 'Super Admin')
