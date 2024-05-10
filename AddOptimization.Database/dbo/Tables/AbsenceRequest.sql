@@ -9,13 +9,16 @@
 	[IsDeleted] [bit] NOT NULL,
 	[IsActive] [bit] NOT NULL,
 	[UserId] [int] NOT NULL,
-	[LeaveStatusId] [int] NOT NULL
+	[LeaveStatusId] [int] NOT NULL,
+	[Duration] [decimal](10, 2) NOT NULL
 ) ON [PRIMARY]
- 
+
 GO
- 
+
 ALTER TABLE [dbo].[AbsenceRequest] ADD  DEFAULT ((0)) FOR [IsDeleted]
 GO
- 
+
 ALTER TABLE [dbo].[AbsenceRequest] ADD  DEFAULT ((1)) FOR [IsActive]
 GO
+
+
