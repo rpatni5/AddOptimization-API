@@ -29,6 +29,5 @@ namespace AddOptimization.Data.Entities
         [ForeignKey(nameof(UserId))]
         public virtual ApplicationUser ApplicationUser { get; set; }
 
-
     }
 }
