@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using AddOptimization.Data.Common;
 using AddOptimization.Data.Extensions;
 using AddOptimization.Utilities.Extensions;
-using NPOI.SS.UserModel;
 
 namespace AddOptimization.Data.Entities;
 
@@ -55,8 +54,8 @@ public partial class AddOptimizationContext : DbContext
     public virtual DbSet<SchedulerEventType> SchedulerEventTypes { get; set; }
     public virtual DbSet<SchedulerEventDetails> SchedulerEventDetails { get; set; }
     public virtual DbSet<AbsenceRequest> AbsenceRequest { get; set; }
-
     public virtual DbSet<LeaveStatuses> LeaveStatuses { get; set; }
+    public virtual DbSet<ClientEmployeeAssociation> ClientEmployeeAssociations { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

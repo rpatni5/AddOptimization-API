@@ -4,5 +4,7 @@
     {
         public int ExpirationThresholdInDays { get; set; }
         public int RenewLicenseEmailTriggerDurationInSeconds {  get; set; }
+        public int FillTimesheetReminderEmailTriggerDurationInSeconds { get; set; }
+        
     }
 }
