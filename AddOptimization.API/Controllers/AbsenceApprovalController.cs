@@ -1,4 +1,5 @@
 ﻿using AddOptimization.API.Common;
+using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Utilities.Models;
 using GraphQL;
@@ -26,6 +27,24 @@ namespace AddOptimization.API.Controllers
             {
                 return HandleException(ex);
             }
-        }        
+        }
+
+        [HttpPost("action-request")]
+        public async Task<IActionResult> AbsenceAction(AdminApprovalRequestActionDto model)
+        {
+            try
+            {
+                var retVal = await _absenceApprovalService.AbsenceAction(model);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+       
+
+
     }
 }

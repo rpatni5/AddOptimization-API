@@ -102,7 +102,7 @@ namespace AddOptimization.Services.Services
                 {
                     entities = entities.Where(e => e.Date <= v);
                 });
-               
+
                 var mappedEntities = _mapper.Map<List<AbsenceRequestResponseDto>>(entities);
                 return ApiResult<List<AbsenceRequestResponseDto>>.Success(mappedEntities);
             }
@@ -117,14 +117,17 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-
-
+                var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
+                var requestedStatusId = (await _leaveStatusesService.Search(null)).Result.First(x => x.Name.Equals("requested", StringComparison.InvariantCultureIgnoreCase)).Id;
+                var approvedStatusId = (await _leaveStatusesService.Search(null)).Result.First(x => x.Name.Equals("approved", StringComparison.InvariantCultureIgnoreCase)).Id;
                 var entity = await _absenceRequestRepository.FirstOrDefaultAsync(t => t.Id == id, ignoreGlobalFilter: true);
                 if (entity == null)
                 {
                     return ApiResult<AbsenceRequestResponseDto>.NotFound("Absence Request");
                 }
-
+                model.UserId = userId;
+                model.LeaveStatusId = requestedStatusId;
+                _mapper.Map(model, entity);
                 _mapper.Map(model, entity);
                 entity = await _absenceRequestRepository.UpdateAsync(entity);
 
@@ -139,6 +142,25 @@ namespace AddOptimization.Services.Services
             }
         }
 
+
+
+        //public async Task<ApiResult<AbsenceRequestResponseDto>> Update(Guid id, AbsenceRequestRequestDto model)
+        //{
+        //    try
+        //    {
+        //        var entity = await _absenceRequestRepository.FirstOrDefaultAsync(o => o.Id == id);
+
+        //        _mapper.Map(model, entity);
+        //        await _absenceRequestRepository.UpdateAsync(entity);
+        //        var mappedEntity = _mapper.Map<AbsenceRequestResponseDto>(entity);
+        //        return ApiResult<AbsenceRequestResponseDto>.Success(mappedEntity);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogException(ex);
+        //        throw;
+        //    }
+        //}
         public async Task<ApiResult<bool>> Delete(Guid id)
         {
             try
