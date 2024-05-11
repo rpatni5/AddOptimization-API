@@ -22,6 +22,7 @@ namespace AddOptimization.Services.Services
     {
         private readonly IGenericRepository<SchedulerEvent> _schedulersRepository;
         private readonly IGenericRepository<SchedulerEventDetails> _schedulersDetailsRepository;
+        private readonly IGenericRepository<Client> _clientsRepository;
         private readonly List<string> _currentUserRoles;
         private readonly ILogger<SchedulerEventService> _logger;
         private readonly IMapper _mapper;
@@ -32,7 +33,7 @@ namespace AddOptimization.Services.Services
         private readonly ITemplateService _templateService;
         private readonly IConfiguration _configuration;
 
-        public SchedulerEventService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulerEventService> logger, IMapper mapper, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ISchedulersStatusService schedulersStatusService, IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository,
+        public SchedulerEventService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulerEventService> logger, IMapper mapper, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ISchedulersStatusService schedulersStatusService, IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository, IGenericRepository<Client> clientsRepository,
             IConfiguration configuration, IEmailService emailService, ITemplateService templateService)
         {
             _schedulersRepository = schedulersRepository;
@@ -46,6 +47,7 @@ namespace AddOptimization.Services.Services
             _emailService = emailService;
             _templateService = templateService;
             _configuration = configuration;
+            _clientsRepository = clientsRepository;
         }
 
 
@@ -398,7 +400,25 @@ namespace AddOptimization.Services.Services
         {
             try
             {
+                var eventDetails = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == model.Id);
+                eventDetails.IsDraft = true;
+                var eventStatus = (await _schedulersStatusService.Search()).Result;
+                var adminApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.ADMIN_APPROVED.ToString()).Id;
+                var clientApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.CLIENT_APPROVED.ToString()).Id;
+                var pendingClientAppprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_CLIENT_APPROVAL.ToString()).Id;
 
+                var clientDetails = await _clientsRepository.FirstOrDefaultAsync(x => x.Id == model.ClientId);
+                eventDetails.UserStatusId = adminApprovedId;
+                if (clientDetails.IsApprovalRequired)
+                {
+                    eventDetails.AdminStatusId = pendingClientAppprovedId;
+                    SendApprovalEmailToClient(model);
+                }
+                else
+                {
+                    eventDetails.AdminStatusId = clientApprovedId;
+                }
+                var result = await _schedulersRepository.UpdateAsync(eventDetails);
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -406,6 +426,11 @@ namespace AddOptimization.Services.Services
                 _logger.LogException(ex);
                 throw;
             }
+        }
+
+        private void SendApprovalEmailToClient(CreateViewTimesheetResponseDto model)
+        {
+
         }
 
         public async Task<ApiResult<bool>> DeclineRequest(CreateViewTimesheetResponseDto model)
