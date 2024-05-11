@@ -4,10 +4,9 @@ using AddOptimization.API.Common;
 using AddOptimization.Contracts.Constants;
 using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
-using AddOptimization.Services.Services;
 using AddOptimization.Utilities.Models;
 
-namespace CustomersManagment.API.Controllers;
+namespace AddOptimization.API.Controllers;
 [Authorize]
 public class CustomersController : CustomApiControllerBase
 {
@@ -105,19 +104,4 @@ public class CustomersController : CustomApiControllerBase
             return HandleException(ex);
         }
     }
-
-    //[HttpGet("license/{customerId}")]
-    //public async Task<IActionResult> GetLicense(Guid customerId)
-    //{
-    //    try
-    //    {
-    //        var retVal = await _customersService.GetLicense(customerId);
-    //        return HandleResponse(retVal);
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        return HandleException(ex);
-    //    }
-    //}
-
 }

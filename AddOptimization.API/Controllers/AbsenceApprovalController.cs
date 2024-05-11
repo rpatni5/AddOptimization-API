@@ -1,9 +1,7 @@
 ﻿using AddOptimization.API.Common;
 using AddOptimization.Contracts.Services;
-using AddOptimization.Services.Services;
 using AddOptimization.Utilities.Models;
 using GraphQL;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AddOptimization.API.Controllers
@@ -20,7 +18,6 @@ namespace AddOptimization.API.Controllers
         public async Task<IActionResult> Search([FromBody] PageQueryFiterBase filters)
         {
             try
-
             {
                 var retVal = await _absenceApprovalService.Search(filters);
                 return HandleResponse(retVal);
@@ -29,8 +26,6 @@ namespace AddOptimization.API.Controllers
             {
                 return HandleException(ex);
             }
-        }
-
-        
+        }        
     }
 }
