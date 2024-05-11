@@ -37,11 +37,11 @@ END
 
 /* Adding Overlap EventType data in Scheduler Event Types */
 
-IF NOT EXISTS (SELECT 1 FROM SchedulerEventTypes Where Name= 'Overlap')
+IF NOT EXISTS (SELECT 1 FROM SchedulerEventTypes Where Name= 'Overtime')
 BEGIN 
     INSERT INTO SchedulerEventTypes(Id,Name)
     VALUES
-        ('D4E69B78-10BF-4B9B-8072-8CEF20ECAAA3','Overlap')
+        ('D4E69B78-10BF-4B9B-8072-8CEF20ECAAA3','Overtime')
 END
 
 /* Adding Absence Request EventType data in Scheduler Event Types */
@@ -55,49 +55,59 @@ END
 
 /* Adding Pending for accountant approval Scheduler Status data in Scheduler Status */
 
-IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Pending for accountant approval')
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Pending Account Approval')
 BEGIN 
-    INSERT INTO SchedulerStatuses(Id,Name)
+    INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
     VALUES
-        ('B39271A8-EB3A-42DC-A079-1C76F4A75668','Pending for accountant approval')
+        ('B39271A8-EB3A-42DC-A079-1C76F4A75668','Pending Account Approval','PENDING_ACCOUNT_ADMIN_APPROVAL')
 END
 
 /* Adding Draft Scheduler Status data in Scheduler Status */
 
 IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Draft')
 BEGIN 
-    INSERT INTO SchedulerStatuses(Id,Name)
+    INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
     VALUES
-        ('905729F2-E9A6-4640-BC04-37A189D77628','Draft')
+        ('905729F2-E9A6-4640-BC04-37A189D77628','Draft','DRAFT')
 END
 
 /* Adding Pending for invoicing Scheduler Status data in Scheduler Status */
 
-IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Pending for invoicing')
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Pending Invoicing')
 BEGIN 
-    INSERT INTO SchedulerStatuses(Id,Name)
+    INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
     VALUES
-        ('0AAD8336-A223-42F4-B6FE-4EDD97ADEDC3','Pending for invoicing')
+        ('0AAD8336-A223-42F4-B6FE-4EDD97ADEDC3','Pending Invoicing','PENDING_INVOICING')
 END
 
 /* Adding Paid by client Scheduler Status data in Scheduler Status */
 
-IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Paid by client')
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Paid')
 BEGIN 
-    INSERT INTO SchedulerStatuses(Id,Name)
+    INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
     VALUES
-        ('F69D2DD9-0165-4CAA-BD6D-96FF663309AF','Paid by client')
+        ('F69D2DD9-0165-4CAA-BD6D-96FF663309AF','Paid','CLIENT_PAID')
 END
 
 /* Adding Pending for client appproval Scheduler Status data in Scheduler Status */
 
-IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Pending for client appproval')
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Pending Client Appproval')
 BEGIN 
-    INSERT INTO SchedulerStatuses(Id,Name)
+    INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
     VALUES
-        ('2DB8D005-90BB-40ED-B35E-ACC37B15787E','Pending for client appproval')
+        ('2DB8D005-90BB-40ED-B35E-ACC37B15787E','Pending Client Appproval','PENDING_CLIENT_APPROVAL')
 END
 
+
+
+/* Adding Declined  Scheduler Status data in Scheduler Status */
+
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Declined')
+BEGIN 
+    INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
+    VALUES
+        ('7FCB2F89-750E-4B76-9B5F-6D944EB58AA2','Declined','DECLINED')
+END
 
 
 /* Adding Roles data in Roles */
@@ -321,3 +331,92 @@ BEGIN
     values (NEWID(),@UserId,@RoleId,GETUTCDATE())
 END
 GO
+
+--Start entry for leave statuses
+IF NOT EXISTS (SELECT 1 FROM LeaveStatuses Where Name= 'Requested')
+BEGIN 
+    INSERT INTO LeaveStatuses(Id,Name,CreatedAt,CreatedByUserId,UpdatedAt,UpdatedByUserId,IsDeleted,IsActive)
+    VALUES
+        ('1','Requested',GETDATE(),1,null,null,0,1);
+END
+IF NOT EXISTS (SELECT 2 FROM LeaveStatuses Where Name= 'Approved')
+BEGIN 
+    INSERT INTO LeaveStatuses(Id,Name,CreatedAt,CreatedByUserId,UpdatedAt,UpdatedByUserId,IsDeleted,IsActive)
+    VALUES
+        ('2','Approved',GETDATE(),1,null,null,0,1);
+END
+IF NOT EXISTS (SELECT 3 FROM LeaveStatuses Where Name= 'Rejected')
+BEGIN 
+    INSERT INTO LeaveStatuses(Id,Name,CreatedAt,CreatedByUserId,UpdatedAt,UpdatedByUserId,IsDeleted,IsActive)
+    VALUES
+        ('3','Rejected',GETDATE(),1,null,null,0,1);
+END
+--End entry for leave statuses
+
+--Start entry for screens
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='gui_versions')
+BEGIN 
+    INSERT INTO Screens(Id,Name,ScreenKey,Route)
+    VALUES
+        ('59B6217B-3408-47D8-524F-08DC629F0CF6','GUI Versions','gui_versions','/admin/gui-versions')
+END
+ 
+ 
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='public-holiday')
+BEGIN 
+    INSERT INTO Screens(Id,Name,ScreenKey,Route)
+    VALUES
+        ('2A87C897-040F-448F-3E68-08DC645010CA','public-holiday','public-holiday','/admin/public-holiday')
+END
+ 
+ 
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='client_screen')
+BEGIN 
+    INSERT INTO Screens(Id,Name,ScreenKey,Route)
+    VALUES
+        ('882B0A13-97EC-4979-3B74-08DC68E79066','Clients','client_screen','/admin/clients')
+END
+ 
+ 
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='admin_gui_versions')
+BEGIN 
+    INSERT INTO Screens(Id,Name,ScreenKey,Route)
+    VALUES
+        ('58A0D4D0-386B-4599-F65E-08DC6A8B7B32','Admin GUI Versions','admin_gui_versions','/admin/gui-versions')
+END
+ 
+ 
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='user_time_sheet_calendar')
+BEGIN 
+    INSERT INTO Screens(Id,Name,ScreenKey,Route)
+    VALUES
+        ('795A1FAF-EDCE-4B8F-F7F2-08DC6DAD177C','User time sheet calendar','user_time_sheet_calendar','/admin/timesheets/time-sheets-calendar/{}')
+END
+ 
+ 
+ 
+ 
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='absence_request')
+BEGIN 
+    INSERT INTO Screens(Id,Name,ScreenKey,Route)
+    VALUES
+        ('F2E60144-4F95-455E-FD2B-08DC6F1A7E9F','Absence Request','absence_request','/admin/timesheets/absence-request')
+END
+ 
+ 
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='admin_time_sheet_review_calendar')
+BEGIN 
+    INSERT INTO Screens(Id,Name,ScreenKey,Route)
+    VALUES
+        ('7817CDA7-F6CB-4A02-4F5E-08DC6F38BC18','Admin time sheet review calendar','admin_time_sheet_review_calendar','/admin/timesheets/time-sheets-review-calendar/{}')
+END
+ 
+ 
+ 
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='absence_approval')
+BEGIN 
+    INSERT INTO Screens(Id,Name,ScreenKey,Route)
+    VALUES
+        ('B39271A8-EB3A-42DC-A079-1C76F4A75668','Absence Approval','absence_approval','/admin/timesheets/absence-approval')
+END
+--End entry for screens

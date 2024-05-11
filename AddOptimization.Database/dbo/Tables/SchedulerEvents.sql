@@ -1,13 +1,12 @@
-﻿CREATE TABLE [dbo].[SchedulerEvents]
-(
+﻿CREATE TABLE [dbo].[SchedulerEvents](
 	[Id] [uniqueidentifier] NOT NULL,
-	[Duration] [decimal](5, 2) NOT NULL,
-	[Date] [datetime2](7) NOT NULL,
-	[Summary] [varchar](300) NULL,
-	[EventTypeId] [uniqueidentifier] NOT NULL,
-	[StatusId] [uniqueidentifier] NOT NULL,
 	[ClientId] [uniqueidentifier] NOT NULL,
+	[ApprovarId] [int] NOT NULL,
+	[StartDate] [datetime2](7) NOT NULL,
+	[EndDate] [datetime2](7) NOT NULL,
 	[UserId] [int] NOT NULL,
+	[UserStatusId] [uniqueidentifier] NOT NULL,
+	[AdminStatusId] [uniqueidentifier] NOT NULL,
 	[IsDraft] [bit] NOT NULL,
 	[IsDeleted] [bit] NOT NULL,
 	[IsActive] [bit] NOT NULL,
@@ -15,29 +14,47 @@
 	[CreatedByUserId] [int] NULL,
 	[UpdatedAt] [datetime2](7) NULL,
 	[UpdatedByUserId] [int] NULL,
-	CONSTRAINT [PK_SchedulerEvents] PRIMARY KEY CLUSTERED ([Id] ASC),
-    CONSTRAINT [FK_SchedulerEvents_ApplicationUsers_CreatedByUserId] FOREIGN KEY ([CreatedByUserId]) REFERENCES [dbo].[ApplicationUsers] ([Id]),
-    CONSTRAINT [FK_SchedulerEvents_ApplicationUsers_UpdatedByUserId] FOREIGN KEY ([UpdatedByUserId]) REFERENCES [dbo].[ApplicationUsers] ([Id]),
-	CONSTRAINT [FK_SchedulerEvents_ApplicationUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [dbo].[ApplicationUsers] ([Id]),
-    CONSTRAINT [FK_SchedulerEvents_Clients_ClientId] FOREIGN KEY ([ClientId]) REFERENCES [dbo].[Clients] ([Id]),
-	CONSTRAINT [FK_SchedulerEvents_SchedulerEventTypes_EventTypeId] FOREIGN KEY ([EventTypeId]) REFERENCES [dbo].[SchedulerEventTypes] ([Id]),
-	CONSTRAINT [FK_SchedulerEvents_SchedulerStatuses_StatusId] FOREIGN KEY ([StatusId]) REFERENCES [dbo].[SchedulerStatuses] ([Id]),
-)
+PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
 GO
-CREATE NONCLUSTERED INDEX [IX_SchedulerEvents_UpdatedByUserId]
-    ON [dbo].[SchedulerEvents]([UpdatedByUserId] ASC);
+
+ALTER TABLE [dbo].[SchedulerEvents] ADD  DEFAULT ((1)) FOR [IsDraft]
 GO
-CREATE NONCLUSTERED INDEX [IX_SchedulerEvents_CreatedByUserId]
-    ON [dbo].[SchedulerEvents]([CreatedByUserId] ASC);
+
+ALTER TABLE [dbo].[SchedulerEvents] ADD  DEFAULT ((0)) FOR [IsDeleted]
 GO
-CREATE NONCLUSTERED INDEX [IX_SchedulerEvents_UserId]
-    ON [dbo].[SchedulerEvents]([UserId] ASC);
+
+ALTER TABLE [dbo].[SchedulerEvents] ADD  DEFAULT ((1)) FOR [IsActive]
 GO
-CREATE NONCLUSTERED INDEX [IX_SchedulerEvents_EventTypeId]
-    ON [dbo].[SchedulerEvents]([EventTypeId] ASC);
+
+ALTER TABLE [dbo].[SchedulerEvents]  WITH CHECK ADD FOREIGN KEY([AdminStatusId])
+REFERENCES [dbo].[SchedulerStatuses] ([Id])
 GO
-CREATE NONCLUSTERED INDEX [IX_SchedulerEvents_StatusId]
-    ON [dbo].[SchedulerEvents]([StatusId] ASC);
+
+ALTER TABLE [dbo].[SchedulerEvents]  WITH CHECK ADD FOREIGN KEY([ApprovarId])
+REFERENCES [dbo].[ApplicationUsers] ([Id])
 GO
-	CREATE NONCLUSTERED INDEX [IX_SchedulerEvents_ClientId]
-    ON [dbo].[SchedulerEvents]([ClientId] ASC);
+
+ALTER TABLE [dbo].[SchedulerEvents]  WITH CHECK ADD FOREIGN KEY([ClientId])
+REFERENCES [dbo].[Clients] ([Id])
+GO
+
+ALTER TABLE [dbo].[SchedulerEvents]  WITH CHECK ADD FOREIGN KEY([CreatedByUserId])
+REFERENCES [dbo].[ApplicationUsers] ([Id])
+GO
+
+ALTER TABLE [dbo].[SchedulerEvents]  WITH CHECK ADD FOREIGN KEY([UpdatedByUserId])
+REFERENCES [dbo].[ApplicationUsers] ([Id])
+GO
+
+ALTER TABLE [dbo].[SchedulerEvents]  WITH CHECK ADD FOREIGN KEY([UserId])
+REFERENCES [dbo].[ApplicationUsers] ([Id])
+GO
+
+ALTER TABLE [dbo].[SchedulerEvents]  WITH CHECK ADD FOREIGN KEY([UserStatusId])
+REFERENCES [dbo].[SchedulerStatuses] ([Id])
+GO
+

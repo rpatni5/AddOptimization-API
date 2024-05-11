@@ -46,6 +46,12 @@ namespace AddOptimization.Services.Services
             try
             {
                 var entities = await _publicholidayRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.Country).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Date));
+
+                filters.GetValue<string>("countryId", (v) =>
+                {
+                    entities = entities.Where(e => e.CountryId.ToString() == v);
+                });
+
                 var mappedEntities = _mapper.Map<List<PublicHolidayResponseDto>>(entities);
                 return ApiResult<List<PublicHolidayResponseDto>>.Success(mappedEntities);
             }
