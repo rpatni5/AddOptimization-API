@@ -438,7 +438,6 @@ namespace AddOptimization.Services.Services
             try
             {
                 var eventDetails = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == model.Id);
-                eventDetails.IsDraft = true;
                 var eventStatus = (await _schedulersStatusService.Search()).Result;
                 var draftstatusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.DRAFT.ToString()).Id;
                 var declinedStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.DECLINED.ToString()).Id;
