@@ -1,21 +1,20 @@
-﻿using AddOptimization.Contracts.Dto;
+﻿using AddOptimization.Contracts.Constants;
+using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
 using AddOptimization.Services.Constants;
 using AddOptimization.Utilities.Common;
-using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Enums;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
+using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
 using AutoMapper;
-using iText.StyledXmlParser.Jsoup.Nodes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AddOptimization.Services.Services
 {
@@ -29,11 +28,14 @@ namespace AddOptimization.Services.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ISchedulersStatusService _schedulersStatusService;
+        private readonly IEmailService _emailService;
+        private readonly ITemplateService _templateService;
+        private readonly IConfiguration _configuration;
 
-        public SchedulerEventService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulerEventService> logger, IMapper mapper, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ISchedulersStatusService schedulersStatusService, IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository)
+        public SchedulerEventService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulerEventService> logger, IMapper mapper, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ISchedulersStatusService schedulersStatusService, IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository,
+            IConfiguration configuration, IEmailService emailService, ITemplateService templateService)
         {
             _schedulersRepository = schedulersRepository;
-
             _logger = logger;
             _mapper = mapper;
             _unitOfWork = unitOfWork;
@@ -41,6 +43,9 @@ namespace AddOptimization.Services.Services
             _schedulersStatusService = schedulersStatusService;
             _schedulersDetailsRepository = schedulersDetailsRepository;
             _currentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
+            _emailService = emailService;
+            _templateService = templateService;
+            _configuration = configuration;
         }
 
 
@@ -415,5 +420,27 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
+
+        #region
+        private async Task<bool> SendTimesheetApprovedEmail(string userFullName, string email)
+        {
+            try
+            {
+                var subject = "Timesheet Approved";
+                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetApproved);
+                emailTemplate = emailTemplate.Replace("[EmployeeName]", userFullName)
+                                             .Replace("[Month]", userFullName)
+                                             .Replace("[Year]", userFullName)
+                                             .Replace("[NoOfDays]", userFullName)
+                                             .Replace("[Approver]", userFullName);
+                return await _emailService.SendEmail(email, subject, emailTemplate);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return false;
+            }
+        }
+        #endregion
     }
 }
