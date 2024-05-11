@@ -109,6 +109,36 @@ BEGIN
         ('7FCB2F89-750E-4B76-9B5F-6D944EB58AA2','Declined','DECLINED')
 END
 
+/* Adding Client Declined Scheduler Status data in Scheduler Status */
+
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Client Declined')
+BEGIN 
+    INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
+    VALUES
+        ('BA7AB70E-C985-4122-BDCA-F83FC29A9884','Client Declined','CLIENT_DECLINED')
+END
+
+/* Adding Client Approved  Scheduler Status data in Scheduler Status */
+
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Client Approved')
+BEGIN 
+    INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
+    VALUES
+        ('92D6B0DB-F21B-4314-96E6-1C45E8E375C6','Client Approved','CLIENT_APPROVED')
+END
+
+/* Adding Admin Approved  Scheduler Status data in Scheduler Status */
+
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Admin Approved')
+BEGIN 
+    INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
+    VALUES
+        ('CA404379-C54D-41B8-AE40-4609FFFDBC5F','Admin Approved','ADMIN_APPROVED')
+END
+
+
+
+
 
 /* Adding Roles data in Roles */
 
