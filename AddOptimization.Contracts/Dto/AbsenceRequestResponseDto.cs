@@ -19,5 +19,6 @@ namespace AddOptimization.Contracts.Dto
         public int LeaveStatusId { get; set; }
         public string LeaveStatusName { get; set; }
         public decimal Duration { get; set; }
+        public string UserName { get; set; }
     }
 }

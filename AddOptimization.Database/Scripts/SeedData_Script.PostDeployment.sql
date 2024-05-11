@@ -100,6 +100,16 @@ END
 
 
 
+/* Adding Declined  Scheduler Status data in Scheduler Status */
+
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Declined')
+BEGIN 
+    INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
+    VALUES
+        ('7FCB2F89-750E-4B76-9B5F-6D944EB58AA2','Declined','DECLINED')
+END
+
+
 /* Adding Roles data in Roles */
 
 IF NOT EXISTS (SELECT 1 FROM Roles Where Name= 'Super Admin')
@@ -344,7 +354,7 @@ END
 --End entry for leave statuses
 
 --Start entry for screens
-IF NOT EXISTS (SELECT 1 FROM Screens Where Name= 'GUI Versions' and ScreenKey ='gui_versions')
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='gui_versions')
 BEGIN 
     INSERT INTO Screens(Id,Name,ScreenKey,Route)
     VALUES
@@ -352,7 +362,7 @@ BEGIN
 END
  
  
-IF NOT EXISTS (SELECT 1 FROM Screens Where Name= 'public-holiday' and ScreenKey ='public-holiday')
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='public-holiday')
 BEGIN 
     INSERT INTO Screens(Id,Name,ScreenKey,Route)
     VALUES
@@ -360,7 +370,7 @@ BEGIN
 END
  
  
-IF NOT EXISTS (SELECT 1 FROM Screens Where Name= 'Clients' and ScreenKey ='client_screen')
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='client_screen')
 BEGIN 
     INSERT INTO Screens(Id,Name,ScreenKey,Route)
     VALUES
@@ -368,7 +378,7 @@ BEGIN
 END
  
  
-IF NOT EXISTS (SELECT 1 FROM Screens Where Name= 'Admin GUI Versions' and ScreenKey ='admin_gui_versions')
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='admin_gui_versions')
 BEGIN 
     INSERT INTO Screens(Id,Name,ScreenKey,Route)
     VALUES
@@ -376,7 +386,7 @@ BEGIN
 END
  
  
-IF NOT EXISTS (SELECT 1 FROM Screens Where Name= 'User time sheet calendar' and ScreenKey ='user_time_sheet_calendar')
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='user_time_sheet_calendar')
 BEGIN 
     INSERT INTO Screens(Id,Name,ScreenKey,Route)
     VALUES
@@ -386,7 +396,7 @@ END
  
  
  
-IF NOT EXISTS (SELECT 1 FROM Screens Where Name= 'Absence Request' and ScreenKey ='absence_request')
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='absence_request')
 BEGIN 
     INSERT INTO Screens(Id,Name,ScreenKey,Route)
     VALUES
@@ -394,7 +404,7 @@ BEGIN
 END
  
  
-IF NOT EXISTS (SELECT 1 FROM Screens Where Name= 'Admin time sheet review calendar' and ScreenKey ='admin_time_sheet_review_calendar')
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='admin_time_sheet_review_calendar')
 BEGIN 
     INSERT INTO Screens(Id,Name,ScreenKey,Route)
     VALUES
@@ -403,7 +413,7 @@ END
  
  
  
-IF NOT EXISTS (SELECT 1 FROM Screens Where Name= 'Absence Approval' and ScreenKey ='absence_approval')
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='absence_approval')
 BEGIN 
     INSERT INTO Screens(Id,Name,ScreenKey,Route)
     VALUES

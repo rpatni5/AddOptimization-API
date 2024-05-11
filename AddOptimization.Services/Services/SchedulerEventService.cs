@@ -408,10 +408,18 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        public async Task<ApiResult<bool>> RejectRequest(CreateViewTimesheetResponseDto model)
+        public async Task<ApiResult<bool>> DeclineRequest(CreateViewTimesheetResponseDto model)
         {
             try
             {
+                var eventDetails = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == model.Id);
+                eventDetails.IsDraft = true;
+                var eventStatus = (await _schedulersStatusService.Search()).Result;
+                var draftstatusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.DRAFT.ToString()).Id;
+                var declinedStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.DECLINED.ToString()).Id;
+                eventDetails.UserStatusId = declinedStatusId;
+                eventDetails.AdminStatusId = draftstatusId;
+                var result = await _schedulersRepository.UpdateAsync(eventDetails);
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -421,7 +429,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        #region
+        #region Private Methods
         private async Task<bool> SendTimesheetApprovedEmail(string userFullName, string email)
         {
             try

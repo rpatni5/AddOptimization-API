@@ -146,12 +146,12 @@ namespace AddOptimization.API.Controllers
             }
         }
 
-        [HttpPost("reject-request")]
-        public async Task<IActionResult> RejectRequest(CreateViewTimesheetResponseDto model)
+        [HttpPost("decline-request")]
+        public async Task<IActionResult> DeclineRequest(CreateViewTimesheetResponseDto model)
         {
             try
             {
-                var retVal = await _schedulerEventService.RejectRequest(model);
+                var retVal = await _schedulerEventService.DeclineRequest(model);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)

@@ -86,7 +86,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _absenceRequestRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.LeaveStatuses).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
+                var entities = await _absenceRequestRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.LeaveStatuses).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
                 filters.GetValue<string>("userId", (v) =>
                 {
                     var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
@@ -102,7 +102,7 @@ namespace AddOptimization.Services.Services
                 {
                     entities = entities.Where(e => e.Date <= v);
                 });
-
+               
                 var mappedEntities = _mapper.Map<List<AbsenceRequestResponseDto>>(entities);
                 return ApiResult<List<AbsenceRequestResponseDto>>.Success(mappedEntities);
             }

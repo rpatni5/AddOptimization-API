@@ -12,6 +12,7 @@ namespace AddOptimization.Services.Constants
         DRAFT,
         PENDING_INVOICING,
         CLIENT_PAID,
-        PENDING_CLIENT_APPROVAL
+        PENDING_CLIENT_APPROVAL,
+        DECLINED
     }
 }
