@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 
 namespace AddOptimization.Services.Services
 {
@@ -91,17 +92,17 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        public async Task<ApiResult<bool>> Save(List<SchedulerEventDetailsDto> model)
+        public async Task<ApiResult<bool>> Save(List<SchedulerEventDetailsDto> schedulerEventDetails)
         {
             var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
-            model.ForEach(x => x.UserId = userId);
+            schedulerEventDetails.ForEach(x => x.UserId = userId);
             await _unitOfWork.BeginTransactionAsync();
             var schedluerEventsToUpdate = new List<SchedulerEventDetails>();
             var schedluerEventsToInsert = new List<SchedulerEventDetails>();
 
             try
             {
-                foreach (var item in model)
+                foreach (var item in schedulerEventDetails)
                 {
                     var entity = _mapper.Map<SchedulerEventDetails>(item);
                     if (item.Id != Guid.Empty)
@@ -206,7 +207,7 @@ namespace AddOptimization.Services.Services
         }
 
 
-        public async Task<ApiResult<List<SchedulerEventDetailsDto>>> GetSchedularEventDetails(Guid id)
+        public async Task<ApiResult<List<SchedulerEventDetailsDto>>> GetSchedulerEventDetails(Guid id)
         {
             try
             {
@@ -217,7 +218,7 @@ namespace AddOptimization.Services.Services
 
                 if (entity == null)
                 {
-                    return ApiResult<List<SchedulerEventDetailsDto>>.NotFound("SchedularEventDetails");
+                    return ApiResult<List<SchedulerEventDetailsDto>>.NotFound("SchedulerEventDetails");
                 }
                 var mappedEntity = _mapper.Map<List<SchedulerEventDetailsDto>>(entity);
                 return ApiResult<List<SchedulerEventDetailsDto>>.Success(mappedEntity);
@@ -244,10 +245,10 @@ namespace AddOptimization.Services.Services
             return await Save(models);
         }
 
-        public async Task<ApiResult<List<SchedulerEventDetailsDto>>> GetSchedularEventDetails(CreateViewTimesheetRequestDto model)
+        public async Task<ApiResult<List<SchedulerEventDetailsDto>>> GetSchedulerEventDetails(CreateViewTimesheetRequestDto model)
         {
             var eventDetails = (await CreateOrViewTimeSheets(model)).Result;
-            return await GetSchedularEventDetails(eventDetails.Id);
+            return await GetSchedulerEventDetails(eventDetails.Id);
         }
 
 
@@ -400,25 +401,27 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var eventDetails = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == model.Id);
-                eventDetails.IsDraft = true;
+                var eventDetails = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == model.Id,include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Client));
                 var eventStatus = (await _schedulersStatusService.Search()).Result;
                 var adminApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.ADMIN_APPROVED.ToString()).Id;
                 var clientApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.CLIENT_APPROVED.ToString()).Id;
-                var pendingClientAppprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_CLIENT_APPROVAL.ToString()).Id;
+                var pendingClientApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_CLIENT_APPROVAL.ToString()).Id;
 
                 var clientDetails = await _clientsRepository.FirstOrDefaultAsync(x => x.Id == model.ClientId);
                 eventDetails.UserStatusId = adminApprovedId;
                 if (clientDetails.IsApprovalRequired)
                 {
-                    eventDetails.AdminStatusId = pendingClientAppprovedId;
-                    SendApprovalEmailToClient(model);
+                    eventDetails.AdminStatusId = pendingClientApprovedId;
+                    
                 }
                 else
                 {
                     eventDetails.AdminStatusId = clientApprovedId;
                 }
                 var result = await _schedulersRepository.UpdateAsync(eventDetails);
+                if (clientDetails.IsApprovalRequired) 
+                    await SendTimesheetApprovedEmail(result.ApplicationUser?.Email, result);
+
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -427,22 +430,16 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-
-        private void SendApprovalEmailToClient(CreateViewTimesheetResponseDto model)
-        {
-
-        }
-
         public async Task<ApiResult<bool>> DeclineRequest(CreateViewTimesheetResponseDto model)
         {
             try
             {
                 var eventDetails = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == model.Id);
                 var eventStatus = (await _schedulersStatusService.Search()).Result;
-                var draftstatusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.DRAFT.ToString()).Id;
+                var draftStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.DRAFT.ToString()).Id;
                 var declinedStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.DECLINED.ToString()).Id;
                 eventDetails.UserStatusId = declinedStatusId;
-                eventDetails.AdminStatusId = draftstatusId;
+                eventDetails.AdminStatusId = draftStatusId;
                 var result = await _schedulersRepository.UpdateAsync(eventDetails);
                 return ApiResult<bool>.Success(true);
             }
@@ -454,17 +451,17 @@ namespace AddOptimization.Services.Services
         }
 
         #region Private Methods
-        private async Task<bool> SendTimesheetApprovedEmail(string userFullName, string email)
+        private async Task<bool> SendTimesheetApprovedEmail(string email, SchedulerEvent schedulerEvent)
         {
             try
             {
                 var subject = "Timesheet Approved";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetApproved);
-                emailTemplate = emailTemplate.Replace("[EmployeeName]", userFullName)
-                                             .Replace("[Month]", userFullName)
-                                             .Replace("[Year]", userFullName)
-                                             .Replace("[NoOfDays]", userFullName)
-                                             .Replace("[Approver]", userFullName);
+                emailTemplate = emailTemplate.Replace("[EmployeeName]", schedulerEvent.ApplicationUser?.FullName)
+                                             .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
+                                             .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
+                                             .Replace("[NoOfDays]", DateTime.DaysInMonth(schedulerEvent.StartDate.Year, schedulerEvent.StartDate.Month).ToString())
+                                             .Replace("[Approver]", schedulerEvent.Approvar?.FullName);
                 return await _emailService.SendEmail(email, subject, emailTemplate);
             }
             catch (Exception ex)

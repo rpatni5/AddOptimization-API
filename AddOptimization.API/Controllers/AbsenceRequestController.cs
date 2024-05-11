@@ -1,10 +1,8 @@
 ﻿using AddOptimization.API.Common;
 using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
-using AddOptimization.Services.Services;
 using AddOptimization.Utilities.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AddOptimization.API.Controllers
@@ -12,10 +10,10 @@ namespace AddOptimization.API.Controllers
     [Authorize]
     public class AbsenceRequestController : CustomApiControllerBase
     {
-        private readonly IAbsenceRequestService _absencerequestService;
+        private readonly IAbsenceRequestService _absenceRequestService;
         public AbsenceRequestController(ILogger<AbsenceRequestController> logger, IAbsenceRequestService absenceRequestService) : base(logger)
         {
-            _absencerequestService = absenceRequestService;
+            _absenceRequestService = absenceRequestService;
         }
 
 
@@ -24,7 +22,7 @@ namespace AddOptimization.API.Controllers
         {
             try
             {
-                var retVal = await _absencerequestService.Create(model);
+                var retVal = await _absenceRequestService.Create(model);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -37,7 +35,7 @@ namespace AddOptimization.API.Controllers
         {
             try
             {
-                var retVal = await _absencerequestService.Get(id);
+                var retVal = await _absenceRequestService.Get(id);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -51,7 +49,7 @@ namespace AddOptimization.API.Controllers
         {
             try
             {
-                var retVal = await _absencerequestService.Search(filters);
+                var retVal = await _absenceRequestService.Search(filters);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -65,7 +63,7 @@ namespace AddOptimization.API.Controllers
         {
             try
             {
-                var retVal = await _absencerequestService.Update(id, model);
+                var retVal = await _absenceRequestService.Update(id, model);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -78,7 +76,7 @@ namespace AddOptimization.API.Controllers
         {
             try
             {
-                var retVal = await _absencerequestService.Delete(id);
+                var retVal = await _absenceRequestService.Delete(id);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)

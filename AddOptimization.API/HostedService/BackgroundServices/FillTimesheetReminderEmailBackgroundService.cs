@@ -34,6 +34,9 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         #region Protected Methods
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+#if DEBUG
+            return;
+#endif
             var durationValue = _configuration.ReadSection<BackgroundServiceSettings>(AppSettingsSections.BackgroundServiceSettings).FillTimesheetReminderEmailTriggerDurationInSeconds;
             var period = TimeSpan.FromSeconds(durationValue);
             using PeriodicTimer timer = new PeriodicTimer(period);
