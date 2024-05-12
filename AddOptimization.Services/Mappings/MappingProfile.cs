@@ -15,6 +15,7 @@ namespace AddOptimization.Services.Mappings
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
             CreateMap<ApplicationUser, UserSummaryDto>();
+            CreateMap<ApplicationUser, ApplicationUserDto>();
             CreateMap<UserCreateDto, ApplicationUser>().ForMember(dst => dst.Password, opt => opt.Ignore());
             CreateMap<RoleCreateDto, Role>();
             CreateMap<Role, RoleDto>();
@@ -152,12 +153,12 @@ namespace AddOptimization.Services.Mappings
             CreateMap<SchedulerEventTypeDto, SchedulerEventType>();
 
 
-            CreateMap<CreateViewTimesheetRequestDto, SchedulerEvent>().AfterMap((s, d) =>
+            CreateMap<SchedulerEventRequestDto, SchedulerEvent>().AfterMap((s, d) =>
             {
 
             });
 
-            CreateMap<SchedulerEvent, CreateViewTimesheetResponseDto>().AfterMap((s, d) =>
+            CreateMap<SchedulerEvent, SchedulerEventResponseDto>().AfterMap((s, d) =>
             {
                 d.ApprovarName = s.Approvar != null ? s.Approvar.FullName : string.Empty;
                 d.UserName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace AddOptimization.Contracts.Dto
 {
-    public class AccountAdminActionRequestDto : CreateViewTimesheetResponseDto
+    public class AccountAdminActionRequestDto : SchedulerEventResponseDto
     {
         public string Comment { get; set; }
     }
