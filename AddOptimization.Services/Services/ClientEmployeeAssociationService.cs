@@ -31,6 +31,13 @@ namespace AddOptimization.Services.Services
         {
             try
             {
+
+                var isExists = await _clientEmployeeAssociationRepository.IsExist(t => t.ClientId == model.ClientId && t.EmployeeId == model.EmployeeId && !t.IsDeleted, ignoreGlobalFilter: true);
+                if (isExists)
+                {
+                    return ApiResult<ClientEmployeeAssociationDto>.Failure(ValidationCodes.ClientEmployeeAssociationAlreadyExists, ValidationErrorMessage.ClientEmployeeAssociationExist);
+                }
+
                 ClientEmployeeAssociation entity = new ClientEmployeeAssociation();
                 _mapper.Map(model, entity);
                 await _clientEmployeeAssociationRepository.InsertAsync(entity);
