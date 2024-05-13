@@ -2,6 +2,7 @@
 using AddOptimization.Contracts.Services;
 using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
+using AddOptimization.Services.Constants;
 using AddOptimization.Utilities.Common;
 using AddOptimization.Utilities.Enums;
 using AddOptimization.Utilities.Extensions;
@@ -23,14 +24,12 @@ namespace AddOptimization.Services.Services
         private readonly IMapper _mapper;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILeaveStatusesService _leaveStatusesService;
-        private readonly IGenericRepository<LeaveStatuses> _leavestatusRepository;
+        private readonly IGenericRepository<LeaveStatuses> _leaveStatusesRepository;
 
-
-
-        public AbsenceApprovalSevice(IGenericRepository<AbsenceRequest> absenceApprovalRepository, IGenericRepository<LeaveStatuses> leavestatusRepository, ILogger<AbsenceApprovalSevice> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, ILeaveStatusesService leaveStatusesService)
+        public AbsenceApprovalSevice(IGenericRepository<AbsenceRequest> absenceApprovalRepository, IGenericRepository<LeaveStatuses> leaveStatusesRepository, ILogger<AbsenceApprovalSevice> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, ILeaveStatusesService leaveStatusesService)
         {
             _absenceApprovalRepository = absenceApprovalRepository;
-            _leavestatusRepository = leavestatusRepository;
+            _leaveStatusesRepository = leaveStatusesRepository;
             _logger = logger;
             _mapper = mapper;
             _httpContextAccessor = httpContextAccessor;
@@ -74,13 +73,13 @@ namespace AddOptimization.Services.Services
 
                 if (model.IsApproved)
                 {
-                    var approvedStatusId = (await _leavestatusRepository.FirstOrDefaultAsync(x => x.Name.ToLower() == "approved")).Id;
+                    var approvedStatusId = (await _leaveStatusesRepository.FirstOrDefaultAsync(x => x.Name.ToLower() == LeaveStatusesEnum.Approved.ToString())).Id;
 
                     entity.LeaveStatusId = approvedStatusId;
                 }
                 else
                 {
-                    var rejectedStatusId = (await _leavestatusRepository.FirstOrDefaultAsync(x => x.Name.ToLower() == "rejected")).Id;
+                    var rejectedStatusId = (await _leaveStatusesRepository.FirstOrDefaultAsync(x => x.Name.ToLower() == LeaveStatusesEnum.Rejected.ToString())).Id;
 
                     entity.LeaveStatusId = rejectedStatusId;
                 }
