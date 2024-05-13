@@ -13,12 +13,10 @@ namespace AddOptimization.Contracts.Dto
         public bool IsDeleted { get; set; }
         public bool IsActive { get; set; }
 
-        public  int UserId { get; set; }
-
+        public int UserId { get; set; }
         public int LeaveStatusId { get; set; }
         public decimal Duration { get; set; }
-
-        
+        public string LeaveStatusName { get; set; }
 
     }
 }

@@ -14,10 +14,7 @@ namespace AddOptimization.Contracts.Services
         Task<ApiResult<AbsenceRequestResponseDto>> Create(AbsenceRequestRequestDto model);
         Task<ApiResult<AbsenceRequestResponseDto>> Get(Guid id);
         Task<ApiResult<List<AbsenceRequestResponseDto>>> Search(PageQueryFiterBase filters);
-
         Task<ApiResult<AbsenceRequestResponseDto>> Update(Guid id, AbsenceRequestRequestDto model);
-
-
         Task<ApiResult<bool>> Delete(Guid id);
 
 
