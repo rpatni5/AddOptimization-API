@@ -206,9 +206,10 @@ namespace AddOptimization.Services.Services
             return ApiResult<SchedulerEventResponseDto>.Success(mappedEntity);
         }
 
-        public async Task<ApiResult<List<SchedulerEventResponseDto>>> GetSchedulerEventsForEmailReminder()
+        public async Task<ApiResult<List<SchedulerEventResponseDto>>> GetSchedulerEventsForEmailReminder(Guid clientId, int userId)
         {
-            var entity = await _schedulersRepository.QueryAsync(x => x.IsDraft && !x.IsDeleted, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Client));
+            var entity = await _schedulersRepository.QueryAsync(x => x.ClientId == clientId && x.UserId == userId && !x.IsDeleted, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Client));
+            // Add logic to identify those events for which we have to send an email
             var mappedEntity = _mapper.Map<List<SchedulerEventResponseDto>>(entity);
             return ApiResult<List<SchedulerEventResponseDto>>.Success(mappedEntity);
         }
@@ -407,7 +408,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var eventDetails = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == model.Id,include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Client));
+                var eventDetails = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == model.Id, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Client));
                 var eventStatus = (await _schedulersStatusService.Search()).Result;
                 var adminApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.ADMIN_APPROVED.ToString()).Id;
                 var clientApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.CLIENT_APPROVED.ToString()).Id;
@@ -418,14 +419,14 @@ namespace AddOptimization.Services.Services
                 if (clientDetails.IsApprovalRequired)
                 {
                     eventDetails.AdminStatusId = pendingClientApprovedId;
-                    
+
                 }
                 else
                 {
                     eventDetails.AdminStatusId = clientApprovedId;
                 }
                 var result = await _schedulersRepository.UpdateAsync(eventDetails);
-                if (clientDetails.IsApprovalRequired) 
+                if (clientDetails.IsApprovalRequired)
                     await SendTimesheetApprovedEmail(result.ApplicationUser?.Email, result);
 
                 return ApiResult<bool>.Success(true);
