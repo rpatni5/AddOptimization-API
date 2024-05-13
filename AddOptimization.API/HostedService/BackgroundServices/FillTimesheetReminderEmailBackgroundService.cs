@@ -34,9 +34,9 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         #region Protected Methods
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-#if DEBUG
-            return;
-#endif
+//#if DEBUG
+//            return;
+//#endif
             var durationValue = _configuration.ReadSection<BackgroundServiceSettings>(AppSettingsSections.BackgroundServiceSettings).FillTimesheetReminderEmailTriggerDurationInSeconds;
             var period = TimeSpan.FromSeconds(durationValue);
             using PeriodicTimer timer = new PeriodicTimer(period);
@@ -56,106 +56,42 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             try
             {
                 using var scope = _serviceProvider.CreateScope();
-                var _license = scope.ServiceProvider.GetRequiredService<ILicenseService>();
+                var schedulerEventService = scope.ServiceProvider.GetRequiredService<ISchedulerEventService>();
                 var expirationThresholdValue = _configuration.ReadSection<BackgroundServiceSettings>(AppSettingsSections.BackgroundServiceSettings).ExpirationThresholdInDays;
-                var expirationThreshold = DateTime.Today.AddDays(expirationThresholdValue);
-                var licenses = await _license.GetAllLicenseForRenewalNotification(expirationThreshold);
-                var groupedResult = licenses.Result.GroupBy(c => c.CustomerId);
-                foreach (var group in groupedResult)
-                {
-                    var licensesDtoCollection = new List<LicenseDetailsDto>();
-                    licensesDtoCollection.AddRange(group);
-                    await SendCustomerLicenseRenewalEmail(licensesDtoCollection);
+                var schedulerEvents = await schedulerEventService.GetSchedulerEventsForEmailReminder();
+                foreach (var schedulerEvent in schedulerEvents.Result)
+                { 
+                    await SendFillTimesheetReminderEmail(schedulerEvent);
                 }
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogInformation("An exception occurred while getting customer license for renewal email.");
+                _logger.LogInformation("An exception occurred while getting scheduler event data for fill timesheet reminder email.");
                 _logger.LogException(ex);
                 return false;
             }
         }
 
-        private async Task<bool> SendCustomerLicenseRenewalEmail(List<LicenseDetailsDto> license)
+        private async Task<bool> SendFillTimesheetReminderEmail(SchedulerEventResponseDto schedulerEvent)
         {
             try
             {
-                var subject = "Add optimization renew license";
-                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.RenewLicense);
-                string[] tableHeaders = { "S.No", "LicenseKey", "NoOfDevices", "ExpirationDate" };
-                var table = GenerateHtmlTable(tableHeaders, license);
+                var subject = "Add optimization timesheet submission reminder";
+                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.FillTimesheetReminder);
                 emailTemplate = emailTemplate
-                                .Replace("[CustomerLicensesData]", table)
-                                .Replace("[CustomerName]", license.FirstOrDefault().CustomerName);
-                return await _emailService.SendEmail(license.FirstOrDefault().CustomerEmail, subject, emailTemplate);
+                                .Replace("[EmployeeName]", schedulerEvent?.UserName)
+                                .Replace("[StartDate]", schedulerEvent?.StartDate.Date.ToString("d"))
+                                .Replace("[EndDate]", schedulerEvent?.EndDate.Date.ToString("d"))
+                                .Replace("[link]","");
+                return await _emailService.SendEmail(schedulerEvent?.ApplicationUser?.Email, subject, emailTemplate);
             }
             catch (Exception ex)
             {
-                _logger.LogInformation("An exception occurred while sending customer license renewal email.");
+                _logger.LogInformation("An exception occurred while sending employee fill timesheet reminder email.");
                 _logger.LogException(ex);
                 return false;
             }
-        }
-
-        public static string GenerateHtmlTable(string[] headers, List<LicenseDetailsDto> license)
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine("<table class=\"body-action\" align=\"center\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\">");
-            sb.AppendLine("<tr>");
-            // Generate table headers
-            foreach (string header in headers)
-            {
-                switch (header)
-                {
-                    case "S.No":
-                        sb.AppendFormat("<th width=\"1\">{0}</th>", header);
-                        break;
-                    case "LicenseKey":
-                        sb.AppendFormat("<th width=\"97\">{0}</th>", "License Key");
-                        break;
-                    case "NoOfDevices":
-                        sb.AppendFormat("<th width=\"1\">{0}</th>", "No Of Devices");
-                        break;
-                    case "ExpirationDate":
-                        sb.AppendFormat("<th width=\"1\">{0}</th>", "Expiration Date");
-                        break;
-                    default:
-                        break;
-                }                
-            }
-            sb.AppendLine("</tr>");
-
-            // Generate table data rows
-            var sNoCount = 1;
-            foreach (var rowData in license)
-            {
-                sb.AppendLine("<tr>");
-                foreach (var cellData in headers)
-                {
-                    if (cellData == "S.No")
-                    {
-                        sb.AppendFormat("<td>{0}</td>", sNoCount);
-                    }
-                    if (cellData == nameof(rowData.LicenseKey))
-                    {
-                        sb.AppendFormat("<td>{0}</td>", rowData.LicenseKey);
-                    }
-                    if (cellData == nameof(rowData.NoOfDevices))
-                    {
-                        sb.AppendFormat("<td>{0}</td>", rowData.NoOfDevices);
-                    }
-                    if (cellData == nameof(rowData.ExpirationDate))
-                    {
-                        sb.AppendFormat("<td>{0}</td>", rowData.ExpirationDate);
-                    }
-                }
-                sb.AppendLine("</tr>");
-                sNoCount++;
-            }
-            
-            sb.AppendLine("</table>");
-            return sb.ToString();
         }
         #endregion
     }

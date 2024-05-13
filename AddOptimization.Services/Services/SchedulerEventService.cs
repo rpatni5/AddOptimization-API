@@ -53,7 +53,7 @@ namespace AddOptimization.Services.Services
 
 
 
-        public async Task<PagedApiResult<CreateViewTimesheetResponseDto>> Search(PageQueryFiterBase filters)
+        public async Task<PagedApiResult<SchedulerEventResponseDto>> Search(PageQueryFiterBase filters)
         {
             try
             {
@@ -62,7 +62,7 @@ namespace AddOptimization.Services.Services
                 entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
                 entities = ApplyFilters(entities, filters);
 
-                var pagedResult = PageHelper<SchedulerEvent, CreateViewTimesheetResponseDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new CreateViewTimesheetResponseDto
+                var pagedResult = PageHelper<SchedulerEvent, SchedulerEventResponseDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new SchedulerEventResponseDto
                 {
                     Id = e.Id,
                     ClientId = e.ClientId,
@@ -82,7 +82,7 @@ namespace AddOptimization.Services.Services
                     Holiday = 0,
                 }).ToList());
                 var retVal = pagedResult;
-                return PagedApiResult<CreateViewTimesheetResponseDto>.Success(retVal);
+                return PagedApiResult<SchedulerEventResponseDto>.Success(retVal);
 
             }
             catch (Exception ex)
@@ -156,7 +156,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        public async Task<ApiResult<CreateViewTimesheetResponseDto>> CreateOrViewTimeSheets(CreateViewTimesheetRequestDto model)
+        public async Task<ApiResult<SchedulerEventResponseDto>> CreateOrViewTimeSheets(SchedulerEventRequestDto model)
         {
             try
             {
@@ -188,8 +188,8 @@ namespace AddOptimization.Services.Services
 
                 entity = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == entity.Id, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Client));
 
-                var mappedEntity = _mapper.Map<CreateViewTimesheetResponseDto>(entity);
-                return ApiResult<CreateViewTimesheetResponseDto>.Success(mappedEntity);
+                var mappedEntity = _mapper.Map<SchedulerEventResponseDto>(entity);
+                return ApiResult<SchedulerEventResponseDto>.Success(mappedEntity);
             }
             catch (Exception ex)
             {
@@ -198,14 +198,20 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        public async Task<ApiResult<CreateViewTimesheetResponseDto>> GetSchedulerEvent(Guid id)
+        public async Task<ApiResult<SchedulerEventResponseDto>> GetSchedulerEvent(Guid id)
         {
-            var entity = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == id, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Client));
+            var entity = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Client));
 
-            var mappedEntity = _mapper.Map<CreateViewTimesheetResponseDto>(entity);
-            return ApiResult<CreateViewTimesheetResponseDto>.Success(mappedEntity);
+            var mappedEntity = _mapper.Map<SchedulerEventResponseDto>(entity);
+            return ApiResult<SchedulerEventResponseDto>.Success(mappedEntity);
         }
 
+        public async Task<ApiResult<List<SchedulerEventResponseDto>>> GetSchedulerEventsForEmailReminder()
+        {
+            var entity = await _schedulersRepository.QueryAsync(x => x.IsDraft && !x.IsDeleted, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Client));
+            var mappedEntity = _mapper.Map<List<SchedulerEventResponseDto>>(entity);
+            return ApiResult<List<SchedulerEventResponseDto>>.Success(mappedEntity);
+        }
 
         public async Task<ApiResult<List<SchedulerEventDetailsDto>>> GetSchedulerEventDetails(Guid id)
         {
@@ -245,7 +251,7 @@ namespace AddOptimization.Services.Services
             return await Save(models);
         }
 
-        public async Task<ApiResult<List<SchedulerEventDetailsDto>>> GetSchedulerEventDetails(CreateViewTimesheetRequestDto model)
+        public async Task<ApiResult<List<SchedulerEventDetailsDto>>> GetSchedulerEventDetails(SchedulerEventRequestDto model)
         {
             var eventDetails = (await CreateOrViewTimeSheets(model)).Result;
             return await GetSchedulerEventDetails(eventDetails.Id);
@@ -356,15 +362,15 @@ namespace AddOptimization.Services.Services
                 var columnName = sort.Name.ToUpper();
                 if (sort.Direction == SortDirection.ascending.ToString())
                 {
-                    if (columnName.ToUpper() == nameof(CreateViewTimesheetResponseDto.ClientName).ToUpper())
+                    if (columnName.ToUpper() == nameof(SchedulerEventResponseDto.ClientName).ToUpper())
                     {
                         entities = entities.OrderBy(o => o.Client.FirstName);
                     }
-                    else if (columnName.ToUpper() == nameof(CreateViewTimesheetResponseDto.ApprovarName).ToUpper())
+                    else if (columnName.ToUpper() == nameof(SchedulerEventResponseDto.ApprovarName).ToUpper())
                     {
                         entities = entities.OrderBy(o => o.Approvar.FirstName);
                     }
-                    else if (columnName.ToUpper() == nameof(CreateViewTimesheetResponseDto.UserStatusName).ToUpper())
+                    else if (columnName.ToUpper() == nameof(SchedulerEventResponseDto.UserStatusName).ToUpper())
                     {
                         entities = entities.OrderBy(o => o.UserStatus.Name);
                     }
@@ -372,15 +378,15 @@ namespace AddOptimization.Services.Services
 
                 else
                 {
-                    if (columnName.ToUpper() == nameof(CreateViewTimesheetResponseDto.ClientName).ToUpper())
+                    if (columnName.ToUpper() == nameof(SchedulerEventResponseDto.ClientName).ToUpper())
                     {
                         entities = entities.OrderByDescending(o => o.Client.FirstName);
                     }
-                    else if (columnName.ToUpper() == nameof(CreateViewTimesheetResponseDto.ApprovarName).ToUpper())
+                    else if (columnName.ToUpper() == nameof(SchedulerEventResponseDto.ApprovarName).ToUpper())
                     {
                         entities = entities.OrderByDescending(o => o.Approvar.FirstName);
                     }
-                    else if (columnName.ToUpper() == nameof(CreateViewTimesheetResponseDto.UserStatusName).ToUpper())
+                    else if (columnName.ToUpper() == nameof(SchedulerEventResponseDto.UserStatusName).ToUpper())
                     {
                         entities = entities.OrderByDescending(o => o.UserStatus.Name);
                     }
@@ -397,7 +403,7 @@ namespace AddOptimization.Services.Services
 
         }
 
-        public async Task<ApiResult<bool>> ApproveRequest(CreateViewTimesheetResponseDto model)
+        public async Task<ApiResult<bool>> ApproveRequest(SchedulerEventResponseDto model)
         {
             try
             {
@@ -430,7 +436,7 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-        public async Task<ApiResult<bool>> DeclineRequest(CreateViewTimesheetResponseDto model)
+        public async Task<ApiResult<bool>> DeclineRequest(SchedulerEventResponseDto model)
         {
             try
             {
