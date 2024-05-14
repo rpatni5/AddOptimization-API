@@ -57,5 +57,20 @@ namespace AddOptimization.API.Controllers
                 return HandleException(ex);
             }
         }
+
+
+        [HttpGet("get-associated-clients/{employeeId}")]
+        public async Task<IActionResult> GetAssociatedClients(int employeeId)
+        {
+            try
+            {
+                var retVal = await _clientEmployeeAssociationService.GetAssociatedClients(employeeId);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
     }
 }
