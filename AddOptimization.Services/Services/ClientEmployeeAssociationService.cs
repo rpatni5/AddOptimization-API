@@ -86,6 +86,21 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
+
+        public async Task<ApiResult<List<ClientEmployeeAssociationDto>>> GetAssociatedClients(int employeeId)
+        {
+            try
+            {
+                var associations = await _clientEmployeeAssociationRepository.QueryAsync(e => e.EmployeeId == employeeId && !e.IsDeleted, include: entities => entities.Include(e => e.Client).Include(e => e.Approver).Include(e => e.ApplicationUser));
+                var mappedEntities = _mapper.Map<List<ClientEmployeeAssociationDto>>(associations);
+                return ApiResult<List<ClientEmployeeAssociationDto>>.Success(mappedEntities);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
     }
 }
 

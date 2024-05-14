@@ -13,5 +13,6 @@ namespace AddOptimization.Contracts.Services
         Task<ApiResult<ClientEmployeeAssociationDto>> Create(ClientEmployeeAssociationDto model);
         Task<ApiResult<List<ClientEmployeeAssociationDto>>> Search();
         Task<ApiResult<bool>> Delete(Guid id);
-       }
+        Task<ApiResult<List<ClientEmployeeAssociationDto>>> GetAssociatedClients(int employeeId);
+    }
 }
