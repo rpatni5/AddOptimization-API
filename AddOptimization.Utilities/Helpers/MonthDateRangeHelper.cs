@@ -24,10 +24,6 @@ namespace AddOptimization.Utilities.Helpers
             }
 
             return monthDateRanges;
-            //foreach (var monthDateRange in monthDateRanges)
-            //{
-            //    Console.WriteLine($"Start Date: {monthDateRange.StartDate.ToShortDateString()}, End Date: {monthDateRange.EndDate.ToShortDateString()}");
-            //}
         }
     }
 
