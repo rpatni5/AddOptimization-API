@@ -5,6 +5,7 @@ using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
 using AddOptimization.Services.Constants;
 using AddOptimization.Utilities.Common;
+using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Enums;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
@@ -209,9 +210,29 @@ namespace AddOptimization.Services.Services
         public async Task<ApiResult<List<SchedulerEventResponseDto>>> GetSchedulerEventsForEmailReminder(Guid clientId, int userId)
         {
             var entity = await _schedulersRepository.QueryAsync(x => x.ClientId == clientId && x.UserId == userId && !x.IsDeleted, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Client));
-            // Add logic to identify those events for which we have to send an email
-            var mappedEntity = _mapper.Map<List<SchedulerEventResponseDto>>(entity);
-            return ApiResult<List<SchedulerEventResponseDto>>.Success(mappedEntity);
+            if (entity == null || !entity.Any())
+            {
+                return ApiResult<List<SchedulerEventResponseDto>>.Failure(ValidationCodes.SchedulerEventsDoesNotExists);
+            }
+
+            var months = MonthDateRangeHelper.GetMonthDateRanges();
+            var response = new List<SchedulerEventResponseDto>();
+            foreach (var month in months)
+            {
+                var value = entity.FirstOrDefault(c => c.StartDate == month.StartDate && c.EndDate == month.EndDate);
+                if (value == null || value?.IsDraft == true)
+                {
+                    var schedulerEvent = new SchedulerEventResponseDto
+                    {
+                        UserName = value != null ? value.ApplicationUser?.FullName : entity.FirstOrDefault().ApplicationUser.FullName,
+                        StartDate = value != null ? value.StartDate : month.StartDate,
+                        EndDate = value != null ? value.EndDate : month.EndDate,
+                        ApplicationUser = _mapper.Map<ApplicationUserDto>(value != null ? value.ApplicationUser : entity.FirstOrDefault().ApplicationUser)
+                    };
+                    response.Add(schedulerEvent);
+                }
+            }
+            return ApiResult<List<SchedulerEventResponseDto>>.Success(response);
         }
 
         public async Task<ApiResult<List<SchedulerEventDetailsDto>>> GetSchedulerEventDetails(Guid id)

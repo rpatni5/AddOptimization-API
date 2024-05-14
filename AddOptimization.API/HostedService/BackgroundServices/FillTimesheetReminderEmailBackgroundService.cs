@@ -1,10 +1,12 @@
 ﻿using AddOptimization.Contracts.Constants;
 using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
+using AddOptimization.Data.Entities;
 using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
+using NPOI.SS.Formula.Functions;
 using System.Text;
 
 namespace AddOptimization.API.HostedService.BackgroundServices
@@ -65,13 +67,12 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 {
                     foreach (var employee in client)
                     {
-                        //
+                        var schedulerEvents = await schedulerEventService.GetSchedulerEventsForEmailReminder(employee.ClientId, employee.EmployeeId);
+                        foreach(var item in schedulerEvents.Result)
+                        {
+                            await SendFillTimesheetReminderEmail(item);
+                        };
                     }
-                }
-                var schedulerEvents = await schedulerEventService.GetSchedulerEventsForEmailReminder();
-                foreach (var schedulerEvent in schedulerEvents.Result)
-                { 
-                    await SendFillTimesheetReminderEmail(schedulerEvent);
                 }
                 return true;
             }
@@ -93,7 +94,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                                 .Replace("[EmployeeName]", schedulerEvent?.UserName)
                                 .Replace("[StartDate]", schedulerEvent?.StartDate.Date.ToString("d"))
                                 .Replace("[EndDate]", schedulerEvent?.EndDate.Date.ToString("d"))
-                                .Replace("[link]","");
+                                .Replace("[link]","");// TODO
                 return await _emailService.SendEmail(schedulerEvent?.ApplicationUser?.Email, subject, emailTemplate);
             }
             catch (Exception ex)
