@@ -195,6 +195,16 @@ namespace AddOptimization.Services.Mappings
             });
             CreateMap<LeaveStatusesDto, LeaveStatuses>();
 
+            CreateMap<HolidayAllocation, HolidayAllocationResponseDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.UserName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
+
+            });
+            CreateMap<HolidayAllocationRequestDto, HolidayAllocation>();
+
+
         }
     }
 }
