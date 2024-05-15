@@ -95,6 +95,11 @@ namespace AddOptimization.Services.Services
                     entities = entities.Where(e => e.UserId == userId);
                 });
 
+                filters.GetValue<int>("employeeId", (v) =>
+                {
+                    entities = entities.Where(e => e.UserId == v);
+                });
+
                 filters.GetValue<DateTime>("startDate", (v) =>
                 {
                     entities = entities.Where(e => e.Date >= v);

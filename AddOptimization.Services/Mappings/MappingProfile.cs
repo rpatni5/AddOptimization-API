@@ -15,6 +15,7 @@ namespace AddOptimization.Services.Mappings
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
             CreateMap<ApplicationUser, UserSummaryDto>();
+            CreateMap<ApplicationUser, ApplicationUserDto>();
             CreateMap<UserCreateDto, ApplicationUser>().ForMember(dst => dst.Password, opt => opt.Ignore());
             CreateMap<RoleCreateDto, Role>();
             CreateMap<Role, RoleDto>();
@@ -152,12 +153,12 @@ namespace AddOptimization.Services.Mappings
             CreateMap<SchedulerEventTypeDto, SchedulerEventType>();
 
 
-            CreateMap<CreateViewTimesheetRequestDto, SchedulerEvent>().AfterMap((s, d) =>
+            CreateMap<SchedulerEventRequestDto, SchedulerEvent>().AfterMap((s, d) =>
             {
 
             });
 
-            CreateMap<SchedulerEvent, CreateViewTimesheetResponseDto>().AfterMap((s, d) =>
+            CreateMap<SchedulerEvent, SchedulerEventResponseDto>().AfterMap((s, d) =>
             {
                 d.ApprovarName = s.Approvar != null ? s.Approvar.FullName : string.Empty;
                 d.UserName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
@@ -194,6 +195,19 @@ namespace AddOptimization.Services.Mappings
                 d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
             });
             CreateMap<LeaveStatusesDto, LeaveStatuses>();
+
+            CreateMap<ClientEmployeeAssociationDto, ClientEmployeeAssociation>();
+
+            CreateMap<ClientEmployeeAssociation, ClientEmployeeAssociationDto>().AfterMap((s, d) =>
+            {
+                d.ApproverName = s.Approver != null ? s.Approver.FullName : string.Empty;
+                d.ClientName = s.Client != null ? $"{s.Client.FirstName} {s.Client.LastName}" : string.Empty;
+                d.EmployeeName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
+                d.CreatedAt = s.CreatedAt?.Date;
+                d.CreatedBy = s.CreatedByUser?.FullName;
+                d.UpdatedAt = s.UpdatedAt?.Date;
+                d.UpdatedBy = s.UpdatedByUser?.FullName;
+            });
 
             CreateMap<HolidayAllocation, HolidayAllocationResponseDto>().AfterMap((s, d) =>
             {

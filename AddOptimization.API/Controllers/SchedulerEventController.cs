@@ -76,7 +76,7 @@ namespace AddOptimization.API.Controllers
         }
 
         [HttpPost("create-timesheet")]
-        public async Task<IActionResult> CreateOrViewTimeSheets([FromBody] CreateViewTimesheetRequestDto model)
+        public async Task<IActionResult> CreateOrViewTimeSheets([FromBody] SchedulerEventRequestDto model)
         {
             try
             {
@@ -104,7 +104,7 @@ namespace AddOptimization.API.Controllers
         }
 
         [HttpPost("scheduler-event-details")]
-        public async Task<IActionResult> GetSchedulerEventDetails([FromBody] CreateViewTimesheetRequestDto model)
+        public async Task<IActionResult> GetSchedulerEventDetails([FromBody] SchedulerEventRequestDto model)
         {
             try
             {
@@ -133,7 +133,7 @@ namespace AddOptimization.API.Controllers
 
 
         [HttpPost("approve-request")]
-        public async Task<IActionResult> ApproveRequest(CreateViewTimesheetResponseDto model)
+        public async Task<IActionResult> ApproveRequest(SchedulerEventResponseDto model)
         {
             try
             {
@@ -147,7 +147,7 @@ namespace AddOptimization.API.Controllers
         }
 
         [HttpPost("decline-request")]
-        public async Task<IActionResult> DeclineRequest(CreateViewTimesheetResponseDto model)
+        public async Task<IActionResult> DeclineRequest(SchedulerEventResponseDto model)
         {
             try
             {
