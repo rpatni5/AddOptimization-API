@@ -6,14 +6,17 @@ using System.Threading.Tasks;
 
 namespace AddOptimization.Contracts.Dto
 {
-    public class ClientEmployeeAssociationDto : BaseDto<Guid>
+    public class CustomerEmployeeAssociationDto : BaseDto<Guid>
     {
-        public Guid ClientId { get; set; }
-        public string ClientName { get; set; }
+        public Guid CustomerId { get; set; }
+        public string CustomerName { get; set; }
         public int EmployeeId { get; set; }
         public string EmployeeName { get; set; }
         public int ApproverId { get; set; }
         public string ApproverName { get; set; }
+        public decimal DailyWeightage { get; set; }
+        public decimal Overtime { get; set; }
+        public decimal PublicHolidays { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public string CreatedBy { get; set; }

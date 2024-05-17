@@ -38,6 +38,6 @@ public class ValidationCodes
     public const string CannotActivateLicense = "CannotActivateLicense";
     public const string InvalidLicense = "InvalidLicense";
     public const string AbsenceRequestedProhibited = "AbsenceRequestedProhibited";
-    public const string ClientEmployeeAssociationAlreadyExists = "ClientEmployeeAssociationAlreadyExists";
+    public const string CustomerEmployeeAssociationAlreadyExists = "CustomerEmployeeAssociationAlreadyExists";
 
 }
