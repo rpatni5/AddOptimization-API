@@ -24,7 +24,7 @@ namespace AddOptimization.Services.Services
             _logger = logger;
             _mapper = mapper;
         }
-        public async Task<ApiResult<ProductResponseDto>> UpSert(ProductRequestDto model)
+        public async Task<ApiResult<ProductResponseDto>> Upsert(ProductRequestDto model)
         {
             try
             {

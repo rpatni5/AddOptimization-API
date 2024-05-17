@@ -37,7 +37,7 @@ namespace AddOptimization.API.Controllers
         {
             try
             {
-                var retVal = await _productService.UpSert(model);
+                var retVal = await _productService.Upsert(model);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)

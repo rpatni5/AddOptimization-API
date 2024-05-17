@@ -11,7 +11,7 @@ namespace AddOptimization.Contracts.Services
 {
     public interface IProductService
     {
-        Task<ApiResult<ProductResponseDto>> UpSert(ProductRequestDto model);
+        Task<ApiResult<ProductResponseDto>> Upsert(ProductRequestDto model);
         Task<ApiResult<List<ProductResponseDto>>> Search(PageQueryFiterBase filters);
         Task<ApiResult<bool>> Delete(Guid id);
 
