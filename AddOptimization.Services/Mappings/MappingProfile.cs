@@ -196,12 +196,12 @@ namespace AddOptimization.Services.Mappings
             });
             CreateMap<LeaveStatusesDto, LeaveStatuses>();
 
-            CreateMap<ClientEmployeeAssociationDto, ClientEmployeeAssociation>();
+            CreateMap<CustomerEmployeeAssociationDto, CustomerEmployeeAssociation>();
 
-            CreateMap<ClientEmployeeAssociation, ClientEmployeeAssociationDto>().AfterMap((s, d) =>
+            CreateMap<CustomerEmployeeAssociation, CustomerEmployeeAssociationDto>().AfterMap((s, d) =>
             {
                 d.ApproverName = s.Approver != null ? s.Approver.FullName : string.Empty;
-                d.ClientName = s.Client != null ? $"{s.Client.FirstName} {s.Client.LastName}" : string.Empty;
+                d.CustomerName = s.Customer != null ? s.Customer.Name: string.Empty;
                 d.EmployeeName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
                 d.CreatedAt = s.CreatedAt?.Date;
                 d.CreatedBy = s.CreatedByUser?.FullName;

@@ -8,6 +8,6 @@ namespace AddOptimization.Utilities.Constants
 {
     public class ValidationErrorMessage
     {
-        public const string ClientEmployeeAssociationExist = "Client-employee association already exists.";
+        public const string CustomerEmployeeAssociationExist = "Customer-employee association already exists.";
     }
 }

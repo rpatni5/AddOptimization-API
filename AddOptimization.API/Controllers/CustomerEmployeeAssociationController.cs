@@ -8,20 +8,20 @@ using Microsoft.AspNetCore.Mvc;
 namespace AddOptimization.API.Controllers
 {
     [Authorize]
-    public class ClientEmployeeAssociationController : CustomApiControllerBase
+    public class CustomerEmployeeAssociationController : CustomApiControllerBase
     {
-        private readonly IClientEmployeeAssociationService _clientEmployeeAssociationService;
-        public ClientEmployeeAssociationController(ILogger<ClientEmployeeAssociationController> logger, IClientEmployeeAssociationService clientEmployeeAssociationService) : base(logger)
+        private readonly ICustomerEmployeeAssociationService _customerEmployeeAssociationService;
+        public CustomerEmployeeAssociationController(ILogger<CustomerEmployeeAssociationController> logger, ICustomerEmployeeAssociationService customerEmployeeAssociationService) : base(logger)
         {
-            _clientEmployeeAssociationService = clientEmployeeAssociationService;
+            _customerEmployeeAssociationService = customerEmployeeAssociationService;
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] ClientEmployeeAssociationDto model)
+        public async Task<IActionResult> Post([FromBody] CustomerEmployeeAssociationDto model)
         {
             try
             {
-                var retVal = await _clientEmployeeAssociationService.Create(model);
+                var retVal = await _customerEmployeeAssociationService.Create(model);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -31,11 +31,11 @@ namespace AddOptimization.API.Controllers
         }
 
         [HttpPost("search")]
-        public async Task<IActionResult> Get([FromBody] ClientEmployeeAssociationDto filter)
+        public async Task<IActionResult> Get([FromBody] CustomerEmployeeAssociationDto filter)
         {
             try
             {
-                var retVal = await _clientEmployeeAssociationService.Search();
+                var retVal = await _customerEmployeeAssociationService.Search();
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -49,7 +49,7 @@ namespace AddOptimization.API.Controllers
         {
             try
             {
-                var retVal = await _clientEmployeeAssociationService.Delete(id);
+                var retVal = await _customerEmployeeAssociationService.Delete(id);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -59,12 +59,12 @@ namespace AddOptimization.API.Controllers
         }
 
 
-        [HttpGet("get-associated-clients/{employeeId}")]
-        public async Task<IActionResult> GetAssociatedClients(int employeeId)
+        [HttpGet("get-associated-customers/{employeeId}")]
+        public async Task<IActionResult> GetAssociatedCustomers(int employeeId)
         {
             try
             {
-                var retVal = await _clientEmployeeAssociationService.GetAssociatedClients(employeeId);
+                var retVal = await _customerEmployeeAssociationService.GetAssociatedCustomers(employeeId);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
