@@ -56,8 +56,8 @@ public partial class AddOptimizationContext : DbContext
     public virtual DbSet<AbsenceRequest> AbsenceRequest { get; set; }
     public virtual DbSet<LeaveStatuses> LeaveStatuses { get; set; }
     public virtual DbSet<ClientEmployeeAssociation> ClientEmployeeAssociations { get; set; }
-
     public virtual DbSet<HolidayAllocation> HolidayAllocation { get; set; }
+    public virtual DbSet<Product> Products { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
