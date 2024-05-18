@@ -85,7 +85,7 @@ public class CustomerService : ICustomerService
         {
             var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin")).ToList();
             var entities = await _customerRepository.QueryAsync(include: entities => entities
-            .Include(e => e.CustomerStatus).Include(e => e.Licenses).Include(e => e.BillingAddress).Include(e => e.Country), orderBy: (entities) => entities.OrderBy(t => t.Name), ignoreGlobalFilter: superAdminRole.Count != 0);
+            .Include(e => e.CustomerStatus).Include(e => e.Licenses).Include(e => e.BillingAddress).Include(e => e.Country).Include(e => e.PartnerCountry), orderBy: (entities) => entities.OrderBy(t => t.Name), ignoreGlobalFilter: superAdminRole.Count != 0);
 
             entities = ApplySorting(entities, filter?.Sorted?.FirstOrDefault());
             entities = ApplyFilters(entities, filter);
@@ -468,14 +468,14 @@ public class CustomerService : ICustomerService
         }
     }
 
-    public async Task<ApiResult<CustomerDto>> GetByCustomer(Guid id)
+    public async Task<ApiResult<CustomerDto>> GetCustomerById(Guid id)
     {
         try
         {
-            var entity = await _customerRepository.FirstOrDefaultAsync(t => t.Id == id , include: entity => entity.Include(e => e.Addresses.Where(a => !a.IsDeleted).OrderByDescending(e => e.CreatedAt)).Include(e => e.CustomerStatus).Include(e => e.Country), ignoreGlobalFilter: true);
+            var entity = await _customerRepository.FirstOrDefaultAsync(t => t.Id == id , include: entity => entity.Include(e => e.Addresses.Where(a => !a.IsDeleted).OrderByDescending(e => e.CreatedAt)).Include(e => e.CustomerStatus).Include(e => e.Country).Include(e => e.PartnerCountry), ignoreGlobalFilter: true);
             if (entity == null)
             {
-                return ApiResult<CustomerDto>.NotFound("customer");
+                return ApiResult<CustomerDto>.NotFound("Customer");
             }
             var mappedEntity = _mapper.Map<CustomerDto>(entity);
 

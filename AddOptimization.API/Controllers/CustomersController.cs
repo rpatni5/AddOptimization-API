@@ -107,11 +107,11 @@ public class CustomersController : CustomApiControllerBase
     }
 
     [HttpGet("get-customer/{id}")]
-    public async Task<IActionResult> GetByCustomer(Guid id)
+    public async Task<IActionResult> GetCustomerById(Guid id)
     {
         try
         {
-            var retVal = await _customersService.GetByCustomer(id);
+            var retVal = await _customersService.GetCustomerById(id);
             return HandleResponse(retVal);
         }
         catch (Exception ex)

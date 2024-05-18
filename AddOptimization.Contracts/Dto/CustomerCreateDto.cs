@@ -29,6 +29,6 @@ public class CustomerCreateDto:BaseDto<Guid?>
     public string PartnerBankAccountNumber { get; set; }
     public string PartnerAddress { get; set; }
     public string PartnerDescriptions { get; set; }
-    public Guid PartnerCountryId { get; set; }
+    public Guid? PartnerCountryId { get; set; }
     public int? PartnerPostalCode { get; set; }
 }
