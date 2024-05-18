@@ -25,8 +25,6 @@ namespace AddOptimization.Contracts.Dto
 
         public virtual ApplicationUserDto ApplicationUser { get; set; }
 
-        public virtual ClientResponseDto Client { get; set; }
-
         public virtual ApplicationUserDto Approvar { get; set; }
         public virtual CustomerDto Customer { get; set; }
     }
