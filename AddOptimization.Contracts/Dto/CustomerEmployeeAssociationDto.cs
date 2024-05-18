@@ -17,6 +17,8 @@ namespace AddOptimization.Contracts.Dto
         public decimal DailyWeightage { get; set; }
         public decimal Overtime { get; set; }
         public decimal PublicHolidays { get; set; }
+        public decimal Saturday { get; set; }
+        public decimal Sunday { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public string CreatedBy { get; set; }
