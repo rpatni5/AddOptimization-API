@@ -13,6 +13,8 @@ namespace AddOptimization.Data.Entities
         public decimal DailyWeightage { get; set; }
         public decimal Overtime { get; set; }
         public decimal PublicHolidays { get; set; }
+        public decimal Saturday { get; set; }
+        public decimal Sunday { get; set; }
 
         [ForeignKey(nameof(EmployeeId))]
         public virtual ApplicationUser ApplicationUser { get; set; }
