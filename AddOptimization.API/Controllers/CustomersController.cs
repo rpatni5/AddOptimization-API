@@ -5,6 +5,7 @@ using AddOptimization.Contracts.Constants;
 using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Utilities.Models;
+using AddOptimization.Services.Services;
 
 namespace AddOptimization.API.Controllers;
 [Authorize]
@@ -97,6 +98,20 @@ public class CustomersController : CustomApiControllerBase
         try
         {
             var retVal = await _customersService.Delete(id);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    [HttpGet("get-customer/{id}")]
+    public async Task<IActionResult> GetByCustomer(Guid id)
+    {
+        try
+        {
+            var retVal = await _customersService.GetByCustomer(id);
             return HandleResponse(retVal);
         }
         catch (Exception ex)
