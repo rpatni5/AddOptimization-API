@@ -487,4 +487,19 @@ public class CustomerService : ICustomerService
             throw;
         }
     }
+
+    public async Task<ApiResult<List<CustomerDto>>> GetAllCustomers()
+    {
+        try
+        {
+            var entities = await _customerRepository.QueryAsync(include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Id));
+            var mappedEntities = _mapper.Map<List<CustomerDto>>(entities);
+            return ApiResult<List<CustomerDto>>.Success(mappedEntities);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            throw;
+        }
+    }
 }

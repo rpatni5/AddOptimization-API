@@ -162,7 +162,7 @@ namespace AddOptimization.Services.Mappings
             {
                 d.ApprovarName = s.Approvar != null ? s.Approvar.FullName : string.Empty;
                 d.UserName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
-                d.ClientName = s.Client != null ? $"{s.Client.FirstName} {s.Client.LastName}" : string.Empty;
+                d.CustomerName = s.Customer != null ? s.Customer.Name : string.Empty;
                 d.AdminStatusName = s.AdminStatus != null ? s.AdminStatus.Name : string.Empty;
                 d.UserStatusName = s.UserStatus != null ? s.UserStatus.Name : string.Empty;
             });

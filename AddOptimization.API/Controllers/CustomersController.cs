@@ -119,4 +119,18 @@ public class CustomersController : CustomApiControllerBase
             return HandleException(ex);
         }
     }
+
+    [HttpGet("get-all")]
+    public async Task<IActionResult> GetAllCustomers()
+    {
+        try
+        {
+            var retVal = await _customersService.GetAllCustomers();
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
 }
