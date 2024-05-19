@@ -36,9 +36,9 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         #region Protected Methods
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-//#if DEBUG
-//            return;
-//#endif
+            //#if DEBUG
+            //            return;
+            //#endif
             var durationValue = _configuration.ReadSection<BackgroundServiceSettings>(AppSettingsSections.BackgroundServiceSettings).FillTimesheetReminderEmailTriggerDurationInSeconds;
             var period = TimeSpan.FromSeconds(durationValue);
             using PeriodicTimer timer = new PeriodicTimer(period);
@@ -70,7 +70,9 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                         var schedulerEvents = await schedulerEventService.GetSchedulerEventsForEmailReminder(employee.Id, employee.EmployeeId);
                         if (schedulerEvents?.Result == null) continue;
 
-                        foreach(var item in schedulerEvents?.Result)
+                        //Filter scheduler events which happened before the client association.
+                        var events = schedulerEvents.Result.Where(s => s.StartDate <= employee.CreatedAt).ToList();
+                        foreach (var item in events)
                         {
                             await SendFillTimesheetReminderEmail(item);
                         };

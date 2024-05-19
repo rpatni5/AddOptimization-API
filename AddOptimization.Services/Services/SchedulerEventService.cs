@@ -69,11 +69,11 @@ namespace AddOptimization.Services.Services
                 var pagedResult = PageHelper<SchedulerEvent, SchedulerEventResponseDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new SchedulerEventResponseDto
                 {
                     Id = e.Id,
-                   
+
                     CustomerId = e.CustomerId,
                     ApprovarId = e.ApprovarId,
                     ApprovarName = e.Approvar.FullName,
-                   
+
                     CustomerName = e.Customer.Name,
                     UserId = e.UserId,
                     UserStatusId = e.UserStatusId,
@@ -262,7 +262,16 @@ namespace AddOptimization.Services.Services
             }
             return ApiResult<List<SchedulerEventResponseDto>>.Success(response);
         }
-
+        public async Task<ApiResult<List<SchedulerEventResponseDto>>> GetSchedulerEventsForApproveEmailReminder()
+        {
+            var entity = await _schedulersRepository.QueryAsync(x => x.AdminStatus.StatusKey == SchedulerStatusesEnum.PENDING_CLIENT_APPROVAL.ToString(), include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer));
+            if (entity == null || !entity.Any())
+            {
+                return ApiResult<List<SchedulerEventResponseDto>>.Failure(ValidationCodes.SchedulerEventsDoesNotExists);
+            }
+            var response = _mapper.Map<List<SchedulerEventResponseDto>>(entity);
+            return ApiResult<List<SchedulerEventResponseDto>>.Success(response);
+        }
         public async Task<ApiResult<List<SchedulerEventDetailsDto>>> GetSchedulerEventDetails(Guid id)
         {
             try
@@ -319,7 +328,7 @@ namespace AddOptimization.Services.Services
             });
             filter.GetValue<string>("customerName", (v) =>
             {
-                entities = entities.Where(e => e.Customer != null && (e.Customer.Name.ToLower().Contains(v.ToLower()) ));
+                entities = entities.Where(e => e.Customer != null && (e.Customer.Name.ToLower().Contains(v.ToLower())));
             });
             filter.GetValue<string>("customer", (v) =>
             {
@@ -468,7 +477,7 @@ namespace AddOptimization.Services.Services
                 if (clientDetails.IsApprovalRequired)
                 {
                     eventDetails.AdminStatusId = pendingCustomerApprovedId;
-                    
+
                 }
                 else
                 {
