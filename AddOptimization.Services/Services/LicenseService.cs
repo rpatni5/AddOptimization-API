@@ -155,7 +155,7 @@ public class LicenseService : ILicenseService
             if (licenseResult != null)
             {
                 var customer = await _customerRepository.FirstOrDefaultAsync(x => x.Id == licenseResult.CustomerId);
-                await SendCustomerLicenseAddedEmail(customer.Email, customer.Name, licenseResult);
+                Task.Run(() => SendCustomerLicenseAddedEmail(customer.Email, customer.Name, licenseResult));
             }
             return await Get(entity.Id);
         }

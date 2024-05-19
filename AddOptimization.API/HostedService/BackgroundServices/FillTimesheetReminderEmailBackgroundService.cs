@@ -90,11 +90,12 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             {
                 var subject = "Add optimization timesheet submission reminder";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.FillTimesheetReminder);
+                var link = GetMyTimesheetLinkForEmployee();
                 emailTemplate = emailTemplate
                                 .Replace("[EmployeeName]", schedulerEvent?.UserName)
                                 .Replace("[StartDate]", schedulerEvent?.StartDate.Date.ToString("d"))
                                 .Replace("[EndDate]", schedulerEvent?.EndDate.Date.ToString("d"))
-                                .Replace("[link]","");// TODO
+                                .Replace("[LinkToMyTimesheet]", link);
                 return await _emailService.SendEmail(schedulerEvent?.ApplicationUser?.Email, subject, emailTemplate);
             }
             catch (Exception ex)
@@ -103,6 +104,12 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 _logger.LogException(ex);
                 return false;
             }
+        }
+
+        private string GetMyTimesheetLinkForEmployee()
+        {
+            var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
+            return $"{baseUrl}admin/timesheets/my-timesheets";
         }
         #endregion
     }

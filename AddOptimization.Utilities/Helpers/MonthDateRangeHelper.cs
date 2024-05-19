@@ -1,18 +1,18 @@
-﻿using System;
+﻿using NPOI.SS.Formula.Functions;
+using System;
 using System.Collections.Generic;
 
 namespace AddOptimization.Utilities.Helpers
 {
     public static class MonthDateRangeHelper
     {
-        public static List<MonthDateRange> GetMonthDateRanges()
+        public static List<MonthDateRange> GetMonthDateRanges(bool isLastDayOfMonth = false)
         {
-            int year = DateTime.Now.Year;
-            var startDate = new DateTime(year, 1, 1);
-            var endDate = new DateTime(year, 12, 31);
-
+            var date = DateTime.Today.AddMonths(isLastDayOfMonth ? -2 : -3);
+            var startDate = new DateTime(date.Year, date.Month, 1); // First Day of previous 3 Month
+            DateTime today = DateTime.Today;
+            DateTime endDate = new DateTime(today.Year, isLastDayOfMonth ? today.Month: (today.Month-1), DateTime.DaysInMonth(today.Year, isLastDayOfMonth ? today.Month : (today.Month - 1)));
             List<MonthDateRange> monthDateRanges = new List<MonthDateRange>();
-
             while (startDate <= endDate)
             {
                 var firstDayOfMonth = new DateTime(startDate.Year, startDate.Month, 1);
