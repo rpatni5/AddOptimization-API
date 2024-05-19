@@ -25,9 +25,9 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         #endregion
 
         #region Constructor
-        public PendingTimesheetReminderToCustomerBackgroundService(IConfiguration configuration, 
-            IEmailService emailService, 
-            ITemplateService templateService, 
+        public PendingTimesheetReminderToCustomerBackgroundService(IConfiguration configuration,
+            IEmailService emailService,
+            ITemplateService templateService,
             IServiceProvider serviceProvider,
             CustomDataProtectionService protectionService,
             ILogger<LicenseRenewalEmailBackgroundService> logger)
@@ -72,7 +72,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
 
                 foreach (var item in schedulerEvents?.Result)
                 {
-                    await SendFillTimesheetReminderEmail(item);
+                    Task.Run(() => SendFillTimesheetReminderEmail(item));
                 };
                 return true;
             }

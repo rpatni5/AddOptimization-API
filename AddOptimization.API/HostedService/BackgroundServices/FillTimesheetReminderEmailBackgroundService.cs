@@ -74,7 +74,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                         var events = schedulerEvents.Result.Where(s => s.StartDate <= employee.CreatedAt).ToList();
                         foreach (var item in events)
                         {
-                            await SendFillTimesheetReminderEmail(item);
+                            Task.Run(() => SendFillTimesheetReminderEmail(item));
                         };
                     }
                 }

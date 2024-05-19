@@ -390,9 +390,6 @@ public class LicenseService : ILicenseService
     {
         try
         {
-            //string path = Path.Combine(_hostingEnvironment.ContentRootPath, "Assets\\Images");
-            //var fileName = "Logo_AddOptimization_blue.png";
-            //var imagePath = $"\"{path}\\{fileName}\"";
             var subject = "Add optimization new license details";
             var message = "A new license has been created for your account. Please find the details below.";
             var emailTemplate = _templateService.ReadTemplate(EmailTemplates.CreateLicense);
@@ -402,7 +399,6 @@ public class LicenseService : ILicenseService
                             .Replace("[LicenseKey]", license.LicenseKey)
                             .Replace("[NoOfDevices]", license.NoOfDevices.ToString())
                             .Replace("[ExpirationDate]", license.ExpirationDate.ToString());
-            //.Replace("[ImageTag]", $"<img src={imagePath} height=\"20\" width=\"120\" />");
             return await _emailService.SendEmail(email, subject, emailTemplate);
         }
         catch (Exception ex)
