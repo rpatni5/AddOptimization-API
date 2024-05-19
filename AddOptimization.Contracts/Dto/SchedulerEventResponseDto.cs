@@ -4,8 +4,8 @@ namespace AddOptimization.Contracts.Dto
 {
     public class SchedulerEventResponseDto :BaseDto<Guid>
     {
-        public Guid ClientId { get; set; }
-        public string ClientName { get; set; }
+        public Guid CustomerId { get; set; }
+        public string CustomerName { get; set; }
         public int ApprovarId { get; set; }
         public string ApprovarName { get; set; }
         public Guid UserStatusId { get; set; }
@@ -28,5 +28,6 @@ namespace AddOptimization.Contracts.Dto
         public virtual ClientResponseDto Client { get; set; }
 
         public virtual ApplicationUserDto Approvar { get; set; }
+        public virtual CustomerDto Customer { get; set; }
     }
 }

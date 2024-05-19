@@ -2,7 +2,7 @@
 {
     public class SchedulerEventRequestDto 
     {
-        public Guid ClientId { get; set; }
+        public Guid CustomerId { get; set; }
         public int? UserId { get; set; }
         public int ApprovarId { get; set; }
         public DateTime DateMonth { get; set; }

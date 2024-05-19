@@ -162,7 +162,7 @@ namespace AddOptimization.Services.Mappings
             {
                 d.ApprovarName = s.Approvar != null ? s.Approvar.FullName : string.Empty;
                 d.UserName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
-                d.ClientName = s.Client != null ? $"{s.Client.FirstName} {s.Client.LastName}" : string.Empty;
+                d.CustomerName = s.Customer != null ? s.Customer.Name : string.Empty;
                 d.AdminStatusName = s.AdminStatus != null ? s.AdminStatus.Name : string.Empty;
                 d.UserStatusName = s.UserStatus != null ? s.UserStatus.Name : string.Empty;
             });
@@ -196,18 +196,34 @@ namespace AddOptimization.Services.Mappings
             });
             CreateMap<LeaveStatusesDto, LeaveStatuses>();
 
-            CreateMap<ClientEmployeeAssociationDto, ClientEmployeeAssociation>();
+            CreateMap<CustomerEmployeeAssociationDto, CustomerEmployeeAssociation>();
 
-            CreateMap<ClientEmployeeAssociation, ClientEmployeeAssociationDto>().AfterMap((s, d) =>
+            CreateMap<CustomerEmployeeAssociation, CustomerEmployeeAssociationDto>().AfterMap((s, d) =>
             {
                 d.ApproverName = s.Approver != null ? s.Approver.FullName : string.Empty;
-                d.ClientName = s.Client != null ? $"{s.Client.FirstName} {s.Client.LastName}" : string.Empty;
+                d.CustomerName = s.Customer != null ? s.Customer.Name: string.Empty;
                 d.EmployeeName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
                 d.CreatedAt = s.CreatedAt?.Date;
                 d.CreatedBy = s.CreatedByUser?.FullName;
                 d.UpdatedAt = s.UpdatedAt?.Date;
                 d.UpdatedBy = s.UpdatedByUser?.FullName;
             });
+
+            CreateMap<HolidayAllocation, HolidayAllocationResponseDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.UserName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
+
+            });
+            CreateMap<HolidayAllocationRequestDto, HolidayAllocation>();
+
+            CreateMap<Product, ProductResponseDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+            });
+            CreateMap<ProductRequestDto, Product>();
 
         }
     }

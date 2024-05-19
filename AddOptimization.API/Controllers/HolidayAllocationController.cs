@@ -2,26 +2,27 @@
 using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Services.Services;
+using AddOptimization.Utilities.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AddOptimization.API.Controllers
 {
     [Authorize]
-    public class ClientEmployeeAssociationController : CustomApiControllerBase
+    public class HolidayAllocationController : CustomApiControllerBase
     {
-        private readonly IClientEmployeeAssociationService _clientEmployeeAssociationService;
-        public ClientEmployeeAssociationController(ILogger<ClientEmployeeAssociationController> logger, IClientEmployeeAssociationService clientEmployeeAssociationService) : base(logger)
+        private readonly IHolidayAllocationService _holidayAllocationService;
+        public HolidayAllocationController(ILogger<HolidayAllocationController> logger, IHolidayAllocationService holidayAllocationService) : base(logger)
         {
-            _clientEmployeeAssociationService = clientEmployeeAssociationService;
+            _holidayAllocationService = holidayAllocationService;
         }
-
-        [HttpPost]
-        public async Task<IActionResult> Post([FromBody] ClientEmployeeAssociationDto model)
+        [HttpPost("search")]
+        public async Task<IActionResult> Search([FromBody] PageQueryFiterBase filters)
         {
             try
             {
-                var retVal = await _clientEmployeeAssociationService.Create(model);
+                var retVal = await _holidayAllocationService.Search(filters);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -30,12 +31,12 @@ namespace AddOptimization.API.Controllers
             }
         }
 
-        [HttpPost("search")]
-        public async Task<IActionResult> Get([FromBody] ClientEmployeeAssociationDto filter)
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] HolidayAllocationRequestDto model)
         {
             try
             {
-                var retVal = await _clientEmployeeAssociationService.Search();
+                var retVal = await _holidayAllocationService.Create(model);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -49,7 +50,7 @@ namespace AddOptimization.API.Controllers
         {
             try
             {
-                var retVal = await _clientEmployeeAssociationService.Delete(id);
+                var retVal = await _holidayAllocationService.Delete(id);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)

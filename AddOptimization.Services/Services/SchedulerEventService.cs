@@ -26,7 +26,7 @@ namespace AddOptimization.Services.Services
     {
         private readonly IGenericRepository<SchedulerEvent> _schedulersRepository;
         private readonly IGenericRepository<SchedulerEventDetails> _schedulersDetailsRepository;
-        private readonly IGenericRepository<Client> _clientsRepository;
+        private readonly IGenericRepository<Customer> _customersRepository;
         private readonly List<string> _currentUserRoles;
         private readonly ILogger<SchedulerEventService> _logger;
         private readonly IMapper _mapper;
@@ -37,7 +37,7 @@ namespace AddOptimization.Services.Services
         private readonly ITemplateService _templateService;
         private readonly IConfiguration _configuration;
         private readonly CustomDataProtectionService _protectionService;
-        public SchedulerEventService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulerEventService> logger, IMapper mapper, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ISchedulersStatusService schedulersStatusService, IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository, IGenericRepository<Client> clientsRepository,
+        public SchedulerEventService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulerEventService> logger, IMapper mapper, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ISchedulersStatusService schedulersStatusService, IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository, IGenericRepository<Customer> customersRepository,
             IConfiguration configuration, IEmailService emailService, ITemplateService templateService, CustomDataProtectionService protectionService)
         {
             _schedulersRepository = schedulersRepository;
@@ -51,8 +51,8 @@ namespace AddOptimization.Services.Services
             _emailService = emailService;
             _templateService = templateService;
             _configuration = configuration;
-            _clientsRepository = clientsRepository;
             _protectionService = protectionService;
+            _customersRepository = customersRepository;
         }
 
 
@@ -62,17 +62,19 @@ namespace AddOptimization.Services.Services
             try
             {
 
-                var entities = await _schedulersRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.Approvar).Include(e => e.Client).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser));
+                var entities = await _schedulersRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.Approvar).Include(e => e.Customer).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser));
                 entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
                 entities = ApplyFilters(entities, filters);
 
                 var pagedResult = PageHelper<SchedulerEvent, SchedulerEventResponseDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new SchedulerEventResponseDto
                 {
                     Id = e.Id,
-                    ClientId = e.ClientId,
+                   
+                    CustomerId = e.CustomerId,
                     ApprovarId = e.ApprovarId,
                     ApprovarName = e.Approvar.FullName,
-                    ClientName = $"{e.Client.FirstName} {e.Client.LastName}",
+                   
+                    CustomerName = e.Customer.Name,
                     UserId = e.UserId,
                     UserStatusId = e.UserStatusId,
                     UserName = e.ApplicationUser.FullName,
@@ -170,7 +172,7 @@ namespace AddOptimization.Services.Services
                 entity.StartDate = new DateTime(model.DateMonth.Year, model.DateMonth.Month, 1);
                 entity.EndDate = entity.StartDate.AddMonths(1).AddDays(-1);
 
-                var response = await _schedulersRepository.FirstOrDefaultAsync(x => x.ClientId == model.ClientId && x.ApprovarId == model.ApprovarId && x.StartDate == entity.StartDate && x.EndDate == entity.EndDate && x.UserId == userId);
+                var response = await _schedulersRepository.FirstOrDefaultAsync(x => x.CustomerId == model.CustomerId && x.ApprovarId == model.ApprovarId && x.StartDate == entity.StartDate && x.EndDate == entity.EndDate && x.UserId == userId);
 
                 if (response != null)
                 {
@@ -180,7 +182,7 @@ namespace AddOptimization.Services.Services
                 {
                     var eventStatus = (await _schedulersStatusService.Search()).Result;
                     entity.ApprovarId = model.ApprovarId;
-                    entity.ClientId = model.ClientId;
+                    entity.CustomerId = model.CustomerId;
                     entity.UserId = userId;
                     var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.DRAFT.ToString()).Id;
                     entity.AdminStatusId = statusId;
@@ -190,7 +192,7 @@ namespace AddOptimization.Services.Services
                 }
 
 
-                entity = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == entity.Id, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Client));
+                entity = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == entity.Id, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer));
 
                 var mappedEntity = _mapper.Map<SchedulerEventResponseDto>(entity);
                 return ApiResult<SchedulerEventResponseDto>.Success(mappedEntity);
@@ -204,7 +206,7 @@ namespace AddOptimization.Services.Services
 
         public async Task<ApiResult<SchedulerEventResponseDto>> GetSchedulerEvent(Guid id)
         {
-            var entity = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Client));
+            var entity = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer));
 
             var mappedEntity = _mapper.Map<SchedulerEventResponseDto>(entity);
             return ApiResult<SchedulerEventResponseDto>.Success(mappedEntity);
@@ -212,7 +214,7 @@ namespace AddOptimization.Services.Services
 
         public async Task<ApiResult<List<SchedulerEventResponseDto>>> GetSchedulerEventsForEmailReminder(Guid clientId, int userId)
         {
-            var entity = await _schedulersRepository.QueryAsync(x => x.ClientId == clientId && x.UserId == userId && !x.IsDeleted, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Client));
+            var entity = await _schedulersRepository.QueryAsync(x => x.Id == clientId && x.UserId == userId && !x.IsDeleted, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer));
             if (entity == null || !entity.Any())
             {
                 return ApiResult<List<SchedulerEventResponseDto>>.Failure(ValidationCodes.SchedulerEventsDoesNotExists);
@@ -315,13 +317,13 @@ namespace AddOptimization.Services.Services
                 var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
                 entities = entities.Where(e => e.UserId == userId);
             });
-            filter.GetValue<string>("clientName", (v) =>
+            filter.GetValue<string>("customerName", (v) =>
             {
-                entities = entities.Where(e => e.Client != null && (e.Client.FirstName.ToLower().Contains(v.ToLower()) || e.Client.LastName.ToLower().Contains(v.ToLower())));
+                entities = entities.Where(e => e.Customer != null && (e.Customer.Name.ToLower().Contains(v.ToLower()) ));
             });
-            filter.GetValue<string>("client", (v) =>
+            filter.GetValue<string>("customer", (v) =>
             {
-                entities = entities.Where(e => e.ClientId.ToString() == v);
+                entities = entities.Where(e => e.CustomerId.ToString() == v);
             });
             filter.GetValue<bool>("isDraft", (v) =>
             {
@@ -329,15 +331,15 @@ namespace AddOptimization.Services.Services
             });
             filter.GetValue<string>("approvarName", (v) =>
             {
-                entities = entities.Where(e => e.Client != null && (e.Approvar.FirstName.ToLower().Contains(v.ToLower()) || e.Approvar.LastName.ToLower().Contains(v.ToLower())));
+                entities = entities.Where(e => e.Customer != null && (e.Approvar.FirstName.ToLower().Contains(v.ToLower()) || e.Approvar.LastName.ToLower().Contains(v.ToLower())));
             });
             filter.GetValue<string>("userStatusName", (v) =>
             {
-                entities = entities.Where(e => e.Client != null && (e.UserStatus.Name.ToLower().Contains(v.ToLower()) || e.UserStatus.Name.ToLower().Contains(v.ToLower())));
+                entities = entities.Where(e => e.Customer != null && (e.UserStatus.Name.ToLower().Contains(v.ToLower()) || e.UserStatus.Name.ToLower().Contains(v.ToLower())));
             });
             filter.GetValue<string>("adminStatusName", (v) =>
             {
-                entities = entities.Where(e => e.Client != null && (e.AdminStatus.Name.ToLower().Contains(v.ToLower()) || e.AdminStatus.Name.ToLower().Contains(v.ToLower())));
+                entities = entities.Where(e => e.Customer != null && (e.AdminStatus.Name.ToLower().Contains(v.ToLower()) || e.AdminStatus.Name.ToLower().Contains(v.ToLower())));
             });
             filter.GetValue<string>("adminStatusId", (v) =>
             {
@@ -410,9 +412,9 @@ namespace AddOptimization.Services.Services
                 var columnName = sort.Name.ToUpper();
                 if (sort.Direction == SortDirection.ascending.ToString())
                 {
-                    if (columnName.ToUpper() == nameof(SchedulerEventResponseDto.ClientName).ToUpper())
+                    if (columnName.ToUpper() == nameof(SchedulerEventResponseDto.CustomerName).ToUpper())
                     {
-                        entities = entities.OrderBy(o => o.Client.FirstName);
+                        entities = entities.OrderBy(o => o.Customer.Name);
                     }
                     else if (columnName.ToUpper() == nameof(SchedulerEventResponseDto.ApprovarName).ToUpper())
                     {
@@ -426,9 +428,9 @@ namespace AddOptimization.Services.Services
 
                 else
                 {
-                    if (columnName.ToUpper() == nameof(SchedulerEventResponseDto.ClientName).ToUpper())
+                    if (columnName.ToUpper() == nameof(SchedulerEventResponseDto.CustomerName).ToUpper())
                     {
-                        entities = entities.OrderByDescending(o => o.Client.FirstName);
+                        entities = entities.OrderByDescending(o => o.Customer.Name);
                     }
                     else if (columnName.ToUpper() == nameof(SchedulerEventResponseDto.ApprovarName).ToUpper())
                     {
@@ -455,22 +457,22 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var eventDetails = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == model.Id, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Client));
+                var eventDetails = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == model.Id, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer));
                 var eventStatus = (await _schedulersStatusService.Search()).Result;
                 var adminApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.ADMIN_APPROVED.ToString()).Id;
-                var clientApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.CLIENT_APPROVED.ToString()).Id;
-                var pendingClientApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_CLIENT_APPROVAL.ToString()).Id;
+                var customerApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.CLIENT_APPROVED.ToString()).Id;
+                var pendingCustomerApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_CLIENT_APPROVAL.ToString()).Id;
 
-                var clientDetails = await _clientsRepository.FirstOrDefaultAsync(x => x.Id == model.ClientId);
+                var clientDetails = await _customersRepository.FirstOrDefaultAsync(x => x.Id == model.CustomerId);
                 eventDetails.UserStatusId = adminApprovedId;
                 if (clientDetails.IsApprovalRequired)
                 {
-                    eventDetails.AdminStatusId = pendingClientApprovedId;
-
+                    eventDetails.AdminStatusId = pendingCustomerApprovedId;
+                    
                 }
                 else
                 {
-                    eventDetails.AdminStatusId = clientApprovedId;
+                    eventDetails.AdminStatusId = customerApprovedId;
                 }
                 var result = await _schedulersRepository.UpdateAsync(eventDetails);
                 if (clientDetails.IsApprovalRequired)
