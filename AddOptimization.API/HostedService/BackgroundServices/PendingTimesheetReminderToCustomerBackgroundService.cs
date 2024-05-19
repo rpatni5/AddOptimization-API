@@ -67,10 +67,6 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             {
                 using var scope = _serviceProvider.CreateScope();
                 var schedulerEventService = scope.ServiceProvider.GetRequiredService<ISchedulerEventService>();
-               //var clientEmployeeAssociationService = scope.ServiceProvider.GetRequiredService<ICustomerEmployeeAssociationService>();
-               //var expirationThresholdValue = _configuration.ReadSection<BackgroundServiceSettings>(AppSettingsSections.BackgroundServiceSettings).ExpirationThresholdInDays;
-               // var clientEmployeeAssociation = await clientEmployeeAssociationService.Search();
-               // var result = clientEmployeeAssociation.Result.GroupBy(c => c.Id).ToList();
                 var schedulerEvents = await schedulerEventService.GetSchedulerEventsForApproveEmailReminder();
                 if (schedulerEvents?.Result == null) return false;
 
