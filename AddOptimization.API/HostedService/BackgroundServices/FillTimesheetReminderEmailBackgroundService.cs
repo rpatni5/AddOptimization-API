@@ -68,7 +68,8 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                     foreach (var employee in client)
                     {
                         var schedulerEvents = await schedulerEventService.GetSchedulerEventsForEmailReminder(employee.Id, employee.EmployeeId);
-                        
+                        if (schedulerEvents?.Result == null) continue;
+
                         foreach(var item in schedulerEvents?.Result)
                         {
                             await SendFillTimesheetReminderEmail(item);
