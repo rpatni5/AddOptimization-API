@@ -77,7 +77,6 @@
     <Build Include="dbo\Tables\UserRoles.sql" />
     <Build Include="dbo\Tables\LicenseDevices.sql" />
     <Build Include="dbo\Tables\Licenses.sql" />
-    <Build Include="dbo\Tables\Clients.sql" />
     <Build Include="dbo\Tables\Countries.sql" />
     <Build Include="dbo\Tables\GuiVersions.sql" />
     <Build Include="dbo\Tables\PublicHolidays.sql" />
