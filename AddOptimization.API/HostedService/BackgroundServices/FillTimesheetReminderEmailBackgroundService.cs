@@ -56,10 +56,10 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             {
                 using var scope = _serviceProvider.CreateScope();
                 var schedulerEventService = scope.ServiceProvider.GetRequiredService<ISchedulerEventService>();
-                var clientEmployeeAssociationService = scope.ServiceProvider.GetRequiredService<ICustomerEmployeeAssociationService>();
+                var customerEmployeeAssociationService = scope.ServiceProvider.GetRequiredService<ICustomerEmployeeAssociationService>();
                 var expirationThresholdValue = _configuration.ReadSection<BackgroundServiceSettings>(AppSettingsSections.BackgroundServiceSettings).ExpirationThresholdInDays;
-                var clientEmployeeAssociation = await clientEmployeeAssociationService.Search();
-                var result = clientEmployeeAssociation.Result.GroupBy(c => c.Id).ToList();
+                var customerEmployeeAssociation = await customerEmployeeAssociationService.Search();
+                var result = customerEmployeeAssociation.Result.GroupBy(c => c.Id).ToList();
                 foreach (var client in result)
                 {
                     foreach (var employee in client)

@@ -212,9 +212,9 @@ namespace AddOptimization.Services.Services
             return ApiResult<SchedulerEventResponseDto>.Success(mappedEntity);
         }
 
-        public async Task<ApiResult<List<SchedulerEventResponseDto>>> GetSchedulerEventsForEmailReminder(Guid clientId, int userId)
+        public async Task<ApiResult<List<SchedulerEventResponseDto>>> GetSchedulerEventsForEmailReminder(Guid customerId, int userId)
         {
-            var entity = await _schedulersRepository.QueryAsync(x => x.Id == clientId && x.UserId == userId && !x.IsDeleted, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer));
+            var entity = await _schedulersRepository.QueryAsync(x => x.Id == customerId && x.UserId == userId && !x.IsDeleted, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer));
             if (entity == null || !entity.Any())
             {
                 return ApiResult<List<SchedulerEventResponseDto>>.Failure(ValidationCodes.SchedulerEventsDoesNotExists);
@@ -472,9 +472,9 @@ namespace AddOptimization.Services.Services
                 var customerApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.CUSTOMER_APPROVED.ToString()).Id;
                 var pendingCustomerApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_CUSTOMER_APPROVAL.ToString()).Id;
 
-                var clientDetails = await _customersRepository.FirstOrDefaultAsync(x => x.Id == model.CustomerId);
+                var customerDetails = await _customersRepository.FirstOrDefaultAsync(x => x.Id == model.CustomerId);
                 eventDetails.UserStatusId = adminApprovedId;
-                if (clientDetails.IsApprovalRequired)
+                if (customerDetails.IsApprovalRequired)
                 {
                     eventDetails.AdminStatusId = pendingCustomerApprovedId;
 
@@ -484,7 +484,7 @@ namespace AddOptimization.Services.Services
                     eventDetails.AdminStatusId = customerApprovedId;
                 }
                 var result = await _schedulersRepository.UpdateAsync(eventDetails);
-                if (clientDetails.IsApprovalRequired)
+                if (customerDetails.IsApprovalRequired)
                     Task.Run(() => SendRequestTimesheetApprovalEmailToCustomer(result.ApplicationUser?.Email, result));
 
                 Task.Run(() => SendTimesheetApprovedEmailToEmployee(result.ApplicationUser?.Email, result));

@@ -80,22 +80,22 @@ BEGIN
         ('0AAD8336-A223-42F4-B6FE-4EDD97ADEDC3','Pending Invoicing','PENDING_INVOICING')
 END
 
-/* Adding Paid by client Scheduler Status data in Scheduler Status */
+/* Adding Paid by customer Scheduler Status data in Scheduler Status */
 
 IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Paid')
 BEGIN 
     INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
     VALUES
-        ('F69D2DD9-0165-4CAA-BD6D-96FF663309AF','Paid','CLIENT_PAID')
+        ('F69D2DD9-0165-4CAA-BD6D-96FF663309AF','Paid','CUSTOMER_PAID')
 END
 
-/* Adding Pending for client appproval Scheduler Status data in Scheduler Status */
+/* Adding Pending for customer appproval Scheduler Status data in Scheduler Status */
 
-IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Pending Client Appproval')
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Pending Customer Appproval')
 BEGIN 
     INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
     VALUES
-        ('2DB8D005-90BB-40ED-B35E-ACC37B15787E','Pending Client Appproval','PENDING_CLIENT_APPROVAL')
+        ('2DB8D005-90BB-40ED-B35E-ACC37B15787E','Pending Customer Appproval','PENDING_CUSTOMER_APPROVAL')
 END
 
 
@@ -109,22 +109,22 @@ BEGIN
         ('7FCB2F89-750E-4B76-9B5F-6D944EB58AA2','Declined','DECLINED')
 END
 
-/* Adding Client Declined Scheduler Status data in Scheduler Status */
+/* Adding Customer Declined Scheduler Status data in Scheduler Status */
 
-IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Client Declined')
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Customer Declined')
 BEGIN 
     INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
     VALUES
-        ('BA7AB70E-C985-4122-BDCA-F83FC29A9884','Client Declined','CLIENT_DECLINED')
+        ('BA7AB70E-C985-4122-BDCA-F83FC29A9884','Customer Declined','CUSTOMER_DECLINED')
 END
 
-/* Adding Client Approved  Scheduler Status data in Scheduler Status */
+/* Adding Customer Approved  Scheduler Status data in Scheduler Status */
 
-IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Client Approved')
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Customer Approved')
 BEGIN 
     INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
     VALUES
-        ('92D6B0DB-F21B-4314-96E6-1C45E8E375C6','Client Approved','CLIENT_APPROVED')
+        ('92D6B0DB-F21B-4314-96E6-1C45E8E375C6','Customer Approved','CUSTOMER_APPROVED')
 END
 
 /* Adding Admin Approved  Scheduler Status data in Scheduler Status */
@@ -399,13 +399,6 @@ BEGIN
         ('2A87C897-040F-448F-3E68-08DC645010CA','public-holiday','public-holiday','/admin/public-holiday')
 END
  
- 
-IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='client_screen')
-BEGIN 
-    INSERT INTO Screens(Id,Name,ScreenKey,Route)
-    VALUES
-        ('882B0A13-97EC-4979-3B74-08DC68E79066','Clients','client_screen','/admin/clients')
-END
  
  
 IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='admin_gui_versions')
