@@ -1,13 +1,10 @@
 ﻿using AddOptimization.Contracts.Constants;
 using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
-using AddOptimization.Data.Entities;
 using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
-using NPOI.SS.Formula.Functions;
-using System.Text;
 
 namespace AddOptimization.API.HostedService.BackgroundServices
 {
@@ -36,9 +33,9 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         #region Protected Methods
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            //#if DEBUG
-            //            return;
-            //#endif
+//#if DEBUG
+//            return;
+//#endif
             var durationValue = _configuration.ReadSection<BackgroundServiceSettings>(AppSettingsSections.BackgroundServiceSettings).FillTimesheetReminderEmailTriggerDurationInSeconds;
             var period = TimeSpan.FromSeconds(durationValue);
             using PeriodicTimer timer = new PeriodicTimer(period);

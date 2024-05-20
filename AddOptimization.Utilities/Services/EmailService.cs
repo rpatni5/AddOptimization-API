@@ -70,8 +70,8 @@ public  class EmailService: IEmailService
                     }
                 };
             }
-            smtpClient.SendAsync(mailMessage,null);
-            return await Task.FromResult(true);
+            smtpClient.Send(mailMessage);
+            return true;
         }
         catch (Exception ex)
         {

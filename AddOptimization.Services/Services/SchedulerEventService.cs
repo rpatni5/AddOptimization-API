@@ -264,7 +264,7 @@ namespace AddOptimization.Services.Services
         }
         public async Task<ApiResult<List<SchedulerEventResponseDto>>> GetSchedulerEventsForApproveEmailReminder()
         {
-            var entity = await _schedulersRepository.QueryAsync(x => x.AdminStatus.StatusKey == SchedulerStatusesEnum.PENDING_CLIENT_APPROVAL.ToString(), include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer));
+            var entity = await _schedulersRepository.QueryAsync(x => x.AdminStatus.StatusKey == SchedulerStatusesEnum.PENDING_CUSTOMER_APPROVAL.ToString(), include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer));
             if (entity == null || !entity.Any())
             {
                 return ApiResult<List<SchedulerEventResponseDto>>.Failure(ValidationCodes.SchedulerEventsDoesNotExists);
@@ -469,8 +469,8 @@ namespace AddOptimization.Services.Services
                 var eventDetails = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == model.Id, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer));
                 var eventStatus = (await _schedulersStatusService.Search()).Result;
                 var adminApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.ADMIN_APPROVED.ToString()).Id;
-                var customerApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.CLIENT_APPROVED.ToString()).Id;
-                var pendingCustomerApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_CLIENT_APPROVAL.ToString()).Id;
+                var customerApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.CUSTOMER_APPROVED.ToString()).Id;
+                var pendingCustomerApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_CUSTOMER_APPROVAL.ToString()).Id;
 
                 var clientDetails = await _customersRepository.FirstOrDefaultAsync(x => x.Id == model.CustomerId);
                 eventDetails.UserStatusId = adminApprovedId;
