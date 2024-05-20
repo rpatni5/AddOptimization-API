@@ -71,7 +71,7 @@ public  class EmailService: IEmailService
                 };
             }
             smtpClient.Send(mailMessage);
-            return await Task.FromResult(true);
+            return true;
         }
         catch (Exception ex)
         {

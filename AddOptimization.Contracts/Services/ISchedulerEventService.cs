@@ -14,7 +14,8 @@ namespace AddOptimization.Contracts.Services
         Task<ApiResult<List<SchedulerEventDetailsDto>>> GetSchedulerEventDetails(Guid id); 
         Task<ApiResult<List<SchedulerEventDetailsDto>>> GetSchedulerEventDetails(SchedulerEventRequestDto model); 
         Task<ApiResult<SchedulerEventResponseDto>> GetSchedulerEvent(Guid id);
-        Task<ApiResult<List<SchedulerEventResponseDto>>> GetSchedulerEventsForEmailReminder();
+        Task<ApiResult<List<SchedulerEventResponseDto>>> GetSchedulerEventsForEmailReminder(Guid customerId, int userId);
+        Task<ApiResult<List<SchedulerEventResponseDto>>> GetSchedulerEventsForApproveEmailReminder();
         Task<ApiResult<bool>> ApproveRequest(SchedulerEventResponseDto model);
         Task<ApiResult<bool>> DeclineRequest(SchedulerEventResponseDto model);
     }

@@ -5,12 +5,15 @@ using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
 using AddOptimization.Services.Constants;
 using AddOptimization.Utilities.Common;
+using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Enums;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
+using AddOptimization.Utilities.Services;
 using AutoMapper;
+using iText.Layout.Element;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -33,9 +36,9 @@ namespace AddOptimization.Services.Services
         private readonly IEmailService _emailService;
         private readonly ITemplateService _templateService;
         private readonly IConfiguration _configuration;
-
+        private readonly CustomDataProtectionService _protectionService;
         public SchedulerEventService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulerEventService> logger, IMapper mapper, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ISchedulersStatusService schedulersStatusService, IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository, IGenericRepository<Customer> customersRepository,
-            IConfiguration configuration, IEmailService emailService, ITemplateService templateService)
+            IConfiguration configuration, IEmailService emailService, ITemplateService templateService, CustomDataProtectionService protectionService)
         {
             _schedulersRepository = schedulersRepository;
             _logger = logger;
@@ -48,6 +51,7 @@ namespace AddOptimization.Services.Services
             _emailService = emailService;
             _templateService = templateService;
             _configuration = configuration;
+            _protectionService = protectionService;
             _customersRepository = customersRepository;
         }
 
@@ -65,11 +69,11 @@ namespace AddOptimization.Services.Services
                 var pagedResult = PageHelper<SchedulerEvent, SchedulerEventResponseDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new SchedulerEventResponseDto
                 {
                     Id = e.Id,
-                   
+
                     CustomerId = e.CustomerId,
                     ApprovarId = e.ApprovarId,
                     ApprovarName = e.Approvar.FullName,
-                   
+
                     CustomerName = e.Customer.Name,
                     UserId = e.UserId,
                     UserStatusId = e.UserStatusId,
@@ -208,13 +212,66 @@ namespace AddOptimization.Services.Services
             return ApiResult<SchedulerEventResponseDto>.Success(mappedEntity);
         }
 
-        public async Task<ApiResult<List<SchedulerEventResponseDto>>> GetSchedulerEventsForEmailReminder()
+        public async Task<ApiResult<List<SchedulerEventResponseDto>>> GetSchedulerEventsForEmailReminder(Guid customerId, int userId)
         {
-            var entity = await _schedulersRepository.QueryAsync(x => x.IsDraft && !x.IsDeleted, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer));
-            var mappedEntity = _mapper.Map<List<SchedulerEventResponseDto>>(entity);
-            return ApiResult<List<SchedulerEventResponseDto>>.Success(mappedEntity);
+            var entity = await _schedulersRepository.QueryAsync(x => x.Id == customerId && x.UserId == userId && !x.IsDeleted, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer));
+            if (entity == null || !entity.Any())
+            {
+                return ApiResult<List<SchedulerEventResponseDto>>.Failure(ValidationCodes.SchedulerEventsDoesNotExists);
+            }
+            var response = new List<SchedulerEventResponseDto>();
+            DateTime today = DateTime.Today;
+            DateTime endOfMonth = new DateTime(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month));
+            if (today == endOfMonth)
+            {
+                var previousMonthsDateRanges = MonthDateRangeHelper.GetMonthDateRanges(true);
+                foreach (var month in previousMonthsDateRanges)
+                {
+                    var value = entity.FirstOrDefault(c => c.StartDate == month.StartDate && c.EndDate == month.EndDate);
+                    if (value == null || value?.IsDraft == true)
+                    {
+                        var schedulerEvent = new SchedulerEventResponseDto
+                        {
+                            UserName = value != null ? value.ApplicationUser?.FullName : entity.FirstOrDefault().ApplicationUser.FullName,
+                            StartDate = value != null ? value.StartDate : month.StartDate,
+                            EndDate = value != null ? value.EndDate : month.EndDate,
+                            ApplicationUser = _mapper.Map<ApplicationUserDto>(value != null ? value.ApplicationUser : entity.FirstOrDefault().ApplicationUser)
+                        };
+                        response.Add(schedulerEvent);
+                    }
+                }
+            }
+            else
+            {
+                var months = MonthDateRangeHelper.GetMonthDateRanges();
+                foreach (var month in months)
+                {
+                    var value = entity.FirstOrDefault(c => c.StartDate == month.StartDate && c.EndDate == month.EndDate);
+                    if (value == null || value?.IsDraft == true)
+                    {
+                        var schedulerEvent = new SchedulerEventResponseDto
+                        {
+                            UserName = value != null ? value.ApplicationUser?.FullName : entity.FirstOrDefault().ApplicationUser.FullName,
+                            StartDate = value != null ? value.StartDate : month.StartDate,
+                            EndDate = value != null ? value.EndDate : month.EndDate,
+                            ApplicationUser = _mapper.Map<ApplicationUserDto>(value != null ? value.ApplicationUser : entity.FirstOrDefault().ApplicationUser)
+                        };
+                        response.Add(schedulerEvent);
+                    }
+                }
+            }
+            return ApiResult<List<SchedulerEventResponseDto>>.Success(response);
         }
-
+        public async Task<ApiResult<List<SchedulerEventResponseDto>>> GetSchedulerEventsForApproveEmailReminder()
+        {
+            var entity = await _schedulersRepository.QueryAsync(x => x.AdminStatus.StatusKey == SchedulerStatusesEnum.PENDING_CUSTOMER_APPROVAL.ToString(), include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer));
+            if (entity == null || !entity.Any())
+            {
+                return ApiResult<List<SchedulerEventResponseDto>>.Failure(ValidationCodes.SchedulerEventsDoesNotExists);
+            }
+            var response = _mapper.Map<List<SchedulerEventResponseDto>>(entity);
+            return ApiResult<List<SchedulerEventResponseDto>>.Success(response);
+        }
         public async Task<ApiResult<List<SchedulerEventDetailsDto>>> GetSchedulerEventDetails(Guid id)
         {
             try
@@ -271,7 +328,7 @@ namespace AddOptimization.Services.Services
             });
             filter.GetValue<string>("customerName", (v) =>
             {
-                entities = entities.Where(e => e.Customer != null && (e.Customer.Name.ToLower().Contains(v.ToLower()) ));
+                entities = entities.Where(e => e.Customer != null && (e.Customer.Name.ToLower().Contains(v.ToLower())));
             });
             filter.GetValue<string>("customer", (v) =>
             {
@@ -409,7 +466,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var eventDetails = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == model.Id);
+                var eventDetails = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == model.Id, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer));
                 var eventStatus = (await _schedulersStatusService.Search()).Result;
                 var adminApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.ADMIN_APPROVED.ToString()).Id;
                 var customerApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.CUSTOMER_APPROVED.ToString()).Id;
@@ -420,16 +477,17 @@ namespace AddOptimization.Services.Services
                 if (customerDetails.IsApprovalRequired)
                 {
                     eventDetails.AdminStatusId = pendingCustomerApprovedId;
-                    
+
                 }
                 else
                 {
                     eventDetails.AdminStatusId = customerApprovedId;
                 }
                 var result = await _schedulersRepository.UpdateAsync(eventDetails);
-                if (customerDetails.IsApprovalRequired) 
-                    await SendTimesheetApprovedEmail(result.ApplicationUser?.Email, result);
+                if (customerDetails.IsApprovalRequired)
+                    Task.Run(() => SendRequestTimesheetApprovalEmailToCustomer(result.ApplicationUser?.Email, result));
 
+                Task.Run(() => SendTimesheetApprovedEmailToEmployee(result.ApplicationUser?.Email, result));
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -460,7 +518,7 @@ namespace AddOptimization.Services.Services
         }
 
         #region Private Methods
-        private async Task<bool> SendTimesheetApprovedEmail(string email, SchedulerEvent schedulerEvent)
+        private async Task<bool> SendTimesheetApprovedEmailToEmployee(string email, SchedulerEvent schedulerEvent)
         {
             try
             {
@@ -478,6 +536,35 @@ namespace AddOptimization.Services.Services
                 _logger.LogException(ex);
                 return false;
             }
+        }
+
+        private async Task<bool> SendRequestTimesheetApprovalEmailToCustomer(string email, SchedulerEvent schedulerEvent)
+        {
+            try
+            {
+                var subject = "Timesheet Approval Request";
+                var link = GetTimesheetLinkForCustomer(schedulerEvent.Id);
+                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.RequestTimesheetApproval);
+                emailTemplate = emailTemplate.Replace("[CustomerName]", schedulerEvent.ApplicationUser?.FullName)//TODO:
+                                             .Replace("[EmployeeName]", schedulerEvent.ApplicationUser?.FullName)
+                                             .Replace("[LinkToTimesheet]", link)
+                                             .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
+                                             .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
+                                             .Replace("[NoOfDays]", DateTime.DaysInMonth(schedulerEvent.StartDate.Year, schedulerEvent.StartDate.Month).ToString());
+                return await _emailService.SendEmail(email, subject, emailTemplate);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return false;
+            }
+        }
+
+        public string GetTimesheetLinkForCustomer(Guid schedulerEventId)
+        {
+            var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
+            var encryptedId = _protectionService.Encode(schedulerEventId.ToString());
+            return $"{baseUrl}timesheet/approval/{encryptedId}";
         }
         #endregion
     }

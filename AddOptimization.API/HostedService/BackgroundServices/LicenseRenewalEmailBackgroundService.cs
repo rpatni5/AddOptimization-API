@@ -65,7 +65,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 {
                     var licensesDtoCollection = new List<LicenseDetailsDto>();
                     licensesDtoCollection.AddRange(group);
-                    await SendCustomerLicenseRenewalEmail(licensesDtoCollection);
+                    Task.Run(() => SendCustomerLicenseRenewalEmail(licensesDtoCollection));
                 }
                 return true;
             }
@@ -122,7 +122,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                         break;
                     default:
                         break;
-                }                
+                }
             }
             sb.AppendLine("</tr>");
 
@@ -153,7 +153,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 sb.AppendLine("</tr>");
                 sNoCount++;
             }
-            
+
             sb.AppendLine("</table>");
             return sb.ToString();
         }

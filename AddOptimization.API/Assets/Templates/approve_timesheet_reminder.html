@@ -225,12 +225,15 @@
         <tr>
             <td class="content-cell">
                 <div class="f-fallback">
-                    <h1>Dear [EmployeeName],</h1>
-                    <p>This is an automated email to inform you that you have not submitted timesheets for the timesheet week [StartDate] - [EndDate]</p>
+                    <h1>Dear [CustomerName],</h1>
+                    <p>This is an automated email to inform you that you have not approve timesheet for the timesheet month [StartDate] - [EndDate] for [EmployeeName]</p>
                     <!-- Action -->
-                    <p>Please submit your timesheet as soon as possible, by going to the [link], or clicking [here]</b></p>
+                    <p>
+                        Please click on the below link to approve the timesheet as soon as possible
+                        <a href="[LinkToApproveTimesheet]" target="_blank" style="background-color: #202A44; color: white; padding: 5px;">Approve Now</a><br />
+                    </p>
                     Thanks
-                    <br />The Add-Optimization team
+                    <br />The AddOptimization team
                 </div>
             </td>
         </tr>

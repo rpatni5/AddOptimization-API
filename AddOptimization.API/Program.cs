@@ -38,6 +38,7 @@ services.RegisterDomainServices();
 services.RegisterDataServices(connectionString);
 services.AddHostedService<LicenseRenewalEmailBackgroundService>();
 services.AddHostedService<FillTimesheetReminderEmailBackgroundService>();
+services.AddHostedService<PendingTimesheetReminderToCustomerBackgroundService>();
 services.AddLogging(builder =>
 {
     builder.AddFile($"logs/log_for.txt",LogLevel.Error);

@@ -5,7 +5,6 @@ using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
-using System.Text;
 
 namespace AddOptimization.API.HostedService.BackgroundServices
 {
@@ -57,11 +56,24 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             {
                 using var scope = _serviceProvider.CreateScope();
                 var schedulerEventService = scope.ServiceProvider.GetRequiredService<ISchedulerEventService>();
+                var customerEmployeeAssociationService = scope.ServiceProvider.GetRequiredService<ICustomerEmployeeAssociationService>();
                 var expirationThresholdValue = _configuration.ReadSection<BackgroundServiceSettings>(AppSettingsSections.BackgroundServiceSettings).ExpirationThresholdInDays;
-                var schedulerEvents = await schedulerEventService.GetSchedulerEventsForEmailReminder();
-                foreach (var schedulerEvent in schedulerEvents.Result)
-                { 
-                    await SendFillTimesheetReminderEmail(schedulerEvent);
+                var customerEmployeeAssociation = await customerEmployeeAssociationService.Search();
+                var result = customerEmployeeAssociation.Result.GroupBy(c => c.Id).ToList();
+                foreach (var client in result)
+                {
+                    foreach (var employee in client)
+                    {
+                        var schedulerEvents = await schedulerEventService.GetSchedulerEventsForEmailReminder(employee.Id, employee.EmployeeId);
+                        if (schedulerEvents?.Result == null) continue;
+
+                        //Filter scheduler events which happened before the client association.
+                        var events = schedulerEvents.Result.Where(s => s.StartDate <= employee.CreatedAt).ToList();
+                        foreach (var item in events)
+                        {
+                            Task.Run(() => SendFillTimesheetReminderEmail(item));
+                        };
+                    }
                 }
                 return true;
             }
@@ -79,11 +91,12 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             {
                 var subject = "Add optimization timesheet submission reminder";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.FillTimesheetReminder);
+                var link = GetMyTimesheetLinkForEmployee();
                 emailTemplate = emailTemplate
                                 .Replace("[EmployeeName]", schedulerEvent?.UserName)
                                 .Replace("[StartDate]", schedulerEvent?.StartDate.Date.ToString("d"))
                                 .Replace("[EndDate]", schedulerEvent?.EndDate.Date.ToString("d"))
-                                .Replace("[link]","");
+                                .Replace("[LinkToMyTimesheet]", link);
                 return await _emailService.SendEmail(schedulerEvent?.ApplicationUser?.Email, subject, emailTemplate);
             }
             catch (Exception ex)
@@ -92,6 +105,12 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 _logger.LogException(ex);
                 return false;
             }
+        }
+
+        private string GetMyTimesheetLinkForEmployee()
+        {
+            var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
+            return $"{baseUrl}admin/timesheets/my-timesheets";
         }
         #endregion
     }
