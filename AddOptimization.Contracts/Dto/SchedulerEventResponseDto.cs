@@ -22,6 +22,7 @@ namespace AddOptimization.Contracts.Dto
         public decimal WorkDuration { get; set; }
         public decimal Overtime { get; set; }
         public decimal Holiday { get; set; }
+        public DateTime UpdatedAt { get; set; }
 
         public virtual ApplicationUserDto ApplicationUser { get; set; }
 
