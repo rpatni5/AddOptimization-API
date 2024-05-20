@@ -412,12 +412,12 @@ namespace AddOptimization.Services.Services
                 var eventDetails = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == model.Id);
                 var eventStatus = (await _schedulersStatusService.Search()).Result;
                 var adminApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.ADMIN_APPROVED.ToString()).Id;
-                var customerApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.CLIENT_APPROVED.ToString()).Id;
-                var pendingCustomerApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_CLIENT_APPROVAL.ToString()).Id;
+                var customerApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.CUSTOMER_APPROVED.ToString()).Id;
+                var pendingCustomerApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_CUSTOMER_APPROVAL.ToString()).Id;
 
-                var clientDetails = await _customersRepository.FirstOrDefaultAsync(x => x.Id == model.CustomerId);
+                var customerDetails = await _customersRepository.FirstOrDefaultAsync(x => x.Id == model.CustomerId);
                 eventDetails.UserStatusId = adminApprovedId;
-                if (clientDetails.IsApprovalRequired)
+                if (customerDetails.IsApprovalRequired)
                 {
                     eventDetails.AdminStatusId = pendingCustomerApprovedId;
                     
@@ -427,7 +427,7 @@ namespace AddOptimization.Services.Services
                     eventDetails.AdminStatusId = customerApprovedId;
                 }
                 var result = await _schedulersRepository.UpdateAsync(eventDetails);
-                if (clientDetails.IsApprovalRequired) 
+                if (customerDetails.IsApprovalRequired) 
                     await SendTimesheetApprovedEmail(result.ApplicationUser?.Email, result);
 
                 return ApiResult<bool>.Success(true);
