@@ -157,7 +157,7 @@ namespace AddOptimization.Services.Services
                 var entity = await _absenceRequestRepository.FirstOrDefaultAsync(t => t.Id == id);
                 if (entity == null)
                 {
-                    return ApiResult<bool>.NotFound("Client");
+                    return ApiResult<bool>.NotFound("Customer");
                 }
                 entity.IsDeleted = true;
                 await _absenceRequestRepository.UpdateAsync(entity);
