@@ -37,7 +37,8 @@ namespace AddOptimization.Services.Services
         private readonly ITemplateService _templateService;
         private readonly IConfiguration _configuration;
         private readonly CustomDataProtectionService _protectionService;
-        public SchedulerEventService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulerEventService> logger, IMapper mapper, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ISchedulersStatusService schedulersStatusService, IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository, IGenericRepository<Customer> customersRepository,
+        private readonly IGenericRepository<SchedulerEventHistory> _schedulerEventHistoryRepository;
+        public SchedulerEventService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulerEventService> logger, IMapper mapper, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ISchedulersStatusService schedulersStatusService, IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository, IGenericRepository<Customer> customersRepository, IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository,
             IConfiguration configuration, IEmailService emailService, ITemplateService templateService, CustomDataProtectionService protectionService)
         {
             _schedulersRepository = schedulersRepository;
@@ -53,6 +54,7 @@ namespace AddOptimization.Services.Services
             _configuration = configuration;
             _protectionService = protectionService;
             _customersRepository = customersRepository;
+            _schedulerEventHistoryRepository = schedulerEventHistoryRepository;
         }
 
 
@@ -462,11 +464,11 @@ namespace AddOptimization.Services.Services
 
         }
 
-        public async Task<ApiResult<bool>> ApproveRequest(SchedulerEventResponseDto model)
+        public async Task<ApiResult<bool>> ApproveRequest(AccountAdminActionRequestDto model)
         {
             try
             {
-                var eventDetails = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == model.Id, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer));
+                var eventDetails = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == model.Id);
                 var eventStatus = (await _schedulersStatusService.Search()).Result;
                 var adminApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.ADMIN_APPROVED.ToString()).Id;
                 var customerApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.CUSTOMER_APPROVED.ToString()).Id;
@@ -484,6 +486,17 @@ namespace AddOptimization.Services.Services
                     eventDetails.AdminStatusId = customerApprovedId;
                 }
                 var result = await _schedulersRepository.UpdateAsync(eventDetails);
+                SchedulerEventHistory entity = new SchedulerEventHistory()
+                {
+                    SchedulerEventId = eventDetails.Id,
+                    UserId = eventDetails.UserId,
+                    UserStatusId = eventDetails.UserStatusId,
+                    AdminStatusId = eventDetails.AdminStatusId,
+                    Comment = model.Comment,
+                };
+
+                await _schedulerEventHistoryRepository.InsertAsync(entity);
+
                 if (customerDetails.IsApprovalRequired)
                     Task.Run(() => SendRequestTimesheetApprovalEmailToCustomer(result.ApplicationUser?.Email, result));
 
@@ -496,7 +509,7 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-        public async Task<ApiResult<bool>> DeclineRequest(SchedulerEventResponseDto model)
+        public async Task<ApiResult<bool>> DeclineRequest(AccountAdminActionRequestDto model)
         {
             try
             {
@@ -508,6 +521,16 @@ namespace AddOptimization.Services.Services
                 eventDetails.UserStatusId = declinedStatusId;
                 eventDetails.AdminStatusId = draftStatusId;
                 var result = await _schedulersRepository.UpdateAsync(eventDetails);
+                SchedulerEventHistory entity = new SchedulerEventHistory()
+                {
+                    SchedulerEventId = eventDetails.Id,
+                    UserId = eventDetails.UserId,
+                    UserStatusId = eventDetails.UserStatusId,
+                    AdminStatusId = eventDetails.AdminStatusId,
+                    Comment = model.Comment,
+                };
+
+                await _schedulerEventHistoryRepository.InsertAsync(entity);
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -517,6 +540,41 @@ namespace AddOptimization.Services.Services
             }
         }
 
+        public async Task<ApiResult<bool>> TimesheetAction(CustomerTimesheetActionDto model)
+        {
+            try
+            {
+                var eventDetails = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == model.Id);
+                var eventStatus = (await _schedulersStatusService.Search()).Result;
+                var customerApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.CUSTOMER_APPROVED.ToString()).Id;
+                var customerDeclinedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.CUSTOMER_DECLINED.ToString()).Id;
+                if (model.IsApproved)
+                {
+                    eventDetails.AdminStatusId = customerApprovedId;
+                }
+                else
+                {
+                    eventDetails.AdminStatusId = customerDeclinedId;
+                }
+                var result = await _schedulersRepository.UpdateAsync(eventDetails);
+                SchedulerEventHistory entity = new SchedulerEventHistory()
+                {
+                    SchedulerEventId = eventDetails.Id,
+                    UserId = eventDetails.UserId,
+                    UserStatusId = eventDetails.UserStatusId,
+                    AdminStatusId = eventDetails.AdminStatusId,
+                    Comment = model.Comment,
+                };
+
+                await _schedulerEventHistoryRepository.InsertAsync(entity);
+                return ApiResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
         #region Private Methods
         private async Task<bool> SendTimesheetApprovedEmailToEmployee(string email, SchedulerEvent schedulerEvent)
         {

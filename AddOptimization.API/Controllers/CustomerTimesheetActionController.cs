@@ -11,12 +11,12 @@ using AddOptimization.Utilities.Services;
 namespace AddOptimization.API.Controllers
 {
     [AllowAnonymous]
-    public class customerTimesheetActionController : CustomApiControllerBase
+    public class CustomerTimesheetActionController : CustomApiControllerBase
     {
         private readonly ISchedulerEventService _schedulerEventService;
         private readonly CustomDataProtectionService _customDataProtectionService;
 
-        public customerTimesheetActionController(ILogger<SchedulerEventController> logger, ISchedulerEventService schedulerEventService, CustomDataProtectionService customDataProtectionService) : base(logger)
+        public CustomerTimesheetActionController(ILogger<SchedulerEventController> logger, ISchedulerEventService schedulerEventService, CustomDataProtectionService customDataProtectionService) : base(logger)
         {
             _schedulerEventService = schedulerEventService;
             _customDataProtectionService = customDataProtectionService;
@@ -47,6 +47,21 @@ namespace AddOptimization.API.Controllers
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpPost("timesheet-action")]
+        public async Task<IActionResult> TimesheetAction(CustomerTimesheetActionDto model)
+        {
+            try
+            {
+                var retVal = await _schedulerEventService.TimesheetAction(model);
+                return HandleResponse(retVal);
+
+            }
+            catch(Exception ex)
             {
                 return HandleException(ex);
             }

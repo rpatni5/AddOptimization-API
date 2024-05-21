@@ -37,6 +37,7 @@ public class CustomerService : ICustomerService
     private readonly IGenericRepository<UserRole> _userRoleRepository;
 
 
+
     private readonly IUnitOfWork _unitOfWork;
     public CustomerService(IGenericRepository<Customer> customerRepository, ILogger<CustomerService> logger, IMapper mapper,
         IAddressService addressService, IUnitOfWork unitOfWork, IEmailService emailService, ITemplateService templateService,
@@ -472,7 +473,7 @@ public class CustomerService : ICustomerService
     {
         try
         {
-            var entity = await _customerRepository.FirstOrDefaultAsync(t => t.Id == id , include: entity => entity.Include(e => e.Addresses.Where(a => !a.IsDeleted).OrderByDescending(e => e.CreatedAt)).Include(e => e.CustomerStatus).Include(e => e.Country).Include(e => e.PartnerCountry), ignoreGlobalFilter: true);
+            var entity = await _customerRepository.FirstOrDefaultAsync(t => t.Id == id, include: entity => entity.Include(e => e.Addresses.Where(a => !a.IsDeleted).OrderByDescending(e => e.CreatedAt)).Include(e => e.CustomerStatus).Include(e => e.Country).Include(e => e.PartnerCountry), ignoreGlobalFilter: true);
             if (entity == null)
             {
                 return ApiResult<CustomerDto>.NotFound("Customer");
@@ -492,7 +493,8 @@ public class CustomerService : ICustomerService
     {
         try
         {
-            var entities = await _customerRepository.QueryAsync(include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Id));
+            var activeId = (await _customerStatusRepository.FirstOrDefaultAsync(e => e.Name == CustomerStatuses.Active)).Id;
+            var entities = await _customerRepository.QueryAsync((e => e.CustomerStatusId == activeId), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Id));
             var mappedEntities = _mapper.Map<List<CustomerDto>>(entities);
             return ApiResult<List<CustomerDto>>.Success(mappedEntities);
         }
