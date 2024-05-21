@@ -208,9 +208,12 @@ namespace AddOptimization.Services.Services
 
         public async Task<ApiResult<SchedulerEventResponseDto>> GetSchedulerEvent(Guid id)
         {
+            var eventStatus = (await _schedulersStatusService.Search()).Result;
+            var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_ACCOUNT_ADMIN_APPROVAL.ToString()).Id;
             var entity = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer));
 
             var mappedEntity = _mapper.Map<SchedulerEventResponseDto>(entity);
+            mappedEntity.IsCustomerApprovalPending = mappedEntity.AdminStatusId == statusId;
             return ApiResult<SchedulerEventResponseDto>.Success(mappedEntity);
         }
 
@@ -274,14 +277,19 @@ namespace AddOptimization.Services.Services
             var response = _mapper.Map<List<SchedulerEventResponseDto>>(entity);
             return ApiResult<List<SchedulerEventResponseDto>>.Success(response);
         }
-        public async Task<ApiResult<List<SchedulerEventDetailsDto>>> GetSchedulerEventDetails(Guid id)
+        public async Task<ApiResult<List<SchedulerEventDetailsDto>>> GetSchedulerEventDetails(Guid id, bool getRoleBasedData = true)
         {
             try
             {
-                var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin") || c.Contains("Account Admin")).ToList();
+                bool ignoreGlobalFilter = true;
+                if (getRoleBasedData)
+                {
+                    var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin") || c.Contains("Account Admin")).ToList();
+                    ignoreGlobalFilter = superAdminRole.Count != 0;
+                }
 
                 var entity = await _schedulersDetailsRepository.QueryAsync(include: entities => entities
-                .Include(e => e.CreatedByUser).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.SchedulerEvent), predicate: o => o.SchedulerEventId == id, ignoreGlobalFilter: superAdminRole.Count != 0);
+                .Include(e => e.CreatedByUser).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.SchedulerEvent), predicate: o => o.SchedulerEventId == id, ignoreGlobalFilter: ignoreGlobalFilter);
 
                 if (entity == null)
                 {

@@ -11,7 +11,7 @@ namespace AddOptimization.Contracts.Services
         Task<ApiResult<bool>> Save(List<SchedulerEventDetailsDto> schedulerEventDetails);
         Task<ApiResult<bool>> SubmitEventDetails(List<SchedulerEventDetailsDto> model);
         Task<ApiResult<SchedulerEventResponseDto>> CreateOrViewTimeSheets(SchedulerEventRequestDto model);
-        Task<ApiResult<List<SchedulerEventDetailsDto>>> GetSchedulerEventDetails(Guid id); 
+        Task<ApiResult<List<SchedulerEventDetailsDto>>> GetSchedulerEventDetails(Guid id, bool getRoleBasedData = true); 
         Task<ApiResult<List<SchedulerEventDetailsDto>>> GetSchedulerEventDetails(SchedulerEventRequestDto model); 
         Task<ApiResult<SchedulerEventResponseDto>> GetSchedulerEvent(Guid id);
         Task<ApiResult<List<SchedulerEventResponseDto>>> GetSchedulerEventsForEmailReminder(Guid customerId, int userId);
