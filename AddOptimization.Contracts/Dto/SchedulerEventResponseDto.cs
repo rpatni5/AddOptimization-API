@@ -28,5 +28,6 @@ namespace AddOptimization.Contracts.Dto
 
         public virtual ApplicationUserDto Approvar { get; set; }
         public virtual CustomerDto Customer { get; set; }
+        public bool IsCustomerApprovalPending { get; set; }
     }
 }

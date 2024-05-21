@@ -28,7 +28,7 @@ namespace AddOptimization.API.Controllers
             try
             {
                 var eventId = new Guid(_customDataProtectionService.Decode(id));
-                var retVal = await _schedulerEventService.GetSchedulerEventDetails(eventId);
+                var retVal = await _schedulerEventService.GetSchedulerEventDetails(eventId, false);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -61,7 +61,7 @@ namespace AddOptimization.API.Controllers
                 return HandleResponse(retVal);
 
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return HandleException(ex);
             }
