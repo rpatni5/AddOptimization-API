@@ -57,6 +57,7 @@ public partial class AddOptimizationContext : DbContext
     public virtual DbSet<CustomerEmployeeAssociation> CustomerEmployeeAssociations { get; set; }
     public virtual DbSet<HolidayAllocation> HolidayAllocation { get; set; }
     public virtual DbSet<Product> Products { get; set; }
+    public virtual DbSet<SchedulerEventHistory> SchedulerEventHistory { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

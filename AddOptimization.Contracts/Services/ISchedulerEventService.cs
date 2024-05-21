@@ -18,5 +18,6 @@ namespace AddOptimization.Contracts.Services
         Task<ApiResult<List<SchedulerEventResponseDto>>> GetSchedulerEventsForApproveEmailReminder();
         Task<ApiResult<bool>> ApproveRequest(SchedulerEventResponseDto model);
         Task<ApiResult<bool>> DeclineRequest(SchedulerEventResponseDto model);
+        Task<ApiResult<bool>> ApprovedTimesheetByCustomer(CustomerTimesheetActionDto model);
     }
 }
