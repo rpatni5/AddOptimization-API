@@ -53,11 +53,11 @@ namespace AddOptimization.API.Controllers
         }
 
         [HttpPost("timesheet-action")]
-        public async Task<IActionResult> ApproveTimesheetRequest(CustomerTimesheetActionDto model)
+        public async Task<IActionResult> TimesheetAction(CustomerTimesheetActionDto model)
         {
             try
             {
-                var retVal = await _schedulerEventService.ApprovedTimesheetByCustomer(model);
+                var retVal = await _schedulerEventService.TimesheetAction(model);
                 return HandleResponse(retVal);
 
             }

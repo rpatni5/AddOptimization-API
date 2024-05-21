@@ -133,7 +133,7 @@ namespace AddOptimization.API.Controllers
 
 
         [HttpPost("approve-request")]
-        public async Task<IActionResult> ApproveRequest(SchedulerEventResponseDto model)
+        public async Task<IActionResult> ApproveRequest(AccountAdminActionRequestDto model)
         {
             try
             {
@@ -147,7 +147,7 @@ namespace AddOptimization.API.Controllers
         }
 
         [HttpPost("decline-request")]
-        public async Task<IActionResult> DeclineRequest(SchedulerEventResponseDto model)
+        public async Task<IActionResult> DeclineRequest(AccountAdminActionRequestDto model)
         {
             try
             {
