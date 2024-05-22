@@ -211,7 +211,7 @@ namespace AddOptimization.Services.Services
         public async Task<ApiResult<SchedulerEventResponseDto>> GetSchedulerEvent(Guid id)
         {
             var eventStatus = (await _schedulersStatusService.Search()).Result;
-            var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_ACCOUNT_ADMIN_APPROVAL.ToString()).Id;
+            var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_CUSTOMER_APPROVAL.ToString()).Id;
             var entity = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer));
 
             var mappedEntity = _mapper.Map<SchedulerEventResponseDto>(entity);
