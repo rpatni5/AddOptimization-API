@@ -506,19 +506,18 @@ namespace AddOptimization.Services.Services
                 };
 
                 await _schedulerEventHistoryRepository.InsertAsync(entity);
+                var userEmail = (await _appUserRepository.FirstOrDefaultAsync(x => x.Id == result.UserId)).Email;
 
                 if (customerDetails.IsApprovalRequired)
                 {
                     Task.Run(() =>
                     {
-                        var customerEmail = _customersRepository.FirstOrDefaultAsync(x => x.Id == result.CustomerId).Result.Email;
-                        SendRequestTimesheetApprovalEmailToCustomer(customerEmail, result);
+                        SendRequestTimesheetApprovalEmailToCustomer(customerDetails.Email, result);
                     });
                 }
 
                 Task.Run(() =>
                 {
-                    var userEmail = _appUserRepository.FirstOrDefaultAsync(x => x.Id == result.UserId).Result.Email;
                     SendTimesheetApprovedEmailToEmployee(userEmail, result);
                 });
                 return ApiResult<bool>.Success(true);
