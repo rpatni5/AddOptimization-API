@@ -215,7 +215,7 @@ namespace AddOptimization.Services.Services
             var entity = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer));
 
             var mappedEntity = _mapper.Map<SchedulerEventResponseDto>(entity);
-            mappedEntity.IsCustomerApprovalPending = mappedEntity.AdminStatusId == statusId;
+            mappedEntity.IsCustomerApprovalPending = mappedEntity.AdminStatusId.ToString() == statusId.ToString();
             return ApiResult<SchedulerEventResponseDto>.Success(mappedEntity);
         }
 
