@@ -39,7 +39,8 @@ namespace AddOptimization.Services.Services
         private readonly CustomDataProtectionService _protectionService;
         private readonly IGenericRepository<SchedulerEventHistory> _schedulerEventHistoryRepository;
         private readonly IGenericRepository<ApplicationUser> _appUserRepository;
-        public SchedulerEventService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulerEventService> logger, IMapper mapper, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ISchedulersStatusService schedulersStatusService, IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository, IGenericRepository<Customer> customersRepository, IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository,
+        private readonly ISchedulerEventTypeService _schedulerEventTypeService;
+        public SchedulerEventService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulerEventService> logger, IMapper mapper, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ISchedulersStatusService schedulersStatusService, IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository, IGenericRepository<Customer> customersRepository, IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository,  ISchedulerEventTypeService schedulerEventTypeService,
             IConfiguration configuration, IEmailService emailService, ITemplateService templateService, CustomDataProtectionService protectionService, IGenericRepository<ApplicationUser> appUserRepository)
         {
             _schedulersRepository = schedulersRepository;
@@ -57,6 +58,7 @@ namespace AddOptimization.Services.Services
             _customersRepository = customersRepository;
             _schedulerEventHistoryRepository = schedulerEventHistoryRepository;
             _appUserRepository = appUserRepository;
+            _schedulerEventTypeService = schedulerEventTypeService;
         }
 
 
@@ -210,11 +212,15 @@ namespace AddOptimization.Services.Services
 
         public async Task<ApiResult<SchedulerEventResponseDto>> GetSchedulerEvent(Guid id)
         {
+            var eventTypes = (await _schedulerEventTypeService.Search()).Result;
+            var timesheetEventId = eventTypes.FirstOrDefault(x => x.Name.Equals("timesheet" , StringComparison.InvariantCultureIgnoreCase )).Id ;
+            var overtimeId = eventTypes.FirstOrDefault(x => x.Name.Equals("overtime" , StringComparison.InvariantCultureIgnoreCase )).Id;
             var eventStatus = (await _schedulersStatusService.Search()).Result;
             var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_CUSTOMER_APPROVAL.ToString()).Id;
-            var entity = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer));
-
+            var entity = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer).Include(e => e.EventDetails));
             var mappedEntity = _mapper.Map<SchedulerEventResponseDto>(entity);
+            mappedEntity.WorkDuration = entity.EventDetails.Where(x => x.EventTypeId == timesheetEventId).Sum(x => x.Duration);
+            mappedEntity.Overtime = entity.EventDetails.Where(x => x.EventTypeId == overtimeId).Sum(x => x.Duration);
             mappedEntity.IsCustomerApprovalPending = mappedEntity.AdminStatusId.ToString() == statusId.ToString();
             return ApiResult<SchedulerEventResponseDto>.Success(mappedEntity);
         }
