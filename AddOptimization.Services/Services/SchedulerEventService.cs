@@ -549,7 +549,7 @@ namespace AddOptimization.Services.Services
                     Comment = model.Comment,
                 };
 
-                await _schedulerEventHistoryRepository.InsertAsync(entity);
+                await _schedulerEventHistoryRepository.InsertAsync(entity);                
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -558,7 +558,6 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-
         public async Task<ApiResult<bool>> TimesheetAction(CustomerTimesheetActionDto model)
         {
             try
@@ -586,12 +585,32 @@ namespace AddOptimization.Services.Services
                 };
 
                 await _schedulerEventHistoryRepository.InsertAsync(entity);
+
+                var accountAdminEmail = (await _appUserRepository.FirstOrDefaultAsync(x => x.Id == result.ApprovarId)).Email;
+                Task.Run(() =>
+                {
+                    SendTimesheetActionEmailToAccountAdmin(accountAdminEmail, eventDetails, model.IsApproved);
+                });
+
+
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
             {
                 _logger.LogException(ex);
                 throw;
+            }
+        }
+
+        private void SendTimesheetActionEmailToAccountAdmin(string accountAdminEmail, SchedulerEvent eventDetails, bool isApprovedEmail)
+        {
+            if (isApprovedEmail)
+            {
+                //send approval email to account admin for particular client has approved along with reason if mentioned
+            }
+            else
+            {
+                //send declined email to account admin for particular client has approved along with reason if mentioned
             }
         }
         #region Private Methods
