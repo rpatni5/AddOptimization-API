@@ -33,9 +33,9 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         #region Protected Methods
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-//#if DEBUG
-//            return;
-//#endif
+            //#if DEBUG
+            //            return;
+            //#endif
             var durationValue = _configuration.ReadSection<BackgroundServiceSettings>(AppSettingsSections.BackgroundServiceSettings).FillTimesheetReminderEmailTriggerDurationInSeconds;
             var period = TimeSpan.FromSeconds(durationValue);
             using PeriodicTimer timer = new PeriodicTimer(period);
@@ -59,16 +59,17 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 var customerEmployeeAssociationService = scope.ServiceProvider.GetRequiredService<ICustomerEmployeeAssociationService>();
                 var expirationThresholdValue = _configuration.ReadSection<BackgroundServiceSettings>(AppSettingsSections.BackgroundServiceSettings).ExpirationThresholdInDays;
                 var customerEmployeeAssociation = await customerEmployeeAssociationService.Search();
-                var result = customerEmployeeAssociation.Result.GroupBy(c => c.Id).ToList();
-                foreach (var client in result)
+                var result = customerEmployeeAssociation.Result.GroupBy(c => c.CustomerId).ToList();
+                foreach (var clientAssociation in result)
                 {
-                    foreach (var employee in client)
+                    foreach (var association in clientAssociation)
                     {
-                        var schedulerEvents = await schedulerEventService.GetSchedulerEventsForEmailReminder(employee.Id, employee.EmployeeId);
+                        var schedulerEvents = await schedulerEventService.GetSchedulerEventsForEmailReminder(association.CustomerId, association.EmployeeId);
                         if (schedulerEvents?.Result == null) continue;
 
                         //Filter scheduler events which happened before the client association.
-                        var events = schedulerEvents.Result.Where(s => s.StartDate <= employee.CreatedAt).ToList();
+                        var events = schedulerEvents.Result
+                            .Where(s => s.EventDetails != null && (s.EventDetails == null && s.EndDate <= association.CreatedAt)).ToList();
                         foreach (var item in events)
                         {
                             Task.Run(() => SendFillTimesheetReminderEmail(item));
