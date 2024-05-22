@@ -38,8 +38,9 @@ namespace AddOptimization.Services.Services
         private readonly IConfiguration _configuration;
         private readonly CustomDataProtectionService _protectionService;
         private readonly IGenericRepository<SchedulerEventHistory> _schedulerEventHistoryRepository;
+        private readonly IGenericRepository<ApplicationUser> _appUserRepository;
         public SchedulerEventService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulerEventService> logger, IMapper mapper, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ISchedulersStatusService schedulersStatusService, IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository, IGenericRepository<Customer> customersRepository, IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository,
-            IConfiguration configuration, IEmailService emailService, ITemplateService templateService, CustomDataProtectionService protectionService)
+            IConfiguration configuration, IEmailService emailService, ITemplateService templateService, CustomDataProtectionService protectionService, IGenericRepository<ApplicationUser> appUserRepository)
         {
             _schedulersRepository = schedulersRepository;
             _logger = logger;
@@ -55,6 +56,7 @@ namespace AddOptimization.Services.Services
             _protectionService = protectionService;
             _customersRepository = customersRepository;
             _schedulerEventHistoryRepository = schedulerEventHistoryRepository;
+            _appUserRepository = appUserRepository;
         }
 
 
@@ -506,9 +508,19 @@ namespace AddOptimization.Services.Services
                 await _schedulerEventHistoryRepository.InsertAsync(entity);
 
                 if (customerDetails.IsApprovalRequired)
-                    Task.Run(() => SendRequestTimesheetApprovalEmailToCustomer(result.ApplicationUser?.Email, result));
+                {
+                    Task.Run(() =>
+                    {
+                        var customerEmail = _customersRepository.FirstOrDefaultAsync(x => x.Id == result.CustomerId).Result.Email;
+                        SendRequestTimesheetApprovalEmailToCustomer(customerEmail, result);
+                    });
+                }
 
-                Task.Run(() => SendTimesheetApprovedEmailToEmployee(result.ApplicationUser?.Email, result));
+                Task.Run(() =>
+                {
+                    var userEmail = _appUserRepository.FirstOrDefaultAsync(x => x.Id == result.UserId).Result.Email;
+                    SendTimesheetApprovedEmailToEmployee(userEmail, result);
+                });
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
