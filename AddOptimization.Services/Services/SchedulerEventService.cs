@@ -92,7 +92,8 @@ namespace AddOptimization.Services.Services
                     WorkDuration = e.EventDetails.Where(x => x.EventTypes.Name == "Timesheet").Sum(x => x.Duration),
                     Overtime = e.EventDetails.Where(x => x.EventTypes.Name == "Overtime").Sum(x => x.Duration),
                     Holiday = 0,
-                }).ToList());
+                   IsCustomerApprovalPending = e.AdminStatus.StatusKey.ToString() == SchedulerStatusesEnum.PENDING_CUSTOMER_APPROVAL.ToString(),
+            }).ToList());
                 var retVal = pagedResult;
                 return PagedApiResult<SchedulerEventResponseDto>.Success(retVal);
 
@@ -519,19 +520,19 @@ namespace AddOptimization.Services.Services
                 };
 
                 await _schedulerEventHistoryRepository.InsertAsync(entity);
-                var userEmail = (await _appUserRepository.FirstOrDefaultAsync(x => x.Id == result.UserId)).Email;
+                var user = (await _appUserRepository.FirstOrDefaultAsync(x => x.Id == result.UserId));
 
                 if (customerDetails.IsApprovalRequired)
                 {
                     Task.Run(() =>
                     {
-                        SendRequestTimesheetApprovalEmailToCustomer(customerDetails.Email, result);
+                        SendRequestTimesheetApprovalEmailToCustomer(customerDetails.Email, result,customerDetails.Name,user.UserName);
                     });
                 }
 
                 Task.Run(() =>
                 {
-                    SendTimesheetApprovedEmailToEmployee(userEmail, result);
+                    SendTimesheetApprovedEmailToEmployee(user.Email, result);
                 });
                 return ApiResult<bool>.Success(true);
             }
@@ -661,15 +662,15 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private async Task<bool> SendRequestTimesheetApprovalEmailToCustomer(string email, SchedulerEvent schedulerEvent)
+        private async Task<bool> SendRequestTimesheetApprovalEmailToCustomer(string email, SchedulerEvent schedulerEvent,string customerName ,string employeeName)
         {
             try
             {
                 var subject = "Timesheet Approval Request";
                 var link = GetTimesheetLinkForCustomer(schedulerEvent.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.RequestTimesheetApproval);
-                emailTemplate = emailTemplate.Replace("[CustomerName]", schedulerEvent.ApplicationUser?.FullName)//TODO:
-                                             .Replace("[EmployeeName]", schedulerEvent.ApplicationUser?.FullName)
+                emailTemplate = emailTemplate.Replace("[CustomerName]", customerName)
+                                             .Replace("[EmployeeName]", employeeName)
                                              .Replace("[LinkToTimesheet]", link)
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
                                              .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
@@ -688,6 +689,12 @@ namespace AddOptimization.Services.Services
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
             var encryptedId = _protectionService.Encode(schedulerEventId.ToString());
             return $"{baseUrl}timesheet/approval/{encryptedId}";
+        }
+
+        public async Task<bool> SendTimesheetApprovalEmailToCustomer(Guid schedulerEventId)
+        {
+            var entity = (await _schedulersRepository.QueryAsync(x => x.Id == schedulerEventId, include: entities => entities.Include(e => e.ApplicationUser).Include(e =>e.Customer))).FirstOrDefault();
+            return await SendRequestTimesheetApprovalEmailToCustomer(entity.Customer.Email , entity , entity.Customer.Name ,entity.ApplicationUser.FullName);
         }
         #endregion
     }
