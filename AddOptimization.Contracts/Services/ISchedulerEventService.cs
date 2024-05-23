@@ -19,5 +19,6 @@ namespace AddOptimization.Contracts.Services
         Task<ApiResult<bool>> ApproveRequest(AccountAdminActionRequestDto model);
         Task<ApiResult<bool>> DeclineRequest(AccountAdminActionRequestDto model);
         Task<ApiResult<bool>> TimesheetAction(CustomerTimesheetActionDto model);
+        Task<bool> SendTimesheetApprovalEmailToCustomer(Guid schedulerEventId);
     }
 }

@@ -159,5 +159,19 @@ namespace AddOptimization.API.Controllers
                 return HandleException(ex);
             }
         }
+
+        [HttpPost("send-email-to-customer/{schedulerEventId}")]
+        public async Task<IActionResult> SendTimesheetApprovalEmailToCustomer(Guid schedulerEventId)
+        {
+            try
+            {
+                var retVal = await _schedulerEventService.SendTimesheetApprovalEmailToCustomer(schedulerEventId);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
     }
 }
