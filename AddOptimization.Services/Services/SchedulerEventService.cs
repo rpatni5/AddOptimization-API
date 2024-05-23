@@ -227,7 +227,12 @@ namespace AddOptimization.Services.Services
 
         public async Task<ApiResult<List<SchedulerEventResponseDto>>> GetSchedulerEventsForEmailReminder(Guid customerId, int userId)
         {
-            var entity = await _schedulersRepository.QueryAsync(x => x.Id == customerId && x.UserId == userId && !x.IsDeleted, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer));
+            var entity = await _schedulersRepository.QueryAsync(x => x.CustomerId == customerId && x.UserId == userId && !x.IsDeleted, include: entities => entities
+            .Include(e => e.Approvar)
+            .Include(e => e.UserStatus).Include(e => e.AdminStatus)
+            .Include(e => e.ApplicationUser).Include(e => e.CreatedByUser)
+            .Include(e => e.UpdatedByUser).Include(e => e.Customer)
+            .Include(e => e.EventDetails));
             if (entity == null || !entity.Any())
             {
                 return ApiResult<List<SchedulerEventResponseDto>>.Failure(ValidationCodes.SchedulerEventsDoesNotExists);
@@ -248,7 +253,8 @@ namespace AddOptimization.Services.Services
                             UserName = value != null ? value.ApplicationUser?.FullName : entity.FirstOrDefault().ApplicationUser.FullName,
                             StartDate = value != null ? value.StartDate : month.StartDate,
                             EndDate = value != null ? value.EndDate : month.EndDate,
-                            ApplicationUser = _mapper.Map<ApplicationUserDto>(value != null ? value.ApplicationUser : entity.FirstOrDefault().ApplicationUser)
+                            ApplicationUser = _mapper.Map<ApplicationUserDto>(value != null ? value.ApplicationUser : entity.FirstOrDefault().ApplicationUser),
+                            EventDetails = _mapper.Map<List<SchedulerEventDetailsDto>>(value != null ? value.EventDetails : null)
                         };
                         response.Add(schedulerEvent);
                     }
@@ -267,7 +273,8 @@ namespace AddOptimization.Services.Services
                             UserName = value != null ? value.ApplicationUser?.FullName : entity.FirstOrDefault().ApplicationUser.FullName,
                             StartDate = value != null ? value.StartDate : month.StartDate,
                             EndDate = value != null ? value.EndDate : month.EndDate,
-                            ApplicationUser = _mapper.Map<ApplicationUserDto>(value != null ? value.ApplicationUser : entity.FirstOrDefault().ApplicationUser)
+                            ApplicationUser = _mapper.Map<ApplicationUserDto>(value != null ? value.ApplicationUser : entity.FirstOrDefault().ApplicationUser),
+                            EventDetails = _mapper.Map<List<SchedulerEventDetailsDto>>(value != null ? value.EventDetails : null)
                         };
                         response.Add(schedulerEvent);
                     }
