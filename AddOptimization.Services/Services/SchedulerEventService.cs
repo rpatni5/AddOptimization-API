@@ -40,8 +40,9 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<SchedulerEventHistory> _schedulerEventHistoryRepository;
         private readonly IGenericRepository<ApplicationUser> _appUserRepository;
         private readonly ISchedulerEventTypeService _schedulerEventTypeService;
-        public SchedulerEventService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulerEventService> logger, IMapper mapper, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ISchedulersStatusService schedulersStatusService, IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository, IGenericRepository<Customer> customersRepository, IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository, ISchedulerEventTypeService schedulerEventTypeService,
-            IConfiguration configuration, IEmailService emailService, ITemplateService templateService, CustomDataProtectionService protectionService, IGenericRepository<ApplicationUser> appUserRepository)
+        private readonly IAbsenceRequestService _absenceRequestService;
+        public SchedulerEventService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulerEventService> logger, IMapper mapper, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ISchedulersStatusService schedulersStatusService, IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository, IGenericRepository<Customer> customersRepository, IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository, ISchedulerEventTypeService schedulerEventTypeService, IAbsenceRequestService absenceRequestService,
+        IConfiguration configuration, IEmailService emailService, ITemplateService templateService, CustomDataProtectionService protectionService, IGenericRepository<ApplicationUser> appUserRepository)
         {
             _schedulersRepository = schedulersRepository;
             _logger = logger;
@@ -59,6 +60,7 @@ namespace AddOptimization.Services.Services
             _schedulerEventHistoryRepository = schedulerEventHistoryRepository;
             _appUserRepository = appUserRepository;
             _schedulerEventTypeService = schedulerEventTypeService;
+            _absenceRequestService = absenceRequestService;
         }
 
 
@@ -75,11 +77,9 @@ namespace AddOptimization.Services.Services
                 var pagedResult = PageHelper<SchedulerEvent, SchedulerEventResponseDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new SchedulerEventResponseDto
                 {
                     Id = e.Id,
-
                     CustomerId = e.CustomerId,
                     ApprovarId = e.ApprovarId,
                     ApprovarName = e.Approvar.FullName,
-
                     CustomerName = e.Customer.Name,
                     UserId = e.UserId,
                     UserStatusId = e.UserStatusId,
@@ -91,9 +91,14 @@ namespace AddOptimization.Services.Services
                     UserStatusName = e.UserStatus.Name,
                     WorkDuration = e.EventDetails.Where(x => x.EventTypes.Name == "Timesheet").Sum(x => x.Duration),
                     Overtime = e.EventDetails.Where(x => x.EventTypes.Name == "Overtime").Sum(x => x.Duration),
-                    Holiday = 0,
-                   IsCustomerApprovalPending = e.AdminStatus.StatusKey.ToString() == SchedulerStatusesEnum.PENDING_CUSTOMER_APPROVAL.ToString(),
-            }).ToList());
+                    IsCustomerApprovalPending = e.AdminStatus.StatusKey.ToString() == SchedulerStatusesEnum.PENDING_CUSTOMER_APPROVAL.ToString(),
+                }).ToList());
+
+                pagedResult.Result.ForEach(e =>
+                {
+                    e.Holiday = GetHolidaysCount(e.StartDate, e.EndDate, e.UserId);
+                });
+
                 var retVal = pagedResult;
                 return PagedApiResult<SchedulerEventResponseDto>.Success(retVal);
 
@@ -105,6 +110,15 @@ namespace AddOptimization.Services.Services
             }
         }
 
+        private decimal GetHolidaysCount(DateTime startDate, DateTime endDate, int employeeId)
+        {
+            PageQueryFiterBase filter = new PageQueryFiterBase();
+            filter.AddFilter("startDate", OperatorType.equal.ToString(), startDate);
+            filter.AddFilter("endDate", OperatorType.equal.ToString(), endDate);
+            filter.AddFilter("employeeId", OperatorType.equal.ToString(), employeeId);
+            var result = (_absenceRequestService.Search(filter)).Result.Result;
+            return result.Sum(x => x.Duration);
+        }
         public async Task<ApiResult<bool>> Save(List<SchedulerEventDetailsDto> schedulerEventDetails)
         {
             var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
@@ -526,7 +540,7 @@ namespace AddOptimization.Services.Services
                 {
                     Task.Run(() =>
                     {
-                        SendRequestTimesheetApprovalEmailToCustomer(customerDetails.Email, result,customerDetails.Name,user.UserName);
+                        SendRequestTimesheetApprovalEmailToCustomer(customerDetails.Email, result, customerDetails.Name, user.UserName);
                     });
                 }
 
@@ -662,7 +676,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private async Task<bool> SendRequestTimesheetApprovalEmailToCustomer(string email, SchedulerEvent schedulerEvent,string customerName ,string employeeName)
+        private async Task<bool> SendRequestTimesheetApprovalEmailToCustomer(string email, SchedulerEvent schedulerEvent, string customerName, string employeeName)
         {
             try
             {
@@ -693,8 +707,8 @@ namespace AddOptimization.Services.Services
 
         public async Task<bool> SendTimesheetApprovalEmailToCustomer(Guid schedulerEventId)
         {
-            var entity = (await _schedulersRepository.QueryAsync(x => x.Id == schedulerEventId, include: entities => entities.Include(e => e.ApplicationUser).Include(e =>e.Customer))).FirstOrDefault();
-            return await SendRequestTimesheetApprovalEmailToCustomer(entity.Customer.Email , entity , entity.Customer.Name ,entity.ApplicationUser.FullName);
+            var entity = (await _schedulersRepository.QueryAsync(x => x.Id == schedulerEventId, include: entities => entities.Include(e => e.ApplicationUser).Include(e => e.Customer))).FirstOrDefault();
+            return await SendRequestTimesheetApprovalEmailToCustomer(entity.Customer.Email, entity, entity.Customer.Name, entity.ApplicationUser.FullName);
         }
         #endregion
     }
