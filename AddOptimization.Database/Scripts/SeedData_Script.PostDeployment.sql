@@ -266,6 +266,14 @@ BEGIN
        (NEWID(),'Timesheet management','timesheet_management','/admin/timesheets/timesheets-management')
 END
 
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey= 'view_timesheet')
+BEGIN 
+    INSERT INTO Screens(Id,Name,ScreenKey,Route)
+    VALUES
+       (NEWID(),'View timesheet','view_timesheet','/admin/timesheets/view-timesheet/{}')
+END
+
+
 /* Adding data in role permissions */
 
 GO
@@ -443,3 +451,12 @@ BEGIN
         ('B39271A8-EB3A-42DC-A079-1C76F4A75668','Absence Approval','absence_approval','/admin/timesheets/absence-approval')
 END
 --End entry for screens
+
+
+--adding entry for  roles 
+IF NOT EXISTS (SELECT 1 FROM Roles Where Name= 'External Employee')
+BEGIN 
+    INSERT INTO Roles(Id,IsDeleted,Name)
+    VALUES
+       (NEWID(),0,'External Employee')
+END
