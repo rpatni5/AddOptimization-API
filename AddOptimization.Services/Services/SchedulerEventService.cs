@@ -40,7 +40,7 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<SchedulerEventHistory> _schedulerEventHistoryRepository;
         private readonly IGenericRepository<ApplicationUser> _appUserRepository;
         private readonly ISchedulerEventTypeService _schedulerEventTypeService;
-        public SchedulerEventService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulerEventService> logger, IMapper mapper, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ISchedulersStatusService schedulersStatusService, IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository, IGenericRepository<Customer> customersRepository, IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository,  ISchedulerEventTypeService schedulerEventTypeService,
+        public SchedulerEventService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulerEventService> logger, IMapper mapper, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ISchedulersStatusService schedulersStatusService, IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository, IGenericRepository<Customer> customersRepository, IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository, ISchedulerEventTypeService schedulerEventTypeService,
             IConfiguration configuration, IEmailService emailService, ITemplateService templateService, CustomDataProtectionService protectionService, IGenericRepository<ApplicationUser> appUserRepository)
         {
             _schedulersRepository = schedulersRepository;
@@ -213,8 +213,8 @@ namespace AddOptimization.Services.Services
         public async Task<ApiResult<SchedulerEventResponseDto>> GetSchedulerEvent(Guid id)
         {
             var eventTypes = (await _schedulerEventTypeService.Search()).Result;
-            var timesheetEventId = eventTypes.FirstOrDefault(x => x.Name.Equals("timesheet" , StringComparison.InvariantCultureIgnoreCase )).Id ;
-            var overtimeId = eventTypes.FirstOrDefault(x => x.Name.Equals("overtime" , StringComparison.InvariantCultureIgnoreCase )).Id;
+            var timesheetEventId = eventTypes.FirstOrDefault(x => x.Name.Equals("timesheet", StringComparison.InvariantCultureIgnoreCase)).Id;
+            var overtimeId = eventTypes.FirstOrDefault(x => x.Name.Equals("overtime", StringComparison.InvariantCultureIgnoreCase)).Id;
             var eventStatus = (await _schedulersStatusService.Search()).Result;
             var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_CUSTOMER_APPROVAL.ToString()).Id;
             var entity = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer).Include(e => e.EventDetails));
@@ -562,7 +562,7 @@ namespace AddOptimization.Services.Services
                     Comment = model.Comment,
                 };
 
-                await _schedulerEventHistoryRepository.InsertAsync(entity);                
+                await _schedulerEventHistoryRepository.InsertAsync(entity);
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -599,10 +599,13 @@ namespace AddOptimization.Services.Services
 
                 await _schedulerEventHistoryRepository.InsertAsync(entity);
 
-                var accountAdminEmail = (await _appUserRepository.FirstOrDefaultAsync(x => x.Id == result.ApprovarId)).Email;
+                var approver = (await _appUserRepository.FirstOrDefaultAsync(x => x.Id == result.ApprovarId));
+                var user = (await _appUserRepository.FirstOrDefaultAsync(x => x.Id == result.UserId));
+                var customer = (await _customersRepository.FirstOrDefaultAsync(x => x.Id == result.CustomerId));
+
                 Task.Run(() =>
                 {
-                    SendTimesheetActionEmailToAccountAdmin(accountAdminEmail, eventDetails, model.IsApproved);
+                    SendTimesheetActionEmailToAccountAdmin(approver, customer, user, eventDetails, model.IsApproved, entity.Comment);
                 });
 
 
@@ -615,15 +618,26 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private void SendTimesheetActionEmailToAccountAdmin(string accountAdminEmail, SchedulerEvent eventDetails, bool isApprovedEmail)
+        private async Task<bool> SendTimesheetActionEmailToAccountAdmin(ApplicationUser approver, Customer customer, ApplicationUser user, SchedulerEvent schedulerEvent, bool isApprovedEmail, string comment)
         {
-            if (isApprovedEmail)
+            try
             {
-                //send approval email to account admin for particular client has approved along with reason if mentioned
+                var subject = isApprovedEmail ? "Timesheet Approved" : "Timesheet Declined";
+                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetActions);
+                emailTemplate = emailTemplate.Replace("[AccountAdmin]", approver.FullName)
+                                             .Replace("[EmployeeName]", user.FullName)
+                                             .Replace("[CustomerName]", customer.Name)
+                                             .Replace("[TimesheetAction]", isApprovedEmail ? "approved" : "declined")
+                                             .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
+                                             .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
+                                             .Replace("[NoOfDays]", DateTime.DaysInMonth(schedulerEvent.StartDate.Year, schedulerEvent.StartDate.Month).ToString())
+                                             .Replace("[Comment]", !string.IsNullOrEmpty(comment) ? comment : "No comment added.");
+                return await _emailService.SendEmail(approver.Email, subject, emailTemplate);
             }
-            else
+            catch (Exception ex)
             {
-                //send declined email to account admin for particular client has approved along with reason if mentioned
+                _logger.LogException(ex);
+                return false;
             }
         }
         #region Private Methods
