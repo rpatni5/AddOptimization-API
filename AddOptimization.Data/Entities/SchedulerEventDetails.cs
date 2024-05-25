@@ -20,5 +20,9 @@ namespace AddOptimization.Data.Entities
         [ForeignKey(nameof(EventTypeId))]
         public virtual SchedulerEventType EventTypes { get; set; }
 
+        public bool IsDeleted { get; set; }
+        public bool IsActive { get; set; }
+
+
     }
 }
