@@ -205,6 +205,20 @@ namespace AddOptimization.Services.Mappings
             });
             CreateMap<ProductRequestDto, Product>();
 
+            CreateMap<Employee, EmployeeDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.UserName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
+                d.Email = s.ApplicationUser != null  ? s.ApplicationUser.Email : string.Empty;
+                d.FirstName = s.ApplicationUser != null ? s.ApplicationUser.FirstName : string.Empty;
+                d.LastName = s.ApplicationUser != null ? s.ApplicationUser.LastName : string.Empty;
+                d.Password = s.ApplicationUser != null ? s.ApplicationUser.Password : string.Empty;
+                d.isActive = s.ApplicationUser!=null ? s.ApplicationUser.IsActive : false;
+
+            });
+            CreateMap<EmployeeDto, Employee>();
+
         }
     }
 }
