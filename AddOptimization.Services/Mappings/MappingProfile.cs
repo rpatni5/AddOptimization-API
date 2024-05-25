@@ -205,6 +205,13 @@ namespace AddOptimization.Services.Mappings
             });
             CreateMap<ProductRequestDto, Product>();
 
+            CreateMap<CompanyInformation, CompanyInformationDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+            });
+            CreateMap<CompanyInformationDto, CompanyInformation>();
+
         }
     }
 }
