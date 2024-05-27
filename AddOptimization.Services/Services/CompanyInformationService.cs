@@ -28,11 +28,19 @@ public class CompanyInformationService : ICompanyInformationService
     {
         try
         {
-            var entity = await _companyRepository.FirstOrDefaultAsync(
-            orderBy: (entities) => entities.OrderByDescending(c => c.CreatedAt));
+            var entity = await _companyRepository.FirstOrDefaultAsync();
             if (entity != null)
             {
-                _mapper.Map(model, entity);
+                entity.AccountName = model.AccountName;
+                entity.AccountNumber = model.AccountNumber;
+                entity.Email = model.Email;
+                entity.Website = model.Website;
+                entity.BankAccountName = model.BankAccountName;
+                entity.BankAccountNumber = model.BankAccountNumber;
+                entity.BankName = model.BankName;
+                entity.MobileNumber = model.MobileNumber;
+                entity.BillingAddress = model.BillingAddress;
+
                 await _companyRepository.UpdateAsync(entity);
             }
             else
@@ -55,8 +63,7 @@ public class CompanyInformationService : ICompanyInformationService
     {
         try
         {
-            var entity = await _companyRepository.FirstOrDefaultAsync(
-                orderBy: (entities) => entities.OrderByDescending(c => c.UpdatedAt));
+            var entity = await _companyRepository.FirstOrDefaultAsync();
 
             if (entity == null)
             {
