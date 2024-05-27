@@ -58,5 +58,19 @@ namespace AddOptimization.API.Controllers
                 return HandleException(ex);
             }
         }
+
+        [HttpGet("get-allocated-holiday/{employeeId}")]
+        public async Task<IActionResult> GetAllocatedHolidays(int employeeId)
+        {
+            try
+            {
+                var retVal = await _holidayAllocationService.GetAllocatedHolidays(employeeId);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
     }
 }

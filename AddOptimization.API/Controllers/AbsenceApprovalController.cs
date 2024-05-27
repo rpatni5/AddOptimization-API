@@ -1,6 +1,7 @@
 ﻿using AddOptimization.API.Common;
 using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
+using AddOptimization.Services.Services;
 using AddOptimization.Utilities.Models;
 using GraphQL;
 using Microsoft.AspNetCore.Mvc;
@@ -43,7 +44,21 @@ namespace AddOptimization.API.Controllers
             }
         }
 
-       
+        [HttpGet("get-absense-approval-count/{employeeId}")]
+        public async Task<IActionResult> GetAllAbsenseApproval(int employeeId)
+        {
+            try
+            {
+                var retVal = await _absenceApprovalService.GetAllAbsenseApproval(employeeId);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+
 
 
     }

@@ -207,6 +207,23 @@ namespace AddOptimization.Services.Services
             }
         }
 
+        public async Task<ApiResult<List<AbsenceRequestResponseDto>>> GetAllAbsenseApproval(int employeeId)
+        {
+            try
+            {
+                var associations = await _absenceApprovalRepository.QueryAsync(e => e.UserId == employeeId && !e.IsDeleted, include: entities => entities.Include(e => e.ApplicationUser));
+                var approvedAssociations = associations.Where(e => e.LeaveStatuses.Name.ToLower() == LeaveStatusesEnum.Approved.ToString().ToLower());
+               // var approvedCount = approvedAssociations.Count();
+                var mappedEntities = _mapper.Map<List<AbsenceRequestResponseDto>>(approvedAssociations);
+                return ApiResult<List<AbsenceRequestResponseDto>>.Success(mappedEntities);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
     }
 }
 

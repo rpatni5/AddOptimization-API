@@ -20,13 +20,15 @@ namespace AddOptimization.Services.Services
     {
         private readonly IGenericRepository<HolidayAllocation> _holidayAllocationRepository;
         private readonly ILogger<HolidayAllocationService> _logger;
-        private readonly IMapper _mapper;  
+        private readonly IMapper _mapper;
+        private readonly List<string> _currentUserRoles;
 
-        public HolidayAllocationService(IGenericRepository<HolidayAllocation> holidayAllocationRepository, ILogger<HolidayAllocationService> logger, IMapper mapper)
+        public HolidayAllocationService(IGenericRepository<HolidayAllocation> holidayAllocationRepository, ILogger<HolidayAllocationService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor)
         {
             _holidayAllocationRepository = holidayAllocationRepository;
             _logger = logger;
             _mapper = mapper;
+            _currentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
         }
 
 
@@ -98,6 +100,20 @@ namespace AddOptimization.Services.Services
             }
         }
 
-    }
+        public async Task<ApiResult<List<HolidayAllocationResponseDto>>> GetAllocatedHolidays(int employeeId)
+        {
+            try
+            {
+                var associations = await _holidayAllocationRepository.QueryAsync(e => e.UserId == employeeId && !e.IsDeleted, include: entities => entities.Include(e => e.ApplicationUser));
+                var mappedEntities = _mapper.Map<List<HolidayAllocationResponseDto>>(associations);
+                return ApiResult<List<HolidayAllocationResponseDto>>.Success(mappedEntities);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
 
+    }
 }
