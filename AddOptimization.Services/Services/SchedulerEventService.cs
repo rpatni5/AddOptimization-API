@@ -169,12 +169,13 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entity = await _schedulersRepository.FirstOrDefaultAsync(t => t.Id == id);
+                var entity = await _schedulersDetailsRepository.FirstOrDefaultAsync(t => t.Id == id);
                 entity.IsDeleted = true;
-                entity.IsActive = false;
+                entity.IsActive = true;
 
-                await _schedulersRepository.UpdateAsync(entity);
+                await _schedulersDetailsRepository.UpdateAsync(entity);
                 return ApiResult<bool>.Success(true);
+            
             }
             catch (Exception ex)
             {
@@ -319,7 +320,7 @@ namespace AddOptimization.Services.Services
                 }
 
                 var entity = await _schedulersDetailsRepository.QueryAsync(include: entities => entities
-                .Include(e => e.CreatedByUser).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.SchedulerEvent), predicate: o => o.SchedulerEventId == id, ignoreGlobalFilter: ignoreGlobalFilter);
+                .Include(e => e.CreatedByUser).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.SchedulerEvent), predicate: (o => o.SchedulerEventId == id && !o.IsDeleted), ignoreGlobalFilter: ignoreGlobalFilter);
 
                 if (entity == null)
                 {
