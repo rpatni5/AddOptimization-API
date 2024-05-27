@@ -28,8 +28,19 @@ public class CompanyInformationService : ICompanyInformationService
     {
         try
         {
-            var entity = _mapper.Map<CompanyInformation>(model);
-            await _companyRepository.InsertAsync(entity);
+            var entity = await _companyRepository.FirstOrDefaultAsync(
+            orderBy: (entities) => entities.OrderByDescending(c => c.CreatedAt));
+            if (entity != null)
+            {
+                _mapper.Map(model, entity);
+                await _companyRepository.UpdateAsync(entity);
+            }
+            else
+            {
+                entity = _mapper.Map<CompanyInformation>(model);
+                await _companyRepository.InsertAsync(entity);
+            }
+       
             var mappedEntity = _mapper.Map<CompanyInformationDto>(entity);
             return ApiResult<CompanyInformationDto>.Success(mappedEntity);
         }
@@ -40,17 +51,19 @@ public class CompanyInformationService : ICompanyInformationService
         }
     }
 
-    public async Task<ApiResult<CompanyInformationDto>> GetCompanyInformation(Guid id)
+    public async Task<ApiResult<CompanyInformationDto>> GetCompanyInformation()
     {
         try
         {
-            var entity = await _companyRepository.FirstOrDefaultAsync(t => t.Id == id, include: entities => entities.Include(e => e.CreatedByUser), orderBy: (entities) => entities.OrderByDescending(c => c.CreatedAt));
+            var entity = await _companyRepository.FirstOrDefaultAsync(
+                orderBy: (entities) => entities.OrderByDescending(c => c.UpdatedAt));
+
             if (entity == null)
             {
                 return ApiResult<CompanyInformationDto>.NotFound("CompanyInformation");
             }
-            var mappedEntity = _mapper.Map<CompanyInformationDto>(entity);
 
+            var mappedEntity = _mapper.Map<CompanyInformationDto>(entity);
             return ApiResult<CompanyInformationDto>.Success(mappedEntity);
         }
         catch (Exception ex)
@@ -60,21 +73,5 @@ public class CompanyInformationService : ICompanyInformationService
         }
     }
 
-    //public async Task<ApiResult<CompanyInformationDto>> Update(Guid id, CompanyInformationDto model)
-    //{
-    //    try
-    //    {
-    //        var entity = await _companyRepository.FirstOrDefaultAsync(o => o.Id == id);
-    //        _mapper.Map(model, entity);
-    //        await _companyRepository.UpdateAsync(entity);
-    //        var mappedEntity = _mapper.Map<CompanyInformationDto>(entity);
-    //        return ApiResult<CompanyInformationDto>.Success(mappedEntity);
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        _logger.LogException(ex);
-    //        throw;
-    //    }
-    //}
 
 }

@@ -30,12 +30,12 @@ public class CompanyInformationController : CustomApiControllerBase
         }
     }
 
-    [HttpGet("get-company-information/{id}")]
-    public async Task<IActionResult> GetCompanyInformation(Guid id)
+    [HttpGet("get-company-information")]
+    public async Task<IActionResult> GetCompanyInformation()
     {
         try
         {
-            var retVal = await _companyInformationService.GetCompanyInformation(id);
+            var retVal = await _companyInformationService.GetCompanyInformation();
             return HandleResponse(retVal);
         }
         catch (Exception ex)
@@ -43,18 +43,4 @@ public class CompanyInformationController : CustomApiControllerBase
             return HandleException(ex);
         }
     }
-
-    //[HttpPut("{id}")]
-    //public async Task<IActionResult> Update(Guid id, [FromBody] CompanyInformationDto model)
-    //{
-    //    try
-    //    {
-    //        var retVal = await _companyInformationService.Update(id, model);
-    //        return HandleResponse(retVal);
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        return HandleException(ex);
-    //    }
-    //}
 }
