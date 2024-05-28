@@ -20,13 +20,18 @@ namespace AddOptimization.Services.Services
     {
         private readonly IGenericRepository<HolidayAllocation> _holidayAllocationRepository;
         private readonly ILogger<HolidayAllocationService> _logger;
-        private readonly IMapper _mapper;  
+        private readonly IMapper _mapper;
+        private readonly List<string> _currentUserRoles;
+        private readonly IAbsenceApprovalService _absenceApprovalService;
+        
 
-        public HolidayAllocationService(IGenericRepository<HolidayAllocation> holidayAllocationRepository, ILogger<HolidayAllocationService> logger, IMapper mapper)
+        public HolidayAllocationService(IGenericRepository<HolidayAllocation> holidayAllocationRepository, ILogger<HolidayAllocationService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, IAbsenceApprovalService absenceApprovalService)
         {
             _holidayAllocationRepository = holidayAllocationRepository;
             _logger = logger;
             _mapper = mapper;
+            _currentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
+            _absenceApprovalService = absenceApprovalService;
         }
 
 
@@ -98,6 +103,45 @@ namespace AddOptimization.Services.Services
             }
         }
 
-    }
+        public async Task<ApiResult<HolidayAllocationResponseDto>> GetAllocatedHolidays(int employeeId)
+        {
+            try
+            {
+                var associations = await _holidayAllocationRepository.FirstOrDefaultAsync(e => e.UserId == employeeId && !e.IsDeleted, include: entities => entities.Include(e => e.ApplicationUser));
+                var mappedEntity = _mapper.Map<HolidayAllocationResponseDto>(associations);
+                return ApiResult<HolidayAllocationResponseDto>.Success(mappedEntity);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
 
+        public async Task<ApiResult<LeaveBalanceDto>> GetEmployeeLeaveBalance(int employeeId)
+        {
+            try
+            {
+              var totalHolidayAllocated = (await GetAllocatedHolidays(employeeId)).Result?.Holidays ?? 0 ;
+                var leaveTaken = (await _absenceApprovalService.GetAllAbsenseApproval(employeeId)).Result?.Count ?? 0;
+                var remainingLeaves = totalHolidayAllocated - leaveTaken;
+
+                var leaveBalanceDto = new LeaveBalanceDto
+                {
+                    EmployeeId = employeeId,
+                    TotalAllocatedHoliday = totalHolidayAllocated,
+                    LeaveTaken = leaveTaken,
+                    leavesLeft = remainingLeaves
+                };
+
+                return ApiResult<LeaveBalanceDto>.Success(leaveBalanceDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return ApiResult<LeaveBalanceDto>.Failure("An error occurred while fetching  balance.");
+            }
+        }
+
+    }
 }

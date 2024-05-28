@@ -17,6 +17,8 @@ namespace AddOptimization.Contracts.Services
         Task<ApiResult<HolidayAllocationResponseDto>> Create(HolidayAllocationRequestDto model);
 
         Task<ApiResult<bool>> Delete(Guid id);
+        Task<ApiResult<HolidayAllocationResponseDto>> GetAllocatedHolidays(int employeeId);
+        Task<ApiResult<LeaveBalanceDto>> GetEmployeeLeaveBalance(int employeeId);
 
     }
 }
