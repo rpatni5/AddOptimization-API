@@ -460,3 +460,60 @@ BEGIN
     VALUES
        (NEWID(),0,'External Employee')
 END
+
+-- Invoicing seed data starts
+
+/* Adding UNPAID status data in Payment Status */
+
+IF NOT EXISTS (SELECT 1 FROM PaymentStatuses Where StatusKey= 'UNPAID')
+BEGIN 
+    INSERT INTO PaymentStatuses(Id,Name,StatusKey)
+    VALUES
+        (NEWID(),'Unpaid','UNPAID')
+END
+
+/* Adding PARTIAL_PAID status data in Payment Status */
+
+IF NOT EXISTS (SELECT 1 FROM PaymentStatuses Where StatusKey= 'PARTIAL_PAID')
+BEGIN 
+    INSERT INTO PaymentStatuses(Id,Name,StatusKey)
+    VALUES
+        (NEWID(),'PartialPaid','PARTIAL_PAID')
+END
+
+/* Adding PAID status data in Payment Status */
+
+IF NOT EXISTS (SELECT 1 FROM PaymentStatuses Where StatusKey= 'PAID')
+BEGIN 
+    INSERT INTO PaymentStatuses(Id,Name,StatusKey)
+    VALUES
+        (NEWID(),'Paid','PAID')
+END
+
+/* Adding DRAFT status data in Invoice Status */
+
+IF NOT EXISTS (SELECT 1 FROM InvoiceStatuses Where StatusKey= 'DRAFT')
+BEGIN 
+    INSERT INTO InvoiceStatuses(Id,Name,StatusKey)
+    VALUES
+        (NEWID(),'Draft','DRAFT')
+END
+
+/* Adding SEND_TO_CUSTOMER status data in Invoice Status */
+
+IF NOT EXISTS (SELECT 1 FROM InvoiceStatuses Where StatusKey= 'SEND_TO_CUSTOMER')
+BEGIN 
+    INSERT INTO InvoiceStatuses(Id,Name,StatusKey)
+    VALUES
+        (NEWID(),'Send To Customer','SEND_TO_CUSTOMER')
+END
+
+/* Adding CLOSED status data in Invoice Status */
+
+IF NOT EXISTS (SELECT 1 FROM InvoiceStatuses Where StatusKey= 'CLOSED')
+BEGIN 
+    INSERT INTO InvoiceStatuses(Id,Name,StatusKey)
+    VALUES
+        (NEWID(),'Closed','CLOSED')
+END
+-- Invoicing seed data ends

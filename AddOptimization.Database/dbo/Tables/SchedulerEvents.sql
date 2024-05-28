@@ -1,6 +1,6 @@
 ﻿CREATE TABLE [dbo].[SchedulerEvents](
 	[Id] [uniqueidentifier] NOT NULL,
-	[ClientId] [uniqueidentifier] NOT NULL,
+	[CustomerId] [uniqueidentifier] NOT NULL,
 	[ApprovarId] [int] NOT NULL,
 	[StartDate] [datetime2](7) NOT NULL,
 	[EndDate] [datetime2](7) NOT NULL,
@@ -38,8 +38,8 @@ ALTER TABLE [dbo].[SchedulerEvents]  WITH CHECK ADD FOREIGN KEY([ApprovarId])
 REFERENCES [dbo].[ApplicationUsers] ([Id])
 GO
 
-ALTER TABLE [dbo].[SchedulerEvents]  WITH CHECK ADD FOREIGN KEY([ClientId])
-REFERENCES [dbo].[Clients] ([Id])
+ALTER TABLE [dbo].[SchedulerEvents]  WITH CHECK ADD FOREIGN KEY([CustomerId])
+REFERENCES [dbo].[Customers] ([Id])
 GO
 
 ALTER TABLE [dbo].[SchedulerEvents]  WITH CHECK ADD FOREIGN KEY([CreatedByUserId])
