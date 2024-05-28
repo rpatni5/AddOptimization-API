@@ -103,13 +103,13 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        public async Task<ApiResult<List<HolidayAllocationResponseDto>>> GetAllocatedHolidays(int employeeId)
+        public async Task<ApiResult<HolidayAllocationResponseDto>> GetAllocatedHolidays(int employeeId)
         {
             try
             {
-                var associations = await _holidayAllocationRepository.QueryAsync(e => e.UserId == employeeId && !e.IsDeleted, include: entities => entities.Include(e => e.ApplicationUser));
-                var mappedEntities = _mapper.Map<List<HolidayAllocationResponseDto>>(associations);
-                return ApiResult<List<HolidayAllocationResponseDto>>.Success(mappedEntities);
+                var associations = await _holidayAllocationRepository.FirstOrDefaultAsync(e => e.UserId == employeeId && !e.IsDeleted, include: entities => entities.Include(e => e.ApplicationUser));
+                var mappedEntity = _mapper.Map<HolidayAllocationResponseDto>(associations);
+                return ApiResult<HolidayAllocationResponseDto>.Success(mappedEntity);
             }
             catch (Exception ex)
             {
@@ -122,12 +122,8 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var totalHolidayAllocatedResult = (await GetAllocatedHolidays(employeeId)).Result;
-                var totalHolidayAllocated = totalHolidayAllocatedResult.Select(dto => dto.Holidays).Sum();
-
-                var leaveTakenResult = (await _absenceApprovalService.GetAllAbsenseApproval(employeeId)).Result;
-                var leaveTaken = leaveTakenResult.Count();
-
+                var totalHolidayAllocated = (await GetAllocatedHolidays(employeeId)).Result.Holidays;
+                var leaveTaken = (await _absenceApprovalService.GetAllAbsenseApproval(employeeId)).Result.Count;
                 var remainingLeaves = totalHolidayAllocated - leaveTaken;
 
                 var leaveBalanceDto = new LeaveBalanceDto

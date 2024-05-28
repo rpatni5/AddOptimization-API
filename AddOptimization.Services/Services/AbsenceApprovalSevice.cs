@@ -211,9 +211,8 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var associations = await _absenceApprovalRepository.QueryAsync(e => e.UserId == employeeId && !e.IsDeleted, include: entities => entities.Include(e => e.ApplicationUser));
+                var associations = await _absenceApprovalRepository.QueryAsync(e => e.UserId == employeeId && !e.IsDeleted, include: entities => entities.Include(e => e.ApplicationUser).Include(e => e.LeaveStatuses));
                 var approvedAssociations = associations.Where(e => e.LeaveStatuses.Name.ToLower() == LeaveStatusesEnum.Approved.ToString().ToLower());
-               // var approvedCount = approvedAssociations.Count();
                 var mappedEntities = _mapper.Map<List<AbsenceRequestResponseDto>>(approvedAssociations);
                 return ApiResult<List<AbsenceRequestResponseDto>>.Success(mappedEntities);
             }
