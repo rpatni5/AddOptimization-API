@@ -8,7 +8,7 @@ namespace AddOptimization.Contracts.Dto
 {
     public class LeaveBalanceDto 
     {
-        public int UserId { get; set; }
+        public int EmployeeId { get; set; }
         public int TotalAllocatedHoliday {  get; set; }
         public  int LeaveTaken  { get; set; }
         public int leavesLeft { get; set; }

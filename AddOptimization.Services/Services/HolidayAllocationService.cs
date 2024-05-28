@@ -132,7 +132,7 @@ namespace AddOptimization.Services.Services
 
                 var leaveBalanceDto = new LeaveBalanceDto
                 {
-                    UserId = employeeId,
+                    EmployeeId = employeeId,
                     TotalAllocatedHoliday = totalHolidayAllocated,
                     LeaveTaken = leaveTaken,
                     leavesLeft = remainingLeaves
