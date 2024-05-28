@@ -72,5 +72,22 @@ namespace AddOptimization.API.Controllers
                 return HandleException(ex);
             }
         }
+
+        [HttpGet("get-holiday-balanced/{employeeId}")]
+        public async Task<IActionResult> GetEmployeeLeaveBalance(int employeeId)
+        {
+            try
+            {
+                var retVal = await _holidayAllocationService.GetEmployeeLeaveBalance(employeeId);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+
+
     }
 }

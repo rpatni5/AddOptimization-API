@@ -22,13 +22,16 @@ namespace AddOptimization.Services.Services
         private readonly ILogger<HolidayAllocationService> _logger;
         private readonly IMapper _mapper;
         private readonly List<string> _currentUserRoles;
+        private readonly IAbsenceApprovalService _absenceApprovalService;
+        
 
-        public HolidayAllocationService(IGenericRepository<HolidayAllocation> holidayAllocationRepository, ILogger<HolidayAllocationService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor)
+        public HolidayAllocationService(IGenericRepository<HolidayAllocation> holidayAllocationRepository, ILogger<HolidayAllocationService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, IAbsenceApprovalService absenceApprovalService)
         {
             _holidayAllocationRepository = holidayAllocationRepository;
             _logger = logger;
             _mapper = mapper;
             _currentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
+            _absenceApprovalService = absenceApprovalService;
         }
 
 
@@ -112,6 +115,35 @@ namespace AddOptimization.Services.Services
             {
                 _logger.LogException(ex);
                 throw;
+            }
+        }
+
+        public async Task<ApiResult<LeaveBalanceDto>> GetEmployeeLeaveBalance(int employeeId)
+        {
+            try
+            {
+                var totalHolidayAllocatedResult = (await GetAllocatedHolidays(employeeId)).Result;
+                var totalHolidayAllocated = totalHolidayAllocatedResult.Select(dto => dto.Holidays).Sum();
+
+                var leaveTakenResult = (await _absenceApprovalService.GetAllAbsenseApproval(employeeId)).Result;
+                var leaveTaken = leaveTakenResult.Count();
+
+                var remainingLeaves = totalHolidayAllocated - leaveTaken;
+
+                var leaveBalanceDto = new LeaveBalanceDto
+                {
+                    UserId = employeeId,
+                    TotalAllocatedHoliday = totalHolidayAllocated,
+                    LeaveTaken = leaveTaken,
+                    leavesLeft = remainingLeaves
+                };
+
+                return ApiResult<LeaveBalanceDto>.Success(leaveBalanceDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return ApiResult<LeaveBalanceDto>.Failure("An error occurred while fetching  balance.");
             }
         }
 
