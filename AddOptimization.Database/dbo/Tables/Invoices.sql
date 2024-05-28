@@ -9,33 +9,47 @@
 	[CreatedByUserId] [int] NULL,
 	[UpdatedAt] [datetime2](7) NULL,
 	[UpdatedByUserId] [int] NULL,
-	[CustomerId] [uniqueidentifier] NOT NULL,
-PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
-) ON [PRIMARY]
+	[CustomerId] [uniqueidentifier] NOT NULL,    
+	CONSTRAINT [PK_Invoices] PRIMARY KEY CLUSTERED ([Id] ASC),
+    CONSTRAINT [FK_Invoices_ApplicationUsers_CreatedByUserId] FOREIGN KEY ([CreatedByUserId]) REFERENCES [dbo].[ApplicationUsers] ([Id]),
+    CONSTRAINT [FK_Invoices_ApplicationUsers_UpdatedByUserId] FOREIGN KEY ([UpdatedByUserId]) REFERENCES [dbo].[ApplicationUsers] ([Id]),
+    CONSTRAINT [FK_Invoices_Customers_CustomerId] FOREIGN KEY ([CustomerId]) REFERENCES [dbo].[Customers] ([Id]) ON DELETE CASCADE
+	);
+
+	
+
+GO
+CREATE NONCLUSTERED INDEX [IX_Invoices_UpdatedByUserId]
+    ON [dbo].[Invoices]([UpdatedByUserId] ASC);
+
+
+GO
+CREATE NONCLUSTERED INDEX [IX_Invoices_CustomerId]
+    ON [dbo].[Invoices]([CustomerId] ASC);
+
+
+GO
+CREATE NONCLUSTERED INDEX [IX_Invoices_CreatedByUserId]
+    ON [dbo].[Invoices]([CreatedByUserId] ASC);
+
 GO 
 ALTER TABLE [dbo].[Invoices] ADD  DEFAULT ((0)) FOR [IsDeleted]
 GO 
 
-ALTER TABLE [dbo].[Invoices]  WITH CHECK ADD FOREIGN KEY([PaymentStatusId])
+ALTER TABLE [dbo].[Invoices]  WITH CHECK ADD  CONSTRAINT [FK_Invoices_PaymentStatuses_PaymentStatusId] FOREIGN KEY([PaymentStatusId])
 REFERENCES [dbo].[PaymentStatuses] ([Id])
+ON DELETE CASCADE
 GO
 
-ALTER TABLE [dbo].[Invoices]  WITH CHECK ADD FOREIGN KEY([InvoiceStatusId])
+ALTER TABLE [dbo].[Invoices] CHECK CONSTRAINT [FK_Invoices_PaymentStatuses_PaymentStatusId]
+GO
+
+ALTER TABLE [dbo].[Invoices]  WITH CHECK ADD  CONSTRAINT [FK_Invoices_InvoiceStatuses_InvoiceStatusId] FOREIGN KEY([InvoiceStatusId])
 REFERENCES [dbo].[InvoiceStatuses] ([Id])
+ON DELETE CASCADE
 GO
 
-ALTER TABLE [dbo].[Invoices]  WITH CHECK ADD FOREIGN KEY([CustomerId])
-REFERENCES [dbo].[Customers] ([Id])
+ALTER TABLE [dbo].[Invoices] CHECK CONSTRAINT [FK_Invoices_InvoiceStatuses_InvoiceStatusId]
 GO
 
-ALTER TABLE [dbo].[Invoices]  WITH CHECK ADD FOREIGN KEY([CreatedByUserId])
-REFERENCES [dbo].[ApplicationUsers] ([Id])
-GO
-
-ALTER TABLE [dbo].[Invoices]  WITH CHECK ADD FOREIGN KEY([UpdatedByUserId])
-REFERENCES [dbo].[ApplicationUsers] ([Id])
-GO
 
