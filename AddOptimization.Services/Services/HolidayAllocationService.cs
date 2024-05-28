@@ -122,7 +122,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-              var totalHolidayAllocated = (await GetAllocatedHolidays(employeeId)).Result?.Holidays ?? 0; ;
+              var totalHolidayAllocated = (await GetAllocatedHolidays(employeeId)).Result?.Holidays ?? 0 ;
                 var leaveTaken = (await _absenceApprovalService.GetAllAbsenseApproval(employeeId)).Result?.Count ?? 0;
                 var remainingLeaves = totalHolidayAllocated - leaveTaken;
 
