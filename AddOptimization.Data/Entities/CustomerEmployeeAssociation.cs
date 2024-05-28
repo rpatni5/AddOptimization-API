@@ -12,7 +12,7 @@ namespace AddOptimization.Data.Entities
         public int ApproverId { get; set; }
         public decimal DailyWeightage { get; set; }
         public decimal Overtime { get; set; }
-        public decimal PublicHolidays { get; set; }
+        public decimal PublicHoliday { get; set; }
         public decimal Saturday { get; set; }
         public decimal Sunday { get; set; }
 
