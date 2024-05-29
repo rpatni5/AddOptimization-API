@@ -1,8 +1,13 @@
-﻿CREATE TABLE [dbo].[ClientEmployeeAssociations](
+﻿CREATE TABLE [dbo].[CustomerEmployeeAssociations](
 	[Id] [uniqueidentifier] NOT NULL,
-	[ClientId] [uniqueidentifier] NOT NULL,
+	[CustomerId] [uniqueidentifier] NOT NULL,
 	[EmployeeId] [int] NOT NULL,
 	[ApproverId] [int] NOT NULL,
+	[DailyWeightage] [decimal](10, 2) NOT NULL,
+	[Overtime] [decimal](10, 2) NOT NULL,
+	[PublicHoliday] [decimal](10, 2) NOT NULL,
+	[Saturday] [decimal](10, 2) NOT NULL,
+	[Sunday] [decimal](10, 2) NOT NULL,
 	[IsDeleted] [bit] NOT NULL,
 	[IsActive] [bit] NOT NULL,
 	[CreatedAt] [datetime2](7) NULL,
@@ -16,28 +21,28 @@ PRIMARY KEY CLUSTERED
 ) ON [PRIMARY]
 GO 
 
-ALTER TABLE [dbo].[ClientEmployeeAssociations] ADD  DEFAULT ((0)) FOR [IsDeleted]
+ALTER TABLE [dbo].[CustomerEmployeeAssociations] ADD  DEFAULT ((0)) FOR [IsDeleted]
 GO
 
-ALTER TABLE [dbo].[ClientEmployeeAssociations] ADD  DEFAULT ((1)) FOR [IsActive]
+ALTER TABLE [dbo].[CustomerEmployeeAssociations] ADD  DEFAULT ((1)) FOR [IsActive]
 GO 
 
-ALTER TABLE [dbo].[ClientEmployeeAssociations]  WITH CHECK ADD FOREIGN KEY([ApproverId])
+ALTER TABLE [dbo].[CustomerEmployeeAssociations]  WITH CHECK ADD FOREIGN KEY([ApproverId])
 REFERENCES [dbo].[ApplicationUsers] ([Id])
 GO
 
-ALTER TABLE [dbo].[ClientEmployeeAssociations]  WITH CHECK ADD FOREIGN KEY([ClientId])
-REFERENCES [dbo].[Clients] ([Id])
+ALTER TABLE [dbo].[CustomerEmployeeAssociations]  WITH CHECK ADD FOREIGN KEY([CustomerId])
+REFERENCES [dbo].[Customers] ([Id])
 GO
 
-ALTER TABLE [dbo].[ClientEmployeeAssociations]  WITH CHECK ADD FOREIGN KEY([CreatedByUserId])
+ALTER TABLE [dbo].[CustomerEmployeeAssociations]  WITH CHECK ADD FOREIGN KEY([CreatedByUserId])
 REFERENCES [dbo].[ApplicationUsers] ([Id])
 GO
 
-ALTER TABLE [dbo].[ClientEmployeeAssociations]  WITH CHECK ADD FOREIGN KEY([UpdatedByUserId])
+ALTER TABLE [dbo].[CustomerEmployeeAssociations]  WITH CHECK ADD FOREIGN KEY([UpdatedByUserId])
 REFERENCES [dbo].[ApplicationUsers] ([Id])
 GO
 
-ALTER TABLE [dbo].[ClientEmployeeAssociations]  WITH CHECK ADD FOREIGN KEY([EmployeeId])
+ALTER TABLE [dbo].[CustomerEmployeeAssociations]  WITH CHECK ADD FOREIGN KEY([EmployeeId])
 REFERENCES [dbo].[ApplicationUsers] ([Id])
 GO 
