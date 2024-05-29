@@ -94,6 +94,9 @@
     <Build Include="dbo\Tables\PaymentStatuses.sql" />
     <Build Include="dbo\Tables\InvoiceStatuses.sql" />
     <Build Include="dbo\Tables\Invoices.sql" />
+    <Build Include="dbo\Tables\Quotes.sql" />
+    <Build Include="dbo\Tables\QuoteStatuses.sql" />
+    <Build Include="dbo\Tables\QuoteSummaries.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Scripts\SeedData_Script.PostDeployment.sql" />
