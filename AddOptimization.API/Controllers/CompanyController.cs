@@ -5,23 +5,23 @@ using AddOptimization.Contracts.Services;
 using AddOptimization.Contracts.Constants;
 using AddOptimization.Contracts.Dto;
 
-namespace UsersManagment.API.Controllers;
+namespace AddOptimization.API.Controllers;
 [Authorize]
-public class CompanyInformationController : CustomApiControllerBase
+public class CompanyController : CustomApiControllerBase
 {
 
-    private readonly ICompanyInformationService _companyInformationService;
-    public CompanyInformationController(ILogger<CompanyInformationController> logger, ICompanyInformationService companyService) : base(logger)
+    private readonly ICompanyService _companyService;
+    public CompanyController(ILogger<CompanyController> logger, ICompanyService companyService) : base(logger)
     {
-        _companyInformationService = companyService;
+        _companyService = companyService;
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(CompanyInformationDto model)
+    public async Task<IActionResult> Create(CompanyDto model)
     {
         try
         {
-            var retVal = await _companyInformationService.Create(model);
+            var retVal = await _companyService.Create(model);
             return HandleResponse(retVal);
         }
         catch (Exception ex)
@@ -35,7 +35,7 @@ public class CompanyInformationController : CustomApiControllerBase
     {
         try
         {
-            var retVal = await _companyInformationService.GetCompanyInformation();
+            var retVal = await _companyService.GetCompanyInformation();
             return HandleResponse(retVal);
         }
         catch (Exception ex)

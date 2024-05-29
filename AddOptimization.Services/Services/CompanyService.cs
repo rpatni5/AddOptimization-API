@@ -11,20 +11,20 @@ using AutoMapper;
 using NPOI.SS.Formula.Functions;
 
 namespace AddOptimization.Services.Services;
-public class CompanyInformationService : ICompanyInformationService
+public class CompanyService : ICompanyService
 {
-    private readonly IGenericRepository<CompanyInformation> _companyRepository;
-    private readonly ILogger<CompanyInformationService> _logger;
+    private readonly IGenericRepository<Company> _companyRepository;
+    private readonly ILogger<CompanyService> _logger;
     private readonly IMapper _mapper;
 
-    public CompanyInformationService(IGenericRepository<CompanyInformation> companyRepository, ILogger<CompanyInformationService> logger, IMapper mapper)
+    public CompanyService(IGenericRepository<Company> companyRepository, ILogger<CompanyService> logger, IMapper mapper)
     {
         _companyRepository = companyRepository;
         _logger = logger;
         _mapper = mapper;
     }
 
-    public async Task<ApiResult<CompanyInformationDto>> Create(CompanyInformationDto model)
+    public async Task<ApiResult<CompanyDto>> Create(CompanyDto model)
     {
         try
         {
@@ -45,12 +45,12 @@ public class CompanyInformationService : ICompanyInformationService
             }
             else
             {
-                entity = _mapper.Map<CompanyInformation>(model);
+                entity = _mapper.Map<Company>(model);
                 await _companyRepository.InsertAsync(entity);
             }
        
-            var mappedEntity = _mapper.Map<CompanyInformationDto>(entity);
-            return ApiResult<CompanyInformationDto>.Success(mappedEntity);
+            var mappedEntity = _mapper.Map<CompanyDto>(entity);
+            return ApiResult<CompanyDto>.Success(mappedEntity);
         }
         catch (Exception ex)
         {
@@ -59,7 +59,7 @@ public class CompanyInformationService : ICompanyInformationService
         }
     }
 
-    public async Task<ApiResult<CompanyInformationDto>> GetCompanyInformation()
+    public async Task<ApiResult<CompanyDto>> GetCompanyInformation()
     {
         try
         {
@@ -67,11 +67,11 @@ public class CompanyInformationService : ICompanyInformationService
 
             if (entity == null)
             {
-                return ApiResult<CompanyInformationDto>.NotFound("CompanyInformation");
+                return ApiResult<CompanyDto>.NotFound("CompanyInformation");
             }
 
-            var mappedEntity = _mapper.Map<CompanyInformationDto>(entity);
-            return ApiResult<CompanyInformationDto>.Success(mappedEntity);
+            var mappedEntity = _mapper.Map<CompanyDto>(entity);
+            return ApiResult<CompanyDto>.Success(mappedEntity);
         }
         catch (Exception ex)
         {

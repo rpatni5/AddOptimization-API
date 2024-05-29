@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AddOptimization.Data.Entities;
 
-public partial class CompanyInformation : BaseEntityNew<Guid>
+public class Company : BaseEntityNew<Guid>
 {
 
     [MaxLength(50)]
