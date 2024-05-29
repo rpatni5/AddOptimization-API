@@ -2,7 +2,7 @@
 
 namespace AddOptimization.Contracts.Dto
 {
-    public class CompanyInformationDto : BaseDto<Guid>
+    public class CompanyDto : BaseDto<Guid>
     {
         public string Email { get; set; }
         public string MobileNumber { get; set; }
