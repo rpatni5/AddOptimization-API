@@ -89,6 +89,8 @@
     <Build Include="dbo\Tables\SchedulerEventHistory.sql" />
     <Build Include="dbo\Tables\ClientEmployeeAssociations.sql" />
     <Build Include="dbo\Tables\HolidayAllocation.sql" />
+    <Build Include="dbo\Tables\Companies.sql" />
+    <Build Include="dbo\Tables\Products.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Scripts\SeedData_Script.PostDeployment.sql" />
