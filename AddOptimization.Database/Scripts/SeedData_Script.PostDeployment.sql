@@ -521,7 +521,7 @@ END
 
 /* Adding Draft Quote Status data in Quote Status */
 
-IF NOT EXISTS (SELECT 1 FROM QuoteStatuses Where Name= 'Draft')
+IF NOT EXISTS (SELECT 1 FROM QuoteStatuses Where StatusKey= 'DRAFT')
 BEGIN 
     INSERT INTO QuoteStatuses(Id,Name,StatusKey)
     VALUES
@@ -530,7 +530,7 @@ END
 
 /* Adding Cancel Quote Status data in Quote Status */
 
-IF NOT EXISTS (SELECT 1 FROM QuoteStatuses Where Name= 'Cancel')
+IF NOT EXISTS (SELECT 1 FROM QuoteStatuses Where StatusKey= 'CANCEL')
 BEGIN 
     INSERT INTO QuoteStatuses(Id,Name,StatusKey)
     VALUES
@@ -539,7 +539,7 @@ END
 
 /* Adding Finalized Quote Status data in Quote Status */
 
-IF NOT EXISTS (SELECT 1 FROM QuoteStatuses Where Name= 'Finalized')
+IF NOT EXISTS (SELECT 1 FROM QuoteStatuses Where StatusKey= 'FINALIZED')
 BEGIN 
     INSERT INTO QuoteStatuses(Id,Name,StatusKey)
     VALUES
@@ -548,7 +548,7 @@ END
 
 /* Adding Send To Customer Quote Status data in Quote Status */
 
-IF NOT EXISTS (SELECT 1 FROM QuoteStatuses Where Name= 'Send To Customer')
+IF NOT EXISTS (SELECT 1 FROM QuoteStatuses Where StatusKey= 'SEND_TO_CUSTOMER')
 BEGIN 
     INSERT INTO QuoteStatuses(Id,Name,StatusKey)
     VALUES

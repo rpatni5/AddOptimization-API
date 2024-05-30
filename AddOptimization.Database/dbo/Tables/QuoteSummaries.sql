@@ -1,12 +1,13 @@
 ﻿
+
 CREATE TABLE [dbo].[QuoteSummaries](
 	[Id] [uniqueidentifier] NOT NULL,
 	[Name] [nvarchar](200) NULL,
-	[Quantity] [decimal](5, 2) NULL,
-	[Vat] [decimal](5, 2) NULL,
-	[UnitPrice] [decimal](5, 2) NULL,
-	[TotalPriceExcVat] [decimal](5, 2) NULL,
-	[TotalPriceIncVat] [decimal](5, 2) NULL,
+	[Quantity] [int] NULL,
+	[Vat] [decimal](10, 2) NULL,
+	[UnitPrice] [decimal](10, 2) NULL,
+	[TotalPriceExcVat] [decimal](10, 2) NULL,
+	[TotalPriceIncVat] [decimal](10, 2) NULL,
 	[QuoteId] [uniqueidentifier] NOT NULL,
 PRIMARY KEY CLUSTERED 
 (
@@ -21,3 +22,5 @@ GO
 
 ALTER TABLE [dbo].[QuoteSummaries] CHECK CONSTRAINT [FK_QuoteSummaries_Quotes]
 GO
+
+

@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AddOptimization.Services", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AddOptimization.Utilities", "AddOptimization.Utilities\AddOptimization.Utilities.csproj", "{43534239-ABE0-45AB-B0A1-753EE78E152A}"
 EndProject
+Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "AddOptimization.Database", "AddOptimization.Database\AddOptimization.Database.sqlproj", "{F862821C-658C-40B0-80B3-F1E69FA3E137}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
