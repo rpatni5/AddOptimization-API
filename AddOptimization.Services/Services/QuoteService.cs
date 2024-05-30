@@ -26,25 +26,28 @@ namespace AddOptimization.Services.Services
     public class QuoteService : IQuoteService
     {
         private readonly IGenericRepository<Quote> _quoteRepository;
-        private readonly IGenericRepository<QuoteSummary> _quoteSumamryRepository;
+        private readonly IGenericRepository<QuoteSummary> _quoteSummaryRepository;
         private readonly ILogger<QuoteService> _logger;
         private readonly IMapper _mapper;
         private readonly IQuoteStatusService _quoteStatusService;
         private readonly IQuoteSummaryService _quoteSummaryService;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public QuoteService(IGenericRepository<Quote> quoteRepository, ILogger<QuoteService> logger, IMapper mapper, IQuoteStatusService quoteStatusService, IGenericRepository<QuoteSummary> quoteSumamryRepository)
+        public QuoteService(IGenericRepository<Quote> quoteRepository, ILogger<QuoteService> logger, IMapper mapper, IQuoteStatusService quoteStatusService, IGenericRepository<QuoteSummary> quoteSumamryRepository, IUnitOfWork unitOfWork)
         {
             _quoteRepository = quoteRepository;
             _logger = logger;
             _mapper = mapper;
             _quoteStatusService = quoteStatusService;
-            _quoteSumamryRepository = quoteSumamryRepository;
+            _quoteSummaryRepository = quoteSumamryRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<ApiResult<QuoteResponseDto>> Create(QuoteRequestDto model)
         {
             try
             {
+                await _unitOfWork.BeginTransactionAsync();
                 var eventStatus = (await _quoteStatusService.Search()).Result;
                 var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == QuoteStatusesEnum.DRAFT.ToString()).Id;
 
@@ -72,15 +75,16 @@ namespace AddOptimization.Services.Services
                         TotalPriceIncVat = summary.TotalPriceIncVat
                     };
 
-                    await _quoteSumamryRepository.InsertAsync(quoteSummary);
+                    await _quoteSummaryRepository.InsertAsync(quoteSummary);
                     entity.QuoteSummaries.Add(quoteSummary);
                 }
-
+                await _unitOfWork.CommitTransactionAsync();
                 var mappedEntity = _mapper.Map<QuoteResponseDto>(entity);
                 return ApiResult<QuoteResponseDto>.Success(mappedEntity);
             }
             catch (Exception ex)
             {
+                await _unitOfWork.RollbackTransactionAsync();
                 _logger.LogException(ex);
                 throw;
             }
