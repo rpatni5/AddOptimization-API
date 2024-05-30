@@ -4,9 +4,10 @@ CREATE TABLE [dbo].[QuoteSummaries](
 	[Name] [nvarchar](200) NULL,
 	[Quantity] [int] NULL,
 	[Vat] [int] NULL,
-	[UnitPrice] [int] NULL,
+	[UnitPrice] [decimal](5, 2) NULL,
 	[TotalPriceExcVat] [int] NULL,
 	[TotalPriceIncVat] [int] NULL,
+	[QuoteId] [uniqueidentifier] NOT NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -14,3 +15,9 @@ PRIMARY KEY CLUSTERED
 ) ON [PRIMARY]
 GO
 
+ALTER TABLE [dbo].[QuoteSummaries]  WITH CHECK ADD  CONSTRAINT [FK_QuoteSummaries_Quotes] FOREIGN KEY([QuoteId])
+REFERENCES [dbo].[Quotes] ([Id])
+GO
+
+ALTER TABLE [dbo].[QuoteSummaries] CHECK CONSTRAINT [FK_QuoteSummaries_Quotes]
+GO
