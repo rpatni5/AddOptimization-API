@@ -2,11 +2,11 @@
 CREATE TABLE [dbo].[QuoteSummaries](
 	[Id] [uniqueidentifier] NOT NULL,
 	[Name] [nvarchar](200) NULL,
-	[Quantity] [int] NULL,
-	[Vat] [int] NULL,
+	[Quantity] [decimal](5, 2) NULL,
+	[Vat] [decimal](5, 2) NULL,
 	[UnitPrice] [decimal](5, 2) NULL,
-	[TotalPriceExcVat] [int] NULL,
-	[TotalPriceIncVat] [int] NULL,
+	[TotalPriceExcVat] [decimal](5, 2) NULL,
+	[TotalPriceIncVat] [decimal](5, 2) NULL,
 	[QuoteId] [uniqueidentifier] NOT NULL,
 PRIMARY KEY CLUSTERED 
 (
