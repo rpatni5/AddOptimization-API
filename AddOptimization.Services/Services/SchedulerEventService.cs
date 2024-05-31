@@ -1,4 +1,4 @@
-﻿using AddOptimization.Contracts.Constants;
+using AddOptimization.Contracts.Constants;
 using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Data.Contracts;
@@ -547,7 +547,7 @@ namespace AddOptimization.Services.Services
 
                 Task.Run(() =>
                 {
-                    SendTimesheetApprovedEmailToEmployee(user.Email, result);
+                    SendTimesheetApprovedEmailToEmployee(user.Email, result, user.UserName, model.ApprovarName);
                 });
                 return ApiResult<bool>.Success(true);
             }
@@ -657,17 +657,17 @@ namespace AddOptimization.Services.Services
             }
         }
         #region Private Methods
-        private async Task<bool> SendTimesheetApprovedEmailToEmployee(string email, SchedulerEvent schedulerEvent)
+        private async Task<bool> SendTimesheetApprovedEmailToEmployee(string email, SchedulerEvent schedulerEvent, string userName, string approverName)
         {
             try
             {
                 var subject = "Timesheet Approved";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetApproved);
-                emailTemplate = emailTemplate.Replace("[EmployeeName]", schedulerEvent.ApplicationUser?.FullName)
+                emailTemplate = emailTemplate.Replace("[EmployeeName]", userName)
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
                                              .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
                                              .Replace("[NoOfDays]", DateTime.DaysInMonth(schedulerEvent.StartDate.Year, schedulerEvent.StartDate.Month).ToString())
-                                             .Replace("[Approver]", schedulerEvent.Approvar?.FullName);
+                                             .Replace("[Approver]", approverName);
                 return await _emailService.SendEmail(email, subject, emailTemplate);
             }
             catch (Exception ex)

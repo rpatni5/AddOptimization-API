@@ -6,7 +6,6 @@ CREATE TABLE [dbo].[Quotes](
 	[BillingAddress] [nvarchar](300) NOT NULL,
 	[ExpiryDate] [datetime2](7) NOT NULL,
 	[QuoteDate] [datetime2](7) NOT NULL,
-	[QuoteSummaryId] [uniqueidentifier] NOT NULL,
 	[QuoteStatusId] [uniqueidentifier] NOT NULL,
 	[IsDeleted] [bit] NOT NULL,
 	[IsActive] [bit] NOT NULL,
@@ -43,12 +42,7 @@ ALTER TABLE [dbo].[Quotes]  WITH CHECK ADD FOREIGN KEY([QuoteStatusId])
 REFERENCES [dbo].[QuoteStatuses] ([Id])
 GO
 
-ALTER TABLE [dbo].[Quotes]  WITH CHECK ADD FOREIGN KEY([QuoteSummaryId])
-REFERENCES [dbo].[QuoteSummaries] ([Id])
-GO
-
 ALTER TABLE [dbo].[Quotes]  WITH CHECK ADD FOREIGN KEY([UpdatedByUserId])
 REFERENCES [dbo].[ApplicationUsers] ([Id])
 GO
-
 

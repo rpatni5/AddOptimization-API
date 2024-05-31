@@ -228,6 +228,26 @@ namespace AddOptimization.Services.Mappings
             });
             CreateMap<CompanyDto, Company>();
 
+            CreateMap<Quote, QuoteResponseDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.CreatedAt = s.CreatedAt?.Date;
+                d.UpdatedAt = s.UpdatedAt?.Date;
+            });
+            CreateMap<QuoteRequestDto, Quote>();
+
+            CreateMap<QuoteStatuses, QuoteStatusDto>().AfterMap((s, d) =>
+            {
+
+            });
+            CreateMap<QuoteStatusDto, QuoteStatuses>();
+
+            CreateMap<QuoteSummary, QuoteSummaryDto>().AfterMap((s, d) =>
+            {
+
+            });
+            CreateMap<QuoteSummaryDto, QuoteSummary>();
         }
     }
 }

@@ -517,3 +517,40 @@ BEGIN
         (NEWID(),'Closed','CLOSED')
 END
 -- Invoicing seed data ends
+
+
+/* Adding Draft Quote Status data in Quote Status */
+
+IF NOT EXISTS (SELECT 1 FROM QuoteStatuses Where StatusKey= 'DRAFT')
+BEGIN 
+    INSERT INTO QuoteStatuses(Id,Name,StatusKey)
+    VALUES
+        ('6BC0B3F8-74FA-4B59-8A95-4DDB851C2A15','Draft','DRAFT')
+END
+
+/* Adding Cancel Quote Status data in Quote Status */
+
+IF NOT EXISTS (SELECT 1 FROM QuoteStatuses Where StatusKey= 'CANCEL')
+BEGIN 
+    INSERT INTO QuoteStatuses(Id,Name,StatusKey)
+    VALUES
+        ('B4D1B75D-96B4-4B2B-923B-49564866E3E1','Cancel','CANCEL')
+END
+
+/* Adding Finalized Quote Status data in Quote Status */
+
+IF NOT EXISTS (SELECT 1 FROM QuoteStatuses Where StatusKey= 'FINALIZED')
+BEGIN 
+    INSERT INTO QuoteStatuses(Id,Name,StatusKey)
+    VALUES
+        ('7F7EBBE2-C4E9-49D5-9AB5-689EAF6652FB','Finalized','FINALIZED')
+END
+
+/* Adding Send To Customer Quote Status data in Quote Status */
+
+IF NOT EXISTS (SELECT 1 FROM QuoteStatuses Where StatusKey= 'SEND_TO_CUSTOMER')
+BEGIN 
+    INSERT INTO QuoteStatuses(Id,Name,StatusKey)
+    VALUES
+        ('44B14DD6-62DB-4001-A11B-8355F683D758','Send To Customer','SEND_TO_CUSTOMER')
+END

@@ -63,6 +63,10 @@ public partial class AddOptimizationContext : DbContext
     public virtual DbSet<Invoice> Invoices { get; set; }
     public virtual DbSet<InvoiceStatus> InvoiceStatuses { get; set; }
     public virtual DbSet<InvoiceDetail> InvoiceDetails { get; set; }
+    public virtual DbSet<Quote> Quotes { get; set; }
+    public virtual DbSet<QuoteStatuses> QuoteStatuses { get; set; }
+    public virtual DbSet<QuoteSummary> QuoteSummaries { get; set; }
+
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
