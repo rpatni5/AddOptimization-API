@@ -2,11 +2,9 @@
 
 namespace AddOptimization.Data.Entities
 {
-
-    public class LeaveStatuses : BaseEntityNew<Guid>
+    public class InvoiceStatus : BaseEntityNew<Guid>
     {
-
-        public int Id { get; set; }
         public string Name { get; set; }
+        public string StatusKey { get; set; }
     }
 }

@@ -1,46 +1,68 @@
-﻿using AddOptimization.Contracts.Dto;
+﻿using AddOptimization.Contracts.Constants;
+using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
 using AddOptimization.Utilities.Common;
 using AddOptimization.Utilities.Extensions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using NPOI.SS.Formula.Functions;
 
 namespace AddOptimization.Services.Services
 {
-    public class InvoiceService: IInvoiceService
+    public class InvoiceService : IInvoiceService
     {
-        //private readonly IGenericRepository<User> _userRepository;
-        //private readonly ILogger<InvoiceService> _logger;
-        //public InvoiceService(IGenericRepository<Invoice> userRepository, ILogger<InvoiceService> logger)
-        //{
-        //    _userRepository = userRepository;
-        //    _logger = logger;
-        //}
+        private readonly IGenericRepository<Invoice> _invoiceRepository;
+        private readonly IGenericRepository<Customer> _customer;
+        private readonly IGenericRepository<CustomerEmployeeAssociation> _customerEmployeeAssociation;
+        private readonly IGenericRepository<SchedulerEvent> _schedulersRepository;
+        private readonly IGenericRepository<SchedulerEventDetails> _schedulersDetailsRepository;
+        private readonly ISchedulersStatusService _schedulersStatusService;
+        private readonly ISchedulerEventTypeService _schedulerEventTypeService;
 
-        //public async Task<ApiResult<List<UserSummaryDto>>> GenerateInvoice()
-        //{
-        //    try
-        //    {
-        //        var entities = await _userRepository.QueryAsync();
-        //        var usersList = entities.Select(s => new UserSummaryDto
-        //        {
-        //            Id = s.Id,
-        //            FullName = s.FullName
-        //        }).OrderBy(x => x.FullName).ToList();
 
-        //        return ApiResult<List<UserSummaryDto>>.Success(usersList);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogException(ex);
-        //        throw;
-        //    }
-        //}
+        private readonly ILogger<InvoiceService> _logger;
+        public InvoiceService(IGenericRepository<Invoice> invoiceRepository,
+            IGenericRepository<Customer> customer,
+            IGenericRepository<CustomerEmployeeAssociation> customerEmployeeAssociation,
+            IGenericRepository<SchedulerEvent> schedulersRepository,
+            IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository,
+            ISchedulersStatusService schedulersStatusService,
+            ISchedulerEventTypeService schedulerEventTypeService,
+            ILogger<InvoiceService> logger)
+        {
+            _invoiceRepository = invoiceRepository;
+            _customerEmployeeAssociation = customerEmployeeAssociation;
+            _customer = customer;
+            _schedulersRepository = schedulersRepository;
+            _schedulerEventTypeService = schedulerEventTypeService;
+            _schedulersStatusService = schedulersStatusService;
+            _schedulersDetailsRepository = schedulersDetailsRepository;
+            _logger = logger;
+        }
+
+        public async Task<ApiResult<List<InvoiceResponseDto>>> GenerateInvoice()
+        {
+            try
+            {
+                var a = new List<InvoiceResponseDto>();
+                var customers = await _customer.QueryAsync(c => c.CustomerStatus.Name == CustomerStatuses.Active);
+                foreach (var item in customers.ToList())
+                {
+                    var employeeAssociation = (await _customerEmployeeAssociation.QueryAsync(c => c.CustomerId == c.CustomerId && !c.IsDeleted)).ToList();
+                    foreach (var employee in employeeAssociation)
+                    {
+
+                    };
+                };
+                return ApiResult<List<InvoiceResponseDto>>.Success(a);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
     }
 }
