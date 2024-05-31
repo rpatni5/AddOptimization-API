@@ -60,6 +60,9 @@ public partial class AddOptimizationContext : DbContext
     public virtual DbSet<SchedulerEventHistory> SchedulerEventHistory { get; set; }
     public virtual DbSet<Employee> Employees { get; set; }
     public virtual DbSet<Company> Companies { get; set; }
+    public virtual DbSet<Invoice> Invoices { get; set; }
+    public virtual DbSet<InvoiceStatus> InvoiceStatuses { get; set; }
+    public virtual DbSet<InvoiceDetail> InvoiceDetails { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
