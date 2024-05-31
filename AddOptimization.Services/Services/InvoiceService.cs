@@ -16,7 +16,7 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<Invoice> _invoiceRepository;
         private readonly IGenericRepository<Customer> _customer;
         private readonly IGenericRepository<CustomerEmployeeAssociation> _customerEmployeeAssociation;
-        private readonly IGenericRepository<SchedulerEvent> _schedulersRepository;
+        private readonly IGenericRepository<SchedulerEvent> _schedulerEventRepository;
         private readonly IGenericRepository<SchedulerEventDetails> _schedulersDetailsRepository;
         private readonly ISchedulersStatusService _schedulersStatusService;
         private readonly ISchedulerEventTypeService _schedulerEventTypeService;
@@ -26,7 +26,7 @@ namespace AddOptimization.Services.Services
         public InvoiceService(IGenericRepository<Invoice> invoiceRepository,
             IGenericRepository<Customer> customer,
             IGenericRepository<CustomerEmployeeAssociation> customerEmployeeAssociation,
-            IGenericRepository<SchedulerEvent> schedulersRepository,
+            IGenericRepository<SchedulerEvent> schedulerEventRepository,
             IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository,
             ISchedulersStatusService schedulersStatusService,
             ISchedulerEventTypeService schedulerEventTypeService,
@@ -35,7 +35,7 @@ namespace AddOptimization.Services.Services
             _invoiceRepository = invoiceRepository;
             _customerEmployeeAssociation = customerEmployeeAssociation;
             _customer = customer;
-            _schedulersRepository = schedulersRepository;
+            _schedulerEventRepository = schedulerEventRepository;
             _schedulerEventTypeService = schedulerEventTypeService;
             _schedulersStatusService = schedulersStatusService;
             _schedulersDetailsRepository = schedulersDetailsRepository;
@@ -48,11 +48,26 @@ namespace AddOptimization.Services.Services
             {
                 var a = new List<InvoiceResponseDto>();
                 var customers = await _customer.QueryAsync(c => c.CustomerStatus.Name == CustomerStatuses.Active);
-                foreach (var item in customers.ToList())
+                foreach (var customer in customers.ToList())
                 {
+                    var vat = customer.VAT;
                     var employeeAssociation = (await _customerEmployeeAssociation.QueryAsync(c => c.CustomerId == c.CustomerId && !c.IsDeleted)).ToList();
-                    foreach (var employee in employeeAssociation)
+                    foreach (var ceItem in employeeAssociation)
                     {
+                        var daily = ceItem.DailyWeightage;
+                        var overTime = ceItem.Overtime;
+                        var publicHoliday = ceItem.PublicHoliday;
+                        var saturday = ceItem.Saturday;
+                        var sunday = ceItem.Sunday;
+
+                        var schedulerEvents = (await _schedulerEventRepository.QueryAsync(c => c.UserId == ceItem.EmployeeId && c.CustomerId == ceItem.CustomerId && !c.IsDraft && !c.IsDeleted)).ToList();
+                        foreach (var schedulerEvent in schedulerEvents)// Months
+                        {
+                            //Days
+                            var eventDetails = (await _schedulersDetailsRepository.QueryAsync(c => c.SchedulerEventId == schedulerEvent.Id && !c.IsDeleted)).ToList();
+                            var grouped = eventDetails.GroupBy(c => c.EventTypeId);
+
+                        };
 
                     };
                 };

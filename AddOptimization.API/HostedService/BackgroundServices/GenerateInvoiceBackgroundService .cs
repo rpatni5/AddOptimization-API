@@ -56,26 +56,9 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             {
                 using var scope = _serviceProvider.CreateScope();
                 var schedulerEventService = scope.ServiceProvider.GetRequiredService<ISchedulerEventService>();
-                var customerEmployeeAssociationService = scope.ServiceProvider.GetRequiredService<ICustomerEmployeeAssociationService>();
-                var expirationThresholdValue = _configuration.ReadSection<BackgroundServiceSettings>(AppSettingsSections.BackgroundServiceSettings).ExpirationThresholdInDays;
-                var customerEmployeeAssociation = await customerEmployeeAssociationService.Search();
-                var result = customerEmployeeAssociation.Result.GroupBy(c => c.CustomerId).ToList();
-                foreach (var clientAssociation in result)
-                {
-                    foreach (var association in clientAssociation)
-                    {
-                        var schedulerEvents = await schedulerEventService.GetSchedulerEventsForEmailReminder(association.CustomerId, association.EmployeeId);
-                        if (schedulerEvents?.Result == null) continue;
-
-                        //Filter scheduler events which happened before the client association.
-                        var events = schedulerEvents.Result
-                            .Where(s => s.EventDetails != null && (s.EventDetails == null && s.EndDate <= association.CreatedAt)).ToList();
-                        foreach (var item in events)
-                        {
-                            //Task.Run(() => SendFillTimesheetReminderEmail(item));
-                        };
-                    }
-                }
+                var invoiceService = scope.ServiceProvider.GetRequiredService<IInvoiceService>();
+                var customerEmployeeAssociation = await invoiceService.GenerateInvoice();
+                 
                 return true;
             }
             catch (Exception ex)
