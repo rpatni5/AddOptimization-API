@@ -29,6 +29,14 @@ CREATE TABLE [dbo].[Customers](
 	[PartnerAddress] [nvarchar](200) NULL,
 	[PartnerDescriptions] [nvarchar](200) NULL,
 	[PartnerCountryId] [uniqueidentifier] NULL,
+	[Street] [nvarchar](200) NULL,
+	[City] [nvarchar](200) NULL,
+	[Country] [nvarchar](200) NULL,
+	[ZipCode] [int] NULL,
+	[PartnerStreet] [nvarchar](200) NULL,
+	[PartnerCity] [nvarchar](200) NULL,
+	[PartnerCountry] [nvarchar](200) NULL,
+	[PartnerZipCode] [int] NULL,
  CONSTRAINT [PK_Customers] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -87,4 +95,5 @@ GO
 
 ALTER TABLE [dbo].[Customers] CHECK CONSTRAINT [FK_Customers_CustomerStatuses_CustomerStatusId]
 GO
+
 
