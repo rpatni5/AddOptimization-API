@@ -5,6 +5,7 @@ using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
+using System.Globalization;
 
 namespace AddOptimization.API.HostedService.BackgroundServices
 {
@@ -69,7 +70,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
 
                         //Filter scheduler events which happened before the client association.
                         var events = schedulerEvents.Result
-                            .Where(s => s.EventDetails != null && (s.EventDetails == null && s.EndDate <= association.CreatedAt)).ToList();
+                            .Where(s => s.StartDate.Month >= association.CreatedAt.Value.Month).ToList();
                         foreach (var item in events)
                         {
                             Task.Run(() => SendFillTimesheetReminderEmail(item));
@@ -95,8 +96,8 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 var link = GetMyTimesheetLinkForEmployee();
                 emailTemplate = emailTemplate
                                 .Replace("[EmployeeName]", schedulerEvent?.UserName)
-                                .Replace("[StartDate]", schedulerEvent?.StartDate.Date.ToString("d"))
-                                .Replace("[EndDate]", schedulerEvent?.EndDate.Date.ToString("d"))
+                                .Replace("[StartDate]", schedulerEvent?.StartDate.Date.ToString("dd/M/yyyy", CultureInfo.InvariantCulture))
+                                .Replace("[EndDate]", schedulerEvent?.EndDate.Date.ToString("dd/M/yyyy", CultureInfo.InvariantCulture))
                                 .Replace("[LinkToMyTimesheet]", link);
                 return await _emailService.SendEmail(schedulerEvent?.ApplicationUser?.Email, subject, emailTemplate);
             }
