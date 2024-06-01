@@ -13,7 +13,6 @@ using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
 using AddOptimization.Utilities.Services;
 using AutoMapper;
-using iText.Layout.Element;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -249,11 +248,31 @@ namespace AddOptimization.Services.Services
             .Include(e => e.ApplicationUser).Include(e => e.CreatedByUser)
             .Include(e => e.UpdatedByUser).Include(e => e.Customer)
             .Include(e => e.EventDetails));
-            if (entity == null || !entity.Any())
-            {
-                return ApiResult<List<SchedulerEventResponseDto>>.Failure(ValidationCodes.SchedulerEventsDoesNotExists);
-            }
             var response = new List<SchedulerEventResponseDto>();
+
+            if (entity == null || !entity.Any()) // User with no timesheets will be notified for 3 recent months passed
+            {
+                var user = (await _appUserRepository.FirstOrDefaultAsync(x => x.Id == userId));
+                var months = MonthDateRangeHelper.GetMonthDateRanges();
+                foreach (var month in months)
+                {
+                    var value = entity.FirstOrDefault(c => c.StartDate == month.StartDate && c.EndDate == month.EndDate);
+                    if (value == null)
+                    {
+                        var schedulerEvent = new SchedulerEventResponseDto
+                        {
+                            UserName = user.FullName,
+                            StartDate = value != null ? value.StartDate : month.StartDate,
+                            EndDate = value != null ? value.EndDate : month.EndDate,
+                            ApplicationUser = _mapper.Map<ApplicationUserDto>(user),
+                            EventDetails = null
+                        };
+                        response.Add(schedulerEvent);
+                    }
+                }
+                return ApiResult<List<SchedulerEventResponseDto>>.Success(response);
+            }
+
             DateTime today = DateTime.Today;
             DateTime endOfMonth = new DateTime(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month));
             if (today == endOfMonth)

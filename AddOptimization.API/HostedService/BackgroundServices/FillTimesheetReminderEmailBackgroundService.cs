@@ -68,7 +68,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                         var schedulerEvents = await schedulerEventService.GetSchedulerEventsForEmailReminder(association.CustomerId, association.EmployeeId);
                         if (schedulerEvents?.Result == null) continue;
 
-                        //Filter scheduler events which happened before the client association.
+                        //Filter scheduler events which happened before current month of the client employee association.
                         var events = schedulerEvents.Result
                             .Where(s => s.StartDate.Month >= association.CreatedAt.Value.Month).ToList();
                         foreach (var item in events)
