@@ -16,6 +16,7 @@ namespace AddOptimization.API.Controllers
 
 
         [HttpGet("search")]
+        [AllowAnonymous]
         public async Task<IActionResult> Search()
         {
             try
