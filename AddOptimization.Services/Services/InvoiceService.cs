@@ -79,5 +79,26 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
+
+        #region Private Methods
+        private List<DateTime> GetDatesInMonth(int month)
+        {
+            DateTime startDate = new DateTime(DateTime.Now.Year, month, 1);
+            List<DateTime> dates = new List<DateTime>();
+
+            for (DateTime date = startDate; date.Month == month; date = date.AddDays(1))
+            {
+                dates.Add(date);
+            }
+
+            return dates;
+        }
+
+        private bool IsWeekend(DateTime date)
+        {
+            return date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday;
+        }
+
+        #endregion
     }
 }
