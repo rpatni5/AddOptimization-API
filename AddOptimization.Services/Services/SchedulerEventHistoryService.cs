@@ -17,7 +17,7 @@ using System.Threading.Tasks;
 
 namespace AddOptimization.Services.Services
 {
-    public class SchedulerEventHistoryService : ISchedulerEventHistory
+    public class SchedulerEventHistoryService : ISchedulerEventHistoryService
     {
         private readonly IGenericRepository<SchedulerEventHistory> _schedulerEventHistoryRepository;
         private readonly ILogger<SchedulerEventHistoryService> _logger;
@@ -38,7 +38,7 @@ namespace AddOptimization.Services.Services
                 
                 if (entity == null)
                 {
-                    return ApiResult<List<SchedulerEventHistoryDto>>.NotFound("History");
+                    return ApiResult<List<SchedulerEventHistoryDto>>.NotFound("Scheduler History");
                 }
                 var mappedEntity = _mapper.Map<List<SchedulerEventHistoryDto>>(entity);
                 return ApiResult<List<SchedulerEventHistoryDto>>.Success(mappedEntity);

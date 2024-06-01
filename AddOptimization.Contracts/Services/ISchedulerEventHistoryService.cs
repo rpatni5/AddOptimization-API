@@ -3,7 +3,7 @@ using AddOptimization.Utilities.Common;
 
 namespace AddOptimization.Contracts.Services
 {
-    public interface ISchedulerEventHistory
+    public interface ISchedulerEventHistoryService
     {
         Task<ApiResult<List<SchedulerEventHistoryDto>>> GetSchedulerEventHistory(Guid id);
     }

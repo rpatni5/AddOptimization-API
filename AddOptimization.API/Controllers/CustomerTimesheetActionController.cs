@@ -14,10 +14,10 @@ namespace AddOptimization.API.Controllers
     public class CustomerTimesheetActionController : CustomApiControllerBase
     {
         private readonly ISchedulerEventService _schedulerEventService;
-        private readonly ISchedulerEventHistory _schedulerEventHistoryService;
+        private readonly ISchedulerEventHistoryService _schedulerEventHistoryService;
         private readonly CustomDataProtectionService _customDataProtectionService;
 
-        public CustomerTimesheetActionController(ILogger<SchedulerEventController> logger, ISchedulerEventService schedulerEventService, ISchedulerEventHistory schedulerEventHistoryService, CustomDataProtectionService customDataProtectionService) : base(logger)
+        public CustomerTimesheetActionController(ILogger<SchedulerEventController> logger, ISchedulerEventService schedulerEventService, ISchedulerEventHistoryService schedulerEventHistoryService, CustomDataProtectionService customDataProtectionService) : base(logger)
         {
             _schedulerEventService = schedulerEventService;
             _customDataProtectionService = customDataProtectionService;

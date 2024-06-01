@@ -10,8 +10,8 @@ namespace AddOptimization.API.Controllers
     [Authorize]
     public class SchedulerEventHistoryController : CustomApiControllerBase
     {
-        private readonly ISchedulerEventHistory _schedulerEventHistory;
-        public SchedulerEventHistoryController(ILogger<SchedulerEventHistoryController> logger, ISchedulerEventHistory schedulerEventHistory) : base(logger)
+        private readonly ISchedulerEventHistoryService _schedulerEventHistory;
+        public SchedulerEventHistoryController(ILogger<SchedulerEventHistoryController> logger, ISchedulerEventHistoryService schedulerEventHistory) : base(logger)
         {
             _schedulerEventHistory = schedulerEventHistory;
         }

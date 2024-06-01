@@ -1,7 +1,5 @@
 ﻿using AddOptimization.Data.Common;
-using NPOI.Util;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AddOptimization.Data.Entities;
 

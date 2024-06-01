@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AddOptimization.API.Controllers
 {
-    [Authorize]
     public class SchedulerEventTypeController : CustomApiControllerBase
     {
         private readonly ISchedulerEventTypeService _schedulersEventTypeService;
