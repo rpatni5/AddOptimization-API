@@ -118,6 +118,12 @@ public class CustomerService : ICustomerService
                 PartnerPostalCode = e.PartnerPostalCode,
                 PartnerAddress = e.PartnerAddress,
                 PartnerDescriptions = e.PartnerDescriptions,
+                Street = e.Street,
+                City = e.City,
+                ZipCode  = e.ZipCode,
+                PartnerCity = e.PartnerCity,
+                PartnerStreet = e.PartnerStreet,
+                PartnerZipCode  = e.PartnerZipCode,
 
             }).ToList());
             var retVal = pagedResult;
