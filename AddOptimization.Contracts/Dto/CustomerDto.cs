@@ -37,10 +37,10 @@ namespace AddOptimization.Contracts.Dto
 
         public string Street { get; set; }
         public string City { get; set; }
-        public int ZipCode { get; set; }
+        public int? ZipCode { get; set; }
         public string PartnerStreet { get; set; }
         public string PartnerCity { get; set; }
-        public int PartnerZipCode { get; set; }
+        public int? PartnerZipCode { get; set; }
 
 
     }
