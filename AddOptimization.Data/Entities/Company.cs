@@ -1,6 +1,5 @@
 ﻿using AddOptimization.Data.Common;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AddOptimization.Data.Entities;
 
@@ -32,6 +31,11 @@ public class Company : BaseEntityNew<Guid>
 
     [MaxLength(300)]
     public string BillingAddress { get; set; }
+    
+    public string Street { get; set; }
+    public string City { get; set; }
+    public string Country { get; set; }
+    public int ZipCode { get; set; }
 
 
 }

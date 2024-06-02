@@ -248,6 +248,16 @@ namespace AddOptimization.Services.Mappings
 
             });
             CreateMap<QuoteSummaryDto, QuoteSummary>();
+
+            CreateMap<SchedulerEventHistory, SchedulerEventHistoryDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.CreatedAt = s.CreatedAt?.Date;
+                d.UpdatedAt = s.UpdatedAt?.Date;
+
+            });
+            CreateMap<SchedulerEventHistoryDto, SchedulerEventHistory>();
         }
     }
 }

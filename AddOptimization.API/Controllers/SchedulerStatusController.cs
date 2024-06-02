@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AddOptimization.API.Controllers
 {
-    [Authorize]
     public class SchedulerStatusController : CustomApiControllerBase
     {
         private readonly ISchedulersStatusService _schedulersStatusService;
@@ -17,6 +16,7 @@ namespace AddOptimization.API.Controllers
         }
 
         [HttpGet("search")]
+        [AllowAnonymous]
         public async Task<IActionResult> Search()
         {
             try

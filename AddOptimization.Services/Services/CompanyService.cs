@@ -40,6 +40,10 @@ public class CompanyService : ICompanyService
                 entity.BankName = model.BankName;
                 entity.MobileNumber = model.MobileNumber;
                 entity.BillingAddress = model.BillingAddress;
+                entity.City = model.City;
+                entity.Street = model.Street;
+                entity.Country = model.Country;
+                entity.ZipCode = model.ZipCode;
 
                 await _companyRepository.UpdateAsync(entity);
             }

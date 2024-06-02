@@ -14,6 +14,10 @@ CREATE TABLE [dbo].[Companies](
 	[CreatedByUserId] [int] NULL,
 	[UpdatedAt] [datetime2](7) NULL,
 	[UpdatedByUserId] [int] NULL,
+	[Street] [nvarchar](200) NULL,
+	[City] [nvarchar](200) NULL,
+	[Country] [nvarchar](200) NULL,
+	[ZipCode] [int] NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -28,3 +32,5 @@ GO
 ALTER TABLE [dbo].[Companies]  WITH CHECK ADD FOREIGN KEY([UpdatedByUserId])
 REFERENCES [dbo].[ApplicationUsers] ([Id])
 GO
+
+
