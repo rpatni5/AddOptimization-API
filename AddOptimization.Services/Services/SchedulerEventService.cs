@@ -366,8 +366,20 @@ namespace AddOptimization.Services.Services
             eventDetails.AdminStatusId = statusId;
 
             var result = await _schedulersRepository.UpdateAsync(eventDetails);
+            var saveResult = await Save(models);
+            if (saveResult.IsSuccess)
+            {
+                SchedulerEventHistory entity = new SchedulerEventHistory()
+                {
+                    SchedulerEventId = eventDetails.Id,
+                    UserId = eventDetails.UserId,
+                    UserStatusId = eventDetails.UserStatusId,
+                    AdminStatusId = eventDetails.AdminStatusId,
+                };
+                await _schedulerEventHistoryRepository.InsertAsync(entity);
+            }
 
-            return await Save(models);
+            return saveResult;
         }
 
         public async Task<ApiResult<List<SchedulerEventDetailsDto>>> GetSchedulerEventDetails(SchedulerEventRequestDto model)
