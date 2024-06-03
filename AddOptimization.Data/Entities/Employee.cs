@@ -8,7 +8,7 @@ namespace AddOptimization.Data.Entities
         public int UserId { get; set; }
 
         public bool IsExternal { get; set; }
-        public decimal Salary { get; set; }
+        public decimal? Salary { get; set; }
 
         [MaxLength(200)]
         public string BankName { get; set; }
