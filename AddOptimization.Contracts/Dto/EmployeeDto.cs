@@ -8,7 +8,7 @@ namespace AddOptimization.Contracts.Dto
         public Guid Id { get; set; }    
         public int UserId { get; set; }
         public bool IsExternal { get; set; }
-        public decimal Salary { get; set; }
+        public decimal? Salary { get; set; }
         public string BankName { get; set; }
         public string BankAccountName { get; set; }
         public string BankAccountNumber { get; set; }

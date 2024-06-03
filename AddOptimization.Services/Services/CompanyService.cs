@@ -68,12 +68,6 @@ public class CompanyService : ICompanyService
         try
         {
             var entity = await _companyRepository.FirstOrDefaultAsync();
-
-            if (entity == null)
-            {
-                return ApiResult<CompanyDto>.NotFound("CompanyInformation");
-            }
-
             var mappedEntity = _mapper.Map<CompanyDto>(entity);
             return ApiResult<CompanyDto>.Success(mappedEntity);
         }

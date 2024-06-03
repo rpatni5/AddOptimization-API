@@ -174,7 +174,7 @@ namespace AddOptimization.Services.Services
 
                 await _schedulersDetailsRepository.UpdateAsync(entity);
                 return ApiResult<bool>.Success(true);
-            
+
             }
             catch (Exception ex)
             {
@@ -213,7 +213,7 @@ namespace AddOptimization.Services.Services
                 }
 
 
-                entity = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == entity.Id, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer));               
+                entity = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == entity.Id, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer));
 
                 var mappedEntity = _mapper.Map<SchedulerEventResponseDto>(entity);
                 return ApiResult<SchedulerEventResponseDto>.Success(mappedEntity);
@@ -534,6 +534,7 @@ namespace AddOptimization.Services.Services
 
         }
 
+
         public async Task<ApiResult<bool>> ApproveRequest(AccountAdminActionRequestDto model)
         {
             try
@@ -578,7 +579,7 @@ namespace AddOptimization.Services.Services
 
                 Task.Run(() =>
                 {
-                    SendTimesheetApprovedEmailToEmployee(user.Email, result, user.UserName, model.ApprovarName);
+                    SendTimesheetApprovedEmailToEmployee(user.Email, result, user.FullName, model.ApprovarName);
                 });
                 return ApiResult<bool>.Success(true);
             }
@@ -669,6 +670,9 @@ namespace AddOptimization.Services.Services
         {
             try
             {
+                var result = await CalculateTimesheetsDaysAndOvertimeHours(schedulerEvent);
+                decimal totalWorkingDays = result.Item1;
+                decimal overtimeHours = result.Item2;
                 var subject = isApprovedEmail ? "Timesheet Approved" : "Timesheet Declined";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetActions);
                 emailTemplate = emailTemplate.Replace("[AccountAdmin]", approver.FullName)
@@ -677,7 +681,8 @@ namespace AddOptimization.Services.Services
                                              .Replace("[TimesheetAction]", isApprovedEmail ? "approved" : "declined")
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
                                              .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
-                                             .Replace("[NoOfDays]", DateTime.DaysInMonth(schedulerEvent.StartDate.Year, schedulerEvent.StartDate.Month).ToString())
+                                             .Replace("[WorkDuration]", totalWorkingDays.ToString())
+                                             .Replace("[Overtime]", overtimeHours.ToString())
                                              .Replace("[Comment]", !string.IsNullOrEmpty(comment) ? comment : "No comment added.");
                 return await _emailService.SendEmail(approver.Email, subject, emailTemplate);
             }
@@ -688,17 +693,21 @@ namespace AddOptimization.Services.Services
             }
         }
         #region Private Methods
-        private async Task<bool> SendTimesheetApprovedEmailToEmployee(string email, SchedulerEvent schedulerEvent, string userName, string approverName)
+        private async Task<bool> SendTimesheetApprovedEmailToEmployee(string email, SchedulerEvent schedulerEvent, string fullName, string approverName)
         {
             try
             {
+                var result = await CalculateTimesheetsDaysAndOvertimeHours(schedulerEvent);
+                decimal totalWorkingDays = result.Item1;
+                decimal overtimeHours = result.Item2;
                 var subject = "Timesheet Approved";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetApproved);
-                emailTemplate = emailTemplate.Replace("[EmployeeName]", userName)
+                emailTemplate = emailTemplate.Replace("[FullName]", fullName)
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
                                              .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
-                                             .Replace("[NoOfDays]", DateTime.DaysInMonth(schedulerEvent.StartDate.Year, schedulerEvent.StartDate.Month).ToString())
-                                             .Replace("[Approver]", approverName);
+                                             .Replace("[Approver]", approverName)
+                                             .Replace("[WorkDuration]", totalWorkingDays.ToString())
+                                             .Replace("[Overtime]", overtimeHours.ToString());
                 return await _emailService.SendEmail(email, subject, emailTemplate);
             }
             catch (Exception ex)
@@ -712,6 +721,9 @@ namespace AddOptimization.Services.Services
         {
             try
             {
+                var result = await CalculateTimesheetsDaysAndOvertimeHours(schedulerEvent);
+                decimal totalWorkingDays = result.Item1;
+                decimal overtimeHours = result.Item2;
                 var subject = "Timesheet Approval Request";
                 var link = GetTimesheetLinkForCustomer(schedulerEvent.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.RequestTimesheetApproval);
@@ -720,7 +732,8 @@ namespace AddOptimization.Services.Services
                                              .Replace("[LinkToTimesheet]", link)
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
                                              .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
-                                             .Replace("[NoOfDays]", DateTime.DaysInMonth(schedulerEvent.StartDate.Year, schedulerEvent.StartDate.Month).ToString());
+                                             .Replace("[WorkDuration]", totalWorkingDays.ToString())
+                                             .Replace("[Overtime]", overtimeHours.ToString());
                 return await _emailService.SendEmail(email, subject, emailTemplate);
             }
             catch (Exception ex)
@@ -742,6 +755,20 @@ namespace AddOptimization.Services.Services
             var entity = (await _schedulersRepository.QueryAsync(x => x.Id == schedulerEventId, include: entities => entities.Include(e => e.ApplicationUser).Include(e => e.Customer))).FirstOrDefault();
             return await SendRequestTimesheetApprovalEmailToCustomer(entity.Customer.Email, entity, entity.Customer.Name, entity.ApplicationUser.FullName);
         }
+
+        private async Task<(decimal, decimal)> CalculateTimesheetsDaysAndOvertimeHours(SchedulerEvent schedulerEvent)
+        {
+
+            var eventTypes = (await _schedulerEventTypeService.Search()).Result;
+            var timesheetEventId = eventTypes.FirstOrDefault(x => x.Name.Equals("timesheet", StringComparison.InvariantCultureIgnoreCase)).Id;
+            var overtimeId = eventTypes.FirstOrDefault(x => x.Name.Equals("overtime", StringComparison.InvariantCultureIgnoreCase)).Id;
+            var timesheetEvents = schedulerEvent.EventDetails.Where(c => c.Date.Value.Month == schedulerEvent.StartDate.Month && c.EventTypeId == timesheetEventId).ToList();
+            var overtimeEvents = schedulerEvent.EventDetails.Where(c => c.Date.Value.Month == schedulerEvent.StartDate.Month && c.EventTypeId == overtimeId).ToList();
+            var totalWorkingDays = timesheetEvents.Sum(item => item.Duration);
+            var overtimeHours = overtimeEvents.Sum(item => item.Duration);
+            return (totalWorkingDays, overtimeHours);
+        }
+
         #endregion
     }
 }
