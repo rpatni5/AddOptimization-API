@@ -84,7 +84,7 @@ public class CustomerService : ICustomerService
     {
         try
         {
-            var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin")).ToList();
+            var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin", StringComparison.InvariantCultureIgnoreCase) || c.Contains("Account Admin", StringComparison.InvariantCultureIgnoreCase)).ToList();
             var entities = await _customerRepository.QueryAsync(include: entities => entities
             .Include(e => e.CustomerStatus).Include(e => e.Licenses).Include(e => e.BillingAddress).Include(e => e.Country).Include(e => e.PartnerCountry), orderBy: (entities) => entities.OrderBy(t => t.Name), ignoreGlobalFilter: superAdminRole.Count != 0);
 
