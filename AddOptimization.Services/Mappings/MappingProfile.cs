@@ -15,6 +15,7 @@ namespace AddOptimization.Services.Mappings
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
             CreateMap<ApplicationUser, UserSummaryDto>();
+            CreateMap<ApplicationUser, ApplicationUserDto>();
             CreateMap<UserCreateDto, ApplicationUser>().ForMember(dst => dst.Password, opt => opt.Ignore());
             CreateMap<RoleCreateDto, Role>();
             CreateMap<Role, RoleDto>();
@@ -102,26 +103,6 @@ namespace AddOptimization.Services.Mappings
             });
             CreateMap<CountryDto, Country>();
 
-
-            CreateMap<ClientRequestDto, Client>().AfterMap((s, d) =>
-            {
-                d.Organization = s.Company;
-            });
-
-            CreateMap<Client, ClientResponseDto>().AfterMap((s, d) =>
-            {
-                d.CreatedAt = s.CreatedAt?.Date;
-                d.CreatedBy = s.CreatedByUser?.FullName;
-                d.UpdatedAt = s.UpdatedAt?.Date;
-                d.UpdatedBy = s.UpdatedByUser?.FullName;
-            });
-
-            CreateMap<Client, ClientResponseDto>().AfterMap((s, d) =>
-            {
-                d.Company = s.Organization;
-            });
-
-
             CreateMap<SchedulerEvent, SchedulerEventDetailsDto>().AfterMap((s, d) =>
             {
                 d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
@@ -152,16 +133,16 @@ namespace AddOptimization.Services.Mappings
             CreateMap<SchedulerEventTypeDto, SchedulerEventType>();
 
 
-            CreateMap<CreateViewTimesheetRequestDto, SchedulerEvent>().AfterMap((s, d) =>
+            CreateMap<SchedulerEventRequestDto, SchedulerEvent>().AfterMap((s, d) =>
             {
 
             });
 
-            CreateMap<SchedulerEvent, CreateViewTimesheetResponseDto>().AfterMap((s, d) =>
+            CreateMap<SchedulerEvent, SchedulerEventResponseDto>().AfterMap((s, d) =>
             {
                 d.ApprovarName = s.Approvar != null ? s.Approvar.FullName : string.Empty;
                 d.UserName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
-                d.ClientName = s.Client != null ? $"{s.Client.FirstName} {s.Client.LastName}" : string.Empty;
+                d.CustomerName = s.Customer != null ? s.Customer.Name : string.Empty;
                 d.AdminStatusName = s.AdminStatus != null ? s.AdminStatus.Name : string.Empty;
                 d.UserStatusName = s.UserStatus != null ? s.UserStatus.Name : string.Empty;
             });
@@ -195,6 +176,88 @@ namespace AddOptimization.Services.Mappings
             });
             CreateMap<LeaveStatusesDto, LeaveStatuses>();
 
+            CreateMap<CustomerEmployeeAssociationDto, CustomerEmployeeAssociation>();
+
+            CreateMap<CustomerEmployeeAssociation, CustomerEmployeeAssociationDto>().AfterMap((s, d) =>
+            {
+                d.ApproverName = s.Approver != null ? s.Approver.FullName : string.Empty;
+                d.CustomerName = s.Customer != null ? s.Customer.Name: string.Empty;
+                d.EmployeeName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
+                d.CreatedAt = s.CreatedAt?.Date;
+                d.CreatedBy = s.CreatedByUser?.FullName;
+                d.UpdatedAt = s.UpdatedAt?.Date;
+                d.UpdatedBy = s.UpdatedByUser?.FullName;
+            });
+
+            CreateMap<HolidayAllocation, HolidayAllocationResponseDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.UserName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
+
+            });
+            CreateMap<HolidayAllocationRequestDto, HolidayAllocation>();
+
+            CreateMap<Product, ProductResponseDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+            });
+            CreateMap<ProductRequestDto, Product>();
+
+            CreateMap<Employee, EmployeeDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.UserName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
+                d.Email = s.ApplicationUser != null  ? s.ApplicationUser.Email : string.Empty;
+                d.FirstName = s.ApplicationUser != null ? s.ApplicationUser.FirstName : string.Empty;
+                d.LastName = s.ApplicationUser != null ? s.ApplicationUser.LastName : string.Empty;
+                d.Password = s.ApplicationUser != null ? s.ApplicationUser.Password : string.Empty;
+                d.isActive = s.ApplicationUser!=null ? s.ApplicationUser.IsActive : false;
+
+            });
+            CreateMap<EmployeeDto, Employee>();
+
+            CreateMap<Company, CompanyDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.CreatedAt = s.CreatedAt?.Date;
+                d.UpdatedAt = s.UpdatedAt?.Date;
+            });
+            CreateMap<CompanyDto, Company>();
+
+            CreateMap<Quote, QuoteResponseDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.CreatedAt = s.CreatedAt?.Date;
+                d.UpdatedAt = s.UpdatedAt?.Date;
+            });
+            CreateMap<QuoteRequestDto, Quote>();
+
+            CreateMap<QuoteStatuses, QuoteStatusDto>().AfterMap((s, d) =>
+            {
+
+            });
+            CreateMap<QuoteStatusDto, QuoteStatuses>();
+
+            CreateMap<QuoteSummary, QuoteSummaryDto>().AfterMap((s, d) =>
+            {
+
+            });
+            CreateMap<QuoteSummaryDto, QuoteSummary>();
+
+            CreateMap<SchedulerEventHistory, SchedulerEventHistoryDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.CreatedAt = s.CreatedAt?.Date;
+                d.UpdatedAt = s.UpdatedAt?.Date;
+
+            });
+            CreateMap<SchedulerEventHistoryDto, SchedulerEventHistory>();
         }
     }
 }

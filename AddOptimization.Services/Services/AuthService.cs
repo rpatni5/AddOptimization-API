@@ -114,7 +114,7 @@ public class AuthService : IAuthService
         try
         {
             var userId = applicationUserId ?? _applicationUserRepository.CurrentUserId;
-            var tokens = (await _refreshTokenRepository.QueryAsync(r => r.ApplicationUserId == userId)).ToList();
+            var tokens = (await _refreshTokenRepository.QueryAsync(r => r.ApplicationUserId == userId && !r.IsExpired)).ToList();
             if (tokens.Any())
             {
                 tokens.ForEach(t =>

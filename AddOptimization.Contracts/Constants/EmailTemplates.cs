@@ -11,4 +11,9 @@ public class EmailTemplates
     public const string SendInvoice = "send_invoice.html";
     public const string OrderAccountManagerAssigned = "order_account_manager_assigned.html";
     public const string RenewLicense = "renew_license.html";
+    public const string TimesheetApproved = "timesheet_approved.html";
+    public const string RequestTimesheetApproval = "request_timesheet_approval.html"; 
+    public const string FillTimesheetReminder = "fill_timesheet_reminder.html";
+    public const string ApproveTimesheetReminder = "approve_timesheet_reminder.html";
+    public const string TimesheetActions = "timesheet_actions.html";
 }

@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using AddOptimization.Data.Common;
 using AddOptimization.Data.Extensions;
 using AddOptimization.Utilities.Extensions;
-using NPOI.SS.UserModel;
 
 namespace AddOptimization.Data.Entities;
 
@@ -48,15 +47,26 @@ public partial class AddOptimizationContext : DbContext
     public virtual DbSet<PublicHoliday> PublicHolidays { get; set; }
 
     public virtual DbSet<Country> Countries { get; set; }
-    public virtual DbSet<Client> Clients { get; set; }
 
     public virtual DbSet<SchedulerEvent> SchedulerEvents { get; set; }
     public virtual DbSet<SchedulerStatus> SchedulerStatuses { get; set; }
     public virtual DbSet<SchedulerEventType> SchedulerEventTypes { get; set; }
     public virtual DbSet<SchedulerEventDetails> SchedulerEventDetails { get; set; }
     public virtual DbSet<AbsenceRequest> AbsenceRequest { get; set; }
-
     public virtual DbSet<LeaveStatuses> LeaveStatuses { get; set; }
+    public virtual DbSet<CustomerEmployeeAssociation> CustomerEmployeeAssociations { get; set; }
+    public virtual DbSet<HolidayAllocation> HolidayAllocation { get; set; }
+    public virtual DbSet<Product> Products { get; set; }
+    public virtual DbSet<SchedulerEventHistory> SchedulerEventHistory { get; set; }
+    public virtual DbSet<Employee> Employees { get; set; }
+    public virtual DbSet<Company> Companies { get; set; }
+    public virtual DbSet<Invoice> Invoices { get; set; }
+    public virtual DbSet<InvoiceStatus> InvoiceStatuses { get; set; }
+    public virtual DbSet<InvoiceDetail> InvoiceDetails { get; set; }
+    public virtual DbSet<Quote> Quotes { get; set; }
+    public virtual DbSet<QuoteStatuses> QuoteStatuses { get; set; }
+    public virtual DbSet<QuoteSummary> QuoteSummaries { get; set; }
+
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

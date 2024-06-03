@@ -6,15 +6,19 @@ namespace AddOptimization.Contracts.Services
 {
     public interface ISchedulerEventService
     {
-        Task<PagedApiResult<CreateViewTimesheetResponseDto>> Search(PageQueryFiterBase filters);
+        Task<PagedApiResult<SchedulerEventResponseDto>> Search(PageQueryFiterBase filters);
         Task<ApiResult<bool>> Delete(Guid id);
-        Task<ApiResult<bool>> Save(List<SchedulerEventDetailsDto> model);
+        Task<ApiResult<bool>> Save(List<SchedulerEventDetailsDto> schedulerEventDetails);
         Task<ApiResult<bool>> SubmitEventDetails(List<SchedulerEventDetailsDto> model);
-        Task<ApiResult<CreateViewTimesheetResponseDto>> CreateOrViewTimeSheets(CreateViewTimesheetRequestDto model);
-        Task<ApiResult<List<SchedulerEventDetailsDto>>> GetSchedularEventDetails(Guid id); 
-        Task<ApiResult<List<SchedulerEventDetailsDto>>> GetSchedularEventDetails(CreateViewTimesheetRequestDto model); 
-        Task<ApiResult<CreateViewTimesheetResponseDto>> GetSchedulerEvent(Guid id);
-        Task<ApiResult<bool>> ApproveRequest(CreateViewTimesheetResponseDto model);
-        Task<ApiResult<bool>> RejectRequest(CreateViewTimesheetResponseDto model);
+        Task<ApiResult<SchedulerEventResponseDto>> CreateOrViewTimeSheets(SchedulerEventRequestDto model);
+        Task<ApiResult<List<SchedulerEventDetailsDto>>> GetSchedulerEventDetails(Guid id, bool getRoleBasedData = true); 
+        Task<ApiResult<List<SchedulerEventDetailsDto>>> GetSchedulerEventDetails(SchedulerEventRequestDto model); 
+        Task<ApiResult<SchedulerEventResponseDto>> GetSchedulerEvent(Guid id);
+        Task<ApiResult<List<SchedulerEventResponseDto>>> GetSchedulerEventsForEmailReminder(Guid customerId, int userId);
+        Task<ApiResult<List<SchedulerEventResponseDto>>> GetSchedulerEventsForApproveEmailReminder();
+        Task<ApiResult<bool>> ApproveRequest(AccountAdminActionRequestDto model);
+        Task<ApiResult<bool>> DeclineRequest(AccountAdminActionRequestDto model);
+        Task<ApiResult<bool>> TimesheetAction(CustomerTimesheetActionDto model);
+        Task<bool> SendTimesheetApprovalEmailToCustomer(Guid schedulerEventId);
     }
 }

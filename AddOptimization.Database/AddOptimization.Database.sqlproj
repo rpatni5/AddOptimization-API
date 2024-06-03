@@ -77,7 +77,6 @@
     <Build Include="dbo\Tables\UserRoles.sql" />
     <Build Include="dbo\Tables\LicenseDevices.sql" />
     <Build Include="dbo\Tables\Licenses.sql" />
-    <Build Include="dbo\Tables\Clients.sql" />
     <Build Include="dbo\Tables\Countries.sql" />
     <Build Include="dbo\Tables\GuiVersions.sql" />
     <Build Include="dbo\Tables\PublicHolidays.sql" />
@@ -87,6 +86,18 @@
     <Build Include="dbo\Tables\SchedulerEventDetails.sql" />
     <Build Include="dbo\Tables\LeaveStatuses.sql" />
     <Build Include="dbo\Tables\AbsenceRequest.sql" />
+    <Build Include="dbo\Tables\SchedulerEventHistory.sql" />
+    <Build Include="dbo\Tables\ClientEmployeeAssociations.sql" />
+    <Build Include="dbo\Tables\HolidayAllocation.sql" />
+    <Build Include="dbo\Tables\Companies.sql" />
+    <Build Include="dbo\Tables\Products.sql" />
+    <Build Include="dbo\Tables\PaymentStatuses.sql" />
+    <Build Include="dbo\Tables\InvoiceStatuses.sql" />
+    <Build Include="dbo\Tables\Invoices.sql" />
+    <Build Include="dbo\Tables\Quotes.sql" />
+    <Build Include="dbo\Tables\QuoteStatuses.sql" />
+    <Build Include="dbo\Tables\QuoteSummaries.sql" />
+    <Build Include="dbo\Tables\InvoiceDetails.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Scripts\SeedData_Script.PostDeployment.sql" />

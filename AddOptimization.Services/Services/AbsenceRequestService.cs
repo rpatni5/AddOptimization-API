@@ -10,6 +10,7 @@ using AddOptimization.Utilities.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using AddOptimization.Utilities.Models;
+using AddOptimization.Services.Constants;
 
 
 namespace AddOptimization.Services.Services
@@ -39,9 +40,10 @@ namespace AddOptimization.Services.Services
             try
             {
                 var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
-                var requestedStatusId = (await _leaveStatusesService.Search(null)).Result.First(x => x.Name.Equals("requested", StringComparison.InvariantCultureIgnoreCase)).Id;
-                var approvedStatusId = (await _leaveStatusesService.Search(null)).Result.First(x => x.Name.Equals("approved", StringComparison.InvariantCultureIgnoreCase)).Id;
+                var leaveStatuses = (await _leaveStatusesService.Search(null)).Result;
 
+                var requestedStatusId = leaveStatuses.First(x => x.Name.Equals(LeaveStatusesEnum.Requested.ToString(), StringComparison.InvariantCultureIgnoreCase)).Id;
+                var approvedStatusId = leaveStatuses.First(x => x.Name.Equals(LeaveStatusesEnum.Approved.ToString(), StringComparison.InvariantCultureIgnoreCase)).Id;
                 var isExisting = await _absenceRequestRepository.IsExist(s => s.Date == model.Date && s.UserId == userId && (s.LeaveStatusId == requestedStatusId || s.LeaveStatusId == approvedStatusId));
                 if (isExisting)
                 {
@@ -93,6 +95,11 @@ namespace AddOptimization.Services.Services
                     entities = entities.Where(e => e.UserId == userId);
                 });
 
+                filters.GetValue<int>("employeeId", (v) =>
+                {
+                    entities = entities.Where(e => e.UserId == v);
+                });
+
                 filters.GetValue<DateTime>("startDate", (v) =>
                 {
                     entities = entities.Where(e => e.Date >= v);
@@ -102,7 +109,7 @@ namespace AddOptimization.Services.Services
                 {
                     entities = entities.Where(e => e.Date <= v);
                 });
-               
+
                 var mappedEntities = _mapper.Map<List<AbsenceRequestResponseDto>>(entities);
                 return ApiResult<List<AbsenceRequestResponseDto>>.Success(mappedEntities);
             }
@@ -117,17 +124,21 @@ namespace AddOptimization.Services.Services
         {
             try
             {
+                var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
+                var leaveStatuses = (await _leaveStatusesService.Search(null)).Result;
 
+                var requestedStatusId = leaveStatuses.First(x => x.Name.Equals(LeaveStatusesEnum.Requested.ToString(), StringComparison.InvariantCultureIgnoreCase)).Id;
+                var approvedStatusId = leaveStatuses.First(x => x.Name.Equals(LeaveStatusesEnum.Approved.ToString(), StringComparison.InvariantCultureIgnoreCase)).Id;
 
                 var entity = await _absenceRequestRepository.FirstOrDefaultAsync(t => t.Id == id, ignoreGlobalFilter: true);
                 if (entity == null)
                 {
                     return ApiResult<AbsenceRequestResponseDto>.NotFound("Absence Request");
                 }
-
+                model.UserId = userId;
+                model.LeaveStatusId = requestedStatusId;
                 _mapper.Map(model, entity);
                 entity = await _absenceRequestRepository.UpdateAsync(entity);
-
 
                 var mappedEntity = _mapper.Map<AbsenceRequestResponseDto>(entity);
                 return ApiResult<AbsenceRequestResponseDto>.Success(mappedEntity);
@@ -146,7 +157,7 @@ namespace AddOptimization.Services.Services
                 var entity = await _absenceRequestRepository.FirstOrDefaultAsync(t => t.Id == id);
                 if (entity == null)
                 {
-                    return ApiResult<bool>.NotFound("Client");
+                    return ApiResult<bool>.NotFound("Customer");
                 }
                 entity.IsDeleted = true;
                 await _absenceRequestRepository.UpdateAsync(entity);

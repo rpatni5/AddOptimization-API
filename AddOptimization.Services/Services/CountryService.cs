@@ -56,7 +56,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _countryRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Id));
+                var entities = await _countryRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.CountryName));
                 var mappedEntities = _mapper.Map<List<CountryDto>>(entities);
                 return ApiResult<List<CountryDto>>.Success(mappedEntities);
             }

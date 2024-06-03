@@ -2,6 +2,7 @@
 using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Services.Services;
+using AddOptimization.Utilities.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -9,62 +10,33 @@ using Microsoft.AspNetCore.Mvc;
 namespace AddOptimization.API.Controllers
 {
     [Authorize]
-    public class ClientController : CustomApiControllerBase
+    public class HolidayAllocationController : CustomApiControllerBase
     {
-        private readonly IClientService _clientService;
-        public ClientController(ILogger<ClientController> logger, IClientService clientService) : base(logger)
+        private readonly IHolidayAllocationService _holidayAllocationService;
+        public HolidayAllocationController(ILogger<HolidayAllocationController> logger, IHolidayAllocationService holidayAllocationService) : base(logger)
         {
-            _clientService = clientService;
+            _holidayAllocationService = holidayAllocationService;
+        }
+        [HttpPost("search")]
+        public async Task<IActionResult> Search([FromBody] PageQueryFiterBase filters)
+        {
+            try
+            {
+                var retVal = await _holidayAllocationService.Search(filters);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] ClientRequestDto model)
+        public async Task<IActionResult> Create([FromBody] HolidayAllocationRequestDto model)
         {
             try
             {
-                var retVal = await _clientService.Create(model);
-                return HandleResponse(retVal);
-            }
-            catch (Exception ex)
-            {
-                return HandleException(ex);
-            }
-        }
-
-        [HttpPost("search")]
-        public async Task<IActionResult> Get([FromBody] ClientResponseDto filter)
-        {
-            try
-            {
-                var retVal = await _clientService.Search();
-                return HandleResponse(retVal);
-            }
-            catch (Exception ex)
-            {
-                return HandleException(ex);
-            }
-        }
-
-        [HttpGet("{id}")]
-        public async Task<IActionResult> Get(Guid id)
-        {
-            try
-            {
-                var retVal = await _clientService.Get(id);
-                return HandleResponse(retVal);
-            }
-            catch (Exception ex)
-            {
-                return HandleException(ex);
-            }
-        }
-
-        [HttpGet("get-all")]
-        public async Task<IActionResult> GetAllClients()
-        {
-            try
-            {
-                var retVal = await _clientService.GetAllClients();
+                var retVal = await _holidayAllocationService.Create(model);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -78,7 +50,7 @@ namespace AddOptimization.API.Controllers
         {
             try
             {
-                var retVal = await _clientService.Delete(id);
+                var retVal = await _holidayAllocationService.Delete(id);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -87,12 +59,12 @@ namespace AddOptimization.API.Controllers
             }
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, ClientRequestDto model)
+        [HttpGet("get-allocated-holiday/{employeeId}")]
+        public async Task<IActionResult> GetAllocatedHolidays(int employeeId)
         {
             try
             {
-                var retVal = await _clientService.Update(id , model);
+                var retVal = await _holidayAllocationService.GetAllocatedHolidays(employeeId);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -100,6 +72,22 @@ namespace AddOptimization.API.Controllers
                 return HandleException(ex);
             }
         }
+
+        [HttpGet("get-holiday-balanced/{employeeId}")]
+        public async Task<IActionResult> GetEmployeeLeaveBalance(int employeeId)
+        {
+            try
+            {
+                var retVal = await _holidayAllocationService.GetEmployeeLeaveBalance(employeeId);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+
 
     }
 }

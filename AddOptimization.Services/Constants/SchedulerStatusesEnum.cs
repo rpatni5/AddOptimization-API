@@ -11,7 +11,12 @@ namespace AddOptimization.Services.Constants
         PENDING_ACCOUNT_ADMIN_APPROVAL,
         DRAFT,
         PENDING_INVOICING,
-        CLIENT_PAID,
-        PENDING_CLIENT_APPROVAL
+        CUSTOMER_PAID,
+        PENDING_CUSTOMER_APPROVAL,
+        DECLINED,
+        CUSTOMER_DECLINED,
+        CUSTOMER_APPROVED,
+        ADMIN_APPROVED,
+
     }
 }

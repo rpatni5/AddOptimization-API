@@ -12,6 +12,7 @@ namespace AddOptimization.Contracts.Services
     public interface IAbsenceApprovalService
     {
         Task<PagedApiResult<AbsenceRequestResponseDto>> Search(PageQueryFiterBase filters);
-        //Task<ApiResult<List<AbsenceApprovalResponseDto>>> Search(PageQueryFiterBase filters);
+        Task<ApiResult<bool>> AbsenceAction(AdminApprovalRequestActionDto model);
+        Task<ApiResult<List<AbsenceRequestResponseDto>>> GetAllAbsenseApproval(int employeeId);
     }
 }

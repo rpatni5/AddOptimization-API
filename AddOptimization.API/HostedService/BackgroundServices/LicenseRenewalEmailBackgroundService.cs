@@ -9,18 +9,18 @@ using System.Text;
 
 namespace AddOptimization.API.HostedService.BackgroundServices
 {
-    public class SendLicenseRenewalEmailBackgroundService : BackgroundService
+    public class LicenseRenewalEmailBackgroundService : BackgroundService
     {
         #region Private Variables
         private readonly IServiceProvider _serviceProvider;
-        private readonly ILogger<SendLicenseRenewalEmailBackgroundService> _logger;
+        private readonly ILogger<LicenseRenewalEmailBackgroundService> _logger;
         private readonly IEmailService _emailService;
         private readonly ITemplateService _templateService;
         private readonly IConfiguration _configuration;
         #endregion
 
         #region Constructor
-        public SendLicenseRenewalEmailBackgroundService(IConfiguration configuration, IEmailService emailService, ITemplateService templateService, IServiceProvider serviceProvider, ILogger<SendLicenseRenewalEmailBackgroundService> logger)
+        public LicenseRenewalEmailBackgroundService(IConfiguration configuration, IEmailService emailService, ITemplateService templateService, IServiceProvider serviceProvider, ILogger<LicenseRenewalEmailBackgroundService> logger)
         {
             _configuration = configuration;
             _serviceProvider = serviceProvider;
@@ -34,6 +34,9 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         #region Protected Methods
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+#if DEBUG
+            return;
+#endif
             var durationValue = _configuration.ReadSection<BackgroundServiceSettings>(AppSettingsSections.BackgroundServiceSettings).RenewLicenseEmailTriggerDurationInSeconds;
             var period = TimeSpan.FromSeconds(durationValue);
             using PeriodicTimer timer = new PeriodicTimer(period);
@@ -62,7 +65,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 {
                     var licensesDtoCollection = new List<LicenseDetailsDto>();
                     licensesDtoCollection.AddRange(group);
-                    await SendCustomerLicenseRenewalEmail(licensesDtoCollection);
+                    Task.Run(() => SendCustomerLicenseRenewalEmail(licensesDtoCollection));
                 }
                 return true;
             }
@@ -119,7 +122,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                         break;
                     default:
                         break;
-                }                
+                }
             }
             sb.AppendLine("</tr>");
 
@@ -150,7 +153,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 sb.AppendLine("</tr>");
                 sNoCount++;
             }
-            
+
             sb.AppendLine("</table>");
             return sb.ToString();
         }

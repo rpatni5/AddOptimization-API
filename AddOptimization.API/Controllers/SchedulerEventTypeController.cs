@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AddOptimization.API.Controllers
 {
-    [Authorize]
     public class SchedulerEventTypeController : CustomApiControllerBase
     {
         private readonly ISchedulerEventTypeService _schedulersEventTypeService;
@@ -16,6 +15,7 @@ namespace AddOptimization.API.Controllers
 
 
         [HttpGet("search")]
+        [AllowAnonymous]
         public async Task<IActionResult> Search()
         {
             try

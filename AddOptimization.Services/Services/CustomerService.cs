@@ -37,6 +37,7 @@ public class CustomerService : ICustomerService
     private readonly IGenericRepository<UserRole> _userRoleRepository;
 
 
+
     private readonly IUnitOfWork _unitOfWork;
     public CustomerService(IGenericRepository<Customer> customerRepository, ILogger<CustomerService> logger, IMapper mapper,
         IAddressService addressService, IUnitOfWork unitOfWork, IEmailService emailService, ITemplateService templateService,
@@ -85,7 +86,7 @@ public class CustomerService : ICustomerService
         {
             var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin")).ToList();
             var entities = await _customerRepository.QueryAsync(include: entities => entities
-            .Include(e => e.CustomerStatus).Include(e => e.Licenses).Include(e => e.BillingAddress), orderBy: (entities) => entities.OrderBy(t => t.Name), ignoreGlobalFilter: superAdminRole.Count != 0);
+            .Include(e => e.CustomerStatus).Include(e => e.Licenses).Include(e => e.BillingAddress).Include(e => e.Country).Include(e => e.PartnerCountry), orderBy: (entities) => entities.OrderBy(t => t.Name), ignoreGlobalFilter: superAdminRole.Count != 0);
 
             entities = ApplySorting(entities, filter?.Sorted?.FirstOrDefault());
             entities = ApplyFilters(entities, filter);
@@ -104,6 +105,25 @@ public class CustomerService : ICustomerService
                 CountryCode = e.CountryCode,
                 CustomerStatusName = e.CustomerStatus.Name,
                 BillingAddressString = e.BillingAddress == null ? null : $"{e.BillingAddress.Address1},{e.BillingAddress.Zip},{e.BillingAddress.City}",
+                ManagerName = e.ManagerName,
+                VAT = e.VAT,
+                PaymentClearanceDays = e.PaymentClearanceDays,
+                CountryId = e.CountryId,
+                IsApprovalRequired = e.IsApprovalRequired,
+                PartnerName = e.PartnerName,
+                PartnerBankName = e.PartnerBankName,
+                PartnerBankAccountName = e.PartnerBankAccountName,
+                PartnerBankAccountNumber = e.PartnerBankAccountNumber,
+                PartnerCountryId = e.PartnerCountryId,
+                PartnerPostalCode = e.PartnerPostalCode,
+                PartnerAddress = e.PartnerAddress,
+                PartnerDescriptions = e.PartnerDescriptions,
+                Street = e.Street,
+                City = e.City,
+                ZipCode  = e.ZipCode,
+                PartnerCity = e.PartnerCity,
+                PartnerStreet = e.PartnerStreet,
+                PartnerZipCode  = e.PartnerZipCode,
 
             }).ToList());
             var retVal = pagedResult;
@@ -452,6 +472,42 @@ public class CustomerService : ICustomerService
         {
             _logger.LogException(ex);
             return false;
+        }
+    }
+
+    public async Task<ApiResult<CustomerDto>> GetCustomerById(Guid id)
+    {
+        try
+        {
+            var entity = await _customerRepository.FirstOrDefaultAsync(t => t.Id == id, include: entity => entity.Include(e => e.Addresses.Where(a => !a.IsDeleted).OrderByDescending(e => e.CreatedAt)).Include(e => e.CustomerStatus).Include(e => e.Country).Include(e => e.PartnerCountry), ignoreGlobalFilter: true);
+            if (entity == null)
+            {
+                return ApiResult<CustomerDto>.NotFound("Customer");
+            }
+            var mappedEntity = _mapper.Map<CustomerDto>(entity);
+
+            return ApiResult<CustomerDto>.Success(mappedEntity);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            throw;
+        }
+    }
+
+    public async Task<ApiResult<List<CustomerDto>>> GetAllCustomers()
+    {
+        try
+        {
+            var activeId = (await _customerStatusRepository.FirstOrDefaultAsync(e => e.Name == CustomerStatuses.Active)).Id;
+            var entities = await _customerRepository.QueryAsync((e => e.CustomerStatusId == activeId), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Id));
+            var mappedEntities = _mapper.Map<List<CustomerDto>>(entities);
+            return ApiResult<List<CustomerDto>>.Success(mappedEntities);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            throw;
         }
     }
 }

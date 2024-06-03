@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AddOptimization.Contracts.Dto
 {
-    public class CreateViewTimesheetResponseDto :BaseDto<Guid>
+    public class SchedulerEventResponseDto :BaseDto<Guid>
     {
-        public Guid ClientId { get; set; }
-        public string ClientName { get; set; }
+        public Guid CustomerId { get; set; }
+        public string CustomerName { get; set; }
         public int ApprovarId { get; set; }
         public string ApprovarName { get; set; }
         public Guid UserStatusId { get; set; }
@@ -26,7 +22,14 @@ namespace AddOptimization.Contracts.Dto
         public decimal WorkDuration { get; set; }
         public decimal Overtime { get; set; }
         public decimal Holiday { get; set; }
+        public DateTime UpdatedAt { get; set; }
 
+        public virtual ApplicationUserDto ApplicationUser { get; set; }
 
+        public virtual ApplicationUserDto Approvar { get; set; }
+        public virtual CustomerDto Customer { get; set; }
+        public virtual List<SchedulerEventDetailsDto> EventDetails { get; set; }
+
+        public bool IsCustomerApprovalPending { get; set; }
     }
 }

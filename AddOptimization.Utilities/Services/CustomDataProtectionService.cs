@@ -5,7 +5,7 @@ namespace AddOptimization.Utilities.Services;
 public class CustomDataProtectionService
 {
     private readonly IDataProtector protector;
-    private readonly string dataProtectionKey = "AddOptimizationEcryption";
+    private readonly string dataProtectionKey = "AddOptimizationEncryption";
     public CustomDataProtectionService(IDataProtectionProvider dataProtectionProvider)
     {
         protector = dataProtectionProvider.CreateProtector(dataProtectionKey);
