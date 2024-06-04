@@ -34,7 +34,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entity = await _schedulerEventHistoryRepository.QueryAsync(x => x.SchedulerEventId == id && !x.IsDeleted, include: entities => entities.Include(e => e.SchedulerEvent));
+                var entity = await _schedulerEventHistoryRepository.QueryAsync(x => x.SchedulerEventId == id && !x.IsDeleted, orderBy: q => q.OrderByDescending(e => e.CreatedAt), include: entities => entities.Include(e => e.SchedulerEvent));
                 
                 if (entity == null)
                 {
@@ -50,8 +50,6 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-       
-
     }
 
 }
