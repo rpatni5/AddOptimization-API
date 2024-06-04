@@ -568,18 +568,19 @@ namespace AddOptimization.Services.Services
 
                 await _schedulerEventHistoryRepository.InsertAsync(entity);
                 var user = (await _appUserRepository.FirstOrDefaultAsync(x => x.Id == result.UserId));
-
+                var details = (await _schedulersDetailsRepository.QueryAsync(x => x.SchedulerEventId == result.Id)).ToList();
+                var duration = await CalculateTimesheetsDaysAndOvertimeHours(result , details);
                 if (customerDetails.IsApprovalRequired)
                 {
                     Task.Run(() =>
                     {
-                        SendRequestTimesheetApprovalEmailToCustomer(customerDetails.Email, result, customerDetails.Name, user.UserName);
+                        SendRequestTimesheetApprovalEmailToCustomer(customerDetails.Email, result, customerDetails.Name, user.FullName , duration.Item1,duration.Item2);
                     });
                 }
 
                 Task.Run(() =>
                 {
-                    SendTimesheetApprovedEmailToEmployee(user.Email, result, user.FullName, model.ApprovarName);
+                    SendTimesheetApprovedEmailToEmployee(user.Email, result, user.FullName, model.ApprovarName, duration.Item1, duration.Item2);
                 });
                 return ApiResult<bool>.Success(true);
             }
@@ -650,10 +651,11 @@ namespace AddOptimization.Services.Services
                 var approver = (await _appUserRepository.FirstOrDefaultAsync(x => x.Id == result.ApprovarId));
                 var user = (await _appUserRepository.FirstOrDefaultAsync(x => x.Id == result.UserId));
                 var customer = (await _customersRepository.FirstOrDefaultAsync(x => x.Id == result.CustomerId));
-
+                var details = (await _schedulersDetailsRepository.QueryAsync(x => x.SchedulerEventId == result.Id)).ToList();
+                var duration = await CalculateTimesheetsDaysAndOvertimeHours(result,details);
                 Task.Run(() =>
                 {
-                    SendTimesheetActionEmailToAccountAdmin(approver, customer, user, eventDetails, model.IsApproved, entity.Comment);
+                    SendTimesheetActionEmailToAccountAdmin(approver, customer, user, eventDetails, model.IsApproved, entity.Comment, duration.Item1, duration.Item2);
                 });
 
 
@@ -666,13 +668,12 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private async Task<bool> SendTimesheetActionEmailToAccountAdmin(ApplicationUser approver, Customer customer, ApplicationUser user, SchedulerEvent schedulerEvent, bool isApprovedEmail, string comment)
+        private async Task<bool> SendTimesheetActionEmailToAccountAdmin(ApplicationUser approver, Customer customer, 
+            ApplicationUser user, SchedulerEvent schedulerEvent, bool isApprovedEmail, 
+            string comment, decimal totalWorkingDays, decimal overtimeHours)
         {
             try
-            {
-                var result = await CalculateTimesheetsDaysAndOvertimeHours(schedulerEvent);
-                decimal totalWorkingDays = result.Item1;
-                decimal overtimeHours = result.Item2;
+            {                
                 var subject = isApprovedEmail ? "Timesheet Approved" : "Timesheet Declined";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetActions);
                 emailTemplate = emailTemplate.Replace("[AccountAdmin]", approver.FullName)
@@ -693,13 +694,11 @@ namespace AddOptimization.Services.Services
             }
         }
         #region Private Methods
-        private async Task<bool> SendTimesheetApprovedEmailToEmployee(string email, SchedulerEvent schedulerEvent, string fullName, string approverName)
+        private async Task<bool> SendTimesheetApprovedEmailToEmployee(string email, SchedulerEvent schedulerEvent, 
+            string fullName, string approverName, decimal totalWorkingDays, decimal overtimeHours)
         {
             try
             {
-                var result = await CalculateTimesheetsDaysAndOvertimeHours(schedulerEvent);
-                decimal totalWorkingDays = result.Item1;
-                decimal overtimeHours = result.Item2;
                 var subject = "Timesheet Approved";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetApproved);
                 emailTemplate = emailTemplate.Replace("[FullName]", fullName)
@@ -717,13 +716,11 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private async Task<bool> SendRequestTimesheetApprovalEmailToCustomer(string email, SchedulerEvent schedulerEvent, string customerName, string employeeName)
+        private async Task<bool> SendRequestTimesheetApprovalEmailToCustomer(string email, SchedulerEvent schedulerEvent, 
+            string customerName, string employeeName, decimal totalWorkingDays, decimal overtimeHours)
         {
             try
             {
-                var result = await CalculateTimesheetsDaysAndOvertimeHours(schedulerEvent);
-                decimal totalWorkingDays = result.Item1;
-                decimal overtimeHours = result.Item2;
                 var subject = "Timesheet Approval Request";
                 var link = GetTimesheetLinkForCustomer(schedulerEvent.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.RequestTimesheetApproval);
@@ -753,17 +750,20 @@ namespace AddOptimization.Services.Services
         public async Task<bool> SendTimesheetApprovalEmailToCustomer(Guid schedulerEventId)
         {
             var entity = (await _schedulersRepository.QueryAsync(x => x.Id == schedulerEventId, include: entities => entities.Include(e => e.ApplicationUser).Include(e => e.Customer))).FirstOrDefault();
-            return await SendRequestTimesheetApprovalEmailToCustomer(entity.Customer.Email, entity, entity.Customer.Name, entity.ApplicationUser.FullName);
+            var details = (await _schedulersDetailsRepository.QueryAsync(x => x.SchedulerEventId == schedulerEventId)).ToList();
+            var duration = await CalculateTimesheetsDaysAndOvertimeHours(entity,details);
+            return await SendRequestTimesheetApprovalEmailToCustomer(entity.Customer.Email, entity, entity.Customer.Name, entity.ApplicationUser.FullName, duration.Item1
+                , duration.Item2);
         }
 
-        private async Task<(decimal, decimal)> CalculateTimesheetsDaysAndOvertimeHours(SchedulerEvent schedulerEvent)
+        private async Task<(decimal, decimal)> CalculateTimesheetsDaysAndOvertimeHours(SchedulerEvent schedulerEvent, List<SchedulerEventDetails> schedulerEventDetails)
         {
 
             var eventTypes = (await _schedulerEventTypeService.Search()).Result;
             var timesheetEventId = eventTypes.FirstOrDefault(x => x.Name.Equals("timesheet", StringComparison.InvariantCultureIgnoreCase)).Id;
             var overtimeId = eventTypes.FirstOrDefault(x => x.Name.Equals("overtime", StringComparison.InvariantCultureIgnoreCase)).Id;
-            var timesheetEvents = schedulerEvent.EventDetails.Where(c => c.Date.Value.Month == schedulerEvent.StartDate.Month && c.EventTypeId == timesheetEventId).ToList();
-            var overtimeEvents = schedulerEvent.EventDetails.Where(c => c.Date.Value.Month == schedulerEvent.StartDate.Month && c.EventTypeId == overtimeId).ToList();
+            var timesheetEvents = schedulerEventDetails.Where(c => c.Date.Value.Month == schedulerEvent.StartDate.Month && c.EventTypeId == timesheetEventId).ToList();
+            var overtimeEvents = schedulerEventDetails.Where(c => c.Date.Value.Month == schedulerEvent.StartDate.Month && c.EventTypeId == overtimeId).ToList();
             var totalWorkingDays = timesheetEvents.Sum(item => item.Duration);
             var overtimeHours = overtimeEvents.Sum(item => item.Duration);
             return (totalWorkingDays, overtimeHours);
