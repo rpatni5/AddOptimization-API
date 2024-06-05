@@ -378,7 +378,7 @@ namespace AddOptimization.Services.Services
                 };
                 await _schedulerEventHistoryRepository.InsertAsync(entity);
             }
-
+            //Send email on timesheet submission to approvar -> send direct link of approval
             return saveResult;
         }
 
