@@ -41,7 +41,7 @@ services.AddHostedService<FillTimesheetReminderEmailBackgroundService>();
 services.AddHostedService<PendingTimesheetReminderToCustomerBackgroundService>();
 services.AddLogging(builder =>
 {
-    builder.AddFile($"logs/log_for.txt",LogLevel.Error);
+    builder.AddFile($"logs/log_for.txt",LogLevel.Information);
 });
 #endregion
 #region configure
