@@ -37,22 +37,25 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             //#if DEBUG
             //            return;
             //#endif
+            _logger.LogInformation("ExecuteAsync Started.");
             var durationValue = _configuration.ReadSection<BackgroundServiceSettings>(AppSettingsSections.BackgroundServiceSettings).FillTimesheetReminderEmailTriggerDurationInSeconds;
             var period = TimeSpan.FromSeconds(durationValue);
             using PeriodicTimer timer = new PeriodicTimer(period);
-            while (!stoppingToken.IsCancellationRequested &&
-                   await timer.WaitForNextTickAsync(stoppingToken))
+            while (!stoppingToken.IsCancellationRequested)
             {
                 _logger.LogInformation("Send Fill Timesheet Reminder Email Background Service Started.");
                 await GetNotFilledTimesheetData();
                 _logger.LogInformation("Send Fill Timesheet Reminder Email Background Service Completed.");
+                await timer.WaitForNextTickAsync(stoppingToken);
             }
+            _logger.LogInformation("ExecuteAsync Completed.");
         }
         #endregion
 
         #region Private Methods        
         private async Task<bool> GetNotFilledTimesheetData()
         {
+            _logger.LogInformation("GetNotFilledTimesheetData Started.");
             try
             {
                 using var scope = _serviceProvider.CreateScope();
@@ -77,6 +80,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                         };
                     }
                 }
+                _logger.LogInformation("GetNotFilledTimesheetData Completed.");
                 return true;
             }
             catch (Exception ex)
