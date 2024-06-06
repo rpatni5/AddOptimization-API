@@ -8,6 +8,7 @@ using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
 using AddOptimization.Utilities.Services;
 using NPOI.SS.Formula.Functions;
+using Sgbj.Cron;
 using System.Text;
 
 namespace AddOptimization.API.HostedService.BackgroundServices
@@ -47,9 +48,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
 #if DEBUG
             return;
 #endif
-            var durationValue = _configuration.ReadSection<BackgroundServiceSettings>(AppSettingsSections.BackgroundServiceSettings).ApprovePendingTimesheetReminderEmailTriggerDurationInSeconds;
-            var period = TimeSpan.FromSeconds(durationValue);
-            using PeriodicTimer timer = new PeriodicTimer(period);
+            using var timer = new CronTimer("0 8 * * */2", TimeZoneInfo.Local);
             while (!stoppingToken.IsCancellationRequested &&
                    await timer.WaitForNextTickAsync(stoppingToken))
             {

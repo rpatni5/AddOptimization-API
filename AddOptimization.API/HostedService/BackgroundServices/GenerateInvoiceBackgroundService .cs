@@ -5,6 +5,7 @@ using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
+using Sgbj.Cron;
 
 namespace AddOptimization.API.HostedService.BackgroundServices
 {
@@ -36,9 +37,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             //#if DEBUG
             //            return;
             //#endif
-            var durationValue = _configuration.ReadSection<BackgroundServiceSettings>(AppSettingsSections.BackgroundServiceSettings).GenerateInvoiceTriggerDurationInSeconds;
-            var period = TimeSpan.FromSeconds(durationValue);
-            using PeriodicTimer timer = new PeriodicTimer(period);
+            using var timer = new CronTimer("0 8 * * *", TimeZoneInfo.Local);
             while (!stoppingToken.IsCancellationRequested &&
                    await timer.WaitForNextTickAsync(stoppingToken))
             {

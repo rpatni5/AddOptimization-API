@@ -5,6 +5,7 @@ using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
+using Sgbj.Cron;
 using System.Globalization;
 
 namespace AddOptimization.API.HostedService.BackgroundServices
@@ -38,15 +39,12 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             //            return;
             //#endif
             _logger.LogInformation("ExecuteAsync Started.");
-            var durationValue = _configuration.ReadSection<BackgroundServiceSettings>(AppSettingsSections.BackgroundServiceSettings).FillTimesheetReminderEmailTriggerDurationInSeconds;
-            var period = TimeSpan.FromSeconds(durationValue);
-            using PeriodicTimer timer = new PeriodicTimer(period);
-            while (!stoppingToken.IsCancellationRequested)
+            using var timer = new CronTimer("0 8 * * *", TimeZoneInfo.Local);
+            while (!stoppingToken.IsCancellationRequested && await timer.WaitForNextTickAsync(stoppingToken))
             {
                 _logger.LogInformation("Send Fill Timesheet Reminder Email Background Service Started.");
                 await GetNotFilledTimesheetData();
                 _logger.LogInformation("Send Fill Timesheet Reminder Email Background Service Completed.");
-                await timer.WaitForNextTickAsync(stoppingToken);
             }
             _logger.LogInformation("ExecuteAsync Completed.");
         }
