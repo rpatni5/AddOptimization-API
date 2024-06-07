@@ -71,7 +71,6 @@ public class LicenseService : ILicenseService
                 ExpirationDate = e.ExpirationDate,
                 CustomerEmail = e.Customer.Email,
                 LicenseDuration = e.LicenseDuration,
-                CustomerName = e.Customer.Name,
                 CreatedBy = e.CreatedByUser.FullName,
                 LicenseDevices = _mapper.Map<List<LicenseDeviceDto>>(e.LicenseDevices),
                 ActivatedDevicesCount = e.LicenseDevices.Any() ? e.LicenseDevices.Count() : 0,
@@ -155,7 +154,7 @@ public class LicenseService : ILicenseService
             if (licenseResult != null)
             {
                 var customer = await _customerRepository.FirstOrDefaultAsync(x => x.Id == licenseResult.CustomerId);
-                Task.Run(() => SendCustomerLicenseAddedEmail(customer.Email, customer.Name, licenseResult));
+                Task.Run(() => SendCustomerLicenseAddedEmail(customer.Email, licenseResult));
             }
             return await Get(entity.Id);
         }
@@ -222,10 +221,7 @@ public class LicenseService : ILicenseService
     private IQueryable<License> ApplyFilters(IQueryable<License> entities, PageQueryFiterBase filter)
     {
 
-        filter.GetValue<string>("customerName", (v) =>
-        {
-            entities = entities.Where(e => e.Customer != null && e.Customer.Name.ToLower().Contains(v.ToLower()));
-        });
+        
 
         filter.GetValue<string>("customerEmail", (v) =>
         {
@@ -332,10 +328,6 @@ public class LicenseService : ILicenseService
                 {
                     orders = orders.OrderBy(e => e.ExpirationDate);
                 }
-                if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerName).ToUpper())
-                {
-                    orders = orders.OrderBy(o => o.Customer.Name);
-                }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerEmail).ToUpper())
                 {
                     orders = orders.OrderBy(o => o.Customer.Email);
@@ -363,10 +355,6 @@ public class LicenseService : ILicenseService
                 {
                     orders = orders.OrderByDescending(e => e.ExpirationDate);
                 }
-                if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerName).ToUpper())
-                {
-                    orders = orders.OrderByDescending(o => o.Customer.Name);
-                }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerEmail).ToUpper())
                 {
                     orders = orders.OrderByDescending(o => o.Customer.Email);
@@ -386,7 +374,7 @@ public class LicenseService : ILicenseService
         }
     }
 
-    private async Task<bool> SendCustomerLicenseAddedEmail(string email, string userFullName, License license)
+    private async Task<bool> SendCustomerLicenseAddedEmail(string email, License license)
     {
         try
         {
@@ -394,7 +382,6 @@ public class LicenseService : ILicenseService
             var message = "A new license has been created for your account. Please find the details below.";
             var emailTemplate = _templateService.ReadTemplate(EmailTemplates.CreateLicense);
             emailTemplate = emailTemplate
-                            .Replace("[CustomerName]", userFullName)
                             .Replace("[Message]", message)
                             .Replace("[LicenseKey]", license.LicenseKey)
                             .Replace("[NoOfDevices]", license.NoOfDevices.ToString())
