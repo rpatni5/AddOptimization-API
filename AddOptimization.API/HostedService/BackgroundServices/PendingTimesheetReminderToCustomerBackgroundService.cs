@@ -97,7 +97,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                                 .Replace("[StartDate]", schedulerEvent?.StartDate.Date.ToString("d"))
                                 .Replace("[EndDate]", schedulerEvent?.EndDate.Date.ToString("d"))
                                 .Replace("[LinkToApproveTimesheet]", link);
-                return await _emailService.SendEmail(schedulerEvent?.Customer?.Email, subject, emailTemplate);
+                return await _emailService.SendEmail(schedulerEvent?.Customer?.ManagerEmail, subject, emailTemplate);
             }
             catch (Exception ex)
             {

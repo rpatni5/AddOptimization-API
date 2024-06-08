@@ -79,6 +79,7 @@ namespace AddOptimization.Services.Services
                     CustomerId = e.CustomerId,
                     ApprovarId = e.ApprovarId,
                     ApprovarName = e.Approvar.FullName,
+                    CustomerName = e.Customer.ManagerName,
                     UserId = e.UserId,
                     UserStatusId = e.UserStatusId,
                     UserName = e.ApplicationUser.FullName,
@@ -397,6 +398,10 @@ namespace AddOptimization.Services.Services
                 var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
                 entities = entities.Where(e => e.UserId == userId);
             });
+            filter.GetValue<string>("customerName", (v) =>
+            {
+                entities = entities.Where(e => e.Customer != null && (e.Customer.ManagerName.ToLower().Contains(v.ToLower())));
+            });
             filter.GetValue<string>("customer", (v) =>
             {
                 entities = entities.Where(e => e.CustomerId.ToString() == v);
@@ -488,6 +493,10 @@ namespace AddOptimization.Services.Services
                 var columnName = sort.Name.ToUpper();
                 if (sort.Direction == SortDirection.ascending.ToString())
                 {
+                    if (columnName.ToUpper() == nameof(SchedulerEventResponseDto.CustomerName).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.Customer.ManagerName);
+                    }
                     if (columnName.ToUpper() == nameof(SchedulerEventResponseDto.ApprovarName).ToUpper())
                     {
                         entities = entities.OrderBy(o => o.Approvar.FirstName);
@@ -500,6 +509,10 @@ namespace AddOptimization.Services.Services
 
                 else
                 {
+                    if (columnName.ToUpper() == nameof(SchedulerEventResponseDto.CustomerName).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.Customer.ManagerName);
+                    }
                     if (columnName.ToUpper() == nameof(SchedulerEventResponseDto.ApprovarName).ToUpper())
                     {
                         entities = entities.OrderByDescending(o => o.Approvar.FirstName);
@@ -556,12 +569,12 @@ namespace AddOptimization.Services.Services
                 await _schedulerEventHistoryRepository.InsertAsync(entity);
                 var user = (await _appUserRepository.FirstOrDefaultAsync(x => x.Id == result.UserId));
                 var details = (await _schedulersDetailsRepository.QueryAsync(x => x.SchedulerEventId == result.Id)).ToList();
-                var duration = await CalculateTimesheetsDaysAndOvertimeHours(result , details);
+                var duration = await CalculateTimesheetsDaysAndOvertimeHours(result, details);
                 if (customerDetails.IsApprovalRequired)
                 {
                     Task.Run(() =>
                     {
-                        SendRequestTimesheetApprovalEmailToCustomer(customerDetails.Email, result, user.FullName , duration.Item1,duration.Item2);
+                        SendRequestTimesheetApprovalEmailToCustomer(customerDetails.ManagerEmail, result, customerDetails.ManagerName, user.FullName, duration.Item1, duration.Item2);
                     });
                 }
 
@@ -639,7 +652,7 @@ namespace AddOptimization.Services.Services
                 var user = (await _appUserRepository.FirstOrDefaultAsync(x => x.Id == result.UserId));
                 var customer = (await _customersRepository.FirstOrDefaultAsync(x => x.Id == result.CustomerId));
                 var details = (await _schedulersDetailsRepository.QueryAsync(x => x.SchedulerEventId == result.Id)).ToList();
-                var duration = await CalculateTimesheetsDaysAndOvertimeHours(result,details);
+                var duration = await CalculateTimesheetsDaysAndOvertimeHours(result, details);
                 Task.Run(() =>
                 {
                     SendTimesheetActionEmailToAccountAdmin(approver, customer, user, eventDetails, model.IsApproved, entity.Comment, duration.Item1, duration.Item2);
@@ -655,12 +668,12 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private async Task<bool> SendTimesheetActionEmailToAccountAdmin(ApplicationUser approver, Customer customer, 
-            ApplicationUser user, SchedulerEvent schedulerEvent, bool isApprovedEmail, 
+        private async Task<bool> SendTimesheetActionEmailToAccountAdmin(ApplicationUser approver, Customer customer,
+            ApplicationUser user, SchedulerEvent schedulerEvent, bool isApprovedEmail,
             string comment, decimal totalWorkingDays, decimal overtimeHours)
         {
             try
-            {                
+            {
                 var subject = isApprovedEmail ? "Timesheet Approved" : "Timesheet Declined";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetActions);
                 emailTemplate = emailTemplate.Replace("[AccountAdmin]", approver.FullName)
@@ -680,7 +693,7 @@ namespace AddOptimization.Services.Services
             }
         }
         #region Private Methods
-        private async Task<bool> SendTimesheetApprovedEmailToEmployee(string email, SchedulerEvent schedulerEvent, 
+        private async Task<bool> SendTimesheetApprovedEmailToEmployee(string email, SchedulerEvent schedulerEvent,
             string fullName, string approverName, decimal totalWorkingDays, decimal overtimeHours)
         {
             try
@@ -702,7 +715,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private async Task<bool> SendRequestTimesheetApprovalEmailToCustomer(string email, SchedulerEvent schedulerEvent, 
+        private async Task<bool> SendRequestTimesheetApprovalEmailToCustomer(string email, SchedulerEvent schedulerEvent, string customerName,
              string employeeName, decimal totalWorkingDays, decimal overtimeHours)
         {
             try
@@ -710,7 +723,8 @@ namespace AddOptimization.Services.Services
                 var subject = "Timesheet Approval Request";
                 var link = GetTimesheetLinkForCustomer(schedulerEvent.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.RequestTimesheetApproval);
-                emailTemplate = emailTemplate.Replace("[EmployeeName]", employeeName)
+                emailTemplate = emailTemplate.Replace("[CustomerName]", customerName)
+                                             .Replace("[EmployeeName]", employeeName)
                                              .Replace("[LinkToTimesheet]", link)
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
                                              .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
@@ -736,8 +750,8 @@ namespace AddOptimization.Services.Services
         {
             var entity = (await _schedulersRepository.QueryAsync(x => x.Id == schedulerEventId, include: entities => entities.Include(e => e.ApplicationUser).Include(e => e.Customer))).FirstOrDefault();
             var details = (await _schedulersDetailsRepository.QueryAsync(x => x.SchedulerEventId == schedulerEventId)).ToList();
-            var duration = await CalculateTimesheetsDaysAndOvertimeHours(entity,details);
-            return await SendRequestTimesheetApprovalEmailToCustomer(entity.Customer.Email, entity, entity.ApplicationUser.FullName, duration.Item1
+            var duration = await CalculateTimesheetsDaysAndOvertimeHours(entity, details);
+            return await SendRequestTimesheetApprovalEmailToCustomer(entity.Customer.ManagerEmail, entity, entity.Customer.ManagerName, entity.ApplicationUser.FullName, duration.Item1
                 , duration.Item2);
         }
 

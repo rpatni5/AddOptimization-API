@@ -140,7 +140,7 @@ namespace AddOptimization.Services.Mappings
             {
                 d.ApprovarName = s.Approvar != null ? s.Approvar.FullName : string.Empty;
                 d.UserName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
-                
+                d.CustomerName = s.Customer != null ? s.Customer.ManagerName : string.Empty;
                 d.AdminStatusName = s.AdminStatus != null ? s.AdminStatus.Name : string.Empty;
                 d.UserStatusName = s.UserStatus != null ? s.UserStatus.Name : string.Empty;
             });
@@ -179,6 +179,7 @@ namespace AddOptimization.Services.Mappings
             CreateMap<CustomerEmployeeAssociation, CustomerEmployeeAssociationDto>().AfterMap((s, d) =>
             {
                 d.ApproverName = s.Approver != null ? s.Approver.FullName : string.Empty;
+                d.CustomerName = s.Customer != null ? s.Customer.ManagerName : string.Empty;
                 d.EmployeeName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
                 d.CreatedAt = s.CreatedAt?.Date;
                 d.CreatedBy = s.CreatedByUser?.FullName;
