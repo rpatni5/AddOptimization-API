@@ -5,6 +5,8 @@ using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
+using Sgbj.Cron;
+using System.Globalization;
 
 namespace AddOptimization.API.HostedService.BackgroundServices
 {
@@ -33,25 +35,25 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         #region Protected Methods
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-#if DEBUG
-            return;
-#endif
-            var durationValue = _configuration.ReadSection<BackgroundServiceSettings>(AppSettingsSections.BackgroundServiceSettings).FillTimesheetReminderEmailTriggerDurationInSeconds;
-            var period = TimeSpan.FromSeconds(durationValue);
-            using PeriodicTimer timer = new PeriodicTimer(period);
-            while (!stoppingToken.IsCancellationRequested &&
-                   await timer.WaitForNextTickAsync(stoppingToken))
+            //#if DEBUG
+            //            return;
+            //#endif
+            _logger.LogInformation("ExecuteAsync Started.");
+            using var timer = new CronTimer("0 8 * * *", TimeZoneInfo.Local);
+            while (!stoppingToken.IsCancellationRequested && await timer.WaitForNextTickAsync(stoppingToken))
             {
                 _logger.LogInformation("Send Fill Timesheet Reminder Email Background Service Started.");
                 await GetNotFilledTimesheetData();
                 _logger.LogInformation("Send Fill Timesheet Reminder Email Background Service Completed.");
             }
+            _logger.LogInformation("ExecuteAsync Completed.");
         }
         #endregion
 
         #region Private Methods        
         private async Task<bool> GetNotFilledTimesheetData()
         {
+            _logger.LogInformation("GetNotFilledTimesheetData Started.");
             try
             {
                 using var scope = _serviceProvider.CreateScope();
@@ -67,15 +69,16 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                         var schedulerEvents = await schedulerEventService.GetSchedulerEventsForEmailReminder(association.CustomerId, association.EmployeeId);
                         if (schedulerEvents?.Result == null) continue;
 
-                        //Filter scheduler events which happened before the client association.
+                        //Filter scheduler events which happened before current month of the client employee association.
                         var events = schedulerEvents.Result
-                            .Where(s => s.EventDetails != null && (s.EventDetails == null && s.EndDate <= association.CreatedAt)).ToList();
+                            .Where(s => s.StartDate.Month >= association.CreatedAt.Value.Month).ToList();
                         foreach (var item in events)
                         {
                             Task.Run(() => SendFillTimesheetReminderEmail(item));
                         };
                     }
                 }
+                _logger.LogInformation("GetNotFilledTimesheetData Completed.");
                 return true;
             }
             catch (Exception ex)
@@ -95,8 +98,8 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 var link = GetMyTimesheetLinkForEmployee();
                 emailTemplate = emailTemplate
                                 .Replace("[EmployeeName]", schedulerEvent?.UserName)
-                                .Replace("[StartDate]", schedulerEvent?.StartDate.Date.ToString("d"))
-                                .Replace("[EndDate]", schedulerEvent?.EndDate.Date.ToString("d"))
+                                .Replace("[StartDate]", schedulerEvent?.StartDate.Date.ToString("dd/M/yyyy", CultureInfo.InvariantCulture))
+                                .Replace("[EndDate]", schedulerEvent?.EndDate.Date.ToString("dd/M/yyyy", CultureInfo.InvariantCulture))
                                 .Replace("[LinkToMyTimesheet]", link);
                 return await _emailService.SendEmail(schedulerEvent?.ApplicationUser?.Email, subject, emailTemplate);
             }

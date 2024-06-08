@@ -5,6 +5,7 @@ using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
+using Sgbj.Cron;
 using System.Text;
 
 namespace AddOptimization.API.HostedService.BackgroundServices
@@ -34,12 +35,11 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         #region Protected Methods
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-#if DEBUG
-            return;
-#endif
-            var durationValue = _configuration.ReadSection<BackgroundServiceSettings>(AppSettingsSections.BackgroundServiceSettings).RenewLicenseEmailTriggerDurationInSeconds;
-            var period = TimeSpan.FromSeconds(durationValue);
-            using PeriodicTimer timer = new PeriodicTimer(period);
+            //#if DEBUG
+            //            return;
+            //#endif
+            _logger.LogInformation("ExecuteAsync Started.");
+            using var timer = new CronTimer("0 8 * * *", TimeZoneInfo.Local);
             while (!stoppingToken.IsCancellationRequested &&
                    await timer.WaitForNextTickAsync(stoppingToken))
             {
@@ -47,6 +47,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 await GetCustomersWithLicensesExpiringSoon();
                 _logger.LogInformation("Send License Renewal Email BackgroundTask Completed.");
             }
+            _logger.LogInformation("ExecuteAsync Completed.");
         }
         #endregion
 

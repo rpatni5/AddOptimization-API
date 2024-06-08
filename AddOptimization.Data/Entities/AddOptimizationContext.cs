@@ -91,12 +91,12 @@ public partial class AddOptimizationContext : DbContext
 
         modelBuilder.Entity<Customer>(entity =>
         {
-            entity.HasQueryFilter(e => e.Email == CurrentUserEmail);
+            entity.HasQueryFilter(e => e.ManagerEmail == CurrentUserEmail);
         });
 
         modelBuilder.Entity<License>(entity =>
         {
-            entity.HasQueryFilter(e => e.Customer != null ? e.Customer.Email == CurrentUserEmail : true);
+            entity.HasQueryFilter(e => e.Customer != null ? e.Customer.ManagerEmail == CurrentUserEmail : true);
         });
 
         modelBuilder.Entity<SchedulerEvent>(entity =>

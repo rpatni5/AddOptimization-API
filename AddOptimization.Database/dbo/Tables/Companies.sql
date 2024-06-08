@@ -1,19 +1,24 @@
-﻿
-CREATE TABLE [dbo].[Companies](
+﻿CREATE TABLE [dbo].[Companies](
 	[Id] [uniqueidentifier] NOT NULL,
-	[AccountName] [nvarchar](200) NULL,
-	[AccountNumber] [nvarchar](200) NULL,
+	[CompanyName] [nvarchar](200) NULL,
 	[Email] [nvarchar](100) NULL,
 	[Website] [nvarchar](100) NULL,
 	[MobileNumber] [nvarchar](100) NULL,
 	[BankName] [nvarchar](200) NULL,
 	[BankAccountName] [nvarchar](200) NULL,
 	[BankAccountNumber] [nvarchar](200) NULL,
-	[BillingAddress] [nvarchar](500) NULL,
+	[BankAddress] [nvarchar](500) NULL,
 	[CreatedAt] [datetime2](7) NULL,
 	[CreatedByUserId] [int] NULL,
 	[UpdatedAt] [datetime2](7) NULL,
 	[UpdatedByUserId] [int] NULL,
+	[Address] [nvarchar](200) NULL,
+	[City] [nvarchar](200) NULL,
+	[Country] [nvarchar](200) NULL,
+	[ZipCode] [int] NULL,
+	[SwiftCode] [varchar](100) NULL,
+	[State] [varchar](100) NULL,
+	[TaxNumber] [varchar](100) NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -28,3 +33,5 @@ GO
 ALTER TABLE [dbo].[Companies]  WITH CHECK ADD FOREIGN KEY([UpdatedByUserId])
 REFERENCES [dbo].[ApplicationUsers] ([Id])
 GO
+
+

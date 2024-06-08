@@ -30,7 +30,6 @@ namespace AddOptimization.Services.Mappings
             CreateMap<CustomerCreateDto, Customer>().ForMember(c => c.Addresses, opt => opt.Ignore()).AfterMap((s, d) =>
             {
                 d.Organizations = s.Company;
-                d.Birthday = s.Birthday != DateTime.MinValue ? s.Birthday.ToString("yyyy-MM-dd") : null;
             });
             CreateMap<CustomerStatus, CustomerStatusDto>();
             CreateMap<ScreenCreateDto, Screen>().AfterMap((s, d) =>
@@ -46,7 +45,6 @@ namespace AddOptimization.Services.Mappings
             CreateMap<Customer, CustomerDto>().AfterMap((s, d) =>
             {
                 d.Company = s.Organizations;
-                d.BirthDay = string.IsNullOrEmpty(s.Birthday) ? s.Birthday : (DateTime.Parse(s.Birthday)).ToString("yyyy-MM-dd");
                 d.CustomerStatusName = s.CustomerStatus?.Name;
                 d.BillingAddressString = s.BillingAddress == null ? null : $"{s.BillingAddress.Address1},{s.BillingAddress.Zip},{s.BillingAddress.City}";
             });
@@ -142,7 +140,7 @@ namespace AddOptimization.Services.Mappings
             {
                 d.ApprovarName = s.Approvar != null ? s.Approvar.FullName : string.Empty;
                 d.UserName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
-                d.CustomerName = s.Customer != null ? s.Customer.Name : string.Empty;
+                d.CustomerName = s.Customer != null ? s.Customer.ManagerName : string.Empty;
                 d.AdminStatusName = s.AdminStatus != null ? s.AdminStatus.Name : string.Empty;
                 d.UserStatusName = s.UserStatus != null ? s.UserStatus.Name : string.Empty;
             });
@@ -181,7 +179,7 @@ namespace AddOptimization.Services.Mappings
             CreateMap<CustomerEmployeeAssociation, CustomerEmployeeAssociationDto>().AfterMap((s, d) =>
             {
                 d.ApproverName = s.Approver != null ? s.Approver.FullName : string.Empty;
-                d.CustomerName = s.Customer != null ? s.Customer.Name: string.Empty;
+                d.CustomerName = s.Customer != null ? s.Customer.ManagerName : string.Empty;
                 d.EmployeeName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
                 d.CreatedAt = s.CreatedAt?.Date;
                 d.CreatedBy = s.CreatedByUser?.FullName;
@@ -248,6 +246,16 @@ namespace AddOptimization.Services.Mappings
 
             });
             CreateMap<QuoteSummaryDto, QuoteSummary>();
+
+            CreateMap<SchedulerEventHistory, SchedulerEventHistoryDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.CreatedAt = s.CreatedAt?.Date;
+                d.UpdatedAt = s.UpdatedAt?.Date;
+
+            });
+            CreateMap<SchedulerEventHistoryDto, SchedulerEventHistory>();
         }
     }
 }

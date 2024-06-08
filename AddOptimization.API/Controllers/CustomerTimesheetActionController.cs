@@ -14,12 +14,14 @@ namespace AddOptimization.API.Controllers
     public class CustomerTimesheetActionController : CustomApiControllerBase
     {
         private readonly ISchedulerEventService _schedulerEventService;
+        private readonly ISchedulerEventHistoryService _schedulerEventHistoryService;
         private readonly CustomDataProtectionService _customDataProtectionService;
 
-        public CustomerTimesheetActionController(ILogger<SchedulerEventController> logger, ISchedulerEventService schedulerEventService, CustomDataProtectionService customDataProtectionService) : base(logger)
+        public CustomerTimesheetActionController(ILogger<SchedulerEventController> logger, ISchedulerEventService schedulerEventService, ISchedulerEventHistoryService schedulerEventHistoryService, CustomDataProtectionService customDataProtectionService) : base(logger)
         {
             _schedulerEventService = schedulerEventService;
             _customDataProtectionService = customDataProtectionService;
+            _schedulerEventHistoryService = schedulerEventHistoryService;
         }
 
         [HttpGet("timesheet-event-details/{id}")]
@@ -60,6 +62,21 @@ namespace AddOptimization.API.Controllers
                 var retVal = await _schedulerEventService.TimesheetAction(model);
                 return HandleResponse(retVal);
 
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpGet("get-scheduler-history/{id}")]
+        public async Task<IActionResult> GetSchedulerEventHistory(string id)
+        {
+            try
+            {
+                var eventId = new Guid(_customDataProtectionService.Decode(id));
+                var retVal = await _schedulerEventHistoryService.GetSchedulerEventHistory(eventId);
+                return HandleResponse(retVal);
             }
             catch (Exception ex)
             {
