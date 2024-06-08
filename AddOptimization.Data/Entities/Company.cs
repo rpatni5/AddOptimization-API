@@ -13,9 +13,7 @@ public class Company : BaseEntityNew<Guid>
     public string MobileNumber { get; set; }
 
     [MaxLength(200)]
-    public string AccountName { get; set; }
-    [MaxLength(50)]
-    public string AccountNumber { get; set; }
+    public string CompanyName { get; set; }
 
     [MaxLength(200)]
     public string Website { get; set; }
@@ -30,12 +28,14 @@ public class Company : BaseEntityNew<Guid>
     public string BankAccountNumber { get; set; }
 
     [MaxLength(300)]
-    public string BillingAddress { get; set; }
+    public string BankAddress { get; set; }
     
-    public string Street { get; set; }
+    public string Address { get; set; }
     public string City { get; set; }
     public string Country { get; set; }
     public int? ZipCode { get; set; }
-
+    public string? SwiftCode { get; set; }
+    public string? State { get; set; }
+    public string? TaxNumber { get; set; }
 
 }
