@@ -378,6 +378,14 @@ namespace AddOptimization.Services.Services
                 };
                 await _schedulerEventHistoryRepository.InsertAsync(entity);
             }
+            var approver = (await _appUserRepository.FirstOrDefaultAsync(x => x.Id == result.ApprovarId));
+            var user = (await _appUserRepository.FirstOrDefaultAsync(x => x.Id == result.UserId));
+            var details = (await _schedulersDetailsRepository.QueryAsync(x => x.SchedulerEventId == result.Id)).ToList();
+            var duration = await CalculateTimesheetsDaysAndOvertimeHours(result, details);
+            Task.Run(() =>
+            {
+                SendRequestTimesheetApprovalEmailToAccountAdmin(approver.Email, result, approver.FullName, user.FullName, duration.Item1, duration.Item2);
+            });
             //Send email on timesheet submission to approvar -> send direct link of approval
             return saveResult;
         }
@@ -738,14 +746,40 @@ namespace AddOptimization.Services.Services
                 return false;
             }
         }
-
+        private async Task<bool> SendRequestTimesheetApprovalEmailToAccountAdmin(string email, SchedulerEvent schedulerEvent, string approverName,
+                                    string employeeName, decimal totalWorkingDays, decimal overtimeHours)
+        {
+            try
+            {
+                var subject = "Timesheet Approval Request";
+                var link = GetTimesheetLinkForAccountAdmin(schedulerEvent.Id);
+                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.RequestTimesheetApproval);
+                emailTemplate = emailTemplate.Replace("[CustomerName]", approverName)
+                                             .Replace("[EmployeeName]", employeeName)
+                                             .Replace("[LinkToTimesheet]", link)
+                                             .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
+                                             .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
+                                             .Replace("[WorkDuration]", totalWorkingDays.ToString())
+                                             .Replace("[Overtime]", overtimeHours.ToString());
+                return await _emailService.SendEmail(email, subject, emailTemplate);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return false;
+            }
+        }
         public string GetTimesheetLinkForCustomer(Guid schedulerEventId)
         {
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
             var encryptedId = _protectionService.Encode(schedulerEventId.ToString());
             return $"{baseUrl}timesheet/approval/{encryptedId}";
         }
-
+        public string GetTimesheetLinkForAccountAdmin(Guid schedulerEventId)
+        {
+            var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
+            return $"{baseUrl}admin/timesheets/time-sheets-review-calendar/{schedulerEventId}";
+        }
         public async Task<bool> SendTimesheetApprovalEmailToCustomer(Guid schedulerEventId)
         {
             var entity = (await _schedulersRepository.QueryAsync(x => x.Id == schedulerEventId, include: entities => entities.Include(e => e.ApplicationUser).Include(e => e.Customer))).FirstOrDefault();
