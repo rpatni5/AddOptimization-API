@@ -45,9 +45,10 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         #region Protected Methods
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-#if DEBUG
-            return;
-#endif
+            //#if DEBUG
+            //            return;
+            //#endif
+            _logger.LogInformation("ExecuteAsync Started.");
             using var timer = new CronTimer("0 8 * * */2", TimeZoneInfo.Local);
             while (!stoppingToken.IsCancellationRequested &&
                    await timer.WaitForNextTickAsync(stoppingToken))
@@ -56,6 +57,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 await GetNotApprovedTimesheetData();
                 _logger.LogInformation("Send Approve Pending Timesheet Reminder Email Background Service Completed.");
             }
+            _logger.LogInformation("ExecuteAsync Completed.");
         }
         #endregion
 

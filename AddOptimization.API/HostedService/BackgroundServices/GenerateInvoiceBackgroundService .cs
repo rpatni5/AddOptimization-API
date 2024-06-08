@@ -37,6 +37,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             //#if DEBUG
             //            return;
             //#endif
+            _logger.LogInformation("ExecuteAsync Started.");
             using var timer = new CronTimer("0 8 * * *", TimeZoneInfo.Local);
             while (!stoppingToken.IsCancellationRequested &&
                    await timer.WaitForNextTickAsync(stoppingToken))
@@ -45,6 +46,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 await GenerateInvoice();
                 _logger.LogInformation("Generate Invoice Background Service Completed.");
             }
+            _logger.LogInformation("ExecuteAsync Completed.");
         }
         #endregion
 

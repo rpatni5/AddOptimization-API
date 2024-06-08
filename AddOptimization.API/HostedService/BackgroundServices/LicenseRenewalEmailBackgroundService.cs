@@ -35,9 +35,10 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         #region Protected Methods
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-#if DEBUG
-            return;
-#endif
+            //#if DEBUG
+            //            return;
+            //#endif
+            _logger.LogInformation("ExecuteAsync Started.");
             using var timer = new CronTimer("0 8 * * *", TimeZoneInfo.Local);
             while (!stoppingToken.IsCancellationRequested &&
                    await timer.WaitForNextTickAsync(stoppingToken))
@@ -46,6 +47,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 await GetCustomersWithLicensesExpiringSoon();
                 _logger.LogInformation("Send License Renewal Email BackgroundTask Completed.");
             }
+            _logger.LogInformation("ExecuteAsync Completed.");
         }
         #endregion
 
