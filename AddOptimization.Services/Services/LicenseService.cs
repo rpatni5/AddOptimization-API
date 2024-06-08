@@ -69,7 +69,8 @@ public class LicenseService : ILicenseService
                 CreatedAt = e.CreatedAt,
                 LicenseKey = e.LicenseKey,
                 ExpirationDate = e.ExpirationDate,
-                CustomerEmail = e.Customer.Email,
+                CustomerEmail = e.Customer.ManagerEmail,
+                CustomerName = e.Customer.ManagerName,
                 LicenseDuration = e.LicenseDuration,
                 CreatedBy = e.CreatedByUser.FullName,
                 LicenseDevices = _mapper.Map<List<LicenseDeviceDto>>(e.LicenseDevices),
@@ -154,7 +155,7 @@ public class LicenseService : ILicenseService
             if (licenseResult != null)
             {
                 var customer = await _customerRepository.FirstOrDefaultAsync(x => x.Id == licenseResult.CustomerId);
-                Task.Run(() => SendCustomerLicenseAddedEmail(customer.Email, licenseResult));
+                Task.Run(() => SendCustomerLicenseAddedEmail(customer.ManagerEmail,customer.ManagerName, licenseResult));
             }
             return await Get(entity.Id);
         }
@@ -221,11 +222,14 @@ public class LicenseService : ILicenseService
     private IQueryable<License> ApplyFilters(IQueryable<License> entities, PageQueryFiterBase filter)
     {
 
-        
+        filter.GetValue<string>("customerName", (v) =>
+        {
+            entities = entities.Where(e => e.Customer != null && e.Customer.ManagerName.ToLower().Contains(v.ToLower()));
+        });
 
         filter.GetValue<string>("customerEmail", (v) =>
         {
-            entities = entities.Where(e => e.Customer != null && e.Customer.Email.ToLower().Contains(v.ToLower()));
+            entities = entities.Where(e => e.Customer != null && e.Customer.ManagerEmail.ToLower().Contains(v.ToLower()));
         });
 
 
@@ -328,9 +332,13 @@ public class LicenseService : ILicenseService
                 {
                     orders = orders.OrderBy(e => e.ExpirationDate);
                 }
+                if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerName).ToUpper())
+                {
+                    orders = orders.OrderBy(o => o.Customer.ManagerName);
+                }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerEmail).ToUpper())
                 {
-                    orders = orders.OrderBy(o => o.Customer.Email);
+                    orders = orders.OrderBy(o => o.Customer.ManagerEmail);
                 }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.LicenseDuration).ToUpper())
                 {
@@ -355,9 +363,13 @@ public class LicenseService : ILicenseService
                 {
                     orders = orders.OrderByDescending(e => e.ExpirationDate);
                 }
+                if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerName).ToUpper())
+                {
+                    orders = orders.OrderByDescending(o => o.Customer.ManagerName);
+                }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerEmail).ToUpper())
                 {
-                    orders = orders.OrderByDescending(o => o.Customer.Email);
+                    orders = orders.OrderByDescending(o => o.Customer.ManagerEmail);
                 }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.LicenseDuration).ToUpper())
                 {
@@ -374,7 +386,7 @@ public class LicenseService : ILicenseService
         }
     }
 
-    private async Task<bool> SendCustomerLicenseAddedEmail(string email, License license)
+    private async Task<bool> SendCustomerLicenseAddedEmail(string email, string userFullName,  License license)
     {
         try
         {
@@ -382,6 +394,7 @@ public class LicenseService : ILicenseService
             var message = "A new license has been created for your account. Please find the details below.";
             var emailTemplate = _templateService.ReadTemplate(EmailTemplates.CreateLicense);
             emailTemplate = emailTemplate
+                            .Replace("[CustomerName]", userFullName)
                             .Replace("[Message]", message)
                             .Replace("[LicenseKey]", license.LicenseKey)
                             .Replace("[NoOfDevices]", license.NoOfDevices.ToString())

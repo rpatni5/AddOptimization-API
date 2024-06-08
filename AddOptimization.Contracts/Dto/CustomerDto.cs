@@ -4,8 +4,6 @@ namespace AddOptimization.Contracts.Dto
 {
     public class CustomerDto: CustomerSummaryDto
     {
-        public string Email { get; set; }
-        
         public string Company { get; set; }
         public string Phone { get; set; }
         public string BillingAddressString { get; set; }

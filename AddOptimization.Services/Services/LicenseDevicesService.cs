@@ -104,7 +104,7 @@ public class LicenseDeviceService : ILicenseDeviceService
                         var mappedLicenseDevice = _mapper.Map<LicenseDeviceDto>(licenseDevice);
                         var customer = await _customerRepository.FirstOrDefaultAsync(x => x.Id == license.Customer.Id);
                         var activeDevicesCount = activeDevices+1;
-                        Task.Run(() => SendCustomerDeviceActivatedEmail(customer.Email, activeDevicesCount, license.NoOfDevices - activeDevicesCount, license, mappedLicenseDevice));
+                        Task.Run(() => SendCustomerDeviceActivatedEmail(customer.ManagerEmail,customer.ManagerName,  activeDevicesCount, license.NoOfDevices - activeDevicesCount, license, mappedLicenseDevice));
                         return ApiResult<LicenseDeviceDto>.Success(mappedLicenseDevice);
                     }
                 }
@@ -208,14 +208,14 @@ public class LicenseDeviceService : ILicenseDeviceService
     #endregion
 
     #region Private Methods
-    private async Task<bool> SendCustomerDeviceActivatedEmail(string email, int activated, int remaining, License license, LicenseDeviceDto licenseDevice)
+    private async Task<bool> SendCustomerDeviceActivatedEmail(string email, string userFullName, int activated, int remaining, License license, LicenseDeviceDto licenseDevice)
     {
         try
         {
             var subject = "Add optimization new device license activated";
-            var message = "A new device license has been activated for your account. Please find the details below.";
             var emailTemplate = _templateService.ReadTemplate(EmailTemplates.DeviceActivated);
             emailTemplate = emailTemplate
+                            .Replace("[CustomerName]", userFullName)
                             .Replace("[MachineName]", licenseDevice.MachineName)
                             .Replace("[Activated]", activated.ToString())
                             .Replace("[Remaining]", remaining.ToString())

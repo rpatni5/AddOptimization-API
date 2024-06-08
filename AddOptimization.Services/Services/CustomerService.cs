@@ -14,11 +14,7 @@ using AddOptimization.Utilities.Enums;
 using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Constants;
-using AddOptimization.Utilities.Services;
 using Microsoft.Extensions.Configuration;
-using System;
-using iText.StyledXmlParser.Css.Selector.Item;
-
 namespace AddOptimization.Services.Services;
 public class CustomerService : ICustomerService
 {
@@ -92,7 +88,6 @@ public class CustomerService : ICustomerService
             var pagedResult = PageHelper<Customer, CustomerDto>.ApplyPaging(entities, filter, entities => entities.Select(e => new CustomerDto
             {
                 Id = e.Id,
-                Email = e.Email,
                 Company = e.Organizations,
                 Notes = e.Notes,
                 Phone = e.Phone,
@@ -182,8 +177,8 @@ public class CustomerService : ICustomerService
         await _unitOfWork.BeginTransactionAsync();
         try
         {
-            var isExists = await _customerRepository.IsExist(t => t.Email.ToLower() == model.Email.ToLower(), ignoreGlobalFilter: true);
-            var isExistInAppUser = await _applicationUserRepository.IsExist(t => t.Email.ToLower() == model.Email.ToLower(), ignoreGlobalFilter: true);
+            var isExists = await _customerRepository.IsExist(t => t.ManagerEmail.ToLower() == model.ManagerEmail.ToLower(), ignoreGlobalFilter: true);
+            var isExistInAppUser = await _applicationUserRepository.IsExist(t => t.Email.ToLower() == model.ManagerEmail.ToLower(), ignoreGlobalFilter: true);
 
             if (isExists || isExistInAppUser)
             {
@@ -192,24 +187,14 @@ public class CustomerService : ICustomerService
             }
             var entity = _mapper.Map<Customer>(model);
             entity = await _customerRepository.InsertAsync(entity);
-            //if (model.Addresses.Any())
-            //{
-            //    model.Addresses.ForEach(a =>
-            //    {
-            //        a.CustomerId = entity.Id;
-            //    });
-            //    await _addressService.BulkCreate(model.Addresses);
-                
-            //}
-            
             var appUserEntity = new ApplicationUser
             {
-                Email = model.Email,
-                FullName = model.Name,
+                Email = model.ManagerEmail,
+                FullName = model.ManagerName,
                 IsEmailsEnabled = true,
                 IsActive = true,
                 IsLocked = false,
-                UserName = model.Email
+                UserName = model.ManagerEmail
             };
             var appUserEntityValue = await _applicationUserRepository.InsertAsync(appUserEntity);
 
@@ -275,7 +260,7 @@ public class CustomerService : ICustomerService
         await _unitOfWork.BeginTransactionAsync();
         try
         {
-            var isExists = await _customerRepository.IsExist(t => t.Id != id && t.Email.ToLower() == model.Email.ToLower(), ignoreGlobalFilter: true);
+            var isExists = await _customerRepository.IsExist(t => t.Id != id && t.ManagerEmail.ToLower() == model.ManagerEmail.ToLower(), ignoreGlobalFilter: true);
 
             if (isExists)
             {
@@ -290,11 +275,11 @@ public class CustomerService : ICustomerService
             }
 
             //Update application user
-            if (entity.Email != model.Email)
+            if (entity.ManagerEmail != model.ManagerEmail || entity.ManagerName != model.ManagerName)
             {
-                var appUserEntityValue = (await _applicationUserRepository.QueryAsync(c => c.Email == entity.Email && c.IsActive)).FirstOrDefault();
+                var appUserEntityValue = (await _applicationUserRepository.QueryAsync(c => c.Email == entity.ManagerEmail && c.IsActive)).FirstOrDefault();
                 appUserEntityValue.FullName = model.Name;
-                appUserEntityValue.Email = model.Email;
+                appUserEntityValue.Email = model.ManagerEmail;
                 await _applicationUserRepository.UpdateAsync(appUserEntityValue);
             }
             _mapper.Map(model, entity);
@@ -336,39 +321,16 @@ public class CustomerService : ICustomerService
         }
     }
 
-    //public async Task<ApiResult<List<CustomerOrderDto>>> GetOrders(Guid customerId)
-    //{
-    //    try
-    //    {
-    //        var entities = await _orderRepository.QueryMappedAsync(e=> new CustomerOrderDto
-    //        {
-    //            Id=e.Id,
-    //            InvoiceNumber= e.InvoiceNumber,
-    //            Duedate=e.Duedate,
-    //            OrderStatusId=e.OrderStatusId,
-    //            OrderStatusName=e.OrderStatus.Name,
-    //            UserId=e.UserId,
-    //            UserFullName=e.UserFullName,
-    //            ShippingAddressString = e.ShippingAddress==null?null:e.ShippingAddress.address1+","+e.ShippingAddress.zip + "," + e.ShippingAddress.city,
-    //            City = e.ShippingAddress==null?null: e.ShippingAddress.city,
-    //            Total = e.Totals==null ? null :e.Totals.total/100
-    //        },e=> e.CustomerId==customerId,include: source => source.Include(o => o.OrderStatus),orderBy:entities=> entities.OrderByDescending(o=> o.CreatedAt));
-
-    //        return ApiResult<List<CustomerOrderDto>>.Success(entities.ToList());
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        _logger.LogException(ex);
-    //        throw;
-    //    }
-    //}
-
     private IQueryable<Customer> ApplyFilters(IQueryable<Customer> entities, PageQueryFiterBase filter)
     {
-
-        filter.GetValue<string>("Email", (v) =>
+        filter.GetValue<string>("ManagerName", (v) =>
         {
-            entities = entities.Where(e => e.Email != null && e.Email.ToLower().Contains(v.ToLower()));
+            entities = entities.Where(e => e.ManagerName != null && e.ManagerName.ToLower().Contains(v.ToLower()));
+        });
+
+        filter.GetValue<string>("ManagerEmail", (v) =>
+        {
+            entities = entities.Where(e => e.ManagerEmail != null && e.ManagerEmail.ToLower().Contains(v.ToLower()));
         });
 
         filter.GetValue<string>("Phone", (v) =>
@@ -398,9 +360,13 @@ public class CustomerService : ICustomerService
             var columnName = sort.Name.ToUpper();
             if (sort.Direction == SortDirection.ascending.ToString())
             {
-                if (columnName.ToUpper() == nameof(CustomerDto.Email).ToUpper())
+                if (columnName.ToUpper() == nameof(CustomerDto.ManagerName).ToUpper())
                 {
-                    orders = orders.OrderBy(o => o.Email);
+                    orders = orders.OrderBy(o => o.ManagerName);
+                }
+                if (columnName.ToUpper() == nameof(CustomerDto.ManagerEmail).ToUpper())
+                {
+                    orders = orders.OrderBy(o => o.ManagerEmail);
                 }
                 if (columnName.ToUpper() == nameof(CustomerDto.Phone).ToUpper())
                 {
@@ -414,9 +380,13 @@ public class CustomerService : ICustomerService
             }
             else
             {
-                if (columnName.ToUpper() == nameof(CustomerDto.Email).ToUpper())
+                if (columnName.ToUpper() == nameof(CustomerDto.ManagerName).ToUpper())
                 {
-                    orders = orders.OrderByDescending(o => o.Email);
+                    orders = orders.OrderBy(o => o.ManagerName);
+                }
+                if (columnName.ToUpper() == nameof(CustomerDto.ManagerEmail).ToUpper())
+                {
+                    orders = orders.OrderByDescending(o => o.ManagerEmail);
                 }
                 if (columnName.ToUpper() == nameof(CustomerDto.Phone).ToUpper())
                 {
