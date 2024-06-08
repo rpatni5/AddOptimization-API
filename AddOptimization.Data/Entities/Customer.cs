@@ -8,9 +8,6 @@ public partial class Customer : BaseEntityNew<Guid>
 {
 
     [MaxLength(200)]
-    public string Email { get; set; }
-
-    [MaxLength(200)]
     public string Phone { get; set; }
 
 

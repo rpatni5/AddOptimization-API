@@ -4,8 +4,6 @@ namespace AddOptimization.Contracts.Dto;
 
 public class CustomerCreateDto:BaseDto<Guid?>
 {
-    [Required]
-    public string Email { get; set; }
     public string Company { get; set; }
     public string Phone { get; set; }
     public string Notes { get; set; }
