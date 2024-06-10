@@ -1,8 +1,6 @@
 ﻿CREATE TABLE [dbo].[Customers](
 	[Id] [uniqueidentifier] NOT NULL,
-	[Email] [nvarchar](200) NULL,
 	[Phone] [nvarchar](200) NULL,
-	[ContactInfo] [nvarchar](500) NULL,
 	[Organizations] [nvarchar](2000) NULL,
 	[BillingAddressId] [uniqueidentifier] NULL,
 	[CustomerStatusId] [uniqueidentifier] NOT NULL,
