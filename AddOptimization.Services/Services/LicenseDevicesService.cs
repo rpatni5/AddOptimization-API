@@ -104,7 +104,7 @@ public class LicenseDeviceService : ILicenseDeviceService
                         var mappedLicenseDevice = _mapper.Map<LicenseDeviceDto>(licenseDevice);
                         var customer = await _customerRepository.FirstOrDefaultAsync(x => x.Id == license.Customer.Id);
                         var activeDevicesCount = activeDevices+1;
-                        Task.Run(() => SendCustomerDeviceActivatedEmail(customer.Email, customer.Name, activeDevicesCount, license.NoOfDevices - activeDevicesCount, license, mappedLicenseDevice));
+                        Task.Run(() => SendCustomerDeviceActivatedEmail(customer.ManagerEmail,customer.ManagerName,  activeDevicesCount, license.NoOfDevices - activeDevicesCount, license, mappedLicenseDevice));
                         return ApiResult<LicenseDeviceDto>.Success(mappedLicenseDevice);
                     }
                 }
@@ -213,7 +213,6 @@ public class LicenseDeviceService : ILicenseDeviceService
         try
         {
             var subject = "Add optimization new device license activated";
-            var message = "A new device license has been activated for your account. Please find the details below.";
             var emailTemplate = _templateService.ReadTemplate(EmailTemplates.DeviceActivated);
             emailTemplate = emailTemplate
                             .Replace("[CustomerName]", userFullName)

@@ -31,19 +31,21 @@ public class CompanyService : ICompanyService
             var entity = await _companyRepository.FirstOrDefaultAsync();
             if (entity != null)
             {
-                entity.AccountName = model.AccountName;
-                entity.AccountNumber = model.AccountNumber;
+                entity.CompanyName = model.CompanyName;
                 entity.Email = model.Email;
                 entity.Website = model.Website;
                 entity.BankAccountName = model.BankAccountName;
                 entity.BankAccountNumber = model.BankAccountNumber;
                 entity.BankName = model.BankName;
                 entity.MobileNumber = model.MobileNumber;
-                entity.BillingAddress = model.BillingAddress;
+                entity.BankAddress = model.BankAddress;
                 entity.City = model.City;
-                entity.Street = model.Street;
+                entity.Address = model.Address;
                 entity.Country = model.Country;
                 entity.ZipCode = model.ZipCode;
+                entity.SwiftCode = model.SwiftCode;
+                entity.State = model.State;
+                entity.TaxNumber = model.TaxNumber;
 
                 await _companyRepository.UpdateAsync(entity);
             }

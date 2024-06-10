@@ -8,6 +8,7 @@ using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
 using AddOptimization.Utilities.Services;
 using NPOI.SS.Formula.Functions;
+using Sgbj.Cron;
 using System.Text;
 
 namespace AddOptimization.API.HostedService.BackgroundServices
@@ -44,12 +45,11 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         #region Protected Methods
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-#if DEBUG
-            return;
-#endif
-            var durationValue = _configuration.ReadSection<BackgroundServiceSettings>(AppSettingsSections.BackgroundServiceSettings).ApprovePendingTimesheetReminderEmailTriggerDurationInSeconds;
-            var period = TimeSpan.FromSeconds(durationValue);
-            using PeriodicTimer timer = new PeriodicTimer(period);
+            //#if DEBUG
+            //            return;
+            //#endif
+            _logger.LogInformation("ExecuteAsync Started.");
+            using var timer = new CronTimer("0 8 * * */2", TimeZoneInfo.Local);
             while (!stoppingToken.IsCancellationRequested &&
                    await timer.WaitForNextTickAsync(stoppingToken))
             {
@@ -57,6 +57,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 await GetNotApprovedTimesheetData();
                 _logger.LogInformation("Send Approve Pending Timesheet Reminder Email Background Service Completed.");
             }
+            _logger.LogInformation("ExecuteAsync Completed.");
         }
         #endregion
 
@@ -97,7 +98,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                                 .Replace("[StartDate]", schedulerEvent?.StartDate.Date.ToString("d"))
                                 .Replace("[EndDate]", schedulerEvent?.EndDate.Date.ToString("d"))
                                 .Replace("[LinkToApproveTimesheet]", link);
-                return await _emailService.SendEmail(schedulerEvent?.Customer?.Email, subject, emailTemplate);
+                return await _emailService.SendEmail(schedulerEvent?.Customer?.ManagerEmail, subject, emailTemplate);
             }
             catch (Exception ex)
             {

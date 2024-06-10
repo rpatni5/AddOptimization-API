@@ -102,5 +102,6 @@
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Scripts\SeedData_Script.PostDeployment.sql" />
+    <None Include="Scripts\Countries_Script.PostDeployment.sql" />
   </ItemGroup>
 </Project>
