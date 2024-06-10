@@ -92,7 +92,6 @@ public class CustomerService : ICustomerService
                 Notes = e.Notes,
                 Phone = e.Phone,
                 CustomerStatusId = e.CustomerStatusId,
-                ContactInfo = e.ContactInfo,
                 Licenses = _mapper.Map<List<LicenseDetailsDto>>(e.Licenses),
                 CountryCode = e.CountryCode,
                 CustomerStatusName = e.CustomerStatus.Name,
@@ -323,19 +322,19 @@ public class CustomerService : ICustomerService
 
     private IQueryable<Customer> ApplyFilters(IQueryable<Customer> entities, PageQueryFiterBase filter)
     {
+
+        filter.GetValue<string>("Company", (v) =>
+        {
+            entities = entities.Where(e => e.Organizations != null && e.Organizations.ToLower().Contains(v.ToLower()));
+        });
         filter.GetValue<string>("ManagerName", (v) =>
         {
             entities = entities.Where(e => e.ManagerName != null && e.ManagerName.ToLower().Contains(v.ToLower()));
         });
 
-        filter.GetValue<string>("ManagerEmail", (v) =>
+        filter.GetValue<string>("CountryNames", (v) =>
         {
-            entities = entities.Where(e => e.ManagerEmail != null && e.ManagerEmail.ToLower().Contains(v.ToLower()));
-        });
-
-        filter.GetValue<string>("Phone", (v) =>
-        {
-            entities = entities.Where(e => e.Phone != null && e.Phone.ToLower().Contains(v.ToLower()));
+            entities = entities.Where(e => e.Country.CountryName != null && e.Country.CountryName.ToLower().Contains(v.ToLower()));
         });
         filter.GetValue<string>("CustomerStatusId", (v) =>
         {
@@ -360,17 +359,18 @@ public class CustomerService : ICustomerService
             var columnName = sort.Name.ToUpper();
             if (sort.Direction == SortDirection.ascending.ToString())
             {
+
+                if (columnName.ToUpper() == nameof(CustomerDto.Company).ToUpper())
+                {
+                    orders = orders.OrderBy(o => o.Organizations);
+                }
                 if (columnName.ToUpper() == nameof(CustomerDto.ManagerName).ToUpper())
                 {
                     orders = orders.OrderBy(o => o.ManagerName);
                 }
-                if (columnName.ToUpper() == nameof(CustomerDto.ManagerEmail).ToUpper())
+                if (columnName.ToUpper() == nameof(CustomerDto.CountryNames).ToUpper())
                 {
-                    orders = orders.OrderBy(o => o.ManagerEmail);
-                }
-                if (columnName.ToUpper() == nameof(CustomerDto.Phone).ToUpper())
-                {
-                    orders = orders.OrderBy(o => o.Phone);
+                    orders = orders.OrderBy(o => o.Country.CountryName);
                 }
                 if (columnName.ToUpper() == nameof(CustomerDto.CustomerStatus).ToUpper())
                 {
@@ -380,17 +380,17 @@ public class CustomerService : ICustomerService
             }
             else
             {
+                if (columnName.ToUpper() == nameof(CustomerDto.Company).ToUpper())
+                {
+                    orders = orders.OrderBy(o => o.Organizations);
+                }
                 if (columnName.ToUpper() == nameof(CustomerDto.ManagerName).ToUpper())
                 {
                     orders = orders.OrderBy(o => o.ManagerName);
                 }
-                if (columnName.ToUpper() == nameof(CustomerDto.ManagerEmail).ToUpper())
+                if (columnName.ToUpper() == nameof(CustomerDto.CountryNames).ToUpper())
                 {
-                    orders = orders.OrderByDescending(o => o.ManagerEmail);
-                }
-                if (columnName.ToUpper() == nameof(CustomerDto.Phone).ToUpper())
-                {
-                    orders = orders.OrderByDescending(o => o.Phone);
+                    orders = orders.OrderBy(o => o.Country.CountryName);
                 }
                 if (columnName.ToUpper() == nameof(CustomerDto.CustomerStatus).ToUpper())
                 {
