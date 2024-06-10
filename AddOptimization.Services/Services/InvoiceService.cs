@@ -58,11 +58,16 @@ namespace AddOptimization.Services.Services
 
                 foreach (var employee in associatedEmployees)
                 {
-
-
                     // first mon-fri billing for this employee excluding public holiday
+                    // 1. filter public holiday for this customer based on countryid of this customer for this month
+                    // 2. get the scheduler event details of this employee for a particular month, date should be mon-fri only excluding public holiday
+                    // 3. filter based on event staus id so taht only timesheet info will come
+
 
                     //then sat sun for this employee
+                    //1. get sat sun events for this employee for a particular month based on eventid
+                    
+
 
                     //then overtime for this employee
 
