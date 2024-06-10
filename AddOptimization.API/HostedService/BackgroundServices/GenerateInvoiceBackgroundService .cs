@@ -82,7 +82,10 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                         bool allTimesheetAproovedForMonth = await schedulerEventService.IsTimesheetApproved(customer.Id, filteredAssociations.Select(x => x.EmployeeId).ToList(), month);
                         if (allTimesheetAproovedForMonth)
                         {
-                            //create timehseet for customer {customer.Id} for month {month}
+                            //check invoice already exist of not
+                            //code pending
+
+                            //create invoice for customer {customer.Id} for month {month}
                             await invoiceService.GenerateInvoice(customer.Id, month, filteredAssociations);
                         }
                     }
