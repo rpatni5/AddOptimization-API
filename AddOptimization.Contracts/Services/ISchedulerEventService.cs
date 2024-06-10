@@ -1,5 +1,6 @@
 ﻿using AddOptimization.Contracts.Dto;
 using AddOptimization.Utilities.Common;
+using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Models;
 
 namespace AddOptimization.Contracts.Services
@@ -20,5 +21,6 @@ namespace AddOptimization.Contracts.Services
         Task<ApiResult<bool>> DeclineRequest(AccountAdminActionRequestDto model);
         Task<ApiResult<bool>> TimesheetAction(CustomerTimesheetActionDto model);
         Task<bool> SendTimesheetApprovalEmailToCustomer(Guid schedulerEventId);
+        Task<bool> IsTimesheetApproved(Guid customerId, List<int> employeeIds, MonthDateRange month);
     }
 }

@@ -5,9 +5,11 @@ using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
 using AddOptimization.Utilities.Common;
 using AddOptimization.Utilities.Extensions;
+using AddOptimization.Utilities.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NPOI.SS.Formula.Functions;
+using Stripe;
 
 namespace AddOptimization.Services.Services
 {
@@ -42,21 +44,34 @@ namespace AddOptimization.Services.Services
             _logger = logger;
         }
 
-        public async Task<ApiResult<List<InvoiceResponseDto>>> GenerateInvoice()
+        public async Task<ApiResult<List<InvoiceResponseDto>>> GenerateInvoice(Guid customerId, MonthDateRange month, List<CustomerEmployeeAssociationDto> associatedEmployees)
         {
             try
             {
-                var a = new List<InvoiceResponseDto>();
-                var customers = await _customer.QueryAsync(c => c.CustomerStatus.Name == CustomerStatuses.Active);
-                foreach (var item in customers.ToList())
-                {
-                    var employeeAssociation = (await _customerEmployeeAssociation.QueryAsync(c => c.CustomerId == c.CustomerId && !c.IsDeleted)).ToList();
-                    foreach (var employee in employeeAssociation)
-                    {
+                //first verify that invoice is already not created for this customer for this month
+                var events = (await _schedulersRepository.QueryAsync(x => x.CustomerId == customerId && x.StartDate.Month == month.StartDate.Month)).ToList();
 
-                    };
-                };
-                return ApiResult<List<InvoiceResponseDto>>.Success(a);
+                //(first table) Invoice no, invoice date, customer address, created date, created by (null),
+                //insert records
+
+                //(second table) description, qty, unit price,vat, totalpriceincludingvat, totalpriceexcludingvat
+
+                foreach (var employee in associatedEmployees)
+                {
+
+
+                    // first mon-fri billing for this employee excluding public holiday
+
+                    //then sat sun for this employee
+
+                    //then overtime for this employee
+
+                    //then public holiday for this employee
+
+                }
+
+
+                return ApiResult<List<InvoiceResponseDto>>.Success("");
             }
             catch (Exception ex)
             {
