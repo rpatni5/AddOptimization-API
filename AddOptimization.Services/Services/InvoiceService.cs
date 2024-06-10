@@ -51,7 +51,7 @@ namespace AddOptimization.Services.Services
                 //first verify that invoice is already not created for this customer for this month
                 var events = (await _schedulersRepository.QueryAsync(x => x.CustomerId == customerId && x.StartDate.Month == month.StartDate.Month)).ToList();
 
-                //(first table) Invoice no, invoice date, customer address, created date, created by (null),
+                //(first table) Invoice no, invoice date, customer address, created date, created by (null),company address, payment status,invoice status, company bank details etc
                 //insert records
 
                 //(second table) description, qty, unit price,vat, totalpriceincludingvat, totalpriceexcludingvat
