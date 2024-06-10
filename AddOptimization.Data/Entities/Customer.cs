@@ -10,10 +10,6 @@ public partial class Customer : BaseEntityNew<Guid>
     [MaxLength(200)]
     public string Phone { get; set; }
 
-
-    [MaxLength(500)]
-    public string ContactInfo { get; set; }
-
     [MaxLength(2000)]
     public string Organizations { get; set; }
     public Guid? BillingAddressId { get; set; }
