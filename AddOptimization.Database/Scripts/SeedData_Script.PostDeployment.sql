@@ -133,7 +133,7 @@ IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Admin Approved')
 BEGIN 
     INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
     VALUES
-        ('CA404379-C54D-41B8-AE40-4609FFFDBC5F','Admin Approved','ADMIN_APPROVED')
+        ('CA404379-C54D-41B8-AE40-4609FFFDBC5F','Approved','APPROVED')
 END
 
 
