@@ -20,6 +20,7 @@ using AddOptimization.Services.Constants;
 using Microsoft.IdentityModel.Tokens;
 using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Constants;
+using Newtonsoft.Json;
 
 namespace AddOptimization.Services.Services
 {
@@ -41,6 +42,24 @@ namespace AddOptimization.Services.Services
             _quoteStatusService = quoteStatusService;
             _quoteSummaryRepository = quoteSumamryRepository;
             _unitOfWork = unitOfWork;
+        }
+
+        public async Task<ApiResult<List<QuoteResponseDto>>> Search(PageQueryFiterBase filters)
+        {
+            try
+            {
+                var entities = await _quoteRepository.QueryAsync(include: source => source.Include(x => x.Customer).Include(x => x.Product).Include(x => x.QuoteStatuses), ignoreGlobalFilter: true);
+
+                var result = entities.ToList();
+                var mappedEntities = _mapper.Map<List<QuoteResponseDto>>(result);
+
+                return ApiResult<List<QuoteResponseDto>>.Success(mappedEntities);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
         }
 
         public async Task<ApiResult<QuoteResponseDto>> Create(QuoteRequestDto model)
@@ -85,6 +104,78 @@ namespace AddOptimization.Services.Services
             catch (Exception ex)
             {
                 await _unitOfWork.RollbackTransactionAsync();
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+        public async Task<ApiResult<QuoteResponseDto>> Update(Guid id, QuoteRequestDto model)
+        {
+            try
+            {
+                var isExists = await _quoteRepository.IsExist(e => e.Id != id);
+                var entity = await _quoteRepository.FirstOrDefaultAsync(e => e.Id == id);
+                var summaries = await _quoteSummaryRepository.QueryAsync(e  => e.QuoteId == id);
+                foreach (var summary in summaries.ToList())
+                {
+                    await _quoteSummaryRepository.DeleteAsync(summary);
+                }
+                if (entity == null)
+                {
+                    return ApiResult<QuoteResponseDto>.NotFound("Quote");
+                }
+                foreach (var summary in model.QuoteSummaries)
+                {
+                    var quoteSummary = new QuoteSummary
+                    {
+                        QuoteId = entity.Id,
+                        Name = summary.Name,
+                        Quantity = summary.Quantity,
+                        Vat = summary.Vat,
+                        UnitPrice = summary.UnitPrice,
+                        TotalPriceExcVat = summary.TotalPriceExcVat,
+                        TotalPriceIncVat = summary.TotalPriceIncVat
+                    };
+                    await _quoteSummaryRepository.InsertAsync(quoteSummary);
+                    entity.QuoteSummaries.Add(quoteSummary);
+                }
+
+                _mapper.Map(model, entity);
+                await _quoteRepository.UpdateAsync(entity);
+                var mappedEntity = _mapper.Map<QuoteResponseDto>(entity);
+                return ApiResult<QuoteResponseDto>.Success(mappedEntity);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+        public async Task<ApiResult<QuoteResponseDto>> FetchQuoteDetails(Guid id)
+        {
+            try
+            {
+                var model = new QuoteResponseDto();
+                var entity = await _quoteRepository.FirstOrDefaultAsync(e => e.Id == id, ignoreGlobalFilter: true);
+                model.Id = entity.Id;
+                model.CustomerId = entity.CustomerId;
+                model.ProductId = entity.ProductId;
+                model.ExpiryDate = entity.ExpiryDate;
+                model.QuoteDate = entity.QuoteDate;
+                model.BillingAddress = entity.BillingAddress;
+                model.QuoteStatusId = entity.QuoteStatusId;
+
+                var quoteSummary = (await _quoteSummaryRepository.QueryAsync(e => e.QuoteId == id, disableTracking: true)).ToList();
+
+                model.QuoteSummaries = _mapper.Map<List<QuoteSummaryDto>>(quoteSummary);
+
+
+                return ApiResult<QuoteResponseDto>.Success(model);
+
+            }
+            catch (Exception ex)
+            {
                 _logger.LogException(ex);
                 throw;
             }
