@@ -6,8 +6,11 @@ namespace AddOptimization.Contracts.Dto
     public class QuoteResponseDto : BaseDto<Guid>
     {
         public Guid CustomerId { get; set; }
+        public string CustomerName { get; set; }
         public Guid ProductId { get; set; }
+        public string ProductName { get; set; }
         public Guid QuoteStatusId { get; set; }
+        public string QuoteStatusesName { get; set; }
         public string BillingAddress { get; set; }
         public DateTime ExpiryDate { get; set; }
         public DateTime QuoteDate { get; set; }

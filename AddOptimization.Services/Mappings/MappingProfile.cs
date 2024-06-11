@@ -232,6 +232,7 @@ namespace AddOptimization.Services.Mappings
                 d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
                 d.CreatedAt = s.CreatedAt?.Date;
                 d.UpdatedAt = s.UpdatedAt?.Date;
+                d.CustomerName = s.Customer != null ? s.Customer.Organizations : string.Empty;
             });
             CreateMap<QuoteRequestDto, Quote>();
 

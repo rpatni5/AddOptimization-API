@@ -18,6 +18,20 @@ namespace AddOptimization.API.Controllers
             _quoteService = quoteService;
         }
 
+        [HttpPost("search")]
+        public async Task<IActionResult> Get([FromBody] PageQueryFiterBase filters)
+        {
+            try
+            {
+                var retVal = await _quoteService.Search(filters);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
 
         [HttpPost]
         public async Task<IActionResult> Create(QuoteRequestDto model)
@@ -25,6 +39,34 @@ namespace AddOptimization.API.Controllers
             try
             {
                 var retVal = await _quoteService.Create(model);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(Guid id, QuoteRequestDto model)
+        {
+            try
+            {
+                var retVal = await _quoteService.Update(id, model);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpGet("get-quote-details/{id}")]
+        public async Task<IActionResult> FetchItemConfDetails(Guid id)
+        {
+            try
+            {
+                var retVal = await _quoteService.FetchQuoteDetails(id);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
