@@ -16,7 +16,7 @@ namespace AddOptimization.Services.Constants
         DECLINED,
         CUSTOMER_DECLINED,
         CUSTOMER_APPROVED,
-        ADMIN_APPROVED,
+        APPROVED,
 
     }
 }
