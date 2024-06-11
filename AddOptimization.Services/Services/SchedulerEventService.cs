@@ -549,7 +549,7 @@ namespace AddOptimization.Services.Services
             {
                 var eventDetails = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == model.Id);
                 var eventStatus = (await _schedulersStatusService.Search()).Result;
-                var adminApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.APPROVED.ToString()).Id;
+                var adminApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.ADMIN_APPROVED.ToString()).Id;
                 var customerApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.CUSTOMER_APPROVED.ToString()).Id;
                 var pendingCustomerApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_CUSTOMER_APPROVAL.ToString()).Id;
 
