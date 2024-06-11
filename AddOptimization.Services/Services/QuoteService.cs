@@ -116,6 +116,7 @@ namespace AddOptimization.Services.Services
                 var isExists = await _quoteRepository.IsExist(e => e.Id != id);
                 var entity = await _quoteRepository.FirstOrDefaultAsync(e => e.Id == id);
                 var summaries = await _quoteSummaryRepository.QueryAsync(e  => e.QuoteId == id);
+                
                 foreach (var summary in summaries.ToList())
                 {
                     await _quoteSummaryRepository.DeleteAsync(summary);
@@ -137,7 +138,6 @@ namespace AddOptimization.Services.Services
                         TotalPriceIncVat = summary.TotalPriceIncVat
                     };
                     await _quoteSummaryRepository.InsertAsync(quoteSummary);
-                    entity.QuoteSummaries.Add(quoteSummary);
                 }
 
                 _mapper.Map(model, entity);
