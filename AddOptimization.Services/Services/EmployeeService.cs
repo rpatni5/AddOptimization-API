@@ -32,6 +32,7 @@ public class EmployeeService : IEmployeeService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IApplicationUserService _applicationUserService;
     private readonly IRoleService _roleService;
+    private readonly IGenericRepository<Country> _countryRepository;
     public EmployeeService(IGenericRepository<Employee> employeeRepository, ILogger<EmployeeService> logger, IMapper mapper,
         IAddressService addressService, IUnitOfWork unitOfWork, IEmailService emailService, ITemplateService templateService,
         IGenericRepository<PasswordResetToken> passwordResetTokenRepository,
@@ -79,16 +80,29 @@ public class EmployeeService : IEmployeeService
             Employee entity = new Employee
             {
                 Salary = model.Salary,
-                BankName= model.BankName,
-                BankAccountName= model.BankAccountName,
-                BankAccountNumber= model.BankAccountNumber,
-                IsExternal= model.IsExternal,
-                BillingAddress= model.BillingAddress,
+                BankName = model.BankName,
+                BankAccountName = model.BankAccountName,
+                BankAccountNumber = model.BankAccountNumber,
+                IsExternal = model.IsExternal,
+                BillingAddress = model.BillingAddress,
                 UserId = savedEmployee.Id,
+                VATNumber = model.VATNumber,
+                ZipCode = model.ZipCode,
+                State = model.State,
+                JobTitle = model.JobTitle,
+                City = model.City,
+                CompanyName = model.CompanyName,
+                CountryId = model.CountryId,
+                Address = model.Address,
+                ExternalZipCode = model.ExternalZipCode,
+                ExternalCity = model.ExternalCity,
+                ExternalState = model.ExternalState,
+                ExternalCountryId = model.ExternalCountryId,
+                ExternalAddress = model.ExternalAddress,
             };
 
             await _employeeRepository.InsertAsync(entity);
-           
+
             var roles = (await _roleService.Search(null)).Result;
 
             await AddRole(roles.FirstOrDefault(x => x.Name.Equals("Employee", StringComparison.InvariantCultureIgnoreCase)).Id, savedEmployee.Id);
@@ -123,7 +137,7 @@ public class EmployeeService : IEmployeeService
     {
         try
         {
-           // await _unitOfWork.BeginTransactionAsync();
+            // await _unitOfWork.BeginTransactionAsync();
 
             var roles = (await _roleService.Search(null)).Result;
 
@@ -139,9 +153,9 @@ public class EmployeeService : IEmployeeService
                 LastName = model.LastName,
                 Roles = userRoles,
             };
-            var userResult = await _applicationUserService.Update(model.UserId, user);
+            var userResult = await _applicationUserService.Update(model.UserId, user );
 
-            Employee entity = new Employee();
+            Employee entity = new Employee { };
             _mapper.Map(model, entity);
             await _employeeRepository.UpdateAsync(entity);
 
@@ -156,12 +170,14 @@ public class EmployeeService : IEmployeeService
         }
     }
 
+
     public async Task<ApiResult<List<EmployeeDto>>> Search(PageQueryFiterBase filters)
     {
         try
         {
 
-            var entities = await _employeeRepository.QueryAsync(include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
+            var entities = await _employeeRepository.QueryAsync(include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Country).Include(e => e.ExternalCountry).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
+
 
             var mappedEntities = _mapper.Map<List<EmployeeDto>>(entities);
 

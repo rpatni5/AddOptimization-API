@@ -24,5 +24,20 @@ namespace AddOptimization.Contracts.Dto
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public bool isActive {  get; set; }
+        public string VATNumber { get; set; }
+        public int ZipCode { get; set; }
+        public string State { get; set; }
+        public string JobTitle { get; set; }
+        public string City { get; set; }
+        public string CompanyName { get; set; }
+        public Guid? CountryId { get; set; }
+        public string Address { get; set; }
+        public int ExternalZipCode { get; set; }
+        public string ExternalCity { get; set; }
+        public string ExternalState { get; set; }
+        public string ExternalAddress { get; set; }
+        public Guid? ExternalCountryId { get; set; }
+      
+
     }
 }
