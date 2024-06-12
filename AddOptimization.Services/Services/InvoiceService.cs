@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NPOI.OpenXmlFormats.Spreadsheet;
 using NPOI.SS.Formula.Functions;
+using System.Text;
 using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 
 namespace AddOptimization.Services.Services
@@ -27,6 +28,7 @@ namespace AddOptimization.Services.Services
         private readonly ISchedulerEventTypeService _schedulerEventTypeService;
         private readonly IGenericRepository<PublicHoliday> _publicHolidayRepository;
         private readonly IGenericRepository<Employee> _employeeRepository;
+        private readonly IGenericRepository<Company> _companyRepository;
 
 
 
@@ -41,8 +43,10 @@ namespace AddOptimization.Services.Services
             IGenericRepository<PublicHoliday> publicHolidayRepository,
             IGenericRepository<InvoiceDetail> invoiceDetailRepository,
             IGenericRepository<Employee> employeeRepository,
+            IGenericRepository<Company> companyRepository,
         ILogger<InvoiceService> logger)
         {
+            _companyRepository = companyRepository;
             _publicHolidayRepository = publicHolidayRepository;
             _invoiceRepository = invoiceRepository;
             _customerEmployeeAssociation = customerEmployeeAssociation;
@@ -81,24 +85,47 @@ namespace AddOptimization.Services.Services
 
 
                 //Address Calculations
+                string customerAddress = GetCustomerAddress(customer);
+
+                var company = await _companyRepository.FirstOrDefaultAsync(ignoreGlobalFilter: true);
+
+                var companyAddress = string.Empty;
+
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine(company.CompanyName);
+                sb.AppendLine(company.Address);
+                sb.AppendLine(company.City);
+                sb.AppendLine(company.State);
+                sb.AppendLine(company.ZipCode.ToString());
+                //sb.AppendLine(company.Company);
+                companyAddress = sb.ToString();
+
+                var companyBankDetails = string.Empty;
+
+                StringBuilder bd = new StringBuilder();
+                bd.AppendLine(company.BankName);
+                bd.AppendLine(company.BankAccountName);
+                bd.AppendLine(company.BankAccountNumber);
+                bd.AppendLine(company.BankAddress);
+                companyAddress = bd.ToString();
 
                 var invoice = new Invoice
-                { 
-                    CompanyAddress = "",
-                    CompanyBankDetails ="",
-                    CustomerAddress ="",
-                    DueDate = "",
-                    InvoiceDate =DateTime.UtcNow,                    
+                {
+                    CustomerAddress = customerAddress,
+                    CompanyAddress = companyAddress,
+                    CompanyBankDetails = companyBankDetails,
+                    DueDate = customer.PaymentClearanceDays.HasValue ? DateTime.UtcNow.AddDays(customer.PaymentClearanceDays.Value) : DateTime.UtcNow.AddDays(15),
+                    InvoiceDate = DateTime.UtcNow,
                     InvoiceNumber = "",
                     InvoiceStatusId = "",
-                    PaymentStatusId=1,
+                    PaymentStatusId = 1,
                     TotalPriceExcludingVat = 0,
-                    TotalPriceIncludingVat =1,
+                    TotalPriceIncludingVat = 1,
                     Vat = 1,
                     CustomerId
                 };
 
-                var invoice = _invoiceRepository.InsertAsync(invoice);
+                var invoiceResult = await _invoiceRepository.InsertAsync(invoice);
                 foreach (var employee in associatedEmployees)
                 {
                     var daily = employee.DailyWeightage;
@@ -118,21 +145,21 @@ namespace AddOptimization.Services.Services
                     decimal unitPrice;
                     var monFriTimesheetList = employeeEventDetails.Where(c => MonthDateRangeHelper.IsWeekday(c.Date.Value) && !publicHolidays.Contains(c.Date.Value.Date) && c.EventTypeId == timesheetEventId).ToList();
                     description = empl.ApplicationUser.FullName + '-' + "job title";
-                    CalculateAndSaveInvoiceDetails(invoice, monFriTimesheetList, daily, empl, customer.VAT ?? 0, description);
+                    CalculateAndSaveInvoiceDetails(invoiceResult, monFriTimesheetList, daily, empl, customer.VAT ?? 0, description);
 
                     var saturdayTimesheetList = employeeEventDetails.Where(c => MonthDateRangeHelper.IsSaturday(c.Date.Value) && c.EventTypeId == timesheetEventId).ToList();
-                    unitPrice = daily / 8 * saturday/100;
+                    unitPrice = daily / 8 * saturday / 100;
                     description = $"{empl.ApplicationUser.FullName}-{jobTitle}-WE (Saturday) {saturday}% ({daily / 8} eur/h)";   // WE (Sunday) 210% (71,88 eur/h)
-                    CalculateAndSaveInvoiceDetails(invoice, saturdayTimesheetList, unitPrice, empl, customer.VAT ?? 0, description);
+                    CalculateAndSaveInvoiceDetails(invoiceResult, saturdayTimesheetList, unitPrice, empl, customer.VAT ?? 0, description);
 
                     var sundayTimesheetList = employeeEventDetails.Where(c => MonthDateRangeHelper.IsSunday(c.Date.Value) && c.EventTypeId == timesheetEventId).ToList();
-                    unitPrice = daily / 8 * sunday/100;
-                    description = $"{empl.ApplicationUser.FullName}-{jobTitle}-WE (Sunday) {sunday}% ({daily / 8} eur/h)";   
-                    CalculateAndSaveInvoiceDetails(invoice, sundayTimesheetList, unitPrice, empl, customer.VAT ?? 0, description);
+                    unitPrice = daily / 8 * sunday / 100;
+                    description = $"{empl.ApplicationUser.FullName}-{jobTitle}-WE (Sunday) {sunday}% ({daily / 8} eur/h)";
+                    CalculateAndSaveInvoiceDetails(invoiceResult, sundayTimesheetList, unitPrice, empl, customer.VAT ?? 0, description);
 
                     var overtimeList = employeeEventDetails.Where(c => c.EventTypeId == overtimeEventId).ToList();
-                    description = $"{empl.ApplicationUser.FullName}-{jobTitle}-WE (Overtime) {sunday}% ({daily / 8} eur/h)";  
-                    CalculateAndSaveInvoiceDetails(invoice, sundayTimesheetList, unitPrice, empl, customer.VAT ?? 0, description);
+                    description = $"{empl.ApplicationUser.FullName}-{jobTitle}-WE (Overtime) {sunday}% ({daily / 8} eur/h)";
+                    CalculateAndSaveInvoiceDetails(invoiceResult, sundayTimesheetList, unitPrice, empl, customer.VAT ?? 0, description);
 
                     var publicHolidaysList = employeeEventDetails.Where(c => MonthDateRangeHelper.IsWeekday(c.Date.Value) && publicHolidays.Contains(c.Date.Value.Date) && c.EventTypeId == timesheetEventId).ToList();
 
@@ -147,7 +174,37 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private void CalculateAndSaveInvoiceDetails(Task<Invoice> invoice, List<SchedulerEventDetails> schedulerEventDetails, decimal daily, Employee empl, decimal vat, string description)
+        private static string GetCustomerAddress(Customer customer)
+        {
+            var customerAddress = string.Empty;
+            if (customer.PartnerName != null)
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine(customer.PartnerAddress);
+                sb.AppendLine(customer.PartnerAddress2);
+                sb.AppendLine(customer.PartnerCity);
+                sb.AppendLine(customer.PartnerState);
+                sb.AppendLine(customer.PartnerZipCode.ToString());
+                //sb.AppendLine(customer.PartnerCountry);
+                customerAddress = sb.ToString();
+            }
+            else
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine(customer.Organizations);
+                sb.AppendLine(customer.Address);
+                sb.AppendLine(customer.Address2);
+                sb.AppendLine(customer.City);
+                sb.AppendLine(customer.State);
+                //sb.AppendLine(customer.Country);
+                sb.AppendLine(customer.ZipCode.ToString());
+                customerAddress = sb.ToString();
+            }
+
+            return customerAddress;
+        }
+
+        private void CalculateAndSaveInvoiceDetails(Invoice invoice, List<SchedulerEventDetails> schedulerEventDetails, decimal daily, Employee empl, decimal vat, string description)
         {
             var quantity = schedulerEventDetails.Sum(c => c.Duration);
             var invoiceDetail = new InvoiceDetail
