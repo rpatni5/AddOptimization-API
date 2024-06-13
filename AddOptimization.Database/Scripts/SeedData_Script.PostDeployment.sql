@@ -273,6 +273,29 @@ BEGIN
        (NEWID(),'View timesheet','view_timesheet','/admin/timesheets/view-timesheet/{}')
 END
 
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey= 'view_quote')
+BEGIN 
+    INSERT INTO Screens(Id,Name,ScreenKey,Route)
+    VALUES
+       (NEWID(),'View quote','view_quote','/admin/quotes/view-quote/{}')
+END
+
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey= 'add_quote')
+BEGIN 
+    INSERT INTO Screens(Id,Name,ScreenKey,Route)
+    VALUES
+       (NEWID(),'Add Quote','add_quote','/admin/quote/quote-add/{}')
+END
+
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey= 'edit_quote')
+BEGIN 
+    INSERT INTO Screens(Id,Name,ScreenKey,Route)
+    VALUES
+       (NEWID(),'Edit Quote','edit_quote','/admin/quotes/quotes-edit/{}')
+END
+
+
+
 
 /* Adding data in role permissions */
 
