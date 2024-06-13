@@ -8,19 +8,28 @@ using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using NPOI.OpenXmlFormats.Spreadsheet;
 using NPOI.SS.Formula.Functions;
+using System.Text;
+using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 
 namespace AddOptimization.Services.Services
 {
     public class InvoiceService : IInvoiceService
     {
         private readonly IGenericRepository<Invoice> _invoiceRepository;
+        private readonly IGenericRepository<InvoiceDetail> _invoiceDetailRepository;
+
         private readonly IGenericRepository<Customer> _customer;
         private readonly IGenericRepository<CustomerEmployeeAssociation> _customerEmployeeAssociation;
         private readonly IGenericRepository<SchedulerEvent> _schedulersRepository;
         private readonly IGenericRepository<SchedulerEventDetails> _schedulersDetailsRepository;
         private readonly ISchedulersStatusService _schedulersStatusService;
         private readonly ISchedulerEventTypeService _schedulerEventTypeService;
+        private readonly IGenericRepository<PublicHoliday> _publicHolidayRepository;
+        private readonly IGenericRepository<Employee> _employeeRepository;
+        private readonly IGenericRepository<Company> _companyRepository;
+
 
 
         private readonly ILogger<InvoiceService> _logger;
@@ -31,8 +40,14 @@ namespace AddOptimization.Services.Services
             IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository,
             ISchedulersStatusService schedulersStatusService,
             ISchedulerEventTypeService schedulerEventTypeService,
-            ILogger<InvoiceService> logger)
+            IGenericRepository<PublicHoliday> publicHolidayRepository,
+            IGenericRepository<InvoiceDetail> invoiceDetailRepository,
+            IGenericRepository<Employee> employeeRepository,
+            IGenericRepository<Company> companyRepository,
+        ILogger<InvoiceService> logger)
         {
+            _companyRepository = companyRepository;
+            _publicHolidayRepository = publicHolidayRepository;
             _invoiceRepository = invoiceRepository;
             _customerEmployeeAssociation = customerEmployeeAssociation;
             _customer = customer;
@@ -40,41 +55,116 @@ namespace AddOptimization.Services.Services
             _schedulerEventTypeService = schedulerEventTypeService;
             _schedulersStatusService = schedulersStatusService;
             _schedulersDetailsRepository = schedulersDetailsRepository;
+            _invoiceDetailRepository = invoiceDetailRepository;
+            _employeeRepository = employeeRepository;
             _logger = logger;
         }
 
-        public async Task<ApiResult<List<InvoiceResponseDto>>> GenerateInvoice(Guid customerId, MonthDateRange month, List<CustomerEmployeeAssociationDto> associatedEmployees)
+        public async Task<ApiResult<List<InvoiceResponseDto>>> GenerateInvoice(Guid customerId, MonthDateRange month,
+            List<CustomerEmployeeAssociationDto> associatedEmployees)
         {
             try
             {
-                //first verify that invoice is already not created for this customer for this month
-                var events = (await _schedulersRepository.QueryAsync(x => x.CustomerId == customerId && x.StartDate.Month == month.StartDate.Month)).ToList();
+                var events = (await _schedulersRepository.QueryAsync(x => x.CustomerId == customerId
+                && x.StartDate.Month == month.StartDate.Month
+                && x.StartDate.Year == month.StartDate.Year)).ToList();
 
-                //(first table) Invoice no, invoice date, customer address, created date, created by (null),company address, payment status,invoice status, company bank details etc
+                //(first table) Invoice no, invoice date, customer address, created date, created by (null),company address,
+                //payment status,invoice status, company bank details , DUE DATE(Payment Clearence Date : 15), vat(Value), totalpriceincludingvat, totalpriceexcludingvat etc
                 //insert records
 
-                //(second table) description, qty, unit price,vat, totalpriceincludingvat, totalpriceexcludingvat
 
+
+                var eventTypes = (await _schedulerEventTypeService.Search()).Result;
+                var timesheetEventId = eventTypes.FirstOrDefault(x => x.Name.Equals("timesheet", StringComparison.InvariantCultureIgnoreCase)).Id;
+                var overtimeEventId = eventTypes.FirstOrDefault(x => x.Name.Equals("overtime", StringComparison.InvariantCultureIgnoreCase)).Id;
+                var customer = await _customer.FirstOrDefaultAsync(t => t.Id == customerId, ignoreGlobalFilter: true);
+                var publicHolidays = (await _publicHolidayRepository.QueryAsync(o => o.CountryId == customer.CountryId
+                    && o.Date.Month == month.StartDate.Month
+                    && o.Date.Year == month.StartDate.Year)).Select(x => x.Date.Date);
+
+
+                //Address Calculations
+                string customerAddress = GetCustomerAddress(customer);
+
+                var company = await _companyRepository.FirstOrDefaultAsync(ignoreGlobalFilter: true);
+
+                var companyAddress = string.Empty;
+
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine(company.CompanyName);
+                sb.AppendLine(company.Address);
+                sb.AppendLine(company.City);
+                sb.AppendLine(company.State);
+                sb.AppendLine(company.ZipCode.ToString());
+                //sb.AppendLine(company.Company);
+                companyAddress = sb.ToString();
+
+                var companyBankDetails = string.Empty;
+
+                StringBuilder bd = new StringBuilder();
+                bd.AppendLine(company.BankName);
+                bd.AppendLine(company.BankAccountName);
+                bd.AppendLine(company.BankAccountNumber);
+                bd.AppendLine(company.BankAddress);
+                companyAddress = bd.ToString();
+
+                var invoice = new Invoice
+                {
+                    CustomerAddress = customerAddress,
+                    CompanyAddress = companyAddress,
+                    CompanyBankDetails = companyBankDetails,
+                    DueDate = customer.PaymentClearanceDays.HasValue ? DateTime.UtcNow.AddDays(customer.PaymentClearanceDays.Value) : DateTime.UtcNow.AddDays(15),
+                    InvoiceDate = DateTime.UtcNow,
+                    InvoiceNumber = "",
+                    InvoiceStatusId = "",
+                    PaymentStatusId = 1,
+                    TotalPriceExcludingVat = 0,
+                    TotalPriceIncludingVat = 1,
+                    Vat = 1,
+                    CustomerId
+                };
+
+                var invoiceResult = await _invoiceRepository.InsertAsync(invoice);
                 foreach (var employee in associatedEmployees)
                 {
-                    // first mon-fri billing for this employee excluding public holiday
-                    // 1. filter public holiday for this customer based on countryid of this customer for this month
-                    // 2. get the scheduler event details of this employee for a particular month, date should be mon-fri only excluding public holiday
-                    // 3. filter based on event staus id so taht only timesheet info will come
+                    var daily = employee.DailyWeightage;
+                    var overTime = employee.Overtime;
+                    var publicHoliday = employee.PublicHoliday;
+                    var saturday = employee.Saturday;
+                    var sunday = employee.Sunday;
 
+                    var empl = (await _employeeRepository.QueryAsync(e => e.UserId == employee.EmployeeId,
+                        include: empl => empl.Include(x => x.ApplicationUser),
+                        ignoreGlobalFilter: true)).FirstOrDefault();
+                    var employeeEvent = events.FirstOrDefault(x => x.UserId == employee.EmployeeId);
+                    var employeeEventDetails = (await _schedulersDetailsRepository.QueryAsync(c => c.SchedulerEventId == employeeEvent.Id && !c.IsDeleted)).ToList();
 
-                    //then sat sun for this employee
-                    //1. get sat sun events for this employee for a particular month based on eventid
-                    
+                    var description = string.Empty;
+                    var jobTitle = "";
+                    decimal unitPrice;
+                    var monFriTimesheetList = employeeEventDetails.Where(c => MonthDateRangeHelper.IsWeekday(c.Date.Value) && !publicHolidays.Contains(c.Date.Value.Date) && c.EventTypeId == timesheetEventId).ToList();
+                    description = empl.ApplicationUser.FullName + '-' + "job title";
+                    CalculateAndSaveInvoiceDetails(invoiceResult, monFriTimesheetList, daily, empl, customer.VAT ?? 0, description);
 
+                    var saturdayTimesheetList = employeeEventDetails.Where(c => MonthDateRangeHelper.IsSaturday(c.Date.Value) && c.EventTypeId == timesheetEventId).ToList();
+                    unitPrice = daily / 8 * saturday / 100;
+                    description = $"{empl.ApplicationUser.FullName}-{jobTitle}-WE (Saturday) {saturday}% ({daily / 8} eur/h)";   // WE (Sunday) 210% (71,88 eur/h)
+                    CalculateAndSaveInvoiceDetails(invoiceResult, saturdayTimesheetList, unitPrice, empl, customer.VAT ?? 0, description);
 
-                    //then overtime for this employee
+                    var sundayTimesheetList = employeeEventDetails.Where(c => MonthDateRangeHelper.IsSunday(c.Date.Value) && c.EventTypeId == timesheetEventId).ToList();
+                    unitPrice = daily / 8 * sunday / 100;
+                    description = $"{empl.ApplicationUser.FullName}-{jobTitle}-WE (Sunday) {sunday}% ({daily / 8} eur/h)";
+                    CalculateAndSaveInvoiceDetails(invoiceResult, sundayTimesheetList, unitPrice, empl, customer.VAT ?? 0, description);
 
-                    //then public holiday for this employee
+                    var overtimeList = employeeEventDetails.Where(c => c.EventTypeId == overtimeEventId).ToList();
+                    description = $"{empl.ApplicationUser.FullName}-{jobTitle}-WE (Overtime) {sunday}% ({daily / 8} eur/h)";
+                    CalculateAndSaveInvoiceDetails(invoiceResult, sundayTimesheetList, unitPrice, empl, customer.VAT ?? 0, description);
+
+                    var publicHolidaysList = employeeEventDetails.Where(c => MonthDateRangeHelper.IsWeekday(c.Date.Value) && publicHolidays.Contains(c.Date.Value.Date) && c.EventTypeId == timesheetEventId).ToList();
+
 
                 }
-
-
                 return ApiResult<List<InvoiceResponseDto>>.Success("");
             }
             catch (Exception ex)
@@ -82,6 +172,52 @@ namespace AddOptimization.Services.Services
                 _logger.LogException(ex);
                 throw;
             }
+        }
+
+        private static string GetCustomerAddress(Customer customer)
+        {
+            var customerAddress = string.Empty;
+            if (customer.PartnerName != null)
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine(customer.PartnerAddress);
+                sb.AppendLine(customer.PartnerAddress2);
+                sb.AppendLine(customer.PartnerCity);
+                sb.AppendLine(customer.PartnerState);
+                sb.AppendLine(customer.PartnerZipCode.ToString());
+                //sb.AppendLine(customer.PartnerCountry);
+                customerAddress = sb.ToString();
+            }
+            else
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine(customer.Organizations);
+                sb.AppendLine(customer.Address);
+                sb.AppendLine(customer.Address2);
+                sb.AppendLine(customer.City);
+                sb.AppendLine(customer.State);
+                //sb.AppendLine(customer.Country);
+                sb.AppendLine(customer.ZipCode.ToString());
+                customerAddress = sb.ToString();
+            }
+
+            return customerAddress;
+        }
+
+        private void CalculateAndSaveInvoiceDetails(Invoice invoice, List<SchedulerEventDetails> schedulerEventDetails, decimal daily, Employee empl, decimal vat, string description)
+        {
+            var quantity = schedulerEventDetails.Sum(c => c.Duration);
+            var invoiceDetail = new InvoiceDetail
+            {
+                InvoiceId = invoice.Id,
+                Description = description,
+                Quantity = quantity,
+                UnitPrice = daily,
+                TotalPriceExcludingVat = daily * quantity,
+                TotalPriceIncludingVat = (daily * quantity) + (daily * quantity * vat / 100),
+                VatPercent = vat,
+            };
+            var invoiceDetails = _invoiceDetailRepository.InsertAsync(invoiceDetail);
         }
     }
 }

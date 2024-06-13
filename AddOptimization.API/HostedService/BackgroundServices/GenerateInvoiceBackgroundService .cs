@@ -79,14 +79,17 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                     {
                         var filteredAssociations = associatedEmployees.Where(s => month.StartDate.Month >= s.CreatedAt.Value.Month).ToList();
 
-                        bool allTimesheetAproovedForMonth = await schedulerEventService.IsTimesheetApproved(customer.Id, filteredAssociations.Select(x => x.EmployeeId).ToList(), month);
-                        if (allTimesheetAproovedForMonth)
+                        bool allTimesheetApprovedForMonth = await schedulerEventService.IsTimesheetApproved(customer.Id, filteredAssociations.Select(x => x.EmployeeId).ToList(), month);
+                        if (allTimesheetApprovedForMonth)
                         {
                             //check invoice already exist of not
                             //code pending
-
+                            var invoice = _invoiceRepository.QueryAsync(i => i.CustomerId == customerId && i.InvoiceDate.Month == month.StartDate.Month);
+                            if (invoice == null)
+                            {
+                                await invoiceService.GenerateInvoice(customer.Id, month, filteredAssociations);
+                            }
                             //create invoice for customer {customer.Id} for month {month}
-                            await invoiceService.GenerateInvoice(customer.Id, month, filteredAssociations);
                         }
                     }
 
