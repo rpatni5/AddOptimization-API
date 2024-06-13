@@ -8,6 +8,7 @@ using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using NPOI.HSSF.Record;
 using NPOI.OpenXmlFormats.Spreadsheet;
 using NPOI.SS.Formula.Functions;
 using System.Text;
@@ -117,12 +118,11 @@ namespace AddOptimization.Services.Services
                     DueDate = customer.PaymentClearanceDays.HasValue ? DateTime.UtcNow.AddDays(customer.PaymentClearanceDays.Value) : DateTime.UtcNow.AddDays(15),
                     InvoiceDate = DateTime.UtcNow,
                     InvoiceNumber = "",
-                    InvoiceStatusId = "",
-                    PaymentStatusId = 1,
+                    InvoiceStatusId = Guid.Empty,
+                    PaymentStatusId = Guid.Empty,
                     TotalPriceExcludingVat = 0,
                     TotalPriceIncludingVat = 1,
                     Vat = 1,
-                    CustomerId
                 };
 
                 var invoiceResult = await _invoiceRepository.InsertAsync(invoice);

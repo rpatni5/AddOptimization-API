@@ -1,6 +1,7 @@
 ﻿using AddOptimization.Contracts.Constants;
 using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
+using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
 using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
@@ -21,10 +22,11 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         private readonly ITemplateService _templateService;
         private readonly IConfiguration _configuration;
         private readonly ICustomerService _customerService;
+        private readonly IGenericRepository<Invoice> _invoiceRepository;
         #endregion
 
         #region Constructor
-        public GenerateInvoiceBackgroundService(IConfiguration configuration, IEmailService emailService, ITemplateService templateService, IServiceProvider serviceProvider, ILogger<GenerateInvoiceBackgroundService> logger, ICustomerService customerService)
+        public GenerateInvoiceBackgroundService(IConfiguration configuration, IEmailService emailService, ITemplateService templateService, IServiceProvider serviceProvider, ILogger<GenerateInvoiceBackgroundService> logger, ICustomerService customerService, IGenericRepository<Invoice> invoiceRepository)
         {
             _configuration = configuration;
             _serviceProvider = serviceProvider;
@@ -32,6 +34,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             _emailService = emailService;
             _templateService = templateService;
             _customerService = customerService;
+            _invoiceRepository = invoiceRepository;
         }
         #endregion
 
@@ -84,7 +87,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                         {
                             //check invoice already exist of not
                             //code pending
-                            var invoice = _invoiceRepository.QueryAsync(i => i.CustomerId == customerId && i.InvoiceDate.Month == month.StartDate.Month);
+                            var invoice = _invoiceRepository.QueryAsync(i => i.CustomerId == customer.Id && i.InvoiceDate.Month == month.StartDate.Month);
                             if (invoice == null)
                             {
                                 await invoiceService.GenerateInvoice(customer.Id, month, filteredAssociations);
