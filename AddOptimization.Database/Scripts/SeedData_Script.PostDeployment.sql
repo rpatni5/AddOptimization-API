@@ -273,27 +273,6 @@ BEGIN
        (NEWID(),'View timesheet','view_timesheet','/admin/timesheets/view-timesheet/{}')
 END
 
-IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey= 'view_quote')
-BEGIN 
-    INSERT INTO Screens(Id,Name,ScreenKey,Route)
-    VALUES
-       (NEWID(),'View quote','view_quote','/admin/quotes/view-quote/{}')
-END
-
-IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey= 'add_quote')
-BEGIN 
-    INSERT INTO Screens(Id,Name,ScreenKey,Route)
-    VALUES
-       (NEWID(),'Add Quote','add_quote','/admin/quote/quote-add/{}')
-END
-
-IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey= 'edit_quote')
-BEGIN 
-    INSERT INTO Screens(Id,Name,ScreenKey,Route)
-    VALUES
-       (NEWID(),'Edit Quote','edit_quote','/admin/quotes/quotes-edit/{}')
-END
-
 
 /* Adding data in role permissions */
 
@@ -556,7 +535,7 @@ BEGIN
     INSERT INTO QuoteStatuses(Id,Name,StatusKey)
     VALUES
         ('B4D1B75D-96B4-4B2B-923B-49564866E3E1','Cancel','CANCEL')
-ENDC:\Users\HP\source\repos\AddOptimization-API\AddOptimization.Database\dbo\Tables\Customers.sql
+END
 
 /* Adding Finalized Quote Status data in Quote Status */
 
