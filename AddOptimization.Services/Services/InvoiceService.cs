@@ -143,26 +143,37 @@ namespace AddOptimization.Services.Services
                     var description = string.Empty;
                     var jobTitle = "";
                     decimal unitPrice;
+                    //Normal day timesheet Mon-Fri
                     var monFriTimesheetList = employeeEventDetails.Where(c => MonthDateRangeHelper.IsWeekday(c.Date.Value) && !publicHolidays.Contains(c.Date.Value.Date) && c.EventTypeId == timesheetEventId).ToList();
                     description = empl.ApplicationUser.FullName + '-' + "job title";
                     CalculateAndSaveInvoiceDetails(invoiceResult, monFriTimesheetList, daily, empl, customer.VAT ?? 0, description);
 
-                    var saturdayTimesheetList = employeeEventDetails.Where(c => MonthDateRangeHelper.IsSaturday(c.Date.Value) && c.EventTypeId == timesheetEventId).ToList();
+                    //Sat timesheet including overtime
+                    var saturdayTimesheetList = employeeEventDetails.Where(c => MonthDateRangeHelper.IsSaturday(c.Date.Value)).ToList();
                     unitPrice = daily / 8 * saturday / 100;
                     description = $"{empl.ApplicationUser.FullName}-{jobTitle}-WE (Saturday) {saturday}% ({daily / 8} eur/h)";   // WE (Sunday) 210% (71,88 eur/h)
-                    CalculateAndSaveInvoiceDetails(invoiceResult, saturdayTimesheetList, unitPrice, empl, customer.VAT ?? 0, description);
+                    CalculateInvoiceDetailsForWeekend(invoiceResult, saturdayTimesheetList, unitPrice, empl, customer.VAT ?? 0, description, timesheetEventId,overtimeEventId);
 
-                    var sundayTimesheetList = employeeEventDetails.Where(c => MonthDateRangeHelper.IsSunday(c.Date.Value) && c.EventTypeId == timesheetEventId).ToList();
+                    //Sun timesheet including overtime
+                    unitPrice = daily / 8 * sunday / 100;
+                    description = $"{empl.ApplicationUser.FullName}-{jobTitle}-WE (Sunday) {sunday}% ({daily / 8} eur/h)";   // WE (Sunday) 210% (71,88 eur/h)
+                    var sundayTimesheetList = employeeEventDetails.Where(c => MonthDateRangeHelper.IsSunday(c.Date.Value)).ToList();
                     unitPrice = daily / 8 * sunday / 100;
                     description = $"{empl.ApplicationUser.FullName}-{jobTitle}-WE (Sunday) {sunday}% ({daily / 8} eur/h)";
-                    CalculateAndSaveInvoiceDetails(invoiceResult, sundayTimesheetList, unitPrice, empl, customer.VAT ?? 0, description);
+                    CalculateInvoiceDetailsForWeekend(invoiceResult, sundayTimesheetList, unitPrice, empl, customer.VAT ?? 0, description, timesheetEventId, overtimeEventId);
 
-                    var overtimeList = employeeEventDetails.Where(c => c.EventTypeId == overtimeEventId).ToList();
+                    //Overtime Mon-Fri
+                    unitPrice = daily / 8 * overTime / 100;
+                    description = $"{empl.ApplicationUser.FullName}-{jobTitle}-Overtime {overTime}% ({daily / 8} eur/h)";
+                    var overtimeList = employeeEventDetails.Where(c => c.EventTypeId == overtimeEventId && MonthDateRangeHelper.IsWeekday(c.Date.Value)).ToList();
                     description = $"{empl.ApplicationUser.FullName}-{jobTitle}-WE (Overtime) {sunday}% ({daily / 8} eur/h)";
-                    CalculateAndSaveInvoiceDetails(invoiceResult, sundayTimesheetList, unitPrice, empl, customer.VAT ?? 0, description);
+                    CalculateAndSaveInvoiceDetails(invoiceResult, overtimeList, unitPrice, empl, customer.VAT ?? 0, description);
 
+                    //Timesheet Mon-Fri on public holiday
+                    unitPrice = daily * publicHoliday / 100;
+                    description = $"{empl.ApplicationUser.FullName}-{jobTitle}-Holiday {publicHoliday}% ({daily} eur/d)";
                     var publicHolidaysList = employeeEventDetails.Where(c => MonthDateRangeHelper.IsWeekday(c.Date.Value) && publicHolidays.Contains(c.Date.Value.Date) && c.EventTypeId == timesheetEventId).ToList();
-
+                    CalculateAndSaveInvoiceDetails(invoiceResult, publicHolidaysList, unitPrice, empl, customer.VAT ?? 0, description);
 
                 }
                 return ApiResult<List<InvoiceResponseDto>>.Success("");
@@ -173,7 +184,6 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-
         private static string GetCustomerAddress(Customer customer)
         {
             var customerAddress = string.Empty;
@@ -218,6 +228,27 @@ namespace AddOptimization.Services.Services
                 VatPercent = vat,
             };
             var invoiceDetails = _invoiceDetailRepository.InsertAsync(invoiceDetail);
+        }
+
+        private void CalculateInvoiceDetailsForWeekend(Invoice invoice, List<SchedulerEventDetails> schedulerEventDetails, decimal unitPrice, Employee empl, decimal vat, string description, Guid timesheetEventId, Guid overtimeEventId)
+        {
+            var timesheetQuantityInHr = schedulerEventDetails.Where(x=>x.SchedulerEventId == timesheetEventId).Sum(c => c.Duration) * 8;
+            var overtimeQuantityInHr = schedulerEventDetails.Where(x => x.SchedulerEventId == overtimeEventId).Sum(c => c.Duration);
+
+            var quantity = timesheetQuantityInHr + overtimeQuantityInHr;
+
+            var invoiceDetail = new InvoiceDetail
+            {
+                InvoiceId = invoice.Id,
+                Description = description,
+                Quantity = quantity,
+                UnitPrice = unitPrice,
+                TotalPriceExcludingVat = unitPrice * quantity,
+                TotalPriceIncludingVat = (unitPrice * quantity) + (unitPrice * quantity * vat / 100),
+                VatPercent = vat,
+            };
+            var invoiceDetails = _invoiceDetailRepository.InsertAsync(invoiceDetail);
+
         }
     }
 }
