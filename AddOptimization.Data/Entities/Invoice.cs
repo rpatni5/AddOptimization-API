@@ -7,17 +7,19 @@ namespace AddOptimization.Data.Entities
     {
         public string InvoiceNumber { get; set; }
         public DateTime InvoiceDate { get; set; }
-        public DateTime DueDate { get; set; }
         public Guid CustomerId { get; set; }
         public Guid PaymentStatusId { get; set; }
         public Guid InvoiceStatusId { get; set; }
         public string CustomerAddress { get; set; }
         public string CompanyAddress { get; set; }
         public string CompanyBankDetails { get; set; }
-        public decimal Vat { get; set; }
+        public decimal VatValue { get; set; }
         public decimal TotalPriceIncludingVat { get; set; }
         public decimal TotalPriceExcludingVat { get; set; }
         public bool IsDeleted { get; set; }
+        public DateTime ExpiryDate { get; set; }
+        public int? PaymentClearanceDays { get; set; }
+        
 
         [ForeignKey(nameof(PaymentStatusId))]
         public virtual PaymentStatus PaymentStatus { get; set; }

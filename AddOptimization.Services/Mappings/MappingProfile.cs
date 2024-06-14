@@ -257,6 +257,35 @@ namespace AddOptimization.Services.Mappings
 
             });
             CreateMap<SchedulerEventHistoryDto, SchedulerEventHistory>();
+
+
+            CreateMap<Invoice, InvoiceResponseDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.CreatedAt = s.CreatedAt?.Date;
+                d.UpdatedAt = s.UpdatedAt?.Date;
+                d.CustomerName = s.Customer != null ? s.Customer.Organizations : string.Empty;
+            });
+            CreateMap<InvoiceRequestDto, Invoice>();
+
+            CreateMap<InvoiceStatus, InvoiceStatusDto>().AfterMap((s, d) =>
+            {
+
+            });
+            CreateMap<InvoiceStatusDto, InvoiceStatus>();
+
+            CreateMap<InvoiceDetail, InvoiceDetailDto>().AfterMap((s, d) =>
+            {
+
+            });
+            CreateMap<InvoiceDetailDto, InvoiceDetail>();
+
+            CreateMap<PaymentStatus, PaymentStatusDto>().AfterMap((s, d) =>
+            {
+
+            });
+            CreateMap<PaymentStatusDto, PaymentStatus>();
         }
     }
 }
