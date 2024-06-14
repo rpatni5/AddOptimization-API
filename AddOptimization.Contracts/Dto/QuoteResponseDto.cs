@@ -5,13 +5,16 @@ namespace AddOptimization.Contracts.Dto
 {
     public class QuoteResponseDto : BaseDto<Guid>
     {
+        public Int64 Id { get; set; }
         public Guid CustomerId { get; set; }
         public string CustomerName { get; set; }
-        public Guid ProductId { get; set; }
         public string ProductName { get; set; }
         public Guid QuoteStatusId { get; set; }
         public string QuoteStatusesName { get; set; }
-        public string BillingAddress { get; set; }
+        public string CustomerAddress { get; set; }
+        public string? CompanyAddress { get; set; }
+        public string? CompanyBankAddress { get; set; }
+        public Int64? QuoteNo { get; set; }
         public DateTime ExpiryDate { get; set; }
         public DateTime QuoteDate { get; set; }
         public string CreatedBy { get; set; }

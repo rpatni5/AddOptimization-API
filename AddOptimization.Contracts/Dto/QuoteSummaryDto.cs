@@ -12,6 +12,6 @@ namespace AddOptimization.Contracts.Dto
         public decimal UnitPrice { get; set; }
         public decimal TotalPriceExcVat { get; set; }
         public decimal TotalPriceIncVat { get; set; }
-        public Guid QuoteId { get; set; }
+        public Int64 QuoteId { get; set; }
     }
 }
