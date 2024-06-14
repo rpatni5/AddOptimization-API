@@ -9,6 +9,7 @@ using AddOptimization.Utilities.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Text;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace AddOptimization.Services.Services
 {
@@ -79,10 +80,10 @@ namespace AddOptimization.Services.Services
                     && o.Date.Month == month.StartDate.Month
                     && o.Date.Year == month.StartDate.Year)).Select(x => x.Date.Date);
 
-                string customerAddress = GetCustomerAddress(customer);
+                string customerAddress = await GetCustomerAddress(customer);
                 var company = await _companyRepository.FirstOrDefaultAsync(ignoreGlobalFilter: true);
                 string companyAddress = await GenerateCompanyAddress(company);
-                string companyBankDetails =await GenerateCompanyBankDetails(company);
+                string companyBankDetails = GenerateCompanyBankDetails(company);
 
                 var invoiceNumber = await GenerateInvoiceNumber();
 
@@ -155,6 +156,11 @@ namespace AddOptimization.Services.Services
                     CalculateAndSaveInvoiceDetails(invoiceResult, publicHolidaysList, unitPrice, empl, customer.VAT ?? 0, description);
 
                 }
+
+                // Get invoice
+                // Get invoice details
+                // update invoice
+
                 return ApiResult<List<InvoiceResponseDto>>.Success("");
             }
             catch (Exception ex)
@@ -164,50 +170,48 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private async Task<string> GenerateCompanyBankDetails(Company company)
+        private static string GenerateCompanyBankDetails(Company company)
         {
-            StringBuilder bd = new StringBuilder();
-            bd.AppendLine(company.BankName);
-            bd.AppendLine(company.BankAccountName);
-            bd.AppendLine(company.BankAccountNumber);
-            bd.AppendLine(company.BankAddress);
-            var companyBankDetails = bd.ToString();
-            return companyBankDetails;
+            StringBuilder companyBankDetails = new StringBuilder();
+            companyBankDetails.AppendLine(company.BankName);
+            companyBankDetails.AppendLine(company.BankAccountName);
+            companyBankDetails.AppendLine(company.BankAccountNumber);
+            companyBankDetails.AppendLine(company.BankAddress);
+            return companyBankDetails.ToString();
         }
 
         private async Task<string> GenerateCompanyAddress(Company company)
         {
-           // var country = await _countryRepository.FirstOrDefaultAsync(c=>c.Id == company.Country., ignoreGlobalFilter: true);
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine(company.CompanyName);
-            sb.AppendLine(company.Address);
-            sb.AppendLine(company.City);
-            sb.AppendLine(company.State);
-            sb.AppendLine(company.ZipCode.ToString());
-            //sb.AppendLine(company.Country);
-            var companyAddress = sb.ToString();
-            return companyAddress;
+            _ = Guid.TryParse(company.Country, out Guid countryId);
+            var country = await _countryRepository.FirstOrDefaultAsync(c => c.Id == countryId, ignoreGlobalFilter: true);
+            StringBuilder companyAddress = new StringBuilder();
+            companyAddress.AppendLine(company.CompanyName);
+            companyAddress.AppendLine(company.Address);
+            companyAddress.AppendLine(company.City);
+            companyAddress.AppendLine(company.State);
+            companyAddress.AppendLine(company.ZipCode.ToString());
+            companyAddress.AppendLine(country.CountryName);
+            return companyAddress.ToString();
         }
 
         private async Task<string> GenerateInvoiceNumber()
         {
-            var invoiceNo = string.Empty;
             var invoice = (await _invoiceRepository.QueryAsync(ignoreGlobalFilter: true)).ToList();
             var maxInvoiceNo = invoice.Max(c => c.Id);
             if (maxInvoiceNo != 0)
             {
-                invoiceNo = $"{DateTime.UtcNow.Year}+{DateTime.UtcNow.Month}+{maxInvoiceNo}";
+                return $"{DateTime.UtcNow.Year}+{DateTime.UtcNow.Month}+{maxInvoiceNo}";
             }
             else
             {
-                invoiceNo = $"{DateTime.UtcNow.Year}+{DateTime.UtcNow.Month}+{maxInvoiceNo}";
+                return $"{DateTime.UtcNow.Year}+{DateTime.UtcNow.Month}+{maxInvoiceNo}";
             }
-            return invoiceNo;
         }
 
-        private static string GetCustomerAddress(Customer customer)
+        private async Task<string> GetCustomerAddress(Customer customer)
         {
             var customerAddress = string.Empty;
+            var country = await _countryRepository.FirstOrDefaultAsync(c => c.Id == customer.CountryId, ignoreGlobalFilter: true);
             if (customer.PartnerName != null)
             {
                 StringBuilder sb = new StringBuilder();
@@ -216,7 +220,7 @@ namespace AddOptimization.Services.Services
                 sb.AppendLine(customer.PartnerCity);
                 sb.AppendLine(customer.PartnerState);
                 sb.AppendLine(customer.PartnerZipCode.ToString());
-                //sb.AppendLine(customer.PartnerCountry);
+                sb.AppendLine(country.CountryName);
                 customerAddress = sb.ToString();
             }
             else
@@ -227,11 +231,10 @@ namespace AddOptimization.Services.Services
                 sb.AppendLine(customer.Address2);
                 sb.AppendLine(customer.City);
                 sb.AppendLine(customer.State);
-                //sb.AppendLine(customer.Country);
+                sb.AppendLine(country.CountryName);
                 sb.AppendLine(customer.ZipCode.ToString());
                 customerAddress = sb.ToString();
             }
-
             return customerAddress;
         }
 
