@@ -8,7 +8,7 @@ CREATE TABLE [dbo].[Invoices](
 	[CustomerAddress] [varchar](400) NULL,
 	[CompanyAddress] [varchar](400) NULL,
 	[CompanyBankDetails] [varchar](400) NULL,
-	[Vat] [decimal](10, 2) NULL,
+	[VatValue] [decimal](10, 2) NULL,
 	[TotalPriceIncludingVat] [decimal](10, 2) NULL,
 	[TotalPriceExcludingVat] [decimal](10, 2) NULL,
 	[IsDeleted] [bit] NOT NULL,
@@ -66,4 +66,3 @@ GO
 
 ALTER TABLE [dbo].[Invoices] CHECK CONSTRAINT [FK_Invoices_PaymentStatuses_PaymentStatusId]
 GO
-
