@@ -1,10 +1,14 @@
 ﻿using AddOptimization.Contracts.Constants;
 using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
+using AddOptimization.Data.Contracts;
+using AddOptimization.Data.Entities;
 using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
+using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
+using GraphQL.Types;
 using Sgbj.Cron;
 
 namespace AddOptimization.API.HostedService.BackgroundServices
@@ -17,17 +21,20 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         private readonly IEmailService _emailService;
         private readonly ITemplateService _templateService;
         private readonly IConfiguration _configuration;
+        private readonly ICustomerService _customerService;
+        private readonly IGenericRepository<Invoice> _invoiceRepository;
         #endregion
 
         #region Constructor
-        public GenerateInvoiceBackgroundService(IConfiguration configuration, IEmailService emailService, ITemplateService templateService, IServiceProvider serviceProvider, ILogger<GenerateInvoiceBackgroundService> logger)
+        public GenerateInvoiceBackgroundService(IConfiguration configuration, IEmailService emailService, ITemplateService templateService, IServiceProvider serviceProvider, ILogger<GenerateInvoiceBackgroundService> logger, ICustomerService customerService, IGenericRepository<Invoice> invoiceRepository)
         {
             _configuration = configuration;
             _serviceProvider = serviceProvider;
             _logger = logger;
             _emailService = emailService;
             _templateService = templateService;
-
+            _customerService = customerService;
+            _invoiceRepository = invoiceRepository;
         }
         #endregion
 
@@ -57,26 +64,40 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             {
                 using var scope = _serviceProvider.CreateScope();
                 var schedulerEventService = scope.ServiceProvider.GetRequiredService<ISchedulerEventService>();
+                var invoiceService = scope.ServiceProvider.GetRequiredService<IInvoiceService>();
                 var customerEmployeeAssociationService = scope.ServiceProvider.GetRequiredService<ICustomerEmployeeAssociationService>();
                 var expirationThresholdValue = _configuration.ReadSection<BackgroundServiceSettings>(AppSettingsSections.BackgroundServiceSettings).ExpirationThresholdInDays;
-                var customerEmployeeAssociation = await customerEmployeeAssociationService.Search();
-                var result = customerEmployeeAssociation.Result.GroupBy(c => c.CustomerId).ToList();
-                foreach (var clientAssociation in result)
-                {
-                    foreach (var association in clientAssociation)
-                    {
-                        var schedulerEvents = await schedulerEventService.GetSchedulerEventsForEmailReminder(association.CustomerId, association.EmployeeId);
-                        if (schedulerEvents?.Result == null) continue;
 
-                        //Filter scheduler events which happened before the client association.
-                        var events = schedulerEvents.Result
-                            .Where(s => s.EventDetails != null && (s.EventDetails == null && s.EndDate <= association.CreatedAt)).ToList();
-                        foreach (var item in events)
+                var customers = (await _customerService.GetAllCustomers()).Result;
+
+                foreach (var customer in customers)
+                {
+                    var customerEmployeeAssociation = (await customerEmployeeAssociationService.Search()).Result;
+
+                    var associatedEmployees = customerEmployeeAssociation.Where(c => c.CustomerId == c.CustomerId && !c.IsDeleted).ToList();
+
+                    var months = MonthDateRangeHelper.GetMonthDateRanges();
+
+                    foreach (var month in months)
+                    {
+                        var filteredAssociations = associatedEmployees.Where(s => month.StartDate.Month >= s.CreatedAt.Value.Month).ToList();
+
+                        bool allTimesheetApprovedForMonth = await schedulerEventService.IsTimesheetApproved(customer.Id, filteredAssociations.Select(x => x.EmployeeId).ToList(), month);
+                        if (allTimesheetApprovedForMonth)
                         {
-                            //Task.Run(() => SendFillTimesheetReminderEmail(item));
-                        };
+                            //check invoice already exist of not
+                            //code pending
+                            var invoice = _invoiceRepository.QueryAsync(i => i.CustomerId == customer.Id && i.InvoiceDate.Month == month.StartDate.Month);
+                            if (invoice == null)
+                            {
+                                await invoiceService.GenerateInvoice(customer.Id, month, filteredAssociations);
+                            }
+                            //create invoice for customer {customer.Id} for month {month}
+                        }
                     }
-                }
+
+                };
+
                 return true;
             }
             catch (Exception ex)
@@ -87,33 +108,6 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             }
         }
 
-        //private async Task<bool> SendFillTimesheetReminderEmail(SchedulerEventResponseDto schedulerEvent)
-        //{
-        //    try
-        //    {
-        //        var subject = "Add optimization timesheet submission reminder";
-        //        var emailTemplate = _templateService.ReadTemplate(EmailTemplates.FillTimesheetReminder);
-        //        var link = GetMyTimesheetLinkForEmployee();
-        //        emailTemplate = emailTemplate
-        //                        .Replace("[EmployeeName]", schedulerEvent?.UserName)
-        //                        .Replace("[StartDate]", schedulerEvent?.StartDate.Date.ToString("d"))
-        //                        .Replace("[EndDate]", schedulerEvent?.EndDate.Date.ToString("d"))
-        //                        .Replace("[LinkToMyTimesheet]", link);
-        //        return await _emailService.SendEmail(schedulerEvent?.ApplicationUser?.Email, subject, emailTemplate);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogInformation("An exception occurred while sending employee fill timesheet reminder email.");
-        //        _logger.LogException(ex);
-        //        return false;
-        //    }
-        //}
-
-        //private string GetMyTimesheetLinkForEmployee()
-        //{
-        //    var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
-        //    return $"{baseUrl}admin/timesheets/my-timesheets";
-        //}
         #endregion
     }
 }

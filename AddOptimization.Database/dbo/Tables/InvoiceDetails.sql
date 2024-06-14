@@ -2,16 +2,16 @@
 	[Id] [uniqueidentifier] NOT NULL,
 	[InvoiceId] [int] NOT NULL,
 	[Description] [varchar](500) NULL,
-	[Quantity] [int] NOT NULL,
+	[Quantity] [decimal](10, 2) NOT NULL,
 	[UnitPrice] [decimal](10, 2) NOT NULL,
-	[Price] [decimal](10, 2) NOT NULL,
-	[Vat] [decimal](10, 2) NOT NULL,
+	[VatPercent] [decimal](10, 2) NOT NULL,
 	[TotalPrice] [decimal](10, 2) NOT NULL,
 	[IsDeleted] [bit] NOT NULL,
 	[CreatedAt] [datetime2](7) NULL,
 	[CreatedByUserId] [int] NULL,
 	[UpdatedAt] [datetime2](7) NULL,
 	[UpdatedByUserId] [int] NULL,
+	[Metadata] [varchar](max) NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC

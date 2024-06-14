@@ -16,12 +16,14 @@ public class CompanyService : ICompanyService
     private readonly IGenericRepository<Company> _companyRepository;
     private readonly ILogger<CompanyService> _logger;
     private readonly IMapper _mapper;
+    private readonly ICountryService _countryService;
 
-    public CompanyService(IGenericRepository<Company> companyRepository, ILogger<CompanyService> logger, IMapper mapper)
+    public CompanyService(IGenericRepository<Company> companyRepository, ILogger<CompanyService> logger, IMapper mapper, ICountryService countryService)
     {
         _companyRepository = companyRepository;
         _logger = logger;
         _mapper = mapper;
+        _countryService = countryService;
     }
 
     public async Task<ApiResult<CompanyDto>> Create(CompanyDto model)
@@ -71,6 +73,10 @@ public class CompanyService : ICompanyService
         {
             var entity = await _companyRepository.FirstOrDefaultAsync();
             var mappedEntity = _mapper.Map<CompanyDto>(entity);
+            Guid.TryParse(entity.Country, out Guid parsedCountryId);
+            var countries = await _countryService.GetCountriesById(parsedCountryId);
+            mappedEntity.CountryName = countries.Result.CountryName;
+
             return ApiResult<CompanyDto>.Success(mappedEntity);
         }
         catch (Exception ex)

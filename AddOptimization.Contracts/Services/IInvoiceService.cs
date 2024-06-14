@@ -1,5 +1,6 @@
 ﻿using AddOptimization.Contracts.Dto;
 using AddOptimization.Utilities.Common;
+using AddOptimization.Utilities.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,6 @@ namespace AddOptimization.Contracts.Services
 {
     public interface IInvoiceService
     {
-        Task<ApiResult<List<InvoiceResponseDto>>> GenerateInvoice();
+        Task<ApiResult<List<InvoiceResponseDto>>> GenerateInvoice(Guid customerId, MonthDateRange month, List<CustomerEmployeeAssociationDto> associatedEmployees);
     }
 }

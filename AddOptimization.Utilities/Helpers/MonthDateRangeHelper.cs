@@ -1,6 +1,7 @@
 ﻿using NPOI.SS.Formula.Functions;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AddOptimization.Utilities.Helpers
 {
@@ -25,7 +26,19 @@ namespace AddOptimization.Utilities.Helpers
 
             return monthDateRanges;
         }
+        public static List<DateTime> FilterWeekdays(List<DateTime> dates) { return dates.Where(date => IsWeekday(date)).ToList(); }
+        public static bool IsWeekday(DateTime date) { return date.DayOfWeek != DayOfWeek.Saturday && date.DayOfWeek != DayOfWeek.Sunday; }
+        public static bool IsSaturday(DateTime date)
+        {
+            return date.DayOfWeek == DayOfWeek.Saturday;
+        }
+
+        public static bool IsSunday(DateTime date)
+        {
+            return date.DayOfWeek == DayOfWeek.Sunday;
+        }
     }
+
 
     public class MonthDateRange
     {

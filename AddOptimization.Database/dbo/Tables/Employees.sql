@@ -11,6 +11,19 @@
 	[CreatedByUserId] [int] NULL,
 	[UpdatedAt] [datetime2](7) NULL,
 	[UpdatedByUserId] [int] NULL,
+    [CountryId] [uniqueidentifier] NULL,
+	[State] [varchar](400) NULL,
+	[ZipCode] [int] NULL,
+	[VATNumber] [varchar](400) NULL,
+	[JobTitle] [nvarchar](200) NULL,
+	[City] [nvarchar](200) NULL,
+	[CompanyName] [nvarchar](200) NULL,
+	[Address] [nvarchar](200) NULL,
+	[ExternalZipCode] [int] NULL,
+	[ExternalCity] [nvarchar](200) NULL,
+	[ExternalState] [nvarchar](200) NULL,
+	[ExternalCountryId] [uniqueidentifier] NULL,
+	[ExternalAddress] [nvarchar](200) NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -31,4 +44,12 @@ GO
 
 ALTER TABLE [dbo].[Employees]  WITH CHECK ADD FOREIGN KEY([UserId])
 REFERENCES [dbo].[ApplicationUsers] ([Id])
+GO
+
+ALTER TABLE [dbo].[Employees]  WITH CHECK ADD FOREIGN KEY([CountryId])
+REFERENCES [dbo].[Countries] ([Id])
+GO
+
+ALTER TABLE [dbo].[Employees]  WITH CHECK ADD FOREIGN KEY([ExternalCountryId])
+REFERENCES [dbo].[Countries] ([Id])
 GO

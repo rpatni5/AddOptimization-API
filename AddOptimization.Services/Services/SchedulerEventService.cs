@@ -802,6 +802,11 @@ namespace AddOptimization.Services.Services
             return (totalWorkingDays, overtimeHours);
         }
 
+        public async Task<bool> IsTimesheetApproved(Guid customerId, List<int> employeeIds, MonthDateRange month)
+        {
+            return (await _schedulersRepository.QueryAsync(x => x.CustomerId == customerId && x.StartDate.Month == month.StartDate.Month)).All(x => employeeIds.Contains(x.UserId));
+        }
+
         #endregion
     }
 }
