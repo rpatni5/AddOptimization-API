@@ -7,7 +7,7 @@ CREATE TABLE [dbo].[QuoteSummaries](
 	[UnitPrice] [decimal](10, 2) NULL,
 	[TotalPriceExcVat] [decimal](10, 2) NULL,
 	[TotalPriceIncVat] [decimal](10, 2) NULL,
-	[QuoteId] [bigint] NULL,
+	[QuoteId] [bigint] NOT NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC

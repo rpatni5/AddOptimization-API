@@ -11,8 +11,8 @@ namespace AddOptimization.Contracts.Dto
         public Guid QuoteStatusId { get; set; }
         public string QuoteStatusesName { get; set; }
         public string CustomerAddress { get; set; }
-        public string? CompanyAddress { get; set; }
-        public string? CompanyBankAddress { get; set; }
+        public string CompanyAddress { get; set; }
+        public string CompanyBankAddress { get; set; }
         public long QuoteNo { get; set; }
         public DateTime ExpiryDate { get; set; }
         public DateTime QuoteDate { get; set; }
