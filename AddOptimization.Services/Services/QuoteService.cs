@@ -72,7 +72,6 @@ namespace AddOptimization.Services.Services
                 await _unitOfWork.BeginTransactionAsync();
                 var eventStatus = (await _quoteStatusService.Search()).Result;
                 var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == QuoteStatusesEnum.DRAFT.ToString()).Id;
-                var id = await _quoteRepository.MaxAsync(e => (int)e.Id, ignoreGlobalFilter: true);
                 var quoteNo = await GenerateQuoteNoAsync();
                 var company = await _companyRepository.FirstOrDefaultAsync(ignoreGlobalFilter: true);
 
@@ -97,7 +96,6 @@ namespace AddOptimization.Services.Services
 
                 Quote entity = new Quote
                 {
-                    Id = id + 1,
                     CustomerId = model.CustomerId,
                     ExpiryDate = model.ExpiryDate,
                     QuoteDate = model.QuoteDate,
@@ -137,7 +135,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        public async Task<ApiResult<QuoteResponseDto>> Update(Int64 id, QuoteRequestDto model)
+        public async Task<ApiResult<QuoteResponseDto>> Update(long id, QuoteRequestDto model)
         {
             try
             {
@@ -180,7 +178,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        public async Task<ApiResult<QuoteResponseDto>> FetchQuoteDetails(Int64 id)
+        public async Task<ApiResult<QuoteResponseDto>> FetchQuoteDetails(long id)
         {
             try
             {
@@ -211,7 +209,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private async Task<Int64> GenerateQuoteNoAsync()
+        private async Task<long> GenerateQuoteNoAsync()
         {
             var id = await _quoteRepository.MaxAsync(e => (int)e.Id, ignoreGlobalFilter: true);
             var now = DateTime.UtcNow;

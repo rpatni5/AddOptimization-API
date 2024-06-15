@@ -48,7 +48,7 @@ namespace AddOptimization.API.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Int64 id, QuoteRequestDto model)
+        public async Task<IActionResult> Update(long id, QuoteRequestDto model)
         {
             try
             {
@@ -62,7 +62,7 @@ namespace AddOptimization.API.Controllers
         }
 
         [HttpGet("get-quote-details/{id}")]
-        public async Task<IActionResult> FetchItemConfDetails(Int64 id)
+        public async Task<IActionResult> FetchItemConfDetails(long id)
         {
             try
             {

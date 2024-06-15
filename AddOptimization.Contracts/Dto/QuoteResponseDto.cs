@@ -3,9 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AddOptimization.Contracts.Dto
 {
-    public class QuoteResponseDto : BaseDto<Guid>
+    public class QuoteResponseDto : BaseDto<long>
     {
-        public Int64 Id { get; set; }
         public Guid CustomerId { get; set; }
         public string CustomerName { get; set; }
         public string ProductName { get; set; }
@@ -14,7 +13,7 @@ namespace AddOptimization.Contracts.Dto
         public string CustomerAddress { get; set; }
         public string? CompanyAddress { get; set; }
         public string? CompanyBankAddress { get; set; }
-        public Int64? QuoteNo { get; set; }
+        public long QuoteNo { get; set; }
         public DateTime ExpiryDate { get; set; }
         public DateTime QuoteDate { get; set; }
         public string CreatedBy { get; set; }

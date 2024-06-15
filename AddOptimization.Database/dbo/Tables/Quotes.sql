@@ -1,7 +1,8 @@
 ﻿
 CREATE TABLE [dbo].[Quotes](
+    [Id] [bigint] IDENTITY(1,1) NOT NULL,
 	[CustomerId] [uniqueidentifier] NOT NULL,
-	[CustomerAddress] [nvarchar](300) NOT NULL,
+	[CustomerAddress] [varchar](400) NOT NULL,
 	[ExpiryDate] [datetime2](7) NOT NULL,
 	[QuoteDate] [datetime2](7) NOT NULL,
 	[QuoteStatusId] [uniqueidentifier] NOT NULL,
@@ -11,8 +12,7 @@ CREATE TABLE [dbo].[Quotes](
 	[CreatedByUserId] [int] NULL,
 	[UpdatedAt] [datetime2](7) NULL,
 	[UpdatedByUserId] [int] NULL,
-	[Id] [bigint] NOT NULL,
-	[QuoteNo] [bigint] NULL,
+	[QuoteNo] [bigint] NOT NULL,
 	[CompanyAddress] [varchar](400) NULL,
 	[CompanyBankAddress] [varchar](400) NULL,
  CONSTRAINT [PK_Quotes] PRIMARY KEY CLUSTERED 

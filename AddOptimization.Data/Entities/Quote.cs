@@ -3,9 +3,8 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 namespace AddOptimization.Data.Entities
 {
-    public class Quote : BaseEntityNew<Guid>
+    public class Quote : BaseEntityNew<long>
     {
-        public Int64 Id   { get; set; }
         public Guid CustomerId { get; set; }
         public Guid QuoteStatusId { get; set; }
         public string CustomerAddress { get; set; }
@@ -13,7 +12,7 @@ namespace AddOptimization.Data.Entities
         public string CompanyBankAddress { get; set; }
         public DateTime ExpiryDate { get; set; }
         public DateTime QuoteDate { get; set; }
-        public Int64? QuoteNo { get; set; }
+        public long QuoteNo { get; set; }
         public bool IsDeleted { get; set; }
         public bool IsActive { get; set; }
 

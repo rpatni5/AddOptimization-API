@@ -7,7 +7,7 @@ namespace AddOptimization.Data.Entities
     public class QuoteSummary
     {
         public Guid Id { get; set; }
-        public Int64 QuoteId { get; set; }
+        public long QuoteId { get; set; }
         public string Name { get; set; }
         public int Quantity { get; set; }
         public decimal Vat { get; set; }
