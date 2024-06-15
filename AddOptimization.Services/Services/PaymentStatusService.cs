@@ -13,6 +13,7 @@ namespace AddOptimization.Services.Services
     public class PaymentStatusService : IPaymentStatusService
     {
         private readonly IGenericRepository<PaymentStatus> _paymentStatusRepository;
+
         private readonly ILogger<PaymentStatusService> _logger;
         private readonly IMapper _mapper;
         public PaymentStatusService(IGenericRepository<PaymentStatus> paymentStatusRepository, ILogger<PaymentStatusService> logger, IMapper mapper)

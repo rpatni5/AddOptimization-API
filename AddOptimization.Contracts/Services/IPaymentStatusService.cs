@@ -12,5 +12,6 @@ namespace AddOptimization.Contracts.Services
     public interface IPaymentStatusService
     {
         Task<ApiResult<List<PaymentStatusDto>>> Search();
+
     }
 }

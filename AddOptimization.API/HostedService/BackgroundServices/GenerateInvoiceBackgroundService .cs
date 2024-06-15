@@ -62,6 +62,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         {
             try
             {
+                _logger.LogInformation("GenerateInvoice Started.");
                 using var scope = _serviceProvider.CreateScope();
                 var schedulerEventService = scope.ServiceProvider.GetRequiredService<ISchedulerEventService>();
                 var invoiceService = scope.ServiceProvider.GetRequiredService<IInvoiceService>();
@@ -80,14 +81,14 @@ namespace AddOptimization.API.HostedService.BackgroundServices
 
                     foreach (var month in months)
                     {
-                        var filteredAssociations = associatedEmployees.Where(s => month.StartDate.Month >= s.CreatedAt.Value.Month).ToList();
+                        var filteredAssociations = associatedEmployees.Where(s => month.StartDate.Month >= s.CreatedAt.Value.Month && month.StartDate.Year >= s.CreatedAt.Value.Year).ToList();
 
                         bool allTimesheetApprovedForMonth = await schedulerEventService.IsTimesheetApproved(customer.Id, filteredAssociations.Select(x => x.EmployeeId).ToList(), month);
                         if (allTimesheetApprovedForMonth)
                         {
                             //check invoice already exist of not
                             //code pending
-                            var invoice = _invoiceRepository.QueryAsync(i => i.CustomerId == customer.Id && i.InvoiceDate.Month == month.StartDate.Month);
+                            var invoice = _invoiceRepository.QueryAsync(i => i.CustomerId == customer.Id && i.InvoiceDate.Month == month.StartDate.Month && i.InvoiceDate.Year == month.StartDate.Year);
                             if (invoice == null)
                             {
                                 await invoiceService.GenerateInvoice(customer.Id, month, filteredAssociations);
@@ -97,7 +98,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                     }
 
                 };
-
+                _logger.LogInformation("GenerateInvoice Completed.");
                 return true;
             }
             catch (Exception ex)
