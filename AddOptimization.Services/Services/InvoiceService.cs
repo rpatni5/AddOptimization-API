@@ -2,10 +2,13 @@
 using AddOptimization.Contracts.Services;
 using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
+using AddOptimization.Data.Repositories;
 using AddOptimization.Services.Constants;
 using AddOptimization.Utilities.Common;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
+using AddOptimization.Utilities.Models;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Text;
@@ -28,6 +31,9 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<PublicHoliday> _publicHolidayRepository;
         private readonly IGenericRepository<Employee> _employeeRepository;
         private readonly IGenericRepository<Company> _companyRepository;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
+
 
 
 
@@ -45,6 +51,8 @@ namespace AddOptimization.Services.Services
             IGenericRepository<InvoiceDetail> invoiceDetailRepository,
             IGenericRepository<Employee> employeeRepository,
             IGenericRepository<Company> companyRepository,
+            IUnitOfWork unitOfWork,
+            IMapper mapper,
         ILogger<InvoiceService> logger)
         {
             _paymentStatusService = paymentStatusService;
@@ -61,6 +69,10 @@ namespace AddOptimization.Services.Services
             _invoiceDetailRepository = invoiceDetailRepository;
             _employeeRepository = employeeRepository;
             _logger = logger;
+            _unitOfWork = unitOfWork;
+            _invoiceStatusService = invoiceStatusService;
+            _mapper = mapper;
+            _paymentStatusService = paymentStatusService;
         }
 
         public async Task<ApiResult<List<InvoiceResponseDto>>> GenerateInvoice(Guid customerId, MonthDateRange month,
@@ -98,14 +110,14 @@ namespace AddOptimization.Services.Services
                     CustomerAddress = customerAddress,
                     CompanyAddress = companyAddress,
                     CompanyBankDetails = companyBankDetails,
-                    DueDate = customer.PaymentClearanceDays.HasValue ? DateTime.UtcNow.AddDays(customer.PaymentClearanceDays.Value) : DateTime.UtcNow.AddDays(15),
+                    // DueDate = customer.PaymentClearanceDays.HasValue ? DateTime.UtcNow.AddDays//(customer.PaymentClearanceDays.Value) : DateTime.UtcNow.AddDays(15),
                     InvoiceDate = DateTime.UtcNow,
                     InvoiceNumber = invoiceNumber,
                     InvoiceStatusId = draftId,
                     PaymentStatusId = unPaidId,
                     TotalPriceExcludingVat = 0,
                     TotalPriceIncludingVat = 0,
-                    Vat = 0,
+                    VatValue = 0,
                 };
                 var invoiceResult = await _invoiceRepository.InsertAsync(invoice);
 
@@ -273,6 +285,67 @@ namespace AddOptimization.Services.Services
             };
             var invoiceDetails = _invoiceDetailRepository.InsertAsync(invoiceDetail);
 
+        }
+
+
+        public async Task<ApiResult<InvoiceResponseDto>> Create(InvoiceRequestDto model)
+        {
+            try
+            {
+                await _unitOfWork.BeginTransactionAsync();
+                var eventStatus = (await _invoiceStatusService.Search()).Result;
+                var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.DRAFT.ToString()).Id;
+
+                var paymentStatus = (await _paymentStatusService.Search()).Result;
+                var paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.UNPAID.ToString()).Id;
+
+                var maxId = await _invoiceRepository.MaxAsync(e => e.Id, ignoreGlobalFilter: true);
+                var newId = maxId + 1;
+                var invoiceNumber = $"{DateTime.UtcNow:yyyyMM}{newId}";
+
+                Invoice entity = new Invoice
+                {
+                    InvoiceNumber = invoiceNumber,
+                    PaymentStatusId = paymentStatusId,
+                    VatValue = model.InvoiceDetails.Sum(x => (x.UnitPrice * x.Quantity * x.VatPercent) / 100),
+                    TotalPriceIncludingVat = model.InvoiceDetails.Sum(x => x.TotalPriceIncludingVat),
+                    TotalPriceExcludingVat = model.InvoiceDetails.Sum(x => x.TotalPriceExcludingVat),
+                    CustomerId = model.CustomerId,
+                    ExpiryDate = model.ExpiryDate,
+                    InvoiceDate = model.InvoiceDate,
+                    CustomerAddress = model.CustomerAddress,
+                    InvoiceStatusId = statusId,
+                    PaymentClearanceDays = model.PaymentClearanceDays,
+
+                };
+                await _invoiceRepository.InsertAsync(entity);
+                foreach (var summary in model.InvoiceDetails)
+                {
+                    var invoiceDetail = new InvoiceDetail
+                    {
+                        InvoiceId = entity.Id,
+                        Description = summary.Description,
+                        Quantity = summary.Quantity,
+                        VatPercent = summary.VatPercent,
+                        UnitPrice = summary.UnitPrice,
+                        TotalPriceExcludingVat = summary.TotalPriceExcludingVat,
+                        TotalPriceIncludingVat = summary.TotalPriceIncludingVat
+
+                    };
+
+                    await _invoiceDetailRepository.InsertAsync(invoiceDetail);
+                    entity.InvoiceDetails.Add(invoiceDetail);
+                }
+                await _unitOfWork.CommitTransactionAsync();
+                var mappedEntity = _mapper.Map<InvoiceResponseDto>(entity);
+                return ApiResult<InvoiceResponseDto>.Success(mappedEntity);
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                _logger.LogException(ex);
+                throw;
+            }
         }
     }
 }

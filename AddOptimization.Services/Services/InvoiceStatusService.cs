@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 
 namespace AddOptimization.Services.Services
 {
-    internal class InvoiceStatusService : IInvoiceStatusService
+    public class InvoiceStatusService : IInvoiceStatusService
     {
         private readonly IGenericRepository<InvoiceStatus> _invoiceStatusRepository;
 
