@@ -5,7 +5,7 @@ namespace AddOptimization.Data.Entities
 {
     public class Invoice : BaseEntityNew<int>
     {
-        public string InvoiceNumber { get; set; }
+        public long InvoiceNumber { get; set; }
         public DateTime InvoiceDate { get; set; }
         public Guid CustomerId { get; set; }
         public Guid PaymentStatusId { get; set; }
