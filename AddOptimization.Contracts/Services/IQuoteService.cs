@@ -12,8 +12,8 @@ namespace AddOptimization.Contracts.Services
     public interface IQuoteService
     {
         Task<ApiResult<QuoteResponseDto>> Create(QuoteRequestDto model);
-        Task<ApiResult<QuoteResponseDto>> Update(Guid id, QuoteRequestDto model);
+        Task<ApiResult<QuoteResponseDto>> Update(long id, QuoteRequestDto model);
         Task<ApiResult<List<QuoteResponseDto>>> Search(PageQueryFiterBase filters);
-        Task<ApiResult<QuoteResponseDto>> FetchQuoteDetails(Guid id);
+        Task<ApiResult<QuoteResponseDto>> FetchQuoteDetails(long id);
     }
 }
