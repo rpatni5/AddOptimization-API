@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AddOptimization.Contracts.Dto
 {
-    public class InvoiceDetailDto
+    public class InvoiceDetailDto : BaseDto<Guid>
     {
         public int InvoiceId { get; set; }
         public string Description { get; set; }

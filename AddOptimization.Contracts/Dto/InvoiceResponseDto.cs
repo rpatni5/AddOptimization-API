@@ -12,11 +12,14 @@ namespace AddOptimization.Contracts.Dto
     {
 
 
-        public string InvoiceNumber { get; set; }
+        public long InvoiceNumber { get; set; }
         public DateTime InvoiceDate { get; set; }
         public Guid CustomerId { get; set; }
+        public string CustomerName { get; set; }
         public Guid PaymentStatusId { get; set; }
+        public string PaymentStatusName { get; set; }
         public Guid InvoiceStatusId { get; set; }
+        public string InvoiceStatusName { get; set; }
         public string CustomerAddress { get; set; }
         public string CompanyAddress { get; set; }
         public string CompanyBankDetails { get; set; }
@@ -31,9 +34,8 @@ namespace AddOptimization.Contracts.Dto
 
         //public virtual InvoiceStatus InvoiceStatus { get; set; }
 
-        public virtual Customer Customer { get; set; }
+        //public virtual Customer Customer { get; set; }
 
-        public string CustomerName { get; set; }
         public string CreatedBy { get; set; }
         public string UpdatedBy { get; set; }
         public DateTime? CreatedAt { get; set; }

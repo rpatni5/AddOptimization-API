@@ -6,6 +6,7 @@ using AddOptimization.Services.Constants;
 using AddOptimization.Utilities.Common;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
+using AddOptimization.Utilities.Models;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -304,7 +305,7 @@ namespace AddOptimization.Services.Services
 
                 var maxId = await _invoiceRepository.MaxAsync(e => e.Id, ignoreGlobalFilter: true);
                 var newId = maxId + 1;
-                var invoiceNumber = $"{DateTime.UtcNow:yyyyMM}{newId}";
+                var invoiceNumber = long.Parse($"{DateTime.UtcNow:yyyyMM}{newId}");
 
                 Invoice entity = new Invoice
                 {
@@ -346,6 +347,98 @@ namespace AddOptimization.Services.Services
             catch (Exception ex)
             {
                 await _unitOfWork.RollbackTransactionAsync();
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+        public async Task<ApiResult<List<InvoiceResponseDto>>> Search(PageQueryFiterBase filters)
+        {
+            try
+            {
+                var entities = await _invoiceRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(x => x.Customer).Include(x => x.PaymentStatus).Include(x => x.InvoiceStatus), orderBy: x => x.OrderByDescending(x => x.CreatedAt), ignoreGlobalFilter: true);
+
+                var result = entities.ToList();
+                var mappedEntities = _mapper.Map<List<InvoiceResponseDto>>(result);
+
+                return ApiResult<List<InvoiceResponseDto>>.Success(mappedEntities);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+        public async Task<ApiResult<InvoiceResponseDto>> FetchInvoiceDetails(int id)
+        {
+            try
+            {
+                var model = new InvoiceResponseDto();
+                var entity = await _invoiceRepository.FirstOrDefaultAsync(e => e.Id == id, ignoreGlobalFilter: true);
+                model.Id = entity.Id;
+                model.CustomerId = entity.CustomerId;
+                model.ExpiryDate = entity.ExpiryDate;
+                model.InvoiceDate = entity.InvoiceDate;
+                model.CustomerAddress = entity.CustomerAddress;
+                model.InvoiceStatusId = entity.InvoiceStatusId;
+                model.PaymentStatusId = entity.PaymentStatusId;
+                model.InvoiceNumber = entity.InvoiceNumber;
+                model.VatValue = entity.VatValue;
+                model.TotalPriceExcludingVat = entity.TotalPriceExcludingVat;
+                model.TotalPriceIncludingVat = entity.TotalPriceIncludingVat;
+                model.PaymentClearanceDays = entity.PaymentClearanceDays;
+
+                var invoiceSummary = (await _invoiceDetailRepository.QueryAsync(e => e.InvoiceId == id, disableTracking: true)).ToList();
+                model.InvoiceDetails = _mapper.Map<List<InvoiceDetailDto>>(invoiceSummary);
+                return ApiResult<InvoiceResponseDto>.Success(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+       
+        public async Task<ApiResult<InvoiceResponseDto>> Update(int id, InvoiceRequestDto model)
+        {
+            try
+            {
+                var isExists = await _invoiceRepository.IsExist(e => e.Id != id);
+                var entity = await _invoiceRepository.FirstOrDefaultAsync(e => e.Id == id);
+                var summaries = await _invoiceDetailRepository.QueryAsync(e => e.InvoiceId == id);
+
+                foreach (var summary in summaries.ToList())
+                {
+                    await _invoiceDetailRepository.DeleteAsync(summary);
+                }
+                if (entity == null)
+                {
+                    return ApiResult<InvoiceResponseDto>.NotFound("Invoice");
+                }
+                foreach (var summary in model.InvoiceDetails)
+                {
+                    var invoiceDetail = new InvoiceDetail
+                    {
+                        InvoiceId = entity.Id,
+                        Description = summary.Description,
+                        Quantity = summary.Quantity,
+                        VatPercent = summary.VatPercent,
+                        UnitPrice = summary.UnitPrice,
+                        TotalPriceExcludingVat = summary.TotalPriceExcludingVat,
+                        TotalPriceIncludingVat = summary.TotalPriceIncludingVat
+
+                    };
+                    await _invoiceDetailRepository.InsertAsync(invoiceDetail);
+                }
+                _mapper.Map(model, entity);
+                entity.InvoiceDetails = null;
+                await _invoiceRepository.UpdateAsync(entity);
+                var mappedEntity = _mapper.Map<InvoiceResponseDto>(entity);
+                return ApiResult<InvoiceResponseDto>.Success(mappedEntity);
+            }
+            catch (Exception ex)
+            {
                 _logger.LogException(ex);
                 throw;
             }
