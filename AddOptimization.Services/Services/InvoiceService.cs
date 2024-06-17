@@ -404,7 +404,6 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var isExists = await _invoiceRepository.IsExist(e => e.Id != id);
                 var entity = await _invoiceRepository.FirstOrDefaultAsync(e => e.Id == id);
                 var summaries = await _invoiceDetailRepository.QueryAsync(e => e.InvoiceId == id);
 
