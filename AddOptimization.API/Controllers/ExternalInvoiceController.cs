@@ -47,7 +47,7 @@ namespace AddOptimization.API.Controllers
 
 
         [HttpGet("get-external-invoice-details/{id}")]
-        public async Task<IActionResult> FetchExternalInvoiceDetails(int id)
+        public async Task<IActionResult> FetchExternalInvoiceDetails(long id)
         {
             try
             {
@@ -62,7 +62,7 @@ namespace AddOptimization.API.Controllers
 
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, ExternalInvoiceRequestDto model)
+        public async Task<IActionResult> Update(long id, ExternalInvoiceRequestDto model)
         {
             try
             {

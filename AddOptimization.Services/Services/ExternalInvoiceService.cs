@@ -233,8 +233,7 @@ namespace AddOptimization.Services.Services
 
                 var paymentStatus = (await _paymentStatusService.Search()).Result;
                 var paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.UNPAID.ToString()).Id;
-
-                var maxId = await _externalInvoiceRepository.MaxAsync(e => e.Id, ignoreGlobalFilter: true);
+                var maxId = await _externalInvoiceRepository.MaxAsync<Int64>(e => e.Id, ignoreGlobalFilter: true);
                 var newId = maxId + 1;
                 var invoiceNumber = $"{DateTime.UtcNow:yyyyMM}{newId}";
 
@@ -307,7 +306,7 @@ namespace AddOptimization.Services.Services
 
 
 
-        public async Task<ApiResult<ExternalInvoiceResponseDto>> FetchInvoiceDetails(int id)
+        public async Task<ApiResult<ExternalInvoiceResponseDto>> FetchInvoiceDetails(long id)
         {
             try
             {
@@ -336,7 +335,7 @@ namespace AddOptimization.Services.Services
         }
 
 
-        public async Task<ApiResult<ExternalInvoiceResponseDto>> Update(int id, ExternalInvoiceRequestDto model)
+        public async Task<ApiResult<ExternalInvoiceResponseDto>> Update(long id, ExternalInvoiceRequestDto model)
         {
             try
             {

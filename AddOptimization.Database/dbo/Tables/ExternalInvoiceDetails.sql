@@ -1,7 +1,8 @@
 ﻿
+
 CREATE TABLE [dbo].[ExternalInvoiceDetails](
 	[Id] [uniqueidentifier] NOT NULL,
-	[ExternalInvoiceId] [int] NOT NULL,
+	[ExternalInvoiceId] [bigint] NOT NULL,
 	[Description] [varchar](500) NULL,
 	[Quantity] [decimal](10, 2) NOT NULL,
 	[UnitPrice] [decimal](10, 2) NOT NULL,

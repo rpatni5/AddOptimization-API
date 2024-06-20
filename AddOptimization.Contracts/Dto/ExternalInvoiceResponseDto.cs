@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace AddOptimization.Contracts.Dto
 {
-    public class ExternalInvoiceResponseDto:BaseDto<int>
+    public class ExternalInvoiceResponseDto:BaseDto<long>
     {
         public long InvoiceNumber { get; set; }
         public DateTime InvoiceDate { get; set; }

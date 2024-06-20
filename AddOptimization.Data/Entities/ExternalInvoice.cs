@@ -9,8 +9,10 @@ using System.Threading.Tasks;
 namespace AddOptimization.Data.Entities
 {
 
-    public class ExternalInvoice : BaseEntityNew<int>
+    public class ExternalInvoice : BaseEntityNew<long>
+
     {
+        public long Id { get; set; }
         public long InvoiceNumber { get; set; }
         public DateTime InvoiceDate { get; set; }
         public Guid? CompanyId { get; set; }

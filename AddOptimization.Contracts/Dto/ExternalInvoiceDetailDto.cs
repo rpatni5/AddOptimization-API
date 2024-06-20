@@ -9,7 +9,7 @@ namespace AddOptimization.Contracts.Dto
     public class ExternalInvoiceDetailDto
     {
         public Guid Id { get; set; }
-        public int ExternalInvoiceId { get; set; }
+        public long ExternalInvoiceId { get; set; }
         public string Description { get; set; }
         public decimal Quantity { get; set; }
         public decimal UnitPrice { get; set; }

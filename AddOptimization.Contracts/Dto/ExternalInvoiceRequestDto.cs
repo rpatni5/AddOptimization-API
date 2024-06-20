@@ -8,7 +8,7 @@ namespace AddOptimization.Contracts.Dto
 {
     public class ExternalInvoiceRequestDto
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public Guid? CompanyId { get; set; }
         public string CompanyAddress { get; set; }
         public string CompanyName { get; set; }
