@@ -46,8 +46,8 @@ namespace AddOptimization.API.Controllers
         }
 
 
-        [HttpGet("get-external-Invoice-details/{id}")]
-        public async Task<IActionResult> FetchItemConfDetails(int id)
+        [HttpGet("get-external-invoice-details/{id}")]
+        public async Task<IActionResult> FetchExternalInvoiceDetails(int id)
         {
             try
             {
