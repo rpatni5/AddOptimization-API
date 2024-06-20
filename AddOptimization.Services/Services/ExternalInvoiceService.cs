@@ -255,17 +255,17 @@ namespace AddOptimization.Services.Services
 
                 };
                 await _externalInvoiceRepository.InsertAsync(entity);
-                foreach (var summary in model.ExternalInvoiceDetails)
+                foreach (var detail in model.ExternalInvoiceDetails)
                 {
                     var invoiceDetail = new ExternalInvoiceDetail
                     {
                         ExternalInvoiceId = entity.Id,
-                        Description = summary.Description,
-                        Quantity = summary.Quantity,
-                        VatPercent = summary.VatPercent,
-                        UnitPrice = summary.UnitPrice,
-                        TotalPriceExcludingVat = summary.TotalPriceExcludingVat,
-                        TotalPriceIncludingVat = summary.TotalPriceIncludingVat
+                        Description = detail.Description,
+                        Quantity = detail.Quantity,
+                        VatPercent = detail.VatPercent,
+                        UnitPrice = detail.UnitPrice,
+                        TotalPriceExcludingVat = detail.TotalPriceExcludingVat,
+                        TotalPriceIncludingVat = detail.TotalPriceIncludingVat
 
                     };
 
@@ -341,29 +341,29 @@ namespace AddOptimization.Services.Services
             {
                 var isExists = await _externalInvoiceRepository.IsExist(e => e.Id != id);
                 var entity = await _externalInvoiceRepository.FirstOrDefaultAsync(e => e.Id == id);
-                var summaries = await _invoiceDetailRepository.QueryAsync(e => e.ExternalInvoiceId == id);
+                var details = await _invoiceDetailRepository.QueryAsync(e => e.ExternalInvoiceId == id);
 
-                foreach (var summary in summaries.ToList())
+                foreach (var detail in details.ToList())
                 {
-                    await _invoiceDetailRepository.DeleteAsync(summary);
+                    await _invoiceDetailRepository.DeleteAsync(detail);
                 }
                 if (entity == null)
                 {
                     return ApiResult<ExternalInvoiceResponseDto>.NotFound("External Invoice");
                 }
-                foreach (var summary in model.ExternalInvoiceDetails)
+                foreach (var detail in model.ExternalInvoiceDetails)
                 {
-                    var quoteSummary = new ExternalInvoiceDetail
+                    var externalInvoiceDetail = new ExternalInvoiceDetail
                     {
                         ExternalInvoiceId = entity.Id,
-                        Description = summary.Description,
-                        Quantity = summary.Quantity,
-                        UnitPrice = summary.UnitPrice,
-                        VatPercent = summary.VatPercent,
-                        TotalPriceIncludingVat = summary.TotalPriceIncludingVat,
-                        TotalPriceExcludingVat=summary.TotalPriceExcludingVat,
+                        Description = detail.Description,
+                        Quantity = detail.Quantity,
+                        UnitPrice = detail.UnitPrice,
+                        VatPercent = detail.VatPercent,
+                        TotalPriceIncludingVat = detail.TotalPriceIncludingVat,
+                        TotalPriceExcludingVat=detail.TotalPriceExcludingVat,
                     };
-                    await _invoiceDetailRepository.InsertAsync(quoteSummary);
+                    await _invoiceDetailRepository.InsertAsync(externalInvoiceDetail);
                 }
                 
                 _mapper.Map(model, entity);
