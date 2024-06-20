@@ -68,6 +68,9 @@
     <None Update="Assets\Templates\device_activated.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Assets\Templates\employee_account_created.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Assets\Templates\fill_timesheet_reminder.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
