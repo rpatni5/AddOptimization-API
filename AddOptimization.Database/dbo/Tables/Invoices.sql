@@ -1,6 +1,6 @@
 ﻿
 CREATE TABLE [dbo].[Invoices](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Id] [bigint] IDENTITY(1,1) NOT NULL,
 	[InvoiceNumber] [bigint] NOT NULL,
 	[InvoiceDate] [datetime2](7) NOT NULL,
 	[InvoiceStatusId] [uniqueidentifier] NOT NULL,
@@ -66,3 +66,5 @@ GO
 
 ALTER TABLE [dbo].[Invoices] CHECK CONSTRAINT [FK_Invoices_PaymentStatuses_PaymentStatusId]
 GO
+
+
