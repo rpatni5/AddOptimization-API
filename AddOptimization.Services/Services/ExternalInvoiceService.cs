@@ -17,7 +17,7 @@ using System.Text;
 
 namespace AddOptimization.Services.Services
 {
-    public class ExternalInvoiceService: IExternalInvoiceService
+    public class ExternalInvoiceService : IExternalInvoiceService
     {
         private readonly IGenericRepository<ExternalInvoice> _externalInvoiceRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -245,7 +245,7 @@ namespace AddOptimization.Services.Services
                     TotalPriceIncludingVat = model.ExternalInvoiceDetails.Sum(x => x.TotalPriceIncludingVat),
                     TotalPriceExcludingVat = model.ExternalInvoiceDetails.Sum(x => x.TotalPriceExcludingVat),
                     CompanyId = model.CompanyId,
-                    CompanyName=model.CompanyName,
+                    CompanyName = model.CompanyName,
                     CompanyAddress = model.CompanyAddress,
                     EmployeeId = userId,
                     ExpiryDate = model.ExpiryDate,
@@ -285,7 +285,6 @@ namespace AddOptimization.Services.Services
         }
 
 
-
         public async Task<ApiResult<List<ExternalInvoiceResponseDto>>> Search(PageQueryFiterBase filters)
         {
             try
@@ -305,7 +304,6 @@ namespace AddOptimization.Services.Services
         }
 
 
-
         public async Task<ApiResult<ExternalInvoiceResponseDto>> FetchInvoiceDetails(long id)
         {
             try
@@ -314,7 +312,7 @@ namespace AddOptimization.Services.Services
                 var entity = await _externalInvoiceRepository.FirstOrDefaultAsync(e => e.Id == id, ignoreGlobalFilter: true);
                 model.Id = entity.Id;
                 model.CompanyId = entity.CompanyId;
-                model.CompanyName=entity.CompanyName;
+                model.CompanyName = entity.CompanyName;
                 model.ExpiryDate = entity.ExpiryDate;
                 model.InvoiceDate = entity.InvoiceDate;
                 model.CompanyAddress = entity.CompanyAddress;
@@ -361,11 +359,11 @@ namespace AddOptimization.Services.Services
                         UnitPrice = detail.UnitPrice,
                         VatPercent = detail.VatPercent,
                         TotalPriceIncludingVat = detail.TotalPriceIncludingVat,
-                        TotalPriceExcludingVat=detail.TotalPriceExcludingVat,
+                        TotalPriceExcludingVat = detail.TotalPriceExcludingVat,
                     };
                     await _invoiceDetailRepository.InsertAsync(externalInvoiceDetail);
                 }
-                
+
                 _mapper.Map(model, entity);
                 await _externalInvoiceRepository.UpdateAsync(entity);
                 var mappedEntity = _mapper.Map<ExternalInvoiceResponseDto>(entity);
@@ -377,6 +375,6 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-       
+
     }
 }
