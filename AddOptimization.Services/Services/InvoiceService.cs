@@ -108,7 +108,7 @@ namespace AddOptimization.Services.Services
                     CompanyAddress = companyAddress,
                     CompanyBankDetails = companyBankDetails,
                     ExpiryDate = customer.PaymentClearanceDays.HasValue ? DateTime.UtcNow.AddDays(customer.PaymentClearanceDays.Value) : DateTime.UtcNow.AddDays(15),
-                    InvoiceDate = DateTime.UtcNow,// TODO
+                    InvoiceDate = month.EndDate,
                     InvoiceNumber = Convert.ToInt64(invoiceNumber),
                     InvoiceStatusId = draftStatusId,
                     PaymentStatusId = unPaidStatusId,
@@ -168,6 +168,10 @@ namespace AddOptimization.Services.Services
                 decimal totalIn = 0;
                 decimal totalEx = 0;
                 var invoiceDetails = (await _invoiceDetailRepository.QueryAsync(c => c.InvoiceId == invoiceResult.Id, ignoreGlobalFilter: true)).ToList();
+               
+                if (!invoiceDetails.Any())  // if no record is found in invoice details then do not update the invoice.
+                    return ApiResult<bool>.Failure("false");
+
                 foreach (var detail in invoiceDetails)
                 {
                     totalIn += detail.TotalPriceIncludingVat;
@@ -218,11 +222,11 @@ namespace AddOptimization.Services.Services
             var maxInvoiceNo = invoice.Max(c => c.Id);
             if (maxInvoiceNo != 0)
             {
-                return $"{DateTime.UtcNow.Year}{DateTime.UtcNow.Month}{maxInvoiceNo+1}";
+                return $"{DateTime.UtcNow.Year}{DateTime.UtcNow.Month}{maxInvoiceNo + 1}";
             }
             else
             {
-                return $"{DateTime.UtcNow.Year}{DateTime.UtcNow.Month}{maxInvoiceNo+1}";
+                return $"{DateTime.UtcNow.Year}{DateTime.UtcNow.Month}{maxInvoiceNo + 1}";
             }
         }
 
