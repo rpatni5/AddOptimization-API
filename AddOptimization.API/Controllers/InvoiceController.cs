@@ -6,7 +6,6 @@ using AddOptimization.Services.Services;
 using AddOptimization.Utilities.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Stripe;
 
 namespace AddOptimization.API.Controllers
 {
