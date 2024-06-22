@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Http;
 using AddOptimization.Utilities.Interface;
 using Microsoft.Extensions.Configuration;
 using System;
+using AddOptimization.Utilities.Constants;
 
 namespace AddOptimization.Services.Services;
 public class EmployeeService : IEmployeeService
@@ -113,6 +114,7 @@ public class EmployeeService : IEmployeeService
             }
 
             await _unitOfWork.CommitTransactionAsync();
+            Task.Run(() => SendEmployeeCreatedEmail(savedEmployee.FullName, savedEmployee.Email));
             return ApiResult<bool>.Success(true);
         }
         catch (Exception ex)
@@ -207,6 +209,22 @@ public class EmployeeService : IEmployeeService
         {
             _logger.LogException(ex);
             throw;
+        }
+    }
+
+    private async Task<bool> SendEmployeeCreatedEmail(string employeeFullName, string email)
+    {
+        try
+        {
+            var subject = "Account created";
+            var emailTemplate = _templateService.ReadTemplate(EmailTemplates.EmployeeAccountCreated);
+            emailTemplate = emailTemplate.Replace("[UserFullName]", employeeFullName);
+            return await _emailService.SendEmail(email, subject, emailTemplate);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            return false;
         }
     }
 
