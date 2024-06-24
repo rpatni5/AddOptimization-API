@@ -92,6 +92,9 @@
     <None Update="Assets\Templates\send_invoice.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Assets\Templates\invoice_action.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Assets\Templates\timesheet_actions.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

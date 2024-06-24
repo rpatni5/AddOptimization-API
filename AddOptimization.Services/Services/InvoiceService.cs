@@ -17,7 +17,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using System.Globalization;
 using System.Text;
 
 namespace AddOptimization.Services.Services
@@ -45,9 +44,10 @@ namespace AddOptimization.Services.Services
         private readonly ITemplateService _templateService;
         private readonly IEmailService _emailService;
         private readonly IGenericRepository<InvoiceHistory> _invoiceHistoryRepository;
-        private readonly IGenericRepository<Customer> _customersRepository;
         private readonly IGenericRepository<ApplicationUser> _appUserRepository;
-
+        private readonly IGenericRepository<Role> _roleRepository;
+        private readonly IApplicationUserService _applicationService;
+        
 
         private readonly ILogger<InvoiceService> _logger;
         public InvoiceService(IGenericRepository<Invoice> invoiceRepository,
@@ -71,8 +71,9 @@ namespace AddOptimization.Services.Services
             ITemplateService templateService,
             IEmailService emailService,
             IGenericRepository<InvoiceHistory> invoiceHistoryRepository,
-            IGenericRepository<Customer> customersRepository,
              IGenericRepository<ApplicationUser> appUserRepository,
+             IGenericRepository<Role> roleRepository,
+              IApplicationUserService applicationService,
 
         ILogger<InvoiceService> logger)
         {
@@ -99,8 +100,9 @@ namespace AddOptimization.Services.Services
             _emailService = emailService;
             _currentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
             _invoiceHistoryRepository = invoiceHistoryRepository;
-            _customersRepository = customersRepository;
             _appUserRepository = appUserRepository;
+            _roleRepository = roleRepository;
+            _applicationService = applicationService;
         }
 
         public async Task<ApiResult<bool>> GenerateInvoice(Guid customerId, MonthDateRange month,
@@ -347,6 +349,152 @@ namespace AddOptimization.Services.Services
             }
         }
 
+        private async Task<bool> SendInvoiceDeclinedEmailToAccountAdmins(IEnumerable<dynamic> accountAdmins, string customerName, long invoiceNumber, int? dueDate, decimal totalAmountDue, string comment)
+        {
+            try
+            {
+                var subject = "Invoice Declined";
+                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.DeclinedInvoice);
+                emailTemplate = emailTemplate.Replace("[CustomerName]", customerName)
+                                             .Replace("[InvoiceNumber]", invoiceNumber.ToString())
+                                             .Replace("[TotalAmountDue]", totalAmountDue.ToString())
+                                             .Replace("[DueDate]", dueDate.ToString())
+                                             .Replace("[Comment]", !string.IsNullOrEmpty(comment) ? comment : "No comment added.");
+                foreach (var admin in accountAdmins)
+                {
+                    var personalizedEmailTemplate = emailTemplate.Replace("[AccountAdmin]", admin.Name);
+                    await _emailService.SendEmail(admin.Email, subject, personalizedEmailTemplate);
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return false;
+            }
+        }
+
+        private IQueryable<Invoice> ApplyFilters(IQueryable<Invoice> entities, PageQueryFiterBase filter)
+        {
+            filter.GetValue<string>("invoiceNumber", (v) =>
+            {
+                entities = entities.Where(e => e.InvoiceNumber.ToString() == v);
+            });
+            filter.GetValue<string>("customerName", (v) =>
+            {
+                entities = entities.Where(e => e.CustomerId.ToString() == v);
+            });
+            filter.GetList<DateTime>("invoiceDate", (v) =>
+            {
+                var date = new DateTime(v.Max().Year, v.Max().Month, 1);
+                entities = entities.Where(e => e.InvoiceDate == date);
+            });
+            filter.GetValue<int>("totalPriceExcludingVat", (v) =>
+            {
+                entities = entities.Where(e => e.TotalPriceExcludingVat == v);
+            });
+            filter.GetValue<int>("totalPriceIncludingVat", (v) =>
+            {
+                entities = entities.Where(e => e.TotalPriceIncludingVat == v);
+            });
+            filter.GetValue<string>("invoiceStatusName", (v) =>
+            {
+                entities = entities.Where(e => e.InvoiceStatus.Name.ToLower().Contains(v.ToLower()) || e.InvoiceStatus.Name.ToLower().Contains(v.ToLower()));
+            });
+            filter.GetValue<string>("paymentStatusName", (v) =>
+            {
+                entities = entities.Where(e => e.PaymentStatus.Name.ToLower().Contains(v.ToLower()) || e.PaymentStatus.Name.ToLower().Contains(v.ToLower()));
+            });
+
+            return entities;
+        }
+
+        private IQueryable<Invoice> ApplySorting(IQueryable<Invoice> entities, SortModel sort)
+        {
+            try
+            {
+                if (sort?.Name == null)
+                {
+                    entities = entities.OrderByDescending(o => o.CreatedAt);
+                    return entities;
+                }
+                var columnName = sort.Name.ToUpper();
+                if (sort.Direction == SortDirection.ascending.ToString())
+                {
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.CustomerName).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.Customer.ManagerName);
+                    }
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.InvoiceNumber).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.InvoiceNumber);
+                    }
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.TotalPriceExcludingVat).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.TotalPriceExcludingVat);
+                    }
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.TotalPriceIncludingVat).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.TotalPriceIncludingVat);
+                    }
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.InvoiceStatusName).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.InvoiceStatus.Name);
+                    }
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.PaymentStatusName).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.PaymentStatus.Name);
+                    }
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.InvoiceDate).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.InvoiceDate);
+                    }
+                }
+
+                else
+                {
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.CustomerName).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.Customer.ManagerName);
+                    }
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.InvoiceNumber).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.InvoiceNumber);
+                    }
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.TotalPriceExcludingVat).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.TotalPriceExcludingVat);
+                    }
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.TotalPriceIncludingVat).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.TotalPriceIncludingVat);
+                    }
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.InvoiceStatusName).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.InvoiceStatus.Name);
+                    }
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.PaymentStatusName).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.PaymentStatus.Name);
+                    }
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.InvoiceDate).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.InvoiceDate);
+                    }
+
+                }
+                return entities;
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return entities;
+            }
+
+        }
+
+
         public async Task<ApiResult<InvoiceResponseDto>> Create(InvoiceRequestDto model)
         {
             try
@@ -556,6 +704,15 @@ namespace AddOptimization.Services.Services
                     Comment = model.Comment,
                 };
                 await _invoiceHistoryRepository.InsertAsync(entity);
+                var entities = (await _invoiceRepository.QueryAsync(x => x.Id == result.Id, include: entities => entities.Include(e => e.Customer))).FirstOrDefault();
+                var accountAdmins = (await _applicationService.GetAccountAdmins()).Result;
+                var adminEmails = accountAdmins.Select(admin => new { Name = admin.UserName, Email = admin.Email });
+
+                Task.Run(() =>
+                    {
+                        SendInvoiceDeclinedEmailToAccountAdmins(adminEmails, entities.Customer.ManagerEmail, entities.InvoiceNumber, entities.PaymentClearanceDays, entities.TotalPriceIncludingVat, entity.Comment);
+                    });
+                
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -565,126 +722,6 @@ namespace AddOptimization.Services.Services
             }
         }
 
-
-        private IQueryable<Invoice> ApplyFilters(IQueryable<Invoice> entities, PageQueryFiterBase filter)
-        {
-            filter.GetValue<string>("invoiceNumber", (v) =>
-            {
-                entities = entities.Where(e => e.InvoiceNumber.ToString() == v);
-            });
-            filter.GetValue<string>("customerName", (v) =>
-            {
-                entities = entities.Where(e => e.CustomerId.ToString() == v);
-            });
-            filter.GetList<DateTime>("invoiceDate", (v) =>
-            {
-                var date = new DateTime(v.Max().Year, v.Max().Month, 1);
-                entities = entities.Where(e => e.InvoiceDate == date);
-            });
-            filter.GetValue<int>("totalPriceExcludingVat", (v) =>
-            {
-                entities = entities.Where(e => e.TotalPriceExcludingVat == v);
-            });
-            filter.GetValue<int>("totalPriceIncludingVat", (v) =>
-            {
-                entities = entities.Where(e => e.TotalPriceIncludingVat == v);
-            });
-            filter.GetValue<string>("invoiceStatusName", (v) =>
-            {
-                entities = entities.Where(e => e.InvoiceStatus.Name.ToLower().Contains(v.ToLower()) || e.InvoiceStatus.Name.ToLower().Contains(v.ToLower()));
-            });
-            filter.GetValue<string>("paymentStatusName", (v) =>
-            {
-                entities = entities.Where(e => e.PaymentStatus.Name.ToLower().Contains(v.ToLower()) || e.PaymentStatus.Name.ToLower().Contains(v.ToLower()));
-            });
-
-            return entities;
-        }
-
-        private IQueryable<Invoice> ApplySorting(IQueryable<Invoice> entities, SortModel sort)
-        {
-            try
-            {
-                if (sort?.Name == null)
-                {
-                    entities = entities.OrderByDescending(o => o.CreatedAt);
-                    return entities;
-                }
-                var columnName = sort.Name.ToUpper();
-                if (sort.Direction == SortDirection.ascending.ToString())
-                {
-                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.CustomerName).ToUpper())
-                    {
-                        entities = entities.OrderBy(o => o.Customer.ManagerName);
-                    }
-                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.InvoiceNumber).ToUpper())
-                    {
-                        entities = entities.OrderBy(o => o.InvoiceNumber);
-                    }
-                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.TotalPriceExcludingVat).ToUpper())
-                    {
-                        entities = entities.OrderBy(o => o.TotalPriceExcludingVat);
-                    }
-                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.TotalPriceIncludingVat).ToUpper())
-                    {
-                        entities = entities.OrderBy(o => o.TotalPriceIncludingVat);
-                    }
-                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.InvoiceStatusName).ToUpper())
-                    {
-                        entities = entities.OrderBy(o => o.InvoiceStatus.Name);
-                    }
-                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.PaymentStatusName).ToUpper())
-                    {
-                        entities = entities.OrderBy(o => o.PaymentStatus.Name);
-                    }
-                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.InvoiceDate).ToUpper())
-                    {
-                        entities = entities.OrderBy(o => o.InvoiceDate);
-                    }
-                }
-
-                else
-                {
-                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.CustomerName).ToUpper())
-                    {
-                        entities = entities.OrderByDescending(o => o.Customer.ManagerName);
-                    }
-                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.InvoiceNumber).ToUpper())
-                    {
-                        entities = entities.OrderByDescending(o => o.InvoiceNumber);
-                    }
-                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.TotalPriceExcludingVat).ToUpper())
-                    {
-                        entities = entities.OrderByDescending(o => o.TotalPriceExcludingVat);
-                    }
-                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.TotalPriceIncludingVat).ToUpper())
-                    {
-                        entities = entities.OrderByDescending(o => o.TotalPriceIncludingVat);
-                    }
-                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.InvoiceStatusName).ToUpper())
-                    {
-                        entities = entities.OrderByDescending(o => o.InvoiceStatus.Name);
-                    }
-                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.PaymentStatusName).ToUpper())
-                    {
-                        entities = entities.OrderByDescending(o => o.PaymentStatus.Name);
-                    }
-                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.InvoiceDate).ToUpper())
-                    {
-                        entities = entities.OrderByDescending(o => o.InvoiceDate);
-                    }
-
-                }
-                return entities;
-
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
-                return entities;
-            }
-
-        }
-
+       
     }
 }

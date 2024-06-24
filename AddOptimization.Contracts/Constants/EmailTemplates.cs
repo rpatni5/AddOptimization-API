@@ -18,4 +18,6 @@ public class EmailTemplates
     public const string TimesheetActions = "timesheet_actions.html";
     public const string EmployeeAccountCreated = "employee_account_created.html";      
     public const string RequestInvoice = "request_invoice.html";
+    public const string DeclinedInvoice = "invoice_action.html";
+
 }
