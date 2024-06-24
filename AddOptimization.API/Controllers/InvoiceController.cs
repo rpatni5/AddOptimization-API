@@ -49,7 +49,7 @@ namespace AddOptimization.API.Controllers
         }
 
         [HttpGet("get-invoice-details/{id}")]
-        public async Task<IActionResult> FetchItemConfDetails(int id)
+        public async Task<IActionResult> FetchInvoiceDetails(int id)
         {
             try
             {
