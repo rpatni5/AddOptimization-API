@@ -539,6 +539,16 @@ BEGIN
     VALUES
         (NEWID(),'Closed','CLOSED')
 END
+
+
+/* Adding DECLINED status data in Invoice Status */
+
+IF NOT EXISTS (SELECT 1 FROM InvoiceStatuses Where StatusKey= 'DECLINED')
+BEGIN 
+    INSERT INTO InvoiceStatuses(Id,Name,StatusKey)
+    VALUES
+        (NEWID(),'Declined','DECLINED')
+END
 -- Invoicing seed data ends
 
 
