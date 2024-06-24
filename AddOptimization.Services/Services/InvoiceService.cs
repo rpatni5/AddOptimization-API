@@ -1,15 +1,22 @@
-﻿using AddOptimization.Contracts.Dto;
+﻿using AddOptimization.Contracts.Constants;
+using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
 using AddOptimization.Services.Constants;
 using AddOptimization.Utilities.Common;
+using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
+using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
+using AddOptimization.Utilities.Services;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 using System.Text;
 
 namespace AddOptimization.Services.Services
@@ -31,8 +38,14 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<Company> _companyRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-
-
+        private readonly List<string> _currentUserRoles;
+        private readonly IConfiguration _configuration;
+        private readonly CustomDataProtectionService _protectionService;
+        private readonly ITemplateService _templateService;
+        private readonly IEmailService _emailService;
+        private readonly IGenericRepository<InvoiceHistory> _invoiceHistoryRepository;
+        private readonly IGenericRepository<Customer> _customersRepository;
+        private readonly IGenericRepository<ApplicationUser> _appUserRepository;
 
 
         private readonly ILogger<InvoiceService> _logger;
@@ -51,6 +64,15 @@ namespace AddOptimization.Services.Services
             IGenericRepository<Company> companyRepository,
             IUnitOfWork unitOfWork,
             IMapper mapper,
+             IConfiguration configuration,
+            IHttpContextAccessor httpContextAccessor,
+            CustomDataProtectionService protectionService,
+            ITemplateService templateService,
+            IEmailService emailService,
+            IGenericRepository<InvoiceHistory> invoiceHistoryRepository,
+            IGenericRepository<Customer> customersRepository,
+             IGenericRepository<ApplicationUser> appUserRepository,
+
         ILogger<InvoiceService> logger)
         {
             _paymentStatusService = paymentStatusService;
@@ -70,7 +92,14 @@ namespace AddOptimization.Services.Services
             _unitOfWork = unitOfWork;
             _invoiceStatusService = invoiceStatusService;
             _mapper = mapper;
-            _paymentStatusService = paymentStatusService;
+            _configuration = configuration;
+            _protectionService = protectionService;
+            _templateService = templateService; 
+            _emailService = emailService;
+            _currentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
+            _invoiceHistoryRepository = invoiceHistoryRepository;
+            _customersRepository = customersRepository;
+            _appUserRepository = appUserRepository;
         }
 
         public async Task<ApiResult<bool>> GenerateInvoice(Guid customerId, MonthDateRange month,
@@ -295,6 +324,27 @@ namespace AddOptimization.Services.Services
             await _invoiceDetailRepository.InsertAsync(invoiceDetail);
         }
 
+        private async Task<bool> SendRequestInvoiceEmailToCustomer(string email, Invoice invoice, string customerName ,long invoiceNumber,int? dueDate,decimal totalAmountDue 
+           )
+        {
+            try
+            {
+                var subject = "Invoice Request";
+                var link = GetInvoiceLinkForCustomer((int)invoice.Id);
+                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.RequestInvoice);
+                emailTemplate = emailTemplate.Replace("[CustomerName]", customerName)
+                                             .Replace("[LinkToOrder]", link)
+                                             .Replace("[InvoiceNumber]",invoiceNumber.ToString())
+                                             .Replace("[TotalAmountDue]", totalAmountDue.ToString())
+                                             .Replace("[DueDate]", dueDate.ToString());
+                return await _emailService.SendEmail(email, subject, emailTemplate);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return false;
+            }
+        }
 
         public async Task<ApiResult<InvoiceResponseDto>> Create(InvoiceRequestDto model)
         {
@@ -307,7 +357,7 @@ namespace AddOptimization.Services.Services
                 var paymentStatus = (await _paymentStatusService.Search()).Result;
                 var paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.UNPAID.ToString()).Id;
 
-                var maxId = await _invoiceRepository.MaxAsync(e => e.Id, ignoreGlobalFilter: true);
+                var maxId = await _invoiceRepository.MaxAsync(e => (int)e.Id, ignoreGlobalFilter: true);
                 var newId = maxId + 1;
                 var invoiceNumber = long.Parse($"{DateTime.UtcNow:yyyyMM}{newId}");
 
@@ -374,10 +424,16 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        public async Task<ApiResult<InvoiceResponseDto>> FetchInvoiceDetails(int id)
+        public async Task<ApiResult<InvoiceResponseDto>> FetchInvoiceDetails(int id, bool getRoleBasedData = true)
         {
             try
             {
+                bool ignoreGlobalFilter = true;
+                if (getRoleBasedData)
+                {
+                    var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin") || c.Contains("Account Admin")).ToList();
+                    ignoreGlobalFilter = superAdminRole.Count != 0;
+                }
                 var model = new InvoiceResponseDto();
                 var entity = await _invoiceRepository.FirstOrDefaultAsync(e => e.Id == id, ignoreGlobalFilter: true);
                 model.Id = entity.Id;
@@ -446,5 +502,47 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
+
+        public string GetInvoiceLinkForCustomer(int invoiceId)
+        {
+            var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
+            var encryptedId = _protectionService.Encode(invoiceId.ToString());
+            return $"{baseUrl}invoice/approval/{encryptedId}";
+        }
+
+        public async Task<bool> SendInvoiceEmailToCustomer(int invoiceId)
+        {
+            var entity = (await _invoiceRepository.QueryAsync(x => x.Id == invoiceId, include: entities => entities.Include(e => e.Customer))).FirstOrDefault();
+            var details = (await _invoiceDetailRepository.QueryAsync(x => x.InvoiceId == invoiceId)).ToList();
+            return await SendRequestInvoiceEmailToCustomer(entity.Customer.ManagerEmail, entity, entity.Customer.ManagerName,entity.InvoiceNumber,entity.PaymentClearanceDays,entity.TotalPriceIncludingVat);
+        }
+
+        public async Task<ApiResult<bool>> DeclineRequest(InvoiceActionRequestDto model)
+        {
+            try
+            {
+                var eventDetails = await _invoiceRepository.FirstOrDefaultAsync(x => x.Id == model.Id);
+                var eventStatus = (await _invoiceStatusService.Search()).Result;
+                var declinedStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.DECLINED.ToString()).Id;
+                eventDetails.InvoiceStatusId = declinedStatusId;
+                var result = await _invoiceRepository.UpdateAsync(eventDetails);
+                InvoiceHistory entity = new InvoiceHistory()
+                {
+                    InvoiceId = eventDetails.Id,
+                    InvoiceStatusId = eventDetails.InvoiceStatusId,
+                    Comment = model.Comment,
+                };
+                await _invoiceHistoryRepository.InsertAsync(entity);
+                return ApiResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+
+
     }
-}
+} 

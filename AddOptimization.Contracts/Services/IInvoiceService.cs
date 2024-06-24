@@ -11,7 +11,9 @@ namespace AddOptimization.Contracts.Services
 
         Task<ApiResult<InvoiceResponseDto>> Create(InvoiceRequestDto model);
         Task<ApiResult<List<InvoiceResponseDto>>> Search(PageQueryFiterBase filters);
-        Task<ApiResult<InvoiceResponseDto>> FetchInvoiceDetails(int id);
+        Task<ApiResult<InvoiceResponseDto>> FetchInvoiceDetails(int id, bool getRoleBasedData = true);
         Task<ApiResult<InvoiceResponseDto>> Update(int id, InvoiceRequestDto model);
+        Task<bool> SendInvoiceEmailToCustomer(int invoiceId);
+        Task<ApiResult<bool>> DeclineRequest(InvoiceActionRequestDto model);
     }
 }

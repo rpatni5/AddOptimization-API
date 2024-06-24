@@ -8,10 +8,8 @@ using System.Threading.Tasks;
 
 namespace AddOptimization.Contracts.Dto
 {
-    public class InvoiceResponseDto : BaseDto<int>
+    public class InvoiceResponseDto : BaseDto<long>
     {
-
-
         public long InvoiceNumber { get; set; }
         public DateTime InvoiceDate { get; set; }
         public Guid CustomerId { get; set; }

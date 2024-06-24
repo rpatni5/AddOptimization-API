@@ -5,7 +5,7 @@ namespace AddOptimization.Contracts.Dto
 {
     public class InvoiceRequestDto
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public Guid CustomerId { get; set; }
         public string CustomerAddress { get; set; }
         public DateTime InvoiceDate { get; set; }

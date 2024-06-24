@@ -16,5 +16,6 @@ public class EmailTemplates
     public const string FillTimesheetReminder = "fill_timesheet_reminder.html";
     public const string ApproveTimesheetReminder = "approve_timesheet_reminder.html";
     public const string TimesheetActions = "timesheet_actions.html";
-    public const string EmployeeAccountCreated = "employee_account_created.html"; 
+    public const string EmployeeAccountCreated = "employee_account_created.html";      
+    public const string RequestInvoice = "request_invoice.html";
 }
