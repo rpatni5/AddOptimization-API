@@ -4,7 +4,6 @@ namespace AddOptimization.Data.Entities
 {
     public class SchedulerEvent : BaseEntityNew<Guid>
     {
-      
         public Guid UserStatusId { get; set; }
         public Guid AdminStatusId { get; set; }
         public Guid CustomerId { get; set; }
