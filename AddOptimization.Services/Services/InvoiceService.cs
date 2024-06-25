@@ -1,13 +1,21 @@
-﻿using AddOptimization.Contracts.Dto;
+﻿using AddOptimization.Contracts.Constants;
+using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
 using AddOptimization.Services.Constants;
 using AddOptimization.Utilities.Common;
+using AddOptimization.Utilities.Constants;
+using AddOptimization.Utilities.Enums;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
+using AddOptimization.Utilities.Interface;
+using AddOptimization.Utilities.Models;
+using AddOptimization.Utilities.Services;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Text;
 
@@ -30,9 +38,16 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<Company> _companyRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-
-
-
+        private readonly List<string> _currentUserRoles;
+        private readonly IConfiguration _configuration;
+        private readonly CustomDataProtectionService _protectionService;
+        private readonly ITemplateService _templateService;
+        private readonly IEmailService _emailService;
+        private readonly IGenericRepository<InvoiceHistory> _invoiceHistoryRepository;
+        private readonly IGenericRepository<ApplicationUser> _appUserRepository;
+        private readonly IGenericRepository<Role> _roleRepository;
+        private readonly IApplicationUserService _applicationService;
+        
 
         private readonly ILogger<InvoiceService> _logger;
         public InvoiceService(IGenericRepository<Invoice> invoiceRepository,
@@ -50,6 +65,16 @@ namespace AddOptimization.Services.Services
             IGenericRepository<Company> companyRepository,
             IUnitOfWork unitOfWork,
             IMapper mapper,
+             IConfiguration configuration,
+            IHttpContextAccessor httpContextAccessor,
+            CustomDataProtectionService protectionService,
+            ITemplateService templateService,
+            IEmailService emailService,
+            IGenericRepository<InvoiceHistory> invoiceHistoryRepository,
+             IGenericRepository<ApplicationUser> appUserRepository,
+             IGenericRepository<Role> roleRepository,
+              IApplicationUserService applicationService,
+
         ILogger<InvoiceService> logger)
         {
             _paymentStatusService = paymentStatusService;
@@ -69,7 +94,15 @@ namespace AddOptimization.Services.Services
             _unitOfWork = unitOfWork;
             _invoiceStatusService = invoiceStatusService;
             _mapper = mapper;
-            _paymentStatusService = paymentStatusService;
+            _configuration = configuration;
+            _protectionService = protectionService;
+            _templateService = templateService;
+            _emailService = emailService;
+            _currentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
+            _invoiceHistoryRepository = invoiceHistoryRepository;
+            _appUserRepository = appUserRepository;
+            _roleRepository = roleRepository;
+            _applicationService = applicationService;
         }
 
         public async Task<ApiResult<bool>> GenerateInvoice(Guid customerId, MonthDateRange month,
@@ -168,7 +201,7 @@ namespace AddOptimization.Services.Services
                 decimal totalIn = 0;
                 decimal totalEx = 0;
                 var invoiceDetails = (await _invoiceDetailRepository.QueryAsync(c => c.InvoiceId == invoiceResult.Id, ignoreGlobalFilter: true)).ToList();
-               
+
                 if (!invoiceDetails.Any())  // if no record is found in invoice details then do not update the invoice.
                     return ApiResult<bool>.Failure("false");
 
@@ -294,6 +327,173 @@ namespace AddOptimization.Services.Services
             await _invoiceDetailRepository.InsertAsync(invoiceDetail);
         }
 
+        private async Task<bool> SendRequestInvoiceEmailToCustomer(string email, Invoice invoice, string customerName, long invoiceNumber, int? dueDate, decimal totalAmountDue
+           )
+        {
+            try
+            {
+                var subject = "Invoice Request";
+                var link = GetInvoiceLinkForCustomer((int)invoice.Id);
+                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.RequestInvoice);
+                emailTemplate = emailTemplate.Replace("[CustomerName]", customerName)
+                                             .Replace("[LinkToOrder]", link)
+                                             .Replace("[InvoiceNumber]", invoiceNumber.ToString())
+                                             .Replace("[TotalAmountDue]", totalAmountDue.ToString())
+                                             .Replace("[DueDate]", dueDate.ToString());
+                return await _emailService.SendEmail(email, subject, emailTemplate);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return false;
+            }
+        }
+
+        private async Task<bool> SendInvoiceDeclinedEmailToAccountAdmins(IEnumerable<dynamic> accountAdmins, string customerName, long invoiceNumber, int? dueDate, decimal totalAmountDue, string comment)
+        {
+            try
+            {
+                var subject = "Invoice Declined";
+                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.DeclinedInvoice);
+                emailTemplate = emailTemplate.Replace("[CustomerName]", customerName)
+                                             .Replace("[InvoiceNumber]", invoiceNumber.ToString())
+                                             .Replace("[TotalAmountDue]", totalAmountDue.ToString())
+                                             .Replace("[DueDate]", dueDate.ToString())
+                                             .Replace("[Comment]", !string.IsNullOrEmpty(comment) ? comment : "No comment added.");
+                foreach (var admin in accountAdmins)
+                {
+                    var personalizedEmailTemplate = emailTemplate.Replace("[AccountAdmin]", admin.Name);
+                    await _emailService.SendEmail(admin.Email, subject, personalizedEmailTemplate);
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return false;
+            }
+        }
+
+        private IQueryable<Invoice> ApplyFilters(IQueryable<Invoice> entities, PageQueryFiterBase filter)
+        {
+            filter.GetValue<string>("invoiceNumber", (v) =>
+            {
+                entities = entities.Where(e => e.InvoiceNumber.ToString() == v);
+            });
+            filter.GetValue<string>("customerName", (v) =>
+            {
+                entities = entities.Where(e => e.CustomerId.ToString() == v);
+            });
+            filter.GetList<DateTime>("invoiceDate", (v) =>
+            {
+                var date = new DateTime(v.Max().Year, v.Max().Month, 1);
+                entities = entities.Where(e => e.InvoiceDate == date);
+            });
+            filter.GetValue<int>("totalPriceExcludingVat", (v) =>
+            {
+                entities = entities.Where(e => e.TotalPriceExcludingVat == v);
+            });
+            filter.GetValue<int>("totalPriceIncludingVat", (v) =>
+            {
+                entities = entities.Where(e => e.TotalPriceIncludingVat == v);
+            });
+            filter.GetValue<string>("invoiceStatusName", (v) =>
+            {
+                entities = entities.Where(e => e.InvoiceStatus.Name.ToLower().Contains(v.ToLower()) || e.InvoiceStatus.Name.ToLower().Contains(v.ToLower()));
+            });
+            filter.GetValue<string>("paymentStatusName", (v) =>
+            {
+                entities = entities.Where(e => e.PaymentStatus.Name.ToLower().Contains(v.ToLower()) || e.PaymentStatus.Name.ToLower().Contains(v.ToLower()));
+            });
+
+            return entities;
+        }
+
+        private IQueryable<Invoice> ApplySorting(IQueryable<Invoice> entities, SortModel sort)
+        {
+            try
+            {
+                if (sort?.Name == null)
+                {
+                    entities = entities.OrderByDescending(o => o.CreatedAt);
+                    return entities;
+                }
+                var columnName = sort.Name.ToUpper();
+                if (sort.Direction == SortDirection.ascending.ToString())
+                {
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.CustomerName).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.Customer.ManagerName);
+                    }
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.InvoiceNumber).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.InvoiceNumber);
+                    }
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.TotalPriceExcludingVat).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.TotalPriceExcludingVat);
+                    }
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.TotalPriceIncludingVat).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.TotalPriceIncludingVat);
+                    }
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.InvoiceStatusName).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.InvoiceStatus.Name);
+                    }
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.PaymentStatusName).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.PaymentStatus.Name);
+                    }
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.InvoiceDate).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.InvoiceDate);
+                    }
+                }
+
+                else
+                {
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.CustomerName).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.Customer.ManagerName);
+                    }
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.InvoiceNumber).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.InvoiceNumber);
+                    }
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.TotalPriceExcludingVat).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.TotalPriceExcludingVat);
+                    }
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.TotalPriceIncludingVat).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.TotalPriceIncludingVat);
+                    }
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.InvoiceStatusName).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.InvoiceStatus.Name);
+                    }
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.PaymentStatusName).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.PaymentStatus.Name);
+                    }
+                    if (columnName.ToUpper() == nameof(InvoiceResponseDto.InvoiceDate).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.InvoiceDate);
+                    }
+
+                }
+                return entities;
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return entities;
+            }
+
+        }
+
 
         public async Task<ApiResult<InvoiceResponseDto>> Create(InvoiceRequestDto model)
         {
@@ -306,9 +506,9 @@ namespace AddOptimization.Services.Services
                 var paymentStatus = (await _paymentStatusService.Search()).Result;
                 var paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.UNPAID.ToString()).Id;
 
-                var maxId = await _invoiceRepository.MaxAsync(e => e.Id, ignoreGlobalFilter: true);
+                var maxId = await _invoiceRepository.MaxAsync(e => (int)e.Id, ignoreGlobalFilter: true);
                 var newId = maxId + 1;
-                var invoiceNumber = $"{DateTime.UtcNow:yyyyMM}{newId}";
+                var invoiceNumber = long.Parse($"{DateTime.UtcNow:yyyyMM}{newId}");
 
                 Invoice entity = new Invoice
                 {
@@ -354,5 +554,174 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
+
+        public async Task<PagedApiResult<InvoiceResponseDto>> Search(PageQueryFiterBase filters)
+        {
+            try
+            {
+                var entities = await _invoiceRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(x => x.Customer).Include(x => x.PaymentStatus).Include(x => x.InvoiceStatus), orderBy: x => x.OrderByDescending(x => x.CreatedAt), ignoreGlobalFilter: true);
+                entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
+                entities = ApplyFilters(entities, filters);
+
+                var pagedResult = PageHelper<Invoice, InvoiceResponseDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new InvoiceResponseDto
+                {
+                    Id = e.Id,
+                    InvoiceNumber = e.InvoiceNumber,
+                    InvoiceDate = e.InvoiceDate,
+                    InvoiceStatusId = e.InvoiceStatusId,
+                    InvoiceStatusName = e.InvoiceStatus.Name,
+                    PaymentStatusId = e.PaymentStatusId,
+                    PaymentStatusName = e.PaymentStatus.Name,
+                    CustomerAddress = e.CustomerAddress,
+                    CompanyAddress = e.CompanyAddress,
+                    VatValue = e.VatValue,
+                    CompanyBankDetails = e.CompanyBankDetails,
+                    TotalPriceExcludingVat = e.TotalPriceExcludingVat,
+                    TotalPriceIncludingVat = e.TotalPriceIncludingVat,
+                    CustomerId = e.CustomerId,
+                    CustomerName = e.Customer.ManagerName,
+                    ExpiryDate = e.ExpiryDate,
+                    PaymentClearanceDays = e.PaymentClearanceDays,
+
+                }).ToList());
+
+                var result = pagedResult;
+                return PagedApiResult<InvoiceResponseDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+        public async Task<ApiResult<InvoiceResponseDto>> FetchInvoiceDetails(int id, bool getRoleBasedData = true)
+        {
+            try
+            {
+                bool ignoreGlobalFilter = true;
+                if (getRoleBasedData)
+                {
+                    var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin") || c.Contains("Account Admin")).ToList();
+                    ignoreGlobalFilter = superAdminRole.Count != 0;
+                }
+                var model = new InvoiceResponseDto();
+                var entity = await _invoiceRepository.FirstOrDefaultAsync(e => e.Id == id, ignoreGlobalFilter: true);
+                model.Id = entity.Id;
+                model.CustomerId = entity.CustomerId;
+                model.ExpiryDate = entity.ExpiryDate;
+                model.InvoiceDate = entity.InvoiceDate;
+                model.CustomerAddress = entity.CustomerAddress;
+                model.InvoiceStatusId = entity.InvoiceStatusId;
+                model.PaymentStatusId = entity.PaymentStatusId;
+                model.InvoiceNumber = entity.InvoiceNumber;
+                model.VatValue = entity.VatValue;
+                model.TotalPriceExcludingVat = entity.TotalPriceExcludingVat;
+                model.TotalPriceIncludingVat = entity.TotalPriceIncludingVat;
+                model.PaymentClearanceDays = entity.PaymentClearanceDays;
+
+                var invoiceSummary = (await _invoiceDetailRepository.QueryAsync(e => e.InvoiceId == id, disableTracking: true)).ToList();
+                model.InvoiceDetails = _mapper.Map<List<InvoiceDetailDto>>(invoiceSummary);
+                return ApiResult<InvoiceResponseDto>.Success(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+        public async Task<ApiResult<InvoiceResponseDto>> Update(int id, InvoiceRequestDto model)
+        {
+            try
+            {
+                var entity = await _invoiceRepository.FirstOrDefaultAsync(e => e.Id == id);
+                var summaries = await _invoiceDetailRepository.QueryAsync(e => e.InvoiceId == id);
+
+                foreach (var summary in summaries.ToList())
+                {
+                    await _invoiceDetailRepository.DeleteAsync(summary);
+                }
+                if (entity == null)
+                {
+                    return ApiResult<InvoiceResponseDto>.NotFound("Invoice");
+                }
+                foreach (var summary in model.InvoiceDetails)
+                {
+                    var invoiceDetail = new InvoiceDetail
+                    {
+                        InvoiceId = entity.Id,
+                        Description = summary.Description,
+                        Quantity = summary.Quantity,
+                        VatPercent = summary.VatPercent,
+                        UnitPrice = summary.UnitPrice,
+                        TotalPriceExcludingVat = summary.TotalPriceExcludingVat,
+                        TotalPriceIncludingVat = summary.TotalPriceIncludingVat
+
+                    };
+                    await _invoiceDetailRepository.InsertAsync(invoiceDetail);
+                }
+                _mapper.Map(model, entity);
+                entity.InvoiceDetails = null;
+                await _invoiceRepository.UpdateAsync(entity);
+                var mappedEntity = _mapper.Map<InvoiceResponseDto>(entity);
+                return ApiResult<InvoiceResponseDto>.Success(mappedEntity);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+        public string GetInvoiceLinkForCustomer(int invoiceId)
+        {
+            var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
+            var encryptedId = _protectionService.Encode(invoiceId.ToString());
+            return $"{baseUrl}invoice/approval/{encryptedId}";
+        }
+
+        public async Task<bool> SendInvoiceEmailToCustomer(int invoiceId)
+        {
+            var entity = (await _invoiceRepository.QueryAsync(x => x.Id == invoiceId, include: entities => entities.Include(e => e.Customer))).FirstOrDefault();
+            var details = (await _invoiceDetailRepository.QueryAsync(x => x.InvoiceId == invoiceId)).ToList();
+            return await SendRequestInvoiceEmailToCustomer(entity.Customer.ManagerEmail, entity, entity.Customer.ManagerName, entity.InvoiceNumber, entity.PaymentClearanceDays, entity.TotalPriceIncludingVat);
+        }
+
+        public async Task<ApiResult<bool>> DeclineRequest(InvoiceActionRequestDto model)
+        {
+            try
+            {
+                var eventDetails = await _invoiceRepository.FirstOrDefaultAsync(x => x.Id == model.Id);
+                var eventStatus = (await _invoiceStatusService.Search()).Result;
+                var declinedStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.DECLINED.ToString()).Id;
+                eventDetails.InvoiceStatusId = declinedStatusId;
+                var result = await _invoiceRepository.UpdateAsync(eventDetails);
+                InvoiceHistory entity = new InvoiceHistory()
+                {
+                    InvoiceId = eventDetails.Id,
+                    InvoiceStatusId = eventDetails.InvoiceStatusId,
+                    Comment = model.Comment,
+                };
+                await _invoiceHistoryRepository.InsertAsync(entity);
+                var entities = (await _invoiceRepository.QueryAsync(x => x.Id == result.Id, include: entities => entities.Include(e => e.Customer))).FirstOrDefault();
+                var accountAdmins = (await _applicationService.GetAccountAdmins()).Result;
+                var adminEmails = accountAdmins.Select(admin => new { Name = admin.UserName, Email = admin.Email });
+
+                Task.Run(() =>
+                    {
+                        SendInvoiceDeclinedEmailToAccountAdmins(adminEmails, entities.Customer.ManagerEmail, entities.InvoiceNumber, entities.PaymentClearanceDays, entities.TotalPriceIncludingVat, entity.Comment);
+                    });
+                
+                return ApiResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+       
     }
 }

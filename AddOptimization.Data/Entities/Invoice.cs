@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AddOptimization.Data.Entities
 {
-    public class Invoice : BaseEntityNew<int>
+    public class Invoice : BaseEntityNew<long>
     {
         public long InvoiceNumber { get; set; }
         public DateTime InvoiceDate { get; set; }
