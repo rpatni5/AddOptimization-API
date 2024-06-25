@@ -397,9 +397,17 @@ namespace AddOptimization.Services.Services
             {
                 entities = entities.Where(e => e.TotalPriceIncludingVat == v);
             });
+            filter.GetValue<string>("invoiceStatusId", (v) =>
+            {
+                entities = entities.Where(e => e.InvoiceStatusId.ToString() == v);
+            });
             filter.GetValue<string>("invoiceStatusName", (v) =>
             {
                 entities = entities.Where(e => e.InvoiceStatus.Name.ToLower().Contains(v.ToLower()) || e.InvoiceStatus.Name.ToLower().Contains(v.ToLower()));
+            });
+            filter.GetValue<string>("paymentStatusId", (v) =>
+            {
+                entities = entities.Where(e => e.PaymentStatusId.ToString() == v);
             });
             filter.GetValue<string>("paymentStatusName", (v) =>
             {
@@ -562,7 +570,7 @@ namespace AddOptimization.Services.Services
                 var entities = await _invoiceRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(x => x.Customer).Include(x => x.PaymentStatus).Include(x => x.InvoiceStatus), orderBy: x => x.OrderByDescending(x => x.CreatedAt), ignoreGlobalFilter: true);
                 entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
                 entities = ApplyFilters(entities, filters);
-
+                entities = entities.Where(e => !(e.InvoiceStatus.Name == "Draft" && e.ExpiryDate < DateTime.UtcNow));
                 var pagedResult = PageHelper<Invoice, InvoiceResponseDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new InvoiceResponseDto
                 {
                     Id = e.Id,
@@ -579,7 +587,7 @@ namespace AddOptimization.Services.Services
                     TotalPriceExcludingVat = e.TotalPriceExcludingVat,
                     TotalPriceIncludingVat = e.TotalPriceIncludingVat,
                     CustomerId = e.CustomerId,
-                    CustomerName = e.Customer.ManagerName,
+                    CustomerName = e.Customer.Organizations,
                     ExpiryDate = e.ExpiryDate,
                     PaymentClearanceDays = e.PaymentClearanceDays,
 
