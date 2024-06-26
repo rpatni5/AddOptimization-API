@@ -253,6 +253,7 @@ namespace AddOptimization.Services.Services
 
                 ExternalInvoice entity = new ExternalInvoice
                 {
+                    Id= newId,
                     InvoiceNumber = Convert.ToInt64(invoiceNumber),
                     PaymentStatusId = paymentStatusId,
                     VatValue = model.ExternalInvoiceDetails.Sum(x => (x.UnitPrice * x.Quantity * x.VatPercent) / 100),
