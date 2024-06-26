@@ -520,6 +520,7 @@ namespace AddOptimization.Services.Services
 
                 Invoice entity = new Invoice
                 {
+                    Id=newId,
                     InvoiceNumber = Convert.ToInt64(invoiceNumber),
                     PaymentStatusId = paymentStatusId,
                     VatValue = model.InvoiceDetails.Sum(x => (x.UnitPrice * x.Quantity * x.VatPercent) / 100),
