@@ -27,6 +27,7 @@ namespace AddOptimization.Contracts.Dto
         public bool IsDeleted { get; set; }
         public DateTime ExpiryDate { get; set; }
         public int? PaymentClearanceDays { get; set; }
+        public decimal DueAmount { get; set; }
 
         //public virtual PaymentStatus PaymentStatus { get; set; }
 

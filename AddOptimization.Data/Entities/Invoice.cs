@@ -19,7 +19,8 @@ namespace AddOptimization.Data.Entities
         public bool IsDeleted { get; set; }
         public DateTime ExpiryDate { get; set; }
         public int? PaymentClearanceDays { get; set; }
-        
+        public decimal DueAmount { get; set; }
+
 
         [ForeignKey(nameof(PaymentStatusId))]
         public virtual PaymentStatus PaymentStatus { get; set; }
