@@ -80,7 +80,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
 
                     foreach (var month in months)
                     {
-                        var filteredAssociations = associatedEmployees.Where(s => month.StartDate.Month >= s.CreatedAt.Value.Month && month.StartDate.Year >= s.CreatedAt.Value.Year).ToList();
+                        var filteredAssociations = associatedEmployees.Where(s => s.CreatedAt.Value.Month < month.StartDate.Month && month.StartDate.Year == s.CreatedAt.Value.Year).ToList();
 
                         bool allTimesheetApprovedForMonth = await schedulerEventService.IsTimesheetApproved(customer.Id, filteredAssociations.Select(x => x.EmployeeId).ToList(), month);
                         if (allTimesheetApprovedForMonth)

@@ -1,17 +1,23 @@
-﻿using AddOptimization.Contracts.Dto;
+﻿using AddOptimization.Contracts.Constants;
+using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
 using AddOptimization.Data.Repositories;
 using AddOptimization.Services.Constants;
 using AddOptimization.Utilities.Common;
+using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
+using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
+using AddOptimization.Utilities.Services;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 using System.Text;
 
 
@@ -22,6 +28,10 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<ExternalInvoice> _externalInvoiceRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IGenericRepository<ExternalInvoiceDetail> _invoiceDetailRepository;
+        private readonly IEmailService _emailService;
+        private readonly ITemplateService _templateService;
+        private readonly IConfiguration _configuration;
+        private readonly CustomDataProtectionService _protectionService;
         private readonly IInvoiceStatusService _invoiceStatusService;
         private readonly IGenericRepository<Customer> _customer;
         private readonly IGenericRepository<CustomerEmployeeAssociation> _customerEmployeeAssociation;
@@ -46,7 +56,9 @@ namespace AddOptimization.Services.Services
              IInvoiceStatusService invoiceStatusService,
               IHttpContextAccessor httpContextAccessor,
                IPaymentStatusService paymentStatusService,
-            ISchedulerEventTypeService schedulerEventTypeService,
+               IEmailService emailService,
+               ITemplateService templateService,
+                IConfiguration configuration,             ISchedulerEventTypeService schedulerEventTypeService,
             IGenericRepository<PublicHoliday> publicHolidayRepository,
             IGenericRepository<ExternalInvoiceDetail> invoiceDetailRepository,
             IGenericRepository<Employee> employeeRepository,
@@ -63,6 +75,8 @@ namespace AddOptimization.Services.Services
             _paymentStatusService = paymentStatusService;
             _customerEmployeeAssociation = customerEmployeeAssociation;
             _customer = customer;
+            _emailService= emailService;
+            _templateService= templateService;
             _schedulersRepository = schedulersRepository;
             _schedulerEventTypeService = schedulerEventTypeService;
             _schedulersStatusService = schedulersStatusService;
@@ -289,7 +303,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _externalInvoiceRepository.QueryAsync((e => !e.IsDeleted), include: source => source.Include(x => x.Company).Include(x => x.InvoiceStatus), ignoreGlobalFilter: true);
+                var entities = await _externalInvoiceRepository.QueryAsync((e => !e.IsDeleted), include: source => source.Include(x => x.Company).Include(x => x.InvoiceStatus).Include(x => x.PaymentStatus).Include(x=>x.ApplicationUser), ignoreGlobalFilter: true);
 
                 var result = entities.ToList();
                 var mappedEntities = _mapper.Map<List<ExternalInvoiceResponseDto>>(result);
@@ -317,8 +331,10 @@ namespace AddOptimization.Services.Services
                 model.InvoiceDate = entity.InvoiceDate;
                 model.CompanyAddress = entity.CompanyAddress;
                 model.InvoiceStatusId = entity.InvoiceStatusId;
+                model.PaymentStatusId = entity.PaymentStatusId;
                 model.CompanyAddress = entity.CompanyAddress;
                 model.InvoiceNumber = entity.InvoiceNumber;
+                //model.EmployeeId = entity.EmployeeId;
 
                 var quoteSummary = (await _invoiceDetailRepository.QueryAsync(e => e.ExternalInvoiceId == id, disableTracking: true)).ToList();
                 model.ExternalInvoiceDetails = _mapper.Map<List<ExternalInvoiceDetailDto>>(quoteSummary);
@@ -375,6 +391,42 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
+        public string GetInvoiceLinkForAccountAdmin(long Id)
+        {
+            var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
+            var encryptedId = _protectionService.Encode(Id.ToString());
+            return $"{baseUrl}quote/approval/{encryptedId}";
+        }
 
+        public async Task<bool> SendInvoiceApprovalEmailToAccountAdmin(long Id)
+        {
+            var entity = (await _externalInvoiceRepository.QueryAsync(x => x.Id == Id, include: entities => entities.Include(e => e.ApplicationUser))).FirstOrDefault();
+            return await SendInvoiceToAccountAdmin(entity.ApplicationUser.Email, entity, entity.ApplicationUser.Email, entity.ApplicationUser.FullName);
+        }
+
+        private async Task<bool> SendInvoiceToAccountAdmin(string email, ExternalInvoice invoice, string managerName,
+                                string employee)
+        {
+            try
+            {
+                var subject = "External Invoice";
+                var link = GetInvoiceLinkForAccountAdmin(invoice.Id);
+                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.SendInvoice);
+                emailTemplate = emailTemplate.Replace("[EmployeeName]", employee)
+                                             .Replace("[MangerName]", managerName)
+                                             .Replace("[LinkToInvoice]", link)
+                                             .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(invoice.InvoiceDate.Month))
+                                             .Replace("[Year]", invoice.InvoiceDate.Year.ToString());
+                return await _emailService.SendEmail(email, subject, emailTemplate);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return false;
+            }
+        }
     }
+
 }
+    
+

@@ -1,6 +1,6 @@
 ﻿
 CREATE TABLE [dbo].[ExternalInvoices](
-	[Id] [bigint] IDENTITY(1,1) NOT NULL,
+	[Id] [bigint] NOT NULL,
 	[InvoiceNumber] [bigint] NOT NULL,
 	[InvoiceDate] [datetime2](7) NOT NULL,
 	[InvoiceStatusId] [uniqueidentifier] NOT NULL,

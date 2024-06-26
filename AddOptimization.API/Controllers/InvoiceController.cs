@@ -32,5 +32,62 @@ namespace AddOptimization.API.Controllers
                 return HandleException(ex);
             }
         }
+
+
+        [HttpPost("search")]
+        public async Task<IActionResult> Get([FromBody] PageQueryFiterBase filter)
+        {
+            try
+            {
+                var retVal = await _invoiceService.Search(filter);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpGet("get-invoice-details/{id}")]
+        public async Task<IActionResult> FetchInvoiceDetails(int id)
+        {
+            try
+            {
+                var retVal = await _invoiceService.FetchInvoiceDetails(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] InvoiceRequestDto model)
+        {
+            try
+            {
+                var retVal = await _invoiceService.Update(id, model);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpPost("send-email-to-customer/{invoiceId}")]
+        public async Task<IActionResult> SendTimesheetApprovalEmailToCustomer(int invoiceId)
+        {
+            try
+            {
+                var retVal = await _invoiceService.SendInvoiceEmailToCustomer(invoiceId);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
     }
 }

@@ -21,6 +21,9 @@ namespace AddOptimization.Contracts.Services
 
         Task<ApiResult<ExternalInvoiceResponseDto>> Update(long id, ExternalInvoiceRequestDto model);
 
+        Task<bool> SendInvoiceApprovalEmailToAccountAdmin(long id);
+
+
 
     }
 }
