@@ -473,6 +473,13 @@ BEGIN
     VALUES
         ('B39271A8-EB3A-42DC-A079-1C76F4A75668','Absence Approval','absence_approval','/admin/timesheets/absence-approval')
 END
+
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='super_admin_dashboard')
+BEGIN 
+    INSERT INTO Screens(Id,Name,ScreenKey,Route)
+    VALUES
+        ('F7D2F4D6-BA6C-4CEA-A5F1-08DC8AD95661','Super Admin Dashboard','super_admin_dashboard','/admin/admin-super-admin-dashboard')
+END
 --End entry for screens
 
 
@@ -538,6 +545,16 @@ BEGIN
     INSERT INTO InvoiceStatuses(Id,Name,StatusKey)
     VALUES
         (NEWID(),'Closed','CLOSED')
+END
+
+
+/* Adding DECLINED status data in Invoice Status */
+
+IF NOT EXISTS (SELECT 1 FROM InvoiceStatuses Where StatusKey= 'DECLINED')
+BEGIN 
+    INSERT INTO InvoiceStatuses(Id,Name,StatusKey)
+    VALUES
+        (NEWID(),'Declined','DECLINED')
 END
 -- Invoicing seed data ends
 

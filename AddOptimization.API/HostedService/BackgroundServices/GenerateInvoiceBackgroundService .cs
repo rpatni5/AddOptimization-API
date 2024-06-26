@@ -21,20 +21,16 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         private readonly IEmailService _emailService;
         private readonly ITemplateService _templateService;
         private readonly IConfiguration _configuration;
-        private readonly ICustomerService _customerService;
-        private readonly IGenericRepository<Invoice> _invoiceRepository;
         #endregion
 
         #region Constructor
-        public GenerateInvoiceBackgroundService(IConfiguration configuration, IEmailService emailService, ITemplateService templateService, IServiceProvider serviceProvider, ILogger<GenerateInvoiceBackgroundService> logger, ICustomerService customerService, IGenericRepository<Invoice> invoiceRepository)
+        public GenerateInvoiceBackgroundService(IConfiguration configuration, IEmailService emailService, ITemplateService templateService, IServiceProvider serviceProvider, ILogger<GenerateInvoiceBackgroundService> logger)
         {
             _configuration = configuration;
             _serviceProvider = serviceProvider;
             _logger = logger;
             _emailService = emailService;
             _templateService = templateService;
-            _customerService = customerService;
-            _invoiceRepository = invoiceRepository;
         }
         #endregion
 
@@ -62,13 +58,17 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         {
             try
             {
+                _logger.LogInformation("GenerateInvoice Started.");
                 using var scope = _serviceProvider.CreateScope();
                 var schedulerEventService = scope.ServiceProvider.GetRequiredService<ISchedulerEventService>();
                 var invoiceService = scope.ServiceProvider.GetRequiredService<IInvoiceService>();
+                var customerService = scope.ServiceProvider.GetRequiredService<ICustomerService>();
+                var invoiceRepository = scope.ServiceProvider.GetRequiredService<IGenericRepository<Invoice>>();
+
                 var customerEmployeeAssociationService = scope.ServiceProvider.GetRequiredService<ICustomerEmployeeAssociationService>();
                 var expirationThresholdValue = _configuration.ReadSection<BackgroundServiceSettings>(AppSettingsSections.BackgroundServiceSettings).ExpirationThresholdInDays;
 
-                var customers = (await _customerService.GetAllCustomers()).Result;
+                var customers = (await customerService.GetAllCustomers()).Result;
 
                 foreach (var customer in customers)
                 {
@@ -80,15 +80,15 @@ namespace AddOptimization.API.HostedService.BackgroundServices
 
                     foreach (var month in months)
                     {
-                        var filteredAssociations = associatedEmployees.Where(s => month.StartDate.Month >= s.CreatedAt.Value.Month).ToList();
+                        var filteredAssociations = associatedEmployees.Where(s => s.CreatedAt.Value.Month < month.StartDate.Month && month.StartDate.Year == s.CreatedAt.Value.Year).ToList();
 
                         bool allTimesheetApprovedForMonth = await schedulerEventService.IsTimesheetApproved(customer.Id, filteredAssociations.Select(x => x.EmployeeId).ToList(), month);
                         if (allTimesheetApprovedForMonth)
                         {
                             //check invoice already exist of not
                             //code pending
-                            var invoice = _invoiceRepository.QueryAsync(i => i.CustomerId == customer.Id && i.InvoiceDate.Month == month.StartDate.Month);
-                            if (invoice == null)
+                            var invoice = (await invoiceRepository.QueryAsync(i => i.CustomerId == customer.Id && i.InvoiceDate.Month == month.StartDate.Month && i.InvoiceDate.Year == month.StartDate.Year)).ToList();
+                            if (!invoice.Any())
                             {
                                 await invoiceService.GenerateInvoice(customer.Id, month, filteredAssociations);
                             }
@@ -97,7 +97,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                     }
 
                 };
-
+                _logger.LogInformation("GenerateInvoice Completed.");
                 return true;
             }
             catch (Exception ex)

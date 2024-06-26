@@ -1,10 +1,11 @@
-﻿using AddOptimization.Data.Common;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace AddOptimization.Data.Entities
+namespace AddOptimization.Contracts.Dto
 {
-    public class InvoiceDetail : BaseEntityNew<Guid>
+    public class InvoiceDetailDto 
     {
+        public Guid? Id { get; set; }
         public long InvoiceId { get; set; }
         public string Description { get; set; }
         public decimal Quantity { get; set; }
@@ -14,8 +15,5 @@ namespace AddOptimization.Data.Entities
         public decimal TotalPriceExcludingVat { get; set; }
         public string Metadata { get; set; }
         public bool IsDeleted { get; set; }
-
-        [ForeignKey(nameof(InvoiceId))]
-        public virtual Invoice Invoices{ get; set; }
     }
 }

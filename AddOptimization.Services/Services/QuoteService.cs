@@ -227,19 +227,19 @@ namespace AddOptimization.Services.Services
 
         private async Task<long> GenerateQuoteNoAsync()
         {
-            var id = await _quoteRepository.MaxAsync(e => (int)e.Id, ignoreGlobalFilter: true);
+            var id = await _quoteRepository.MaxAsync<Int64>(e => e.Id, ignoreGlobalFilter: true);
             var now = DateTime.UtcNow;
             var currentYear = now.Year;
             var currentMonth = now.Month;
 
-            int maxIncrement = 0;
+            long maxIncrement = 0;
 
             if (id != 0)
             {
                 maxIncrement = id;
             }
 
-            int newIncrement = maxIncrement + 1;
+            long newIncrement = maxIncrement + 1;
             return Convert.ToInt64($"{currentYear}{currentMonth:D2}{newIncrement}");
         }
 
