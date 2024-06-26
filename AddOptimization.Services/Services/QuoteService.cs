@@ -22,6 +22,11 @@ using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Constants;
 using Newtonsoft.Json;
 using iText.Commons.Actions.Contexts;
+using AddOptimization.Contracts.Constants;
+using System.Globalization;
+using AddOptimization.Utilities.Interface;
+using Microsoft.Extensions.Configuration;
+using AddOptimization.Utilities.Services;
 
 namespace AddOptimization.Services.Services
 {
@@ -35,8 +40,12 @@ namespace AddOptimization.Services.Services
         private readonly IQuoteSummaryService _quoteSummaryService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IGenericRepository<Company> _companyRepository;
+        private readonly IEmailService _emailService;
+        private readonly ITemplateService _templateService;
+        private readonly IConfiguration _configuration;
+        private readonly CustomDataProtectionService _protectionService;
 
-        public QuoteService(IGenericRepository<Quote> quoteRepository, ILogger<QuoteService> logger, IMapper mapper, IQuoteStatusService quoteStatusService, IGenericRepository<QuoteSummary> quoteSumamryRepository, IUnitOfWork unitOfWork, IGenericRepository<Company> companyRepository)
+        public QuoteService(IGenericRepository<Quote> quoteRepository, ILogger<QuoteService> logger, IMapper mapper, IQuoteStatusService quoteStatusService, IGenericRepository<QuoteSummary> quoteSumamryRepository, IUnitOfWork unitOfWork, IGenericRepository<Company> companyRepository, IConfiguration configuration, IEmailService emailService, ITemplateService templateService, CustomDataProtectionService protectionService)
         {
             _quoteRepository = quoteRepository;
             _logger = logger;
@@ -45,6 +54,11 @@ namespace AddOptimization.Services.Services
             _quoteSummaryRepository = quoteSumamryRepository;
             _unitOfWork = unitOfWork;
             _companyRepository = companyRepository;
+            _configuration = configuration;
+            _emailService = emailService;
+            _templateService = templateService;
+            _unitOfWork = unitOfWork;
+            _protectionService = protectionService;
         }
 
         public async Task<ApiResult<List<QuoteResponseDto>>> Search(PageQueryFiterBase filters)
@@ -74,6 +88,7 @@ namespace AddOptimization.Services.Services
                 var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == QuoteStatusesEnum.DRAFT.ToString()).Id;
                 var quoteNo = await GenerateQuoteNoAsync();
                 var company = await _companyRepository.FirstOrDefaultAsync(ignoreGlobalFilter: true);
+                var id = await _quoteRepository.MaxAsync(e => (int)e.Id, ignoreGlobalFilter: true);
 
                 var companyAddress = string.Empty;
 
@@ -96,6 +111,7 @@ namespace AddOptimization.Services.Services
 
                 Quote entity = new Quote
                 {
+                    Id= id+1,
                     CustomerId = model.CustomerId,
                     ExpiryDate = model.ExpiryDate,
                     QuoteDate = model.QuoteDate,
@@ -227,5 +243,39 @@ namespace AddOptimization.Services.Services
             return Convert.ToInt64($"{currentYear}{currentMonth:D2}{newIncrement}");
         }
 
+        public string GetQuoteLinkForCustomer(long quoteId)
+        {
+            var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
+            var encryptedId = _protectionService.Encode(quoteId.ToString());
+            return $"{baseUrl}quote/approval/{encryptedId}";
+        }
+
+        public async Task<bool> SendQuoteEmailToCustomer(long quoteId)
+        {
+            var entity = (await _quoteRepository.QueryAsync(x => x.Id == quoteId, include: entities => entities.Include(e => e.Customer))).FirstOrDefault();
+            return await SendQuoteToCustomer(entity.Customer.ManagerEmail, entity, entity.Customer.ManagerName, entity.Customer.Organizations);
+        }
+
+        private async Task<bool> SendQuoteToCustomer(string email, Quote quote, string managerName,
+                                    string customer)
+        {
+            try
+            {
+                var subject = "Quote";
+                var link = GetQuoteLinkForCustomer(quote.Id);
+                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.CustomerQuote);
+                emailTemplate = emailTemplate.Replace("[CustomerName]", customer)
+                                             .Replace("[MangerName]", managerName)
+                                             .Replace("[LinkToQuote]", link)
+                                             .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(quote.QuoteDate.Month))
+                                             .Replace("[Year]", quote.QuoteDate.Year.ToString());
+                return await _emailService.SendEmail(email, subject, emailTemplate);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return false;
+            }
+        }
     }
 }

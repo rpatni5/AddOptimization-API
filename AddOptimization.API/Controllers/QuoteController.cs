@@ -4,8 +4,10 @@ using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Services.Services;
 using AddOptimization.Utilities.Models;
+using AddOptimization.Utilities.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NPOI.SS.Formula.Functions;
 
 namespace AddOptimization.API.Controllers
 {
@@ -13,9 +15,11 @@ namespace AddOptimization.API.Controllers
     public class QuoteController : CustomApiControllerBase
     {
         private readonly IQuoteService _quoteService;
-        public QuoteController(ILogger<QuoteController> logger, IQuoteService quoteService) : base(logger)
+        private readonly CustomDataProtectionService _customDataProtectionService;
+        public QuoteController(ILogger<QuoteController> logger, IQuoteService quoteService, CustomDataProtectionService customDataProtectionService) : base(logger)
         {
             _quoteService = quoteService;
+            _customDataProtectionService = customDataProtectionService;
         }
 
         [HttpPost("search")]
@@ -67,6 +71,43 @@ namespace AddOptimization.API.Controllers
             try
             {
                 var retVal = await _quoteService.FetchQuoteDetails(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpPost("send-quote-to-customer/{quoteId}")]
+        public async Task<IActionResult> SendQuoteEmailToCustomer(long quoteId)
+        {
+            try
+            {
+                var retVal = await _quoteService.SendQuoteEmailToCustomer(quoteId);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [AllowAnonymous]
+
+        [HttpGet("customer-quote-details/{id}")]
+        public async Task<IActionResult> GetCustomerQuoteDetails(string id)
+        {
+            try
+            {
+
+                var decryptedString = _customDataProtectionService.Decode(id);
+                var st = decryptedString;
+                if (!long.TryParse(decryptedString, out var decryptedId))
+                {
+                    throw new ArgumentException("Invalid decrypted ID format");
+                }
+                var retVal = await _quoteService.FetchQuoteDetails(decryptedId);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
