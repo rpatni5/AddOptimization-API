@@ -491,7 +491,7 @@ namespace AddOptimization.Data.Repositories
         }
 
 
-        public async Task<int> MaxAsync(Expression<Func<TEntity, int>> select, Expression<Func<TEntity, bool>> predicate = null, bool ignoreGlobalFilter = true)
+        public async Task<TValue> MaxAsync<TValue>(Expression<Func<TEntity, TValue>> select, Expression<Func<TEntity, bool>> predicate = null, bool ignoreGlobalFilter = true)
         {
             try
             {
@@ -504,7 +504,7 @@ namespace AddOptimization.Data.Repositories
                 {
                     query = query.Where(predicate);
                 }
-                return query.Any() ? await query.MaxAsync(select) : 0;
+                return query.Any() ? await query.MaxAsync(select) : default(TValue);
             }
             catch (Exception ex)
             {
@@ -512,6 +512,7 @@ namespace AddOptimization.Data.Repositories
                 throw;
             }
         }
+
 
     }
 }
