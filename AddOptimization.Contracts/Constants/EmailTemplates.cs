@@ -21,5 +21,8 @@ public class EmailTemplates
     public const string EmployeeAccountCreated = "employee_account_created.html";      
     public const string RequestInvoice = "request_invoice.html";
     public const string DeclinedInvoice = "invoice_action.html";
+    public const string RequestExternalInvoice = "request_external_invoice.html";
+    public const string DeclinedExternalInvoice = "external_invoice_action.html";
+
 
 }

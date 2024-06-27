@@ -58,7 +58,7 @@ namespace AddOptimization.API.Controllers
         {
             try
             {
-                var retVal = await _externalInvoiceService.FetchInvoiceDetails(id);
+                var retVal = await _externalInvoiceService.FetchExternalInvoiceDetails(id);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -83,7 +83,7 @@ namespace AddOptimization.API.Controllers
         }
 
         [HttpPost("send-email-to-account-admin/{id}")]
-        public async Task<IActionResult> SendInvoiceApprovalEmailToAccountAdmin(long id)
+        public async Task<IActionResult> SendInvoiceApprovalEmailToAccountAdmin(int id)
         {
             try
             {
@@ -99,19 +99,29 @@ namespace AddOptimization.API.Controllers
 
         [AllowAnonymous]
 
-        [HttpGet("customer-invoice-details/{id}")]
-        public async Task<IActionResult> GetCustomerInvoiceDetails(string id)
+        [HttpGet("external-invoice-details/{id}")]
+        public async Task<IActionResult> FetchExternalInvoiceDetails(string id)
         {
             try
             {
+                var eventId = int.Parse(_customDataProtectionService.Decode(id));
+                var retVal = await _externalInvoiceService.FetchExternalInvoiceDetails(eventId, false);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
 
-                var decryptedString = _customDataProtectionService.Decode(id);
-                var st = decryptedString;
-                if (!long.TryParse(decryptedString, out var decryptedId))
-                {
-                    throw new ArgumentException("Invalid decrypted ID format");
-                }
-                var retVal = await _externalInvoiceService.FetchInvoiceDetails(decryptedId);
+
+        [AllowAnonymous]
+        [HttpPost("external-invoice-decline-request")]
+        public async Task<IActionResult> DeclineRequest(ExternalInvoiceActionRequestDto model)
+        {
+            try
+            {
+                var retVal = await _externalInvoiceService.DeclineRequest(model);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)

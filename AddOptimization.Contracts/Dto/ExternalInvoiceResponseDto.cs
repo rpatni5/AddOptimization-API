@@ -12,6 +12,7 @@ namespace AddOptimization.Contracts.Dto
     {
         public long InvoiceNumber { get; set; }
         public DateTime InvoiceDate { get; set; }
+        public int? EmployeeId { get; set; }
         public Guid? CompanyId {  get; set; }
         public Guid PaymentStatusId { get; set; }
         public Guid InvoiceStatusId { get; set; }
