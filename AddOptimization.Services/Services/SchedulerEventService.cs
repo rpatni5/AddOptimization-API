@@ -133,10 +133,12 @@ namespace AddOptimization.Services.Services
                     var entity = _mapper.Map<SchedulerEventDetails>(item);
                     if (item.Id != Guid.Empty)
                     {
+                        entity.Date = entity.Date.Value.Date;
                         schedluerEventsToUpdate.Add(entity);
                     }
                     else
                     {
+                        entity.Date = entity.Date.Value.Date;
                         schedluerEventsToInsert.Add(entity);
                     }
                 }
@@ -335,7 +337,7 @@ namespace AddOptimization.Services.Services
                 if (getRoleBasedData)
                 {
                     var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin") || c.Contains("Account Admin")).ToList();
-                    ignoreGlobalFilter = superAdminRole.Count != 0;
+                     ignoreGlobalFilter = superAdminRole.Count != 0;
                 }
 
                 var entity = await _schedulersDetailsRepository.QueryAsync(include: entities => entities
