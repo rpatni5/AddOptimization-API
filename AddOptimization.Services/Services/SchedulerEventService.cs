@@ -665,7 +665,11 @@ namespace AddOptimization.Services.Services
                 {
                     SendTimesheetActionEmailToAccountAdmin(approver, customer, user, eventDetails, model.IsApproved, entity.Comment, duration.Item1, duration.Item2);
                 });
-
+                
+                Task.Run(() =>
+                {
+                    SendTimesheetActionEmailToEmployee(customer, user, eventDetails, model.IsApproved, entity.Comment, duration.Item1, duration.Item2);
+                });
 
                 return ApiResult<bool>.Success(true);
             }
@@ -676,9 +680,34 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private async Task<bool> SendTimesheetActionEmailToAccountAdmin(ApplicationUser approver, Customer customer,
+        private async Task<bool> SendTimesheetActionEmailToEmployee(Customer customer,
             ApplicationUser user, SchedulerEvent schedulerEvent, bool isApprovedEmail,
             string comment, decimal totalWorkingDays, decimal overtimeHours)
+        {
+            try
+            {
+                var subject = isApprovedEmail ? "Timesheet Approved" : "Timesheet Declined";
+                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetActionsEmployee);
+                emailTemplate = emailTemplate.Replace("[EmployeeName]", user.FullName)
+                                             .Replace("[CustomerName]", customer.ManagerName)
+                                             .Replace("[TimesheetAction]", isApprovedEmail ? "approved" : "declined")
+                                             .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
+                                             .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
+                                             .Replace("[WorkDuration]", totalWorkingDays.ToString())
+                                             .Replace("[Overtime]", overtimeHours.ToString())
+                                             .Replace("[Comment]", !string.IsNullOrEmpty(comment) ? comment : "No comment added.");
+                return await _emailService.SendEmail(user.Email, subject, emailTemplate);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return false;
+            }
+        }
+
+        private async Task<bool> SendTimesheetActionEmailToAccountAdmin(ApplicationUser approver, Customer customer,
+         ApplicationUser user, SchedulerEvent schedulerEvent, bool isApprovedEmail,
+         string comment, decimal totalWorkingDays, decimal overtimeHours)
         {
             try
             {
@@ -686,6 +715,7 @@ namespace AddOptimization.Services.Services
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetActions);
                 emailTemplate = emailTemplate.Replace("[AccountAdmin]", approver.FullName)
                                              .Replace("[EmployeeName]", user.FullName)
+                                             .Replace("[CustomerName]", customer.ManagerName)
                                              .Replace("[TimesheetAction]", isApprovedEmail ? "approved" : "declined")
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
                                              .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())

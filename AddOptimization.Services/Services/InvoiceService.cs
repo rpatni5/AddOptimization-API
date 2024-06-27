@@ -210,7 +210,7 @@ namespace AddOptimization.Services.Services
                     totalIn += detail.TotalPriceIncludingVat;
                     totalEx += detail.TotalPriceExcludingVat;
                 }
-                invoiceResult.TotalPriceIncludingVat = totalIn;
+                invoiceResult.DueAmount = invoiceResult.TotalPriceIncludingVat = totalIn;
                 invoiceResult.TotalPriceExcludingVat = totalEx;
                 invoiceResult.VatValue = totalIn - totalEx;
 
