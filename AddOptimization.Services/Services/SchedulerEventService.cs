@@ -620,6 +620,13 @@ namespace AddOptimization.Services.Services
                 };
 
                 await _schedulerEventHistoryRepository.InsertAsync(entity);
+                var user = (await _appUserRepository.FirstOrDefaultAsync(x => x.Id == result.UserId));
+                var details = (await _schedulersDetailsRepository.QueryAsync(x => x.SchedulerEventId == result.Id)).ToList();
+                var duration = await CalculateTimesheetsDaysAndOvertimeHours(result, details);
+                Task.Run(() =>
+                {
+                    SendTimesheetDeclinedEmailToEmployee(user.Email, result, user.FullName, model.ApprovarName, duration.Item1, duration.Item2);
+                });
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -737,6 +744,28 @@ namespace AddOptimization.Services.Services
             try
             {
                 var subject = "Timesheet Approved";
+                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetApproved);
+                emailTemplate = emailTemplate.Replace("[FullName]", fullName)
+                                             .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
+                                             .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
+                                             .Replace("[Approver]", approverName)
+                                             .Replace("[WorkDuration]", totalWorkingDays.ToString())
+                                             .Replace("[Overtime]", overtimeHours.ToString());
+                return await _emailService.SendEmail(email, subject, emailTemplate);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return false;
+            }
+        }
+
+        private async Task<bool> SendTimesheetDeclinedEmailToEmployee(string email, SchedulerEvent schedulerEvent,
+           string fullName, string approverName, decimal totalWorkingDays, decimal overtimeHours)
+        {
+            try
+            {
+                var subject = "Timesheet Declined";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetApproved);
                 emailTemplate = emailTemplate.Replace("[FullName]", fullName)
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
