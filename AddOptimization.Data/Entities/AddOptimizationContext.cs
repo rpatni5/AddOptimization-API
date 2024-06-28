@@ -70,6 +70,8 @@ public partial class AddOptimizationContext : DbContext
     public virtual DbSet<ExternalInvoice> ExternalInvoices {get; set;}
     public virtual DbSet<ExternalInvoiceDetail> ExternalInvoiceDetails{get;set; }
     public virtual DbSet<InvoiceHistory> InvoiceHistory { get; set; }
+    public virtual DbSet<ExternalInvoiceHistory> ExternalInvoiceHistory { get; set; }
+
 
 
 

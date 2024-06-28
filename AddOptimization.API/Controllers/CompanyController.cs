@@ -29,6 +29,7 @@ public class CompanyController : CustomApiControllerBase
             return HandleException(ex);
         }
     }
+    [AllowAnonymous]
 
     [HttpGet("get-company-information")]
     public async Task<IActionResult> GetCompanyInformation()
