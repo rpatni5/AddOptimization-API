@@ -8,7 +8,7 @@ using AddOptimization.Utilities.Models;
 using AddOptimization.Services.Services;
 
 namespace AddOptimization.API.Controllers;
-//[Authorize]
+[Authorize]
 public class EmployeeController : CustomApiControllerBase
 {
 
