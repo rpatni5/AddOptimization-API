@@ -8,7 +8,7 @@ using AddOptimization.Utilities.Models;
 using AddOptimization.Services.Services;
 
 namespace AddOptimization.API.Controllers;
-[Authorize]
+//[Authorize]
 public class EmployeeController : CustomApiControllerBase
 {
 
@@ -38,6 +38,20 @@ public class EmployeeController : CustomApiControllerBase
         try
         {
             var retVal = await _employeeService.Update(id , model);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    [HttpPost("nda/{id}/{isNDASigned}")]
+    public async Task<IActionResult> SignNDA(Guid id, bool isNDASigned)
+    {
+        try
+        {
+            var retVal = await _employeeService.SignNDA(id, isNDASigned);
             return HandleResponse(retVal);
         }
         catch (Exception ex)

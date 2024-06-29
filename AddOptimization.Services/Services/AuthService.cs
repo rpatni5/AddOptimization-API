@@ -29,11 +29,19 @@ public class AuthService : IAuthService
     private readonly ILogger<AuthService> _logger;
     private readonly IMapper _mapper;
     private readonly IGenericRepository<ApplicationUser> _applicationUserRepository;
+    private readonly IGenericRepository<Employee> _employeeRepository;
     private readonly IGenericRepository<RefreshToken> _refreshTokenRepository;
     private readonly IGenericRepository<PasswordResetToken> _passwordResetTokenRepository;
     private readonly IEmailService _emailService;
     private readonly IPermissionService _permissionService;
-    public AuthService(IConfiguration configuration, ILogger<AuthService> logger, IGenericRepository<ApplicationUser> applicationUserRepository, IMapper mapper, IGenericRepository<RefreshToken> tokenRepository, IGenericRepository<PasswordResetToken> passwordResetTokenRepository, IEmailService emailService, ITemplateService templateService, IPermissionService permissionService)
+    public AuthService(IConfiguration configuration, ILogger<AuthService> logger,
+        IGenericRepository<ApplicationUser> applicationUserRepository,
+        IMapper mapper, IGenericRepository<RefreshToken> tokenRepository,
+        IGenericRepository<PasswordResetToken> passwordResetTokenRepository,
+        IEmailService emailService,
+        ITemplateService templateService,
+        IPermissionService permissionService,
+        IGenericRepository<Employee> employeeRepository)
     {
         _logger = logger;
         _applicationUserRepository = applicationUserRepository;
@@ -44,6 +52,7 @@ public class AuthService : IAuthService
         _templateService = templateService;
         _configuration = configuration;
         _permissionService = permissionService;
+        _employeeRepository = employeeRepository;
     }
 
     private (string token, DateTime expiry) GenerateAccessToken(ApplicationUser entity)
@@ -191,6 +200,8 @@ public class AuthService : IAuthService
                 return ApiResult<AuthResponseDto>.Failure(ValidationCodes.InvalidPassword, message);
             }
             var resp = await BuildResponse(entity);
+            bool? isNDASigned = await GetNDASignedRequired(entity);
+            resp.NDASignedRequired = isNDASigned;
             entity.LastLogin = DateTime.UtcNow;
             entity.FailedLoginAttampts = 0;
             await _applicationUserRepository.UpdateAsync(entity);
@@ -225,11 +236,25 @@ public class AuthService : IAuthService
         {
             return ApiResult<AuthResponseDto>.Failure(ValidationCodes.LockedUserAccount);
         }
+
         var resp = await BuildResponse(entity);
+        bool? isNDASigned = await GetNDASignedRequired(entity);
+        resp.NDASignedRequired = isNDASigned;
         entity.LastLogin = DateTime.UtcNow;
         entity.FailedLoginAttampts = 0;
         await _applicationUserRepository.UpdateAsync(entity);
         return ApiResult<AuthResponseDto>.Success(resp);
+    }
+
+    private async Task<bool?> GetNDASignedRequired(ApplicationUser entity)
+    {
+        var isEmployeeRole = entity.UserRoles.Any(c => c.Role.Name.Contains("Employee", StringComparison.InvariantCultureIgnoreCase));
+        if (isEmployeeRole)
+        {
+            var employee = await _employeeRepository.FirstOrDefaultAsync(u => u.UserId == entity.Id);
+            return employee != null ? !employee.IsNDASigned : false;
+        }
+        return null;
     }
 
     public bool ValidateIdToken(string token, string expectedIssuer, string expectedAudience, out string preferredUsername)
