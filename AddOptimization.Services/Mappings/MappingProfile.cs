@@ -310,6 +310,14 @@ namespace AddOptimization.Services.Mappings
                 d.UpdatedAt = s.UpdatedAt?.Date;
             });
             CreateMap<InvoicePaymentHistoryDto, InvoicePaymentHistory>();
+
+            CreateMap<InvoicePaymentHistory, InvoiceAmountPaymentDto>().AfterMap((s, d) =>
+            {
+               
+            });
+            CreateMap<InvoiceAmountPaymentDto, InvoicePaymentHistory>();
+
+
         }
     }
 }

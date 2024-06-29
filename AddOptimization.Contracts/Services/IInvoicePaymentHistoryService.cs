@@ -11,7 +11,7 @@ namespace AddOptimization.Contracts.Services
 {
     public interface IInvoicePaymentHistoryService
     {
-        Task<ApiResult<List<InvoicePaymentHistoryDto>>> Create(List<InvoicePaymentHistoryDto> models);
+        Task<ApiResult<InvoiceAmountPaymentDto>> Create(InvoiceAmountPaymentDto model);
         Task<ApiResult<List<InvoicePaymentHistoryDto>>> Search(PageQueryFiterBase filters);
         Task<ApiResult<List<InvoicePaymentHistoryDto>>> GetPaymentById(int id);
 

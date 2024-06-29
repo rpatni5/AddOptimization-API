@@ -20,7 +20,7 @@ namespace AddOptimization.API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] List<InvoicePaymentHistoryDto> model)
+        public async Task<IActionResult> Create(InvoiceAmountPaymentDto model)
         {
             try
             {
@@ -60,7 +60,6 @@ namespace AddOptimization.API.Controllers
                 return HandleException(ex);
             }
         }
-
 
     }
 }

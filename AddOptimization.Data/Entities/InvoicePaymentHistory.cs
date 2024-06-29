@@ -22,5 +22,6 @@ namespace AddOptimization.Data.Entities
         [ForeignKey(nameof(InvoiceStatusId))]
         public virtual InvoiceStatus InvoiceStatus { get; set; }
 
+
     }
 }
