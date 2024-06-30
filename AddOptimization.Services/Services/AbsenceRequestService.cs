@@ -36,14 +36,14 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<ApplicationUser> _applicationUserRepository;
 
 
-        public AbsenceRequestService(IGenericRepository<AbsenceRequest> absenceRequestRepository, 
-            ILogger<AbsenceRequestService> logger, 
-            IMapper mapper, 
-            IHttpContextAccessor httpContextAccessor, 
+        public AbsenceRequestService(IGenericRepository<AbsenceRequest> absenceRequestRepository,
+            ILogger<AbsenceRequestService> logger,
+            IMapper mapper,
+            IHttpContextAccessor httpContextAccessor,
             ILeaveStatusesService leaveStatusesService,
             IApplicationUserService applicationUserService,
-            IConfiguration configuration, 
-            IEmailService emailService, 
+            IConfiguration configuration,
+            IEmailService emailService,
             ITemplateService templateService,
             IGenericRepository<ApplicationUser> applicationUserRepository)
         {
@@ -52,7 +52,7 @@ namespace AddOptimization.Services.Services
             _mapper = mapper;
             _httpContextAccessor = httpContextAccessor;
             _leaveStatusesService = leaveStatusesService;
-            _applicationUserService = applicationUserService; 
+            _applicationUserService = applicationUserService;
             _emailService = emailService;
             _templateService = templateService;
             _configuration = configuration;
@@ -87,7 +87,7 @@ namespace AddOptimization.Services.Services
                 {
                     Task.Run(() =>
                     {
-                        SendAbsenceRequestEmailToAccountAdmin(accountAdmin,user,mappedEntity);
+                        SendAbsenceRequestEmailToAccountAdmin(accountAdmin, user, mappedEntity);
                     });
                 }
                 return ApiResult<AbsenceRequestResponseDto>.Success(mappedEntity);
@@ -170,12 +170,23 @@ namespace AddOptimization.Services.Services
                 {
                     return ApiResult<AbsenceRequestResponseDto>.NotFound("Absence Request");
                 }
+                var oldComment = entity.Comment;
+                var oldDuration = entity.Duration;
+
                 model.UserId = userId;
                 model.LeaveStatusId = requestedStatusId;
                 _mapper.Map(model, entity);
                 entity = await _absenceRequestRepository.UpdateAsync(entity);
-
                 var mappedEntity = _mapper.Map<AbsenceRequestResponseDto>(entity);
+                var accountAdminResult = await _applicationUserService.GetAccountAdmins();
+                var user = (await _applicationUserRepository.FirstOrDefaultAsync(x => x.Id == mappedEntity.UserId));
+                foreach (var accountAdmin in accountAdminResult.Result.ToList())
+                {
+                    Task.Run(() =>
+                    {
+                        SendAbsenceRequestEmailToAccountAdmin(accountAdmin, user, mappedEntity, oldComment, oldDuration, true);
+                    });
+                }
                 return ApiResult<AbsenceRequestResponseDto>.Success(mappedEntity);
             }
             catch (Exception ex)
@@ -205,19 +216,28 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private async Task<bool> SendAbsenceRequestEmailToAccountAdmin(ApplicationUserDto accountAdmin, ApplicationUser user, AbsenceRequestResponseDto absenceRequest)
+        private async Task<bool> SendAbsenceRequestEmailToAccountAdmin(ApplicationUserDto accountAdmin,
+            ApplicationUser user,
+            AbsenceRequestResponseDto absenceRequest,
+            string? oldComment = null,
+            decimal? oldDuration = null,
+            bool isUpdated = false)
         {
             try
             {
-                var subject = "Absence Request";
+                var subject = !isUpdated ? "Absence Request" : "Absence Request Updated";
                 var link = GetAbsenceRequestLinkForAccountAdmin(absenceRequest.Id);
+                var action = !isUpdated ? "submitted" : "updated";
+                var duration = !isUpdated ? absenceRequest.Duration.ToString() : $"{oldDuration} is updated to {absenceRequest.Duration}";
+                var comment = !isUpdated ? absenceRequest.Comment : $"{oldComment} is updated to {absenceRequest.Comment}";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.AbsenceRequestApproval);
                 emailTemplate = emailTemplate.Replace("[AccountAdminName]", accountAdmin.FullName)
                                              .Replace("[EmployeeName]", user.FullName)
-                                             .Replace("[LinkToTimesheet]", link)
+                                             .Replace("[Action]", action)
+                                             .Replace("[LinkToAbsenceRequests]", link)
                                              .Replace("[Date]", absenceRequest.Date.ToString("dd/MM/yyyy"))
-                                             .Replace("[Duration]", absenceRequest.Duration.ToString())
-                                             .Replace("[Comment]", absenceRequest.Comment);
+                                             .Replace("[Duration]", duration)
+                                             .Replace("[Comment]", comment);
                 return await _emailService.SendEmail(accountAdmin.Email, subject, emailTemplate);
             }
             catch (Exception ex)
