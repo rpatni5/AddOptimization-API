@@ -26,7 +26,6 @@ namespace AddOptimization.Services.Services
     {
         private readonly IGenericRepository<AbsenceRequest> _absenceRequestRepository;
         private readonly IApplicationUserService _applicationUserService;
-        private readonly IGenericRepository<ApplicationUser> _applicationUserRepository;
         private readonly ILogger<AbsenceRequestService> _logger;
         private readonly IMapper _mapper;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -34,6 +33,8 @@ namespace AddOptimization.Services.Services
         private readonly IEmailService _emailService;
         private readonly ITemplateService _templateService;
         private readonly IConfiguration _configuration;
+        private readonly IGenericRepository<ApplicationUser> _applicationUserRepository;
+
 
         public AbsenceRequestService(IGenericRepository<AbsenceRequest> absenceRequestRepository, 
             ILogger<AbsenceRequestService> logger, 

@@ -25,6 +25,7 @@ public class EmailTemplates
     public const string RequestExternalInvoice = "request_external_invoice.html";
     public const string DeclinedExternalInvoice = "external_invoice_action.html";
     public const string AbsenceRequestApproval = "absence_request_approval.html";
+    public const string AbsenceRequestActions = "absence_request_actions.html";
 
 
 }
