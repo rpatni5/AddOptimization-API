@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AddOptimization.API.Controllers
 {
-    //[Authorize]
+    [Authorize]
     public class AbsenceRequestController : CustomApiControllerBase
     {
         private readonly IAbsenceRequestService _absenceRequestService;
