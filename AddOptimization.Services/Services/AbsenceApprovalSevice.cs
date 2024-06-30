@@ -108,28 +108,23 @@ namespace AddOptimization.Services.Services
                     entity.LeaveStatusId = rejectedStatusId;
                 }
                 entity.Comment = model.Comment;
-                var result  = await _absenceApprovalRepository.UpdateAsync(entity);
+                var result = await _absenceApprovalRepository.UpdateAsync(entity);
                 var accountAdminResult = await _applicationUserService.GetAccountAdmins();
+                var accountAdmin = accountAdminResult.Result.FirstOrDefault();
                 var user = await _applicationUserRepository.FirstOrDefaultAsync(x => x.Id == entity.UserId);
                 if (model.IsApproved)
                 {
-                    foreach (var accountAdmin in accountAdminResult.Result.ToList())
-                    {
-                        Task.Run(() =>
+                    Task.Run(() =>
                         {
-                            SendAbsenceRequestActionEmailToAccountAdmin(model.IsApproved, accountAdmin, user, result);
+                            SendAbsenceRequestActionEmailEmployee(model.IsApproved, accountAdmin, user, result);
                         });
-                    }
                 }
                 else
                 {
-                    foreach (var accountAdmin in accountAdminResult.Result.ToList())
-                    {
-                        Task.Run(() =>
+                    Task.Run(() =>
                         {
-                            SendAbsenceRequestActionEmailToAccountAdmin(model.IsApproved, accountAdmin, user, result);
+                            SendAbsenceRequestActionEmailEmployee(model.IsApproved, accountAdmin, user, result);
                         });
-                    }
                 }
 
                 return ApiResult<bool>.Success(true);
@@ -269,7 +264,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private async Task<bool> SendAbsenceRequestActionEmailToAccountAdmin(bool isApproved, ApplicationUserDto accountAdmin, ApplicationUser user, AbsenceRequest absenceRequest)
+        private async Task<bool> SendAbsenceRequestActionEmailEmployee(bool isApproved, ApplicationUserDto accountAdmin, ApplicationUser user, AbsenceRequest absenceRequest)
         {
             try
             {
@@ -278,7 +273,7 @@ namespace AddOptimization.Services.Services
                 var link = GetAbsenceRequestLinkForAccountAdmin(absenceRequest.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.AbsenceRequestActions);
                 emailTemplate = emailTemplate.Replace("[AccountAdminName]", accountAdmin.FullName)
-                                             .Replace("[EmployeeName]", user.FullName) 
+                                             .Replace("[EmployeeName]", user.FullName)
                                              .Replace("[Action]", action)
                                              .Replace("[Date]", absenceRequest.Date.ToString("dd/MM/yyyy"))
                                              .Replace("[Duration]", absenceRequest.Duration.ToString())
