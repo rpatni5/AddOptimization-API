@@ -89,6 +89,9 @@
     <None Update="Assets\Templates\request_invoice.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Assets\Templates\absence_request_approval.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Assets\Templates\request_timesheet_approval.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

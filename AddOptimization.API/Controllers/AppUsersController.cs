@@ -7,7 +7,7 @@ using AddOptimization.Contracts.Constants;
 using AddOptimization.Utilities.Models;
 
 namespace AddOptimization.API.Controllers;
-[Authorize]
+//[Authorize]
 public class AppUsersController : CustomApiControllerBase
 {
     private readonly IApplicationUserService _applicationUsersService;
