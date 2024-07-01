@@ -9,6 +9,7 @@ namespace AddOptimization.Data.Entities
         public Guid? CountryId { get; set; }
         public Guid? ExternalCountryId {  get; set; }
         public bool IsExternal { get; set; }
+        public bool IsNDASigned { get; set; }
         public decimal? Salary { get; set; }
         public string VATNumber { get; set; }
         public int? ZipCode { get; set; }

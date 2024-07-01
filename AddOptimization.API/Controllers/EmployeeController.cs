@@ -46,6 +46,20 @@ public class EmployeeController : CustomApiControllerBase
         }
     }
 
+    [HttpPost("nda/{id}/{isNDASigned}")]
+    public async Task<IActionResult> SignNDA(Guid id, bool isNDASigned)
+    {
+        try
+        {
+            var retVal = await _employeeService.SignNDA(id, isNDASigned);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
     [HttpPost("search")]
     public async Task<IActionResult> Search([FromBody] PageQueryFiterBase filters)
     {
