@@ -56,6 +56,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Assets\Templates\absence_request_actions.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Assets\Templates\account_created_reset_password.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -87,6 +90,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Assets\Templates\request_invoice.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\Templates\absence_request_approval.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Assets\Templates\request_timesheet_approval.html">

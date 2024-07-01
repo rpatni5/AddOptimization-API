@@ -172,7 +172,25 @@ public class EmployeeService : IEmployeeService
         }
     }
 
-
+    public async Task<ApiResult<bool>> SignNDA(Guid id, bool isNDASigned)
+    {
+        try
+        {
+            var entity = await _employeeRepository.FirstOrDefaultAsync(o => o.Id == id, disableTracking: false, ignoreGlobalFilter: true);
+            if (entity == null)
+            {
+                return ApiResult<bool>.Failure("Employee");
+            }
+            entity.IsNDASigned = isNDASigned;
+            await _employeeRepository.UpdateAsync(entity);
+            return ApiResult<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            throw;
+        }
+    }
     public async Task<ApiResult<List<EmployeeDto>>> Search(PageQueryFiterBase filters)
     {
         try
