@@ -335,12 +335,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                bool ignoreGlobalFilter = true;
-                if (getRoleBasedData)
-                {
-                    var superAdminRole = _currentUserRoles.Where(c => c.Contains("Account Admin")).ToList();
-                    ignoreGlobalFilter = superAdminRole.Count != 0;
-                }
+               
 
                 var model = new ExternalInvoiceResponseDto();
                 var entity = await _externalInvoiceRepository.FirstOrDefaultAsync(e => e.Id == id, include: source => source.Include(x => x.InvoiceStatus).Include(x => x.PaymentStatus), ignoreGlobalFilter: true);
@@ -376,7 +371,6 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                //var isExists = await _externalInvoiceRepository.IsExist(e => e.Id != id);
                 var entity = await _externalInvoiceRepository.FirstOrDefaultAsync(e => e.Id == id);
                 var details = await _invoiceDetailRepository.QueryAsync(e => e.ExternalInvoiceId == id);
 
@@ -469,7 +463,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private async Task<bool> SendInvoiceDeclinedEmailToEmployee(string Email, string companyName, string employeeName, long invoiceNumber, int? dueDate, decimal totalAmountDue, string comment)
+        private async Task<bool> SendInvoiceDeclinedEmailToEmployee(string Email, string companyName, string employeeName, long invoiceNumber, decimal totalAmountDue, string comment)
         {
             try
             {
@@ -479,7 +473,6 @@ namespace AddOptimization.Services.Services
                                              .Replace("[EmployeeName]", employeeName)
                                              .Replace("[InvoiceNumber]", invoiceNumber.ToString())
                                              .Replace("[TotalAmountDue]", totalAmountDue.ToString())
-                                             .Replace("[DueDate]", dueDate.ToString())
                                              .Replace("[Comment]", !string.IsNullOrEmpty(comment) ? comment : "No comment added.");
           
                 await _emailService.SendEmail(Email, subject, emailTemplate);
@@ -509,12 +502,11 @@ namespace AddOptimization.Services.Services
                 };
                 await _externalInvoiceHistoryRepository.InsertAsync(entity);
                 var entities = (await _externalInvoiceRepository.QueryAsync(x => x.Id == result.Id, include: entities => entities.Include(e => e.Company).Include(e => e.ApplicationUser))).FirstOrDefault();
-                var accountAdmins = (await _applicationService.GetEmployee()).Result;
-                var adminEmails = accountAdmins.Select(admin => new { Name = admin.UserName, Email = admin.Email });
+              
 
                 Task.Run(() =>
                 {
-                    SendInvoiceDeclinedEmailToEmployee(entities.ApplicationUser.Email, entities.Company.CompanyName, entities.ApplicationUser.FullName, entities.InvoiceNumber, entities.PaymentClearanceDays, entities.TotalPriceIncludingVat, entity.Comment);
+                    SendInvoiceDeclinedEmailToEmployee(entities.ApplicationUser.Email, entities.Company.CompanyName, entities.ApplicationUser.FullName, entities.InvoiceNumber, entities.TotalPriceIncludingVat, entity.Comment);
                 });
 
 
