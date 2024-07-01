@@ -47,7 +47,7 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<ApplicationUser> _appUserRepository;
         private readonly IGenericRepository<Role> _roleRepository;
         private readonly IApplicationUserService _applicationService;
-        
+
 
         private readonly ILogger<InvoiceService> _logger;
         public InvoiceService(IGenericRepository<Invoice> invoiceRepository,
@@ -520,7 +520,7 @@ namespace AddOptimization.Services.Services
 
                 Invoice entity = new Invoice
                 {
-                    Id=newId,
+                    Id = newId,
                     InvoiceNumber = Convert.ToInt64(invoiceNumber),
                     PaymentStatusId = paymentStatusId,
                     VatValue = model.InvoiceDetails.Sum(x => (x.UnitPrice * x.Quantity * x.VatPercent) / 100),
@@ -532,9 +532,10 @@ namespace AddOptimization.Services.Services
                     CustomerAddress = model.CustomerAddress,
                     InvoiceStatusId = statusId,
                     PaymentClearanceDays = model.PaymentClearanceDays,
-
                 };
+                entity.DueAmount = entity.TotalPriceIncludingVat;
                 await _invoiceRepository.InsertAsync(entity);
+
                 foreach (var summary in model.InvoiceDetails)
                 {
                     var invoiceDetail = new InvoiceDetail
@@ -591,7 +592,7 @@ namespace AddOptimization.Services.Services
                     CustomerName = e.Customer.Organizations,
                     ExpiryDate = e.ExpiryDate,
                     PaymentClearanceDays = e.PaymentClearanceDays,
-
+                    DueAmount = e.DueAmount
                 }).ToList());
 
                 var result = pagedResult;
@@ -697,6 +698,20 @@ namespace AddOptimization.Services.Services
             return await SendRequestInvoiceEmailToCustomer(entity.Customer.ManagerEmail, entity, entity.Customer.ManagerName, entity.InvoiceNumber, entity.PaymentClearanceDays, entity.TotalPriceIncludingVat);
         }
 
+
+        public async Task<bool> SendInvoiceToCustomer(int invoiceId)
+        {
+            var eventStatus = (await _invoiceStatusService.Search()).Result;
+            var sentToCustomerStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.SEND_TO_CUSTOMER.ToString()).Id;
+
+            var entity = (await _invoiceRepository.QueryAsync(x => x.Id == invoiceId, include: entities => entities.Include(e => e.Customer))).FirstOrDefault();
+            entity.InvoiceStatusId = sentToCustomerStatusId;
+            await _invoiceRepository.UpdateAsync(entity);
+
+            var details = (await _invoiceDetailRepository.QueryAsync(x => x.InvoiceId == invoiceId)).ToList();
+            return await SendRequestInvoiceEmailToCustomer(entity.Customer.ManagerEmail, entity, entity.Customer.ManagerName, entity.InvoiceNumber, entity.PaymentClearanceDays, entity.TotalPriceIncludingVat);
+        }
+
         public async Task<ApiResult<bool>> DeclineRequest(InvoiceActionRequestDto model)
         {
             try
@@ -721,7 +736,7 @@ namespace AddOptimization.Services.Services
                     {
                         SendInvoiceDeclinedEmailToAccountAdmins(adminEmails, entities.Customer.ManagerEmail, entities.InvoiceNumber, entities.PaymentClearanceDays, entities.TotalPriceIncludingVat, entity.Comment);
                     });
-                
+
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -731,6 +746,6 @@ namespace AddOptimization.Services.Services
             }
         }
 
-       
+
     }
 }

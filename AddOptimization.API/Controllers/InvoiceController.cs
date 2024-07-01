@@ -77,11 +77,25 @@ namespace AddOptimization.API.Controllers
         }
 
         [HttpPost("send-email-to-customer/{invoiceId}")]
-        public async Task<IActionResult> SendTimesheetApprovalEmailToCustomer(int invoiceId)
+        public async Task<IActionResult> SendInvoiceEmailToCustomer(int invoiceId)
         {
             try
             {
                 var retVal = await _invoiceService.SendInvoiceEmailToCustomer(invoiceId);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpPost("send-invoice-to-customer/{invoiceId}")]
+        public async Task<IActionResult> SendTimesheetApprovalEmailToCustomer(int invoiceId)
+        {
+            try
+            {
+                var retVal = await _invoiceService.SendInvoiceToCustomer(invoiceId);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)

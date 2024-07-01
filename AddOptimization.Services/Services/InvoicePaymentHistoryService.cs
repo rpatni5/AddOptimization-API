@@ -21,7 +21,8 @@ namespace AddOptimization.Services.Services
         private readonly IPaymentStatusService _paymentStatusService;
         private readonly IMapper _mapper;
         private readonly IInvoiceService _invoiceService;
-        public InvoicePaymentHistoryService(IGenericRepository<InvoicePaymentHistory> invoicePaymentRepository, ILogger<InvoicePaymentHistoryService> logger, IMapper mapper, IInvoiceStatusService invoiceStatusService, IInvoiceService invoiceService, IPaymentStatusService paymentStatusService)
+        private readonly IGenericRepository<Invoice> _invoiceRepository;
+        public InvoicePaymentHistoryService(IGenericRepository<InvoicePaymentHistory> invoicePaymentRepository, ILogger<InvoicePaymentHistoryService> logger, IMapper mapper, IInvoiceStatusService invoiceStatusService, IInvoiceService invoiceService, IPaymentStatusService paymentStatusService, IGenericRepository<Invoice> invoiceRepository)
         {
             _invoicePaymentRepository = invoicePaymentRepository;
             _logger = logger;
@@ -29,6 +30,7 @@ namespace AddOptimization.Services.Services
             _invoiceStatusService = invoiceStatusService;
             _paymentStatusService = paymentStatusService;
             _invoiceService = invoiceService;
+            _invoiceRepository = invoiceRepository;
         }
 
         public async Task<ApiResult<InvoiceAmountPaymentDto>> Create(InvoiceAmountPaymentDto model)
@@ -36,16 +38,16 @@ namespace AddOptimization.Services.Services
             try
             {
 
-            
+
                 var eventStatus = (await _invoiceStatusService.Search()).Result;
                 var paymentStatus = (await _paymentStatusService.Search()).Result;
 
-                var draftStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.DRAFT.ToString()).Id;
-                var unpaidStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.UNPAID.ToString()).Id;
+                //var draftStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.DRAFT.ToString()).Id;
+                //var unpaidStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.UNPAID.ToString()).Id;
                 var closedStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.CLOSED.ToString()).Id;
-                var paidStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.PAID.ToString()).Id;
-                var sentToCustomerStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.SEND_TO_CUSTOMER.ToString()).Id;
-                var partialPaidStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.PARTIAL_PAID.ToString()).Id;
+                //var paidStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.PAID.ToString()).Id;
+                //var sentToCustomerStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.SEND_TO_CUSTOMER.ToString()).Id;
+                //var partialPaidStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.PARTIAL_PAID.ToString()).Id;
 
                 var existingPayments = await _invoicePaymentRepository.QueryAsync(e => e.InvoiceId == model.InvoiceId);
                 foreach (var payment in existingPayments.ToList())
@@ -62,8 +64,6 @@ namespace AddOptimization.Services.Services
                         Id = Guid.NewGuid(),
                         InvoiceId = model.InvoiceId,
                         PaymentDate = summary.PaymentDate,
-                        PaymentStatusId = unpaidStatusId,
-                        InvoiceStatusId = draftStatusId,
                         Amount = summary.Amount,
                         TransactionId = summary.TransactionId,
                     };
@@ -72,8 +72,43 @@ namespace AddOptimization.Services.Services
                 }
 
 
-                var mappedEntity = _mapper.Map<InvoiceAmountPaymentDto>(entities);
-                return ApiResult<InvoiceAmountPaymentDto>.Success(mappedEntity);
+                var mappedEntity = _mapper.Map<List<InvoicePaymentHistoryDto>>(entities);
+
+                var invoiceAmountPayment = new InvoiceAmountPaymentDto
+                {
+                    InvoiceId = model.InvoiceId,
+                    InvoicePaymentHistory = mappedEntity
+                };
+
+                var totalPaidAmount = invoiceAmountPayment.InvoicePaymentHistory.Where(x => !x.IsDeleted).Sum(x => x.Amount);
+
+                var invoice = await _invoiceRepository.FirstOrDefaultAsync(x => x.Id == model.InvoiceId);
+
+                Guid paymentStatusId;
+
+                var dueAmount = invoice.TotalPriceIncludingVat;
+                if (invoice.TotalPriceIncludingVat == totalPaidAmount)
+                {
+                    paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.PAID.ToString()).Id;
+                    dueAmount = 0;
+                    invoice.InvoiceStatusId = closedStatusId;
+                }
+                else if (invoice.TotalPriceIncludingVat > 0)
+                {
+                    paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.PARTIAL_PAID.ToString()).Id;
+                    dueAmount = invoice.TotalPriceIncludingVat - totalPaidAmount;
+                }
+                else
+                {
+                    paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.UNPAID.ToString()).Id;
+                    dueAmount = invoice.TotalPriceIncludingVat;
+                }
+
+                invoice.PaymentStatusId = paymentStatusId;
+                invoice.DueAmount = dueAmount;
+                await _invoiceRepository.UpdateAsync(invoice);
+
+                return ApiResult<InvoiceAmountPaymentDto>.Success(invoiceAmountPayment);
             }
             catch (Exception ex)
             {
@@ -86,7 +121,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _invoicePaymentRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(x => x.PaymentStatus).Include(x => x.InvoiceStatus), orderBy: x => x.OrderByDescending(x => x.CreatedAt), ignoreGlobalFilter: true);
+                var entities = await _invoicePaymentRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(x => x.Invoice), orderBy: x => x.OrderByDescending(x => x.CreatedAt), ignoreGlobalFilter: true);
 
                 var result = entities.ToList();
                 var mappedEntities = _mapper.Map<List<InvoicePaymentHistoryDto>>(result);
