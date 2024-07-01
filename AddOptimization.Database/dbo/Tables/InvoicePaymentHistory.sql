@@ -1,9 +1,7 @@
 ﻿
 CREATE TABLE [dbo].[InvoicePaymentHistory](
 	[Id] [uniqueidentifier] NOT NULL,
-	[InvoiceId] [bigint] NOT NULL,
-	[InvoiceStatusId] [uniqueidentifier] NOT NULL,
-	[PaymentStatusId] [uniqueidentifier] NOT NULL,
+	[InvoiceId] [bigint] NOT NULL,	
 	[PaymentDate] [datetime2](7) NULL,
 	[Amount] [decimal](10, 2) NULL,
 	[TransactionId] [uniqueidentifier] NOT NULL,
@@ -32,14 +30,6 @@ GO
 
 ALTER TABLE [dbo].[InvoicePaymentHistory]  WITH CHECK ADD FOREIGN KEY([InvoiceId])
 REFERENCES [dbo].[Invoices] ([Id])
-GO
-
-ALTER TABLE [dbo].[InvoicePaymentHistory]  WITH CHECK ADD FOREIGN KEY([InvoiceStatusId])
-REFERENCES [dbo].[InvoiceStatuses] ([Id])
-GO
-
-ALTER TABLE [dbo].[InvoicePaymentHistory]  WITH CHECK ADD FOREIGN KEY([PaymentStatusId])
-REFERENCES [dbo].[PaymentStatuses] ([Id])
 GO
 
 ALTER TABLE [dbo].[InvoicePaymentHistory]  WITH CHECK ADD FOREIGN KEY([UpdatedByUserId])
