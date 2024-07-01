@@ -133,9 +133,11 @@ namespace AddOptimization.Services.Services
                 var draftStatusId = invoiceStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusEnum.DRAFT.ToString()).Id;
                 var paymentStatus = (await _paymentStatusService.Search()).Result;
                 var unPaidStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusEnum.UNPAID.ToString()).Id;
-
+                var maxId = await _invoiceRepository.MaxAsync<Int64>(e => e.Id, ignoreGlobalFilter: true);
+                var newId = maxId + 1;
                 var invoice = new Invoice
                 {
+                    Id = newId,
                     CustomerId = customer.Id,
                     CustomerAddress = customerAddress,
                     CompanyAddress = companyAddress,
