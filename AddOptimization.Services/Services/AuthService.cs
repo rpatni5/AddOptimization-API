@@ -174,6 +174,11 @@ public class AuthService : IAuthService
             {
                 return ApiResult<AuthResponseDto>.Failure(ValidationCodes.InvalidUserName);
             }
+            if (await IsEmployeeRole(entity))
+            {
+                return ApiResult<AuthResponseDto>.Failure(ValidationCodes.LoginWithMicrosoftProvider);
+            }
+
             if (!entity.IsActive)
             {
                 return ApiResult<AuthResponseDto>.Failure(ValidationCodes.InactiveUserAccount);
@@ -256,7 +261,10 @@ public class AuthService : IAuthService
         }
         return null;
     }
-
+    private async Task<bool> IsEmployeeRole(ApplicationUser entity)
+    {
+        return entity.UserRoles.Any(c => c.Role.Name.Contains("Employee", StringComparison.InvariantCultureIgnoreCase));
+    }
     public bool ValidateIdToken(string token, string expectedIssuer, string expectedAudience, out string preferredUsername)
     {
         try
