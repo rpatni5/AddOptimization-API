@@ -133,7 +133,7 @@ namespace AddOptimization.Services.Services
                     var entity = _mapper.Map<SchedulerEventDetails>(item);
                     if (item.Id != Guid.Empty)
                     {
-                        entity.Date = entity.Date.Value.ToUniversalTime();
+                        entity.Date = entity.Date.Value;
                         schedluerEventsToUpdate.Add(entity);
                     }
                     else
