@@ -464,15 +464,16 @@ namespace AddOptimization.Services.Services
 
             filter.GetList<DateTime>("startDate", (v) =>
             {
-                var date = new DateTime(v.Max().Year, v.Max().Month, 1);
+                var date = new DateTime(v.Max().Year, v.Max().Month, 1).AddMonths(1);
                 entities = entities.Where(e => e.StartDate == date);
-            }, OperatorType.lessthan, true);
+            }, OperatorType.greaterthan, true);
 
             filter.GetList<DateTime>("startDate", (v) =>
             {
                 var date = new DateTime(v.Max().Year, v.Max().Month, 1);
                 entities = entities.Where(e => e.StartDate == date);
-            }, OperatorType.greaterthan, true);
+            }, OperatorType.lessthan, true);
+
 
             filter.GetList<DateTime>("endDate", (v) =>
             {
@@ -482,8 +483,9 @@ namespace AddOptimization.Services.Services
 
             filter.GetList<DateTime>("endDate", (v) =>
             {
-                var date = (new DateTime(v.Min().Year, v.Min().Month, 1)).AddMonths(1).AddDays(-1);
+                var date = (new DateTime(v.Min().Year, v.Min().Month, 1)).AddMonths(2).AddDays(-1);
                 entities = entities.Where(e => e.EndDate == date);
+            
             }, OperatorType.greaterthan, true);
 
 
