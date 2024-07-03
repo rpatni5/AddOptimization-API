@@ -8,7 +8,7 @@ namespace AddOptimization.Services.Constants
 {
     public enum SchedulerStatusesEnum
     {
-        PENDING_ACCOUNT_ADMIN_APPROVAL,
+        PENDING_APPROVAL,
         DRAFT,
         PENDING_INVOICING,
         CUSTOMER_PAID,

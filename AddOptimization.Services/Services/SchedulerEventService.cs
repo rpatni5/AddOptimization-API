@@ -133,12 +133,12 @@ namespace AddOptimization.Services.Services
                     var entity = _mapper.Map<SchedulerEventDetails>(item);
                     if (item.Id != Guid.Empty)
                     {
-                        entity.Date = entity.Date.Value.Date;
+                        entity.Date = entity.Date.Value.ToUniversalTime();
                         schedluerEventsToUpdate.Add(entity);
                     }
                     else
                     {
-                        entity.Date = entity.Date.Value.Date;
+                        entity.Date = entity.Date.Value;
                         schedluerEventsToInsert.Add(entity);
                     }
                 }
@@ -362,7 +362,7 @@ namespace AddOptimization.Services.Services
             var eventDetails = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == models.First().SchedulerEventId);
             eventDetails.IsDraft = false;
             var eventStatus = (await _schedulersStatusService.Search()).Result;
-            var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_ACCOUNT_ADMIN_APPROVAL.ToString()).Id;
+            var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_APPROVAL.ToString()).Id;
 
             eventDetails.UserStatusId = statusId;
             eventDetails.AdminStatusId = statusId;
