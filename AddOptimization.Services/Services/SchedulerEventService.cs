@@ -240,8 +240,8 @@ namespace AddOptimization.Services.Services
             mappedEntity.WorkDuration = entity.EventDetails.Where(x => x.EventTypeId == timesheetEventId).Sum(x => x.Duration);
             mappedEntity.Overtime = entity.EventDetails.Where(x => x.EventTypeId == overtimeId).Sum(x => x.Duration);
             mappedEntity.IsCustomerApprovalPending = mappedEntity.AdminStatusId.ToString() == statusId.ToString();
-            entity.StartDate = entity.StartDate.ToUtc();
-            entity.EndDate = entity.EndDate.ToUtc();
+            mappedEntity.StartDate = mappedEntity.StartDate.ToUtc();
+            mappedEntity.EndDate = mappedEntity.EndDate.ToUtc();
             return ApiResult<SchedulerEventResponseDto>.Success(mappedEntity);
         }
 
