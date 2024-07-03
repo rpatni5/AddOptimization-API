@@ -174,10 +174,10 @@ public class AuthService : IAuthService
             {
                 return ApiResult<AuthResponseDto>.Failure(ValidationCodes.InvalidUserName);
             }
-            if (await IsEmployeeRole(entity))
-            {
-                return ApiResult<AuthResponseDto>.Failure(ValidationCodes.LoginWithMicrosoftProvider);
-            }
+            //if (await IsEmployeeRole(entity))
+            //{
+            //    return ApiResult<AuthResponseDto>.Failure(ValidationCodes.LoginWithMicrosoftProvider);
+            //}
 
             if (!entity.IsActive)
             {
