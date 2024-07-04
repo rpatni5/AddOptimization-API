@@ -576,11 +576,14 @@ namespace AddOptimization.Services.Services
                         SendRequestTimesheetApprovalEmailToCustomer(customerDetails.ManagerEmail, result, customerDetails.ManagerName, user.FullName, duration.Item1, duration.Item2);
                     });
                 }
-
-                Task.Run(() =>
+                else
                 {
-                    SendTimesheetApprovedEmailToEmployee(user.Email, result, user.FullName, model.ApprovarName, duration.Item1, duration.Item2);
-                });
+                    Task.Run(() =>
+                    {
+                        SendTimesheetApprovedEmailToEmployee(user.Email, result, user.FullName, model.ApprovarName, duration.Item1, duration.Item2);
+                    });
+                }
+                
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -634,13 +637,19 @@ namespace AddOptimization.Services.Services
                 var eventStatus = (await _schedulersStatusService.Search()).Result;
                 var customerApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.CUSTOMER_APPROVED.ToString()).Id;
                 var customerDeclinedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.CUSTOMER_DECLINED.ToString()).Id;
+
+                var userStatusApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.APPROVED.ToString()).Id;
+                var userDeclinedStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.DECLINED.ToString()).Id;
+
                 if (model.IsApproved)
                 {
                     eventDetails.AdminStatusId = customerApprovedId;
+                    eventDetails.UserStatusId = userStatusApprovedId;
                 }
                 else
                 {
                     eventDetails.AdminStatusId = customerDeclinedId;
+                    eventDetails.UserStatusId = userDeclinedStatusId;
                 }
                 var result = await _schedulersRepository.UpdateAsync(eventDetails);
                 SchedulerEventHistory entity = new SchedulerEventHistory()
