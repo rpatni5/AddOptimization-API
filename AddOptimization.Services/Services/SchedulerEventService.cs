@@ -13,6 +13,7 @@ using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
 using AddOptimization.Utilities.Services;
 using AutoMapper;
+using iText.StyledXmlParser.Jsoup.Nodes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -615,7 +616,7 @@ namespace AddOptimization.Services.Services
                 var duration = await CalculateTimesheetsDaysAndOvertimeHours(result, details);
                 Task.Run(() =>
                 {
-                    SendTimesheetDeclinedEmailToEmployee(user.Email, result, user.FullName, model.ApprovarName, duration.Item1, duration.Item2);
+                    SendTimesheetDeclinedEmailToEmployee(user.Email, result, user.FullName, model.ApprovarName, duration.Item1, duration.Item2, model.Comment);
                 });
                 return ApiResult<bool>.Success(true);
             }
@@ -751,7 +752,7 @@ namespace AddOptimization.Services.Services
         }
 
         private async Task<bool> SendTimesheetDeclinedEmailToEmployee(string email, SchedulerEvent schedulerEvent,
-           string fullName, string approverName, decimal totalWorkingDays, decimal overtimeHours)
+           string fullName, string approverName, decimal totalWorkingDays, decimal overtimeHours, string declinedReason)
         {
             try
             {
@@ -762,7 +763,8 @@ namespace AddOptimization.Services.Services
                                              .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
                                              .Replace("[Approver]", approverName)
                                              .Replace("[WorkDuration]", totalWorkingDays.ToString())
-                                             .Replace("[Overtime]", overtimeHours.ToString());
+                                             .Replace("[Overtime]", overtimeHours.ToString())
+                                             .Replace("[Comment]", declinedReason); 
                 return await _emailService.SendEmail(email, subject, emailTemplate);
             }
             catch (Exception ex)
