@@ -14,17 +14,13 @@ namespace AddOptimization.Contracts.Services
     {
         Task<ApiResult<List<ExternalInvoiceResponseDto>>> GenerateExternalInvoice(Guid customerId, MonthDateRange month, List<CustomerEmployeeAssociationDto> associatedEmployees);
         Task<ApiResult<ExternalInvoiceResponseDto>> Create(ExternalInvoiceRequestDto model);
-
-        Task<ApiResult<List<ExternalInvoiceResponseDto>>> Search(PageQueryFiterBase filters);
-
+        Task<PagedApiResult<ExternalInvoiceResponseDto>> Search(PageQueryFiterBase filters);
         Task<ApiResult<ExternalInvoiceResponseDto>> FetchExternalInvoiceDetails(long id, bool getRoleBasedData = true);
-
         Task<ApiResult<ExternalInvoiceResponseDto>> Update(long id, ExternalInvoiceRequestDto model);
-
-        Task<bool> SendInvoiceApprovalEmailToAccountAdmin(int id);
-
+        Task<bool> SendInvoiceApprovalEmailToAccountAdmin(int Id);
         Task<ApiResult<bool>> DeclineRequest(ExternalInvoiceActionRequestDto model);
-
+        Task<bool> SendInvoiceApprovalEmailToCustomer(int id);
+   
 
     }
 }

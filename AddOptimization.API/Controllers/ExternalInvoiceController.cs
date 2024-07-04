@@ -17,14 +17,14 @@ namespace AddOptimization.API.Controllers
         private readonly IExternalInvoiceService _externalInvoiceService;
         private readonly CustomDataProtectionService _customDataProtectionService;
 
-        public ExternalInvoiceController(ILogger<ExternalInvoiceController> logger, IExternalInvoiceService externalInvoiceService ,CustomDataProtectionService customDataProtectionService): base(logger)
+        public ExternalInvoiceController(ILogger<ExternalInvoiceController> logger, IExternalInvoiceService externalInvoiceService, CustomDataProtectionService customDataProtectionService) : base(logger)
         {
             _externalInvoiceService = externalInvoiceService;
             _customDataProtectionService = customDataProtectionService;
 
         }
 
-    [HttpPost]
+        [HttpPost]
         public async Task<IActionResult> Create(ExternalInvoiceRequestDto model)
         {
             try
@@ -97,15 +97,12 @@ namespace AddOptimization.API.Controllers
         }
 
 
-        [AllowAnonymous]
-
-        [HttpGet("external-invoice-details/{id}")]
-        public async Task<IActionResult> FetchExternalInvoiceDetails(string id)
+        [HttpPost("send-email-to-customer/{id}")]
+        public async Task<IActionResult> SendInvoiceApprovalEmailToCustomer(int id)
         {
             try
             {
-                var eventId = int.Parse(_customDataProtectionService.Decode(id));
-                var retVal = await _externalInvoiceService.FetchExternalInvoiceDetails(eventId, false);
+                var retVal = await _externalInvoiceService.SendInvoiceApprovalEmailToCustomer(id);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -115,7 +112,6 @@ namespace AddOptimization.API.Controllers
         }
 
 
-        [AllowAnonymous]
         [HttpPost("external-invoice-decline-request")]
         public async Task<IActionResult> DeclineRequest(ExternalInvoiceActionRequestDto model)
         {

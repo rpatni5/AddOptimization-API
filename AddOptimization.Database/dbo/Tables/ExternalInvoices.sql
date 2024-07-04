@@ -21,6 +21,8 @@ CREATE TABLE [dbo].[ExternalInvoices](
 	[CompanyName] [varchar](400) NULL,
 	[CompanyId] [uniqueidentifier] NULL,
 	[EmployeeId] [int] NULL,
+	[DueAmount] [decimal](10, 2) NOT NULL,
+
 PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC

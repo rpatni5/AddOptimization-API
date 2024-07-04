@@ -508,7 +508,7 @@ IF NOT EXISTS (SELECT 1 FROM PaymentStatuses Where StatusKey= 'PARTIAL_PAID')
 BEGIN 
     INSERT INTO PaymentStatuses(Id,Name,StatusKey)
     VALUES
-        (NEWID(),'PartialPaid','PARTIAL_PAID')
+        (NEWID(),'Partial paid','PARTIAL_PAID')
 END
 
 /* Adding PAID status data in Payment Status */
@@ -535,7 +535,7 @@ IF NOT EXISTS (SELECT 1 FROM InvoiceStatuses Where StatusKey= 'SEND_TO_CUSTOMER'
 BEGIN 
     INSERT INTO InvoiceStatuses(Id,Name,StatusKey)
     VALUES
-        (NEWID(),'Send To Customer','SEND_TO_CUSTOMER')
+        (NEWID(),'Sent','SEND_TO_CUSTOMER')
 END
 
 /* Adding CLOSED status data in Invoice Status */
