@@ -334,7 +334,7 @@ namespace AddOptimization.Services.Services
                     VatValue = e.VatValue,
                     TotalPriceExcludingVat = e.TotalPriceExcludingVat,
                     TotalPriceIncludingVat = e.TotalPriceIncludingVat,
-                    DueAmount = e.TotalPriceIncludingVat,
+                    DueAmount = e.DueAmount,
 
                 }).ToList());
 
@@ -366,7 +366,6 @@ namespace AddOptimization.Services.Services
                 model.PaymentStatusName = entity.PaymentStatus.Name;
                 model.CompanyAddress = entity.CompanyAddress;
                 model.InvoiceNumber = entity.InvoiceNumber;
-                model.DueAmount = entity.DueAmount;
                 model.VatValue = entity.VatValue;
                 model.TotalPriceExcludingVat = entity.TotalPriceExcludingVat;
                 model.TotalPriceIncludingVat = entity.TotalPriceIncludingVat;
