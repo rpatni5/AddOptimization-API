@@ -14,8 +14,6 @@ namespace AddOptimization.Contracts.Dto
         public Guid? Id { get; set; }
         public long InvoiceId { get; set; }
         public DateTime PaymentDate { get; set; }
-        public Guid PaymentStatusId { get; set; }
-        public Guid InvoiceStatusId { get; set; }
         public bool IsDeleted { get; set; }
         public decimal Amount { get; set; }
         public long TransactionId { get; set; }

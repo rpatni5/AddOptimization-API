@@ -11,10 +11,8 @@ namespace AddOptimization.Contracts.Services
 {
    public interface IExternalInvoicePaymentHistoryService
     {
-
         Task<ApiResult<ExternalInvoiceAmountDto>> Create(ExternalInvoiceAmountDto model);
         Task<ApiResult<List<ExternalInvoicePaymentHistoryDto>>> Search(PageQueryFiterBase filters);
         Task<ApiResult<List<ExternalInvoicePaymentHistoryDto>>> GetPaymentById(int id);
     }
 }
-

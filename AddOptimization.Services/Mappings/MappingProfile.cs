@@ -318,6 +318,22 @@ namespace AddOptimization.Services.Mappings
             CreateMap<InvoiceAmountPaymentDto, InvoicePaymentHistory>();
 
 
+            CreateMap<ExternalInvoicePaymentHistory, ExternalInvoicePaymentHistoryDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.CreatedAt = s.CreatedAt?.Date;
+                d.UpdatedAt = s.UpdatedAt?.Date;
+            });
+            CreateMap<ExternalInvoicePaymentHistoryDto, ExternalInvoicePaymentHistory>();
+
+            CreateMap<ExternalInvoicePaymentHistory, ExternalInvoiceAmountDto>().AfterMap((s, d) =>
+            {
+
+            });
+            CreateMap<ExternalInvoiceAmountDto, ExternalInvoicePaymentHistory>();
+
+
         }
     }
 }

@@ -28,6 +28,7 @@ namespace AddOptimization.Data.Entities
         public DateTime ExpiryDate { get; set; }
         public int? PaymentClearanceDays { get; set; }
         public int? EmployeeId { get; set; }
+        public decimal DueAmount { get; set; }
 
         [ForeignKey(nameof(PaymentStatusId))]
         public virtual PaymentStatus PaymentStatus { get; set; }
@@ -41,7 +42,6 @@ namespace AddOptimization.Data.Entities
         [ForeignKey(nameof(EmployeeId))]
         public virtual ApplicationUser ApplicationUser { get; set; }
         public virtual ICollection<ExternalInvoiceDetail> InvoiceDetails { get; set; }
-
 
     }
 }
