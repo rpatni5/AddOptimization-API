@@ -10,8 +10,10 @@ namespace AddOptimization.Contracts.Dto
         public string ApprovarName { get; set; }
         public Guid UserStatusId { get; set; }
         public string UserStatusName { get; set; }
+        public string UserStatusKey { get; set; }
         public Guid AdminStatusId { get; set; }
         public string AdminStatusName { get; set; }
+        public string AdminStatusKey { get; set; }
         public int UserId { get; set; }
         public string UserName { get; set; }
         public bool IsDraft { get; set; }
