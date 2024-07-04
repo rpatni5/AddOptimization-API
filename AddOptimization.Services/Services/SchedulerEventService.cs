@@ -756,7 +756,7 @@ namespace AddOptimization.Services.Services
             try
             {
                 var subject = "Timesheet Declined";
-                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetApproved);
+                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetDeclined);
                 emailTemplate = emailTemplate.Replace("[FullName]", fullName)
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
                                              .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
