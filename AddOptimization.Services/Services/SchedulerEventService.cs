@@ -366,10 +366,11 @@ namespace AddOptimization.Services.Services
             var eventDetails = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == models.First().SchedulerEventId);
             eventDetails.IsDraft = false;
             var eventStatus = (await _schedulersStatusService.Search()).Result;
-            var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_APPROVAL.ToString()).Id;
+            var userStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_APPROVAL.ToString()).Id;
+            var adminStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_ACCOUNT_APPROVAL.ToString()).Id;
 
-            eventDetails.UserStatusId = statusId;
-            eventDetails.AdminStatusId = statusId;
+            eventDetails.UserStatusId = userStatusId;
+            eventDetails.AdminStatusId = adminStatusId;
 
             var result = await _schedulersRepository.UpdateAsync(eventDetails);
             var saveResult = await Save(models);
