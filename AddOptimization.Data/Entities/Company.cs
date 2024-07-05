@@ -29,7 +29,7 @@ public class Company : BaseEntityNew<Guid>
 
     [MaxLength(300)]
     public string BankAddress { get; set; }
-    
+    public Guid? DialCodeId { get; set; }
     public string Address { get; set; }
     public string City { get; set; }
     public string Country { get; set; }

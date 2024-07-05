@@ -48,6 +48,7 @@ public class CompanyService : ICompanyService
                 entity.SwiftCode = model.SwiftCode;
                 entity.State = model.State;
                 entity.TaxNumber = model.TaxNumber;
+                entity.DialCodeId = model.DialCodeId;
 
                 await _companyRepository.UpdateAsync(entity);
             }
