@@ -54,7 +54,7 @@ public class LicenseService : ILicenseService
     {
         try
         {
-            var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin")).ToList();
+            var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin") || c.Contains("Account Admin")).ToList();
 
             var entities = await _licenseRepository.QueryAsync(include: source => source.Include(o => o.LicenseDevices).Include(o => o.Customer).Include(e => e.CreatedByUser), ignoreGlobalFilter: superAdminRole.Count != 0);
 

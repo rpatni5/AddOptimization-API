@@ -80,7 +80,7 @@ namespace AddOptimization.Services.Services
                     CustomerId = e.CustomerId,
                     ApprovarId = e.ApprovarId,
                     ApprovarName = e.Approvar.FullName,
-                    CustomerName = e.Customer.ManagerName,
+                    CustomerName = e.Customer.Organizations,
                     UserId = e.UserId,
                     UserStatusId = e.UserStatusId,
                     UserName = e.ApplicationUser.FullName,
@@ -544,15 +544,19 @@ namespace AddOptimization.Services.Services
                 var eventStatus = (await _schedulersStatusService.Search()).Result;
                 var customerApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.CUSTOMER_APPROVED.ToString()).Id;
                 var pendingCustomerApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_CUSTOMER_APPROVAL.ToString()).Id;
+                var userApprovedStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.APPROVED.ToString()).Id;
+                var userPendingApprovalStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_APPROVAL.ToString()).Id;
+
 
                 var customerDetails = await _customersRepository.FirstOrDefaultAsync(x => x.Id == model.CustomerId);
                 if (customerDetails.IsApprovalRequired)
                 {
+                    eventDetails.UserStatusId = userPendingApprovalStatusId;
                     eventDetails.AdminStatusId = pendingCustomerApprovedId;
-
                 }
                 else
                 {
+                    eventDetails.UserStatusId = userApprovedStatusId;
                     eventDetails.AdminStatusId = customerApprovedId;
                 }
                 var result = await _schedulersRepository.UpdateAsync(eventDetails);

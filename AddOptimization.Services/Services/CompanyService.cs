@@ -73,6 +73,10 @@ public class CompanyService : ICompanyService
         try
         {
             var entity = await _companyRepository.FirstOrDefaultAsync();
+            if(entity == null)
+            {
+                return null;
+            }
             var mappedEntity = _mapper.Map<CompanyDto>(entity);
             Guid.TryParse(entity.Country, out Guid parsedCountryId);
             var countries = await _countryService.GetCountriesById(parsedCountryId);
