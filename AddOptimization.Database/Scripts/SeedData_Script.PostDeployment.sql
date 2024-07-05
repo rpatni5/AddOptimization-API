@@ -1,11 +1,11 @@
 ﻿
 /* Adding Super User */
 
-IF NOT EXISTS (SELECT 1 FROM ApplicationUsers Where Email= 'stein@addoptimization.com')
+IF NOT EXISTS (SELECT 1 FROM ApplicationUsers Where Email= 'stein@addoptimization.es')
 BEGIN 
     INSERT INTO ApplicationUsers(FirstName, LastName, Email, FullName,UserName,Password,IsActive,IsLocked,IsEmailsEnabled,CreatedAt)
     VALUES
-        ('Stein','Geerinck','stein@addoptimization.com','Stein Geerinck','stein@addoptimization.com','ADAot9CKJUhGJu0rG1je4A6BBiyURsKiQPCA2NvDYKhi61C998K5B8mdLMqK3F0DnA==',1,0,0,GETUTCDATE())
+        ('Stein','Geerinck','stein@addoptimization.es','Stein Geerinck','stein@addoptimization.es','ADAot9CKJUhGJu0rG1je4A6BBiyURsKiQPCA2NvDYKhi61C998K5B8mdLMqK3F0DnA==',1,0,0,GETUTCDATE())
 END
 
 /* Adding Active status data in Customer Status */
@@ -53,87 +53,77 @@ BEGIN
         ('45F8C755-E930-4372-96C7-8DE02FDDFDF6','Absence Request')
 END
 
-/* Adding Pending for accountant approval Scheduler Status data in Scheduler Status */
+/* Adding Pending approval Scheduler Status data in Scheduler Status */
 
-IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Pending Account Approval')
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'PENDING_APPROVAL')
 BEGIN 
     INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
     VALUES
-        ('B39271A8-EB3A-42DC-A079-1C76F4A75668','Pending Account Approval','PENDING_ACCOUNT_ADMIN_APPROVAL')
+        (NEWID(),'Pending Approval','PENDING_APPROVAL')
+END
+
+/* Adding Pending for accountant approval Scheduler Status data in Scheduler Status */
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'PENDING_ACCOUNT_APPROVAL')
+BEGIN 
+    INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
+    VALUES
+        (NEWID(),'Pending Account Approval','PENDING_ACCOUNT_APPROVAL')
 END
 
 /* Adding Draft Scheduler Status data in Scheduler Status */
 
-IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Draft')
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'DRAFT')
 BEGIN 
     INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
     VALUES
-        ('905729F2-E9A6-4640-BC04-37A189D77628','Draft','DRAFT')
-END
-
-/* Adding Pending for invoicing Scheduler Status data in Scheduler Status */
-
-IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Pending Invoicing')
-BEGIN 
-    INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
-    VALUES
-        ('0AAD8336-A223-42F4-B6FE-4EDD97ADEDC3','Pending Invoicing','PENDING_INVOICING')
-END
-
-/* Adding Paid by customer Scheduler Status data in Scheduler Status */
-
-IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Paid')
-BEGIN 
-    INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
-    VALUES
-        ('F69D2DD9-0165-4CAA-BD6D-96FF663309AF','Paid','CUSTOMER_PAID')
+        (NEWID(),'Draft','DRAFT')
 END
 
 /* Adding Pending for customer appproval Scheduler Status data in Scheduler Status */
 
-IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Pending Customer Appproval')
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'PENDING_CUSTOMER_APPROVAL')
 BEGIN 
     INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
     VALUES
-        ('2DB8D005-90BB-40ED-B35E-ACC37B15787E','Pending Customer Appproval','PENDING_CUSTOMER_APPROVAL')
+        (NEWID(),'Pending Customer Appproval','PENDING_CUSTOMER_APPROVAL')
 END
 
 
 
 /* Adding Declined  Scheduler Status data in Scheduler Status */
 
-IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Declined')
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'DECLINED')
 BEGIN 
     INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
     VALUES
-        ('7FCB2F89-750E-4B76-9B5F-6D944EB58AA2','Declined','DECLINED')
+        (NEWID(),'Declined','DECLINED')
 END
 
 /* Adding Customer Declined Scheduler Status data in Scheduler Status */
 
-IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Customer Declined')
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'CUSTOMER_DECLINED')
 BEGIN 
     INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
     VALUES
-        ('BA7AB70E-C985-4122-BDCA-F83FC29A9884','Customer Declined','CUSTOMER_DECLINED')
+        (NEWID(),'Customer Declined','CUSTOMER_DECLINED')
 END
 
 /* Adding Customer Approved  Scheduler Status data in Scheduler Status */
 
-IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Customer Approved')
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'CUSTOMER_APPROVED')
 BEGIN 
     INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
     VALUES
-        ('92D6B0DB-F21B-4314-96E6-1C45E8E375C6','Customer Approved','CUSTOMER_APPROVED')
+        (NEWID(),'Customer Approved','CUSTOMER_APPROVED')
 END
 
 /* Adding Admin Approved  Scheduler Status data in Scheduler Status */
 
-IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Approved')
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'APPROVED')
 BEGIN 
     INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
     VALUES
-        ('CA404379-C54D-41B8-AE40-4609FFFDBC5F','Approved','ADMIN_APPROVED')
+        (NEWID(),'Approved','APPROVED')
 END
 
 
@@ -382,7 +372,7 @@ GO
 GO
 DECLARE @UserId int;
 DECLARE @RoleId uniqueidentifier;
-SET @UserId = (Select TOP 1 Id from ApplicationUsers Where Email = 'stein@addoptimization.com');
+SET @UserId = (Select TOP 1 Id from ApplicationUsers Where Email = 'stein@addoptimization.es');
 SET @RoleId = (Select TOP 1 Id from Roles Where Name = 'Super Admin');
 Select @UserId
 Select @RoleId
