@@ -275,7 +275,7 @@ public class LicenseService : ILicenseService
         {
             if (!string.IsNullOrEmpty(v))
             {
-                var createdDate = DateTime.Parse(v).Date;
+                var createdDate = DateTime.Parse(v).ToUtc().Date;
                 entities = entities.Where(e => e.CreatedAt != null && e.CreatedAt.Value.Date == createdDate);
             }
         });
@@ -285,7 +285,7 @@ public class LicenseService : ILicenseService
         {
             if (!string.IsNullOrEmpty(v))
             {
-                var expirationDate = DateTime.Parse(v).Date;
+                var expirationDate = DateTime.Parse(v).ToUtc().Date;
                 entities = entities.Where(e =>
                     e.ExpirationDate != DateTime.MinValue ?
                     e.ExpirationDate.Date == expirationDate :
