@@ -23,6 +23,10 @@ jobs:
           include-prerelease: true
           configurationFile: 'appsettings.Test.json'
 
+      - name: Copy environment-specific appsettings
+        run: |
+          cp AddOptimization.API/appsettings.Test.json AddOptimization.API/appsettings.json
+
       - name: Build with dotnet
         run: dotnet build --configuration Release
 
