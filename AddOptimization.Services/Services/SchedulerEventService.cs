@@ -13,6 +13,7 @@ using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
 using AddOptimization.Utilities.Services;
 using AutoMapper;
+using iText.StyledXmlParser.Jsoup.Nodes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -87,7 +88,9 @@ namespace AddOptimization.Services.Services
                     EndDate = e.EndDate,
                     AdminStatusId = e.AdminStatusId,
                     AdminStatusName = e.AdminStatus.Name,
+                    AdminStatusKey = e.AdminStatus.StatusKey,
                     UserStatusName = e.UserStatus.Name,
+                    UserStatusKey = e.UserStatus.StatusKey,
                     WorkDuration = e.EventDetails.Where(x => x.EventTypes.Name == "Timesheet").Sum(x => x.Duration),
                     Overtime = e.EventDetails.Where(x => x.EventTypes.Name == "Overtime").Sum(x => x.Duration),
                     IsCustomerApprovalPending = e.AdminStatus.StatusKey.ToString() == SchedulerStatusesEnum.PENDING_CUSTOMER_APPROVAL.ToString(),
@@ -133,10 +136,12 @@ namespace AddOptimization.Services.Services
                     var entity = _mapper.Map<SchedulerEventDetails>(item);
                     if (item.Id != Guid.Empty)
                     {
+                        entity.Date = entity.Date.Value;
                         schedluerEventsToUpdate.Add(entity);
                     }
                     else
                     {
+                        entity.Date = entity.Date.Value;
                         schedluerEventsToInsert.Add(entity);
                     }
                 }
@@ -214,7 +219,8 @@ namespace AddOptimization.Services.Services
 
 
                 entity = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == entity.Id, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer));
-
+                entity.StartDate = entity.StartDate.ToUtc();
+                entity.EndDate = entity.EndDate.ToUtc();
                 var mappedEntity = _mapper.Map<SchedulerEventResponseDto>(entity);
                 return ApiResult<SchedulerEventResponseDto>.Success(mappedEntity);
             }
@@ -237,6 +243,8 @@ namespace AddOptimization.Services.Services
             mappedEntity.WorkDuration = entity.EventDetails.Where(x => x.EventTypeId == timesheetEventId).Sum(x => x.Duration);
             mappedEntity.Overtime = entity.EventDetails.Where(x => x.EventTypeId == overtimeId).Sum(x => x.Duration);
             mappedEntity.IsCustomerApprovalPending = mappedEntity.AdminStatusId.ToString() == statusId.ToString();
+            mappedEntity.StartDate = mappedEntity.StartDate.ToUtc();
+            mappedEntity.EndDate = mappedEntity.EndDate.ToUtc();
             return ApiResult<SchedulerEventResponseDto>.Success(mappedEntity);
         }
 
@@ -335,7 +343,7 @@ namespace AddOptimization.Services.Services
                 if (getRoleBasedData)
                 {
                     var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin") || c.Contains("Account Admin")).ToList();
-                    ignoreGlobalFilter = superAdminRole.Count != 0;
+                     ignoreGlobalFilter = superAdminRole.Count != 0;
                 }
 
                 var entity = await _schedulersDetailsRepository.QueryAsync(include: entities => entities
@@ -346,6 +354,7 @@ namespace AddOptimization.Services.Services
                     return ApiResult<List<SchedulerEventDetailsDto>>.NotFound("SchedulerEventDetails");
                 }
                 var mappedEntity = _mapper.Map<List<SchedulerEventDetailsDto>>(entity);
+                mappedEntity.ForEach(x => x.Date = x.Date.Value.ToUtc());
                 return ApiResult<List<SchedulerEventDetailsDto>>.Success(mappedEntity);
             }
             catch (Exception ex)
@@ -360,10 +369,11 @@ namespace AddOptimization.Services.Services
             var eventDetails = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == models.First().SchedulerEventId);
             eventDetails.IsDraft = false;
             var eventStatus = (await _schedulersStatusService.Search()).Result;
-            var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_ACCOUNT_ADMIN_APPROVAL.ToString()).Id;
+            var userStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_APPROVAL.ToString()).Id;
+            var adminStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_ACCOUNT_APPROVAL.ToString()).Id;
 
-            eventDetails.UserStatusId = statusId;
-            eventDetails.AdminStatusId = statusId;
+            eventDetails.UserStatusId = userStatusId;
+            eventDetails.AdminStatusId = adminStatusId;
 
             var result = await _schedulersRepository.UpdateAsync(eventDetails);
             var saveResult = await Save(models);
@@ -447,17 +457,14 @@ namespace AddOptimization.Services.Services
                 int userId = Convert.ToInt32(v);
                 entities = entities.Where(e => e.UserId == userId);
             });
-
             filter.GetList<DateTime>("duedateRange", (v) =>
             {
-                var date = new DateTime(v.Max().Year, v.Max().Month, 1);
-                entities = entities.Where(e => e.EndDate < date);
+                entities = entities.Where(e => e.StartDate.Date <= v.Max().Date);
             }, OperatorType.lessthan, true);
 
             filter.GetList<DateTime>("duedateRange", (v) =>
             {
-                var date = (new DateTime(v.Min().Year, v.Min().Month, 1)).AddMonths(1).AddDays(-1);
-                entities = entities.Where(e => e.StartDate > date);
+                entities = entities.Where(e => e.StartDate.Date >= v.Min().Date);
             }, OperatorType.greaterthan, true);
 
             filter.GetList<DateTime>("startDate", (v) =>
@@ -466,25 +473,11 @@ namespace AddOptimization.Services.Services
                 entities = entities.Where(e => e.StartDate == date);
             }, OperatorType.lessthan, true);
 
-            filter.GetList<DateTime>("startDate", (v) =>
-            {
-                var date = new DateTime(v.Max().Year, v.Max().Month, 1);
-                entities = entities.Where(e => e.StartDate == date);
-            }, OperatorType.greaterthan, true);
-
             filter.GetList<DateTime>("endDate", (v) =>
             {
                 var date = (new DateTime(v.Min().Year, v.Min().Month, 1)).AddMonths(1).AddDays(-1);
                 entities = entities.Where(e => e.EndDate == date);
             }, OperatorType.lessthan, true);
-
-            filter.GetList<DateTime>("endDate", (v) =>
-            {
-                var date = (new DateTime(v.Min().Year, v.Min().Month, 1)).AddMonths(1).AddDays(-1);
-                entities = entities.Where(e => e.EndDate == date);
-            }, OperatorType.greaterthan, true);
-
-
 
             return entities;
         }
@@ -549,19 +542,21 @@ namespace AddOptimization.Services.Services
             {
                 var eventDetails = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == model.Id);
                 var eventStatus = (await _schedulersStatusService.Search()).Result;
-                var adminApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.ADMIN_APPROVED.ToString()).Id;
                 var customerApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.CUSTOMER_APPROVED.ToString()).Id;
                 var pendingCustomerApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_CUSTOMER_APPROVAL.ToString()).Id;
+                var userApprovedStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.APPROVED.ToString()).Id;
+                var userPendingApprovalStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_APPROVAL.ToString()).Id;
+
 
                 var customerDetails = await _customersRepository.FirstOrDefaultAsync(x => x.Id == model.CustomerId);
-                eventDetails.UserStatusId = adminApprovedId;
                 if (customerDetails.IsApprovalRequired)
                 {
+                    eventDetails.UserStatusId = userPendingApprovalStatusId;
                     eventDetails.AdminStatusId = pendingCustomerApprovedId;
-
                 }
                 else
                 {
+                    eventDetails.UserStatusId = userApprovedStatusId;
                     eventDetails.AdminStatusId = customerApprovedId;
                 }
                 var result = await _schedulersRepository.UpdateAsync(eventDetails);
@@ -585,11 +580,14 @@ namespace AddOptimization.Services.Services
                         SendRequestTimesheetApprovalEmailToCustomer(customerDetails.ManagerEmail, result, customerDetails.ManagerName, user.FullName, duration.Item1, duration.Item2);
                     });
                 }
-
-                Task.Run(() =>
+                else
                 {
-                    SendTimesheetApprovedEmailToEmployee(user.Email, result, user.FullName, model.ApprovarName, duration.Item1, duration.Item2);
-                });
+                    Task.Run(() =>
+                    {
+                        SendTimesheetApprovedEmailToEmployee(user.Email, result, user.FullName, model.ApprovarName, duration.Item1, duration.Item2);
+                    });
+                }
+                
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -620,6 +618,13 @@ namespace AddOptimization.Services.Services
                 };
 
                 await _schedulerEventHistoryRepository.InsertAsync(entity);
+                var user = (await _appUserRepository.FirstOrDefaultAsync(x => x.Id == result.UserId));
+                var details = (await _schedulersDetailsRepository.QueryAsync(x => x.SchedulerEventId == result.Id)).ToList();
+                var duration = await CalculateTimesheetsDaysAndOvertimeHours(result, details);
+                Task.Run(() =>
+                {
+                    SendTimesheetDeclinedEmailToEmployee(user.Email, result, user.FullName, model.ApprovarName, duration.Item1, duration.Item2, model.Comment);
+                });
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -636,13 +641,19 @@ namespace AddOptimization.Services.Services
                 var eventStatus = (await _schedulersStatusService.Search()).Result;
                 var customerApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.CUSTOMER_APPROVED.ToString()).Id;
                 var customerDeclinedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.CUSTOMER_DECLINED.ToString()).Id;
+
+                var userStatusApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.APPROVED.ToString()).Id;
+                var userDeclinedStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.DECLINED.ToString()).Id;
+
                 if (model.IsApproved)
                 {
                     eventDetails.AdminStatusId = customerApprovedId;
+                    eventDetails.UserStatusId = userStatusApprovedId;
                 }
                 else
                 {
                     eventDetails.AdminStatusId = customerDeclinedId;
+                    eventDetails.UserStatusId = userDeclinedStatusId;
                 }
                 var result = await _schedulersRepository.UpdateAsync(eventDetails);
                 SchedulerEventHistory entity = new SchedulerEventHistory()
@@ -665,7 +676,11 @@ namespace AddOptimization.Services.Services
                 {
                     SendTimesheetActionEmailToAccountAdmin(approver, customer, user, eventDetails, model.IsApproved, entity.Comment, duration.Item1, duration.Item2);
                 });
-
+                
+                Task.Run(() =>
+                {
+                    SendTimesheetActionEmailToEmployee(customer, user, eventDetails, model.IsApproved, entity.Comment, duration.Item1, duration.Item2);
+                });
 
                 return ApiResult<bool>.Success(true);
             }
@@ -676,9 +691,34 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private async Task<bool> SendTimesheetActionEmailToAccountAdmin(ApplicationUser approver, Customer customer,
+        private async Task<bool> SendTimesheetActionEmailToEmployee(Customer customer,
             ApplicationUser user, SchedulerEvent schedulerEvent, bool isApprovedEmail,
             string comment, decimal totalWorkingDays, decimal overtimeHours)
+        {
+            try
+            {
+                var subject = isApprovedEmail ? "Timesheet Approved" : "Timesheet Declined";
+                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetActionsEmployee);
+                emailTemplate = emailTemplate.Replace("[EmployeeName]", user.FullName)
+                                             .Replace("[CustomerName]", customer.ManagerName)
+                                             .Replace("[TimesheetAction]", isApprovedEmail ? "approved" : "declined")
+                                             .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
+                                             .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
+                                             .Replace("[WorkDuration]", totalWorkingDays.ToString())
+                                             .Replace("[Overtime]", overtimeHours.ToString())
+                                             .Replace("[Comment]", !string.IsNullOrEmpty(comment) ? comment : "No comment added.");
+                return await _emailService.SendEmail(user.Email, subject, emailTemplate);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return false;
+            }
+        }
+
+        private async Task<bool> SendTimesheetActionEmailToAccountAdmin(ApplicationUser approver, Customer customer,
+         ApplicationUser user, SchedulerEvent schedulerEvent, bool isApprovedEmail,
+         string comment, decimal totalWorkingDays, decimal overtimeHours)
         {
             try
             {
@@ -686,6 +726,7 @@ namespace AddOptimization.Services.Services
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetActions);
                 emailTemplate = emailTemplate.Replace("[AccountAdmin]", approver.FullName)
                                              .Replace("[EmployeeName]", user.FullName)
+                                             .Replace("[CustomerName]", customer.ManagerName)
                                              .Replace("[TimesheetAction]", isApprovedEmail ? "approved" : "declined")
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
                                              .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
@@ -714,6 +755,29 @@ namespace AddOptimization.Services.Services
                                              .Replace("[Approver]", approverName)
                                              .Replace("[WorkDuration]", totalWorkingDays.ToString())
                                              .Replace("[Overtime]", overtimeHours.ToString());
+                return await _emailService.SendEmail(email, subject, emailTemplate);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return false;
+            }
+        }
+
+        private async Task<bool> SendTimesheetDeclinedEmailToEmployee(string email, SchedulerEvent schedulerEvent,
+           string fullName, string approverName, decimal totalWorkingDays, decimal overtimeHours, string declinedReason)
+        {
+            try
+            {
+                var subject = "Timesheet Declined";
+                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetDeclined);
+                emailTemplate = emailTemplate.Replace("[FullName]", fullName)
+                                             .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
+                                             .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
+                                             .Replace("[Approver]", approverName)
+                                             .Replace("[WorkDuration]", totalWorkingDays.ToString())
+                                             .Replace("[Overtime]", overtimeHours.ToString())
+                                             .Replace("[Comment]", declinedReason); 
                 return await _emailService.SendEmail(email, subject, emailTemplate);
             }
             catch (Exception ex)
@@ -804,7 +868,13 @@ namespace AddOptimization.Services.Services
 
         public async Task<bool> IsTimesheetApproved(Guid customerId, List<int> employeeIds, MonthDateRange month)
         {
-            return (await _schedulersRepository.QueryAsync(x => x.CustomerId == customerId && x.StartDate.Month == month.StartDate.Month)).All(x => employeeIds.Contains(x.UserId));
+            var result =  (await _schedulersRepository.QueryAsync(x => x.CustomerId == customerId 
+            && x.StartDate.Month == month.StartDate.Month 
+            && x.StartDate.Year == month.StartDate.Year
+            && x.AdminStatus.StatusKey == SchedulerStatusesEnum.CUSTOMER_APPROVED.ToString()));
+
+            var IsApproved = result.All(x => employeeIds.Contains(x.UserId));
+            return IsApproved;
         }
 
         #endregion

@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy ASP.Net Core app to Azure Web App - add-optimization
+name: Build and deploy - QA
 
 on:
   push:
@@ -21,6 +21,11 @@ jobs:
         with:
           dotnet-version: '7.x'
           include-prerelease: true
+          configurationFile: 'appsettings.Test.json'
+
+      - name: Copy environment-specific appsettings
+        run: |
+          cp AddOptimization.API/appsettings.Test.json AddOptimization.API/appsettings.json
 
       - name: Build with dotnet
         run: dotnet build --configuration Release
@@ -40,13 +45,22 @@ jobs:
     environment:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-    
+    permissions:
+      id-token: write #This is required for requesting the JWT
+
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v3
         with:
           name: .net-app
       
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_61FFB90F82CB415EA059B6FCD5F612B7 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_F8639B683952421AA42FAF02A3A5E8A8 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_434C30ED8E13466BBF35B33A4548466E }}
+
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
@@ -54,4 +68,4 @@ jobs:
           app-name: 'add-optimization'
           slot-name: 'Production'
           package: .
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_E33296B330494D029ACE1B45472A4436 }}
+          

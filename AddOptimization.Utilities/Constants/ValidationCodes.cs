@@ -41,5 +41,5 @@ public class ValidationCodes
     public const string CustomerEmployeeAssociationAlreadyExists = "CustomerEmployeeAssociationAlreadyExists";
     public const string SchedulerEventsDoesNotExists = "SchedulerEventsDoesNotExists";
     public const string EmployeeAlreadyExists = "EmployeeAlreadyExists";
-
+    public const string LoginWithMicrosoftProvider = "LoginWithMicrosoftProvider";
 }

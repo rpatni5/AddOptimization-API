@@ -1,9 +1,8 @@
 ﻿
 CREATE TABLE [dbo].[Quotes](
-	[Id] [uniqueidentifier] NOT NULL,
+    [Id] [bigint] IDENTITY(1,1) NOT NULL,
 	[CustomerId] [uniqueidentifier] NOT NULL,
-	[ProductId] [uniqueidentifier] NOT NULL,
-	[BillingAddress] [nvarchar](300) NOT NULL,
+	[CustomerAddress] [varchar](400) NOT NULL,
 	[ExpiryDate] [datetime2](7) NOT NULL,
 	[QuoteDate] [datetime2](7) NOT NULL,
 	[QuoteStatusId] [uniqueidentifier] NOT NULL,
@@ -13,7 +12,10 @@ CREATE TABLE [dbo].[Quotes](
 	[CreatedByUserId] [int] NULL,
 	[UpdatedAt] [datetime2](7) NULL,
 	[UpdatedByUserId] [int] NULL,
-PRIMARY KEY CLUSTERED 
+	[QuoteNo] [bigint] NOT NULL,
+	[CompanyAddress] [varchar](400) NULL,
+	[CompanyBankAddress] [varchar](400) NULL,
+ CONSTRAINT [PK_Quotes] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
@@ -30,12 +32,20 @@ ALTER TABLE [dbo].[Quotes]  WITH CHECK ADD FOREIGN KEY([CreatedByUserId])
 REFERENCES [dbo].[ApplicationUsers] ([Id])
 GO
 
+ALTER TABLE [dbo].[Quotes]  WITH CHECK ADD FOREIGN KEY([CreatedByUserId])
+REFERENCES [dbo].[ApplicationUsers] ([Id])
+GO
+
 ALTER TABLE [dbo].[Quotes]  WITH CHECK ADD FOREIGN KEY([CustomerId])
 REFERENCES [dbo].[Customers] ([Id])
 GO
 
-ALTER TABLE [dbo].[Quotes]  WITH CHECK ADD FOREIGN KEY([ProductId])
-REFERENCES [dbo].[Products] ([Id])
+ALTER TABLE [dbo].[Quotes]  WITH CHECK ADD FOREIGN KEY([CustomerId])
+REFERENCES [dbo].[Customers] ([Id])
+GO
+
+ALTER TABLE [dbo].[Quotes]  WITH CHECK ADD FOREIGN KEY([QuoteStatusId])
+REFERENCES [dbo].[QuoteStatuses] ([Id])
 GO
 
 ALTER TABLE [dbo].[Quotes]  WITH CHECK ADD FOREIGN KEY([QuoteStatusId])
@@ -46,3 +56,6 @@ ALTER TABLE [dbo].[Quotes]  WITH CHECK ADD FOREIGN KEY([UpdatedByUserId])
 REFERENCES [dbo].[ApplicationUsers] ([Id])
 GO
 
+ALTER TABLE [dbo].[Quotes]  WITH CHECK ADD FOREIGN KEY([UpdatedByUserId])
+REFERENCES [dbo].[ApplicationUsers] ([Id])
+GO

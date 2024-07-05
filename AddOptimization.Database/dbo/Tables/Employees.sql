@@ -2,6 +2,7 @@
 	[Id] [uniqueidentifier] NOT NULL,
 	[UserId] [int] NOT NULL,
 	[IsExternal] [bit] NOT NULL,
+	[IsNDASigned] [bit] NOT NULL,
 	[Salary] [decimal](10, 2) NULL,
 	[BankName] [nvarchar](200) NULL,
 	[BankAccountName] [nvarchar](200) NULL,
@@ -32,6 +33,9 @@ PRIMARY KEY CLUSTERED
 GO
 
 ALTER TABLE [dbo].[Employees] ADD  DEFAULT ((0)) FOR [IsExternal]
+GO
+
+ALTER TABLE [dbo].[Employees] ADD  DEFAULT ((0)) FOR [IsNDASigned]
 GO
 
 ALTER TABLE [dbo].[Employees]  WITH CHECK ADD FOREIGN KEY([CreatedByUserId])

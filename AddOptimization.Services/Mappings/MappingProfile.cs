@@ -142,7 +142,9 @@ namespace AddOptimization.Services.Mappings
                 d.UserName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
                 d.CustomerName = s.Customer != null ? s.Customer.ManagerName : string.Empty;
                 d.AdminStatusName = s.AdminStatus != null ? s.AdminStatus.Name : string.Empty;
+                d.AdminStatusKey = s.AdminStatus != null ? s.AdminStatus.StatusKey : string.Empty;
                 d.UserStatusName = s.UserStatus != null ? s.UserStatus.Name : string.Empty;
+                d.UserStatusKey = s.UserStatus != null ? s.UserStatus.StatusKey : string.Empty;
             });
 
 
@@ -257,6 +259,83 @@ namespace AddOptimization.Services.Mappings
 
             });
             CreateMap<SchedulerEventHistoryDto, SchedulerEventHistory>();
+
+
+            CreateMap<Invoice, InvoiceResponseDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.CreatedAt = s.CreatedAt?.Date;
+                d.UpdatedAt = s.UpdatedAt?.Date;
+                d.CustomerName = s.Customer != null ? s.Customer.Organizations : string.Empty;
+            });
+            CreateMap<InvoiceRequestDto, Invoice>();
+
+            CreateMap<InvoiceStatus, InvoiceStatusDto>().AfterMap((s, d) =>
+            {
+
+            });
+            CreateMap<InvoiceStatusDto, InvoiceStatus>();
+
+            CreateMap<InvoiceDetail, InvoiceDetailDto>().AfterMap((s, d) =>
+            {
+
+            });
+            CreateMap<InvoiceDetailDto, InvoiceDetail>();
+
+            CreateMap<PaymentStatus, PaymentStatusDto>().AfterMap((s, d) =>
+            {
+
+            });
+            CreateMap<PaymentStatusDto, PaymentStatus>();
+
+            CreateMap<ExternalInvoice, ExternalInvoiceResponseDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.CreatedAt = s.CreatedAt?.Date;
+                d.UpdatedAt = s.UpdatedAt?.Date;
+            });
+            CreateMap<ExternalInvoiceRequestDto, ExternalInvoice>();
+
+            CreateMap<ExternalInvoiceDetail, ExternalInvoiceDetailDto>().AfterMap((s, d) =>
+            {
+
+            });
+            CreateMap<ExternalInvoiceDetailDto, InvoiceDetail>();
+
+            CreateMap<InvoicePaymentHistory, InvoicePaymentHistoryDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.CreatedAt = s.CreatedAt?.Date;
+                d.UpdatedAt = s.UpdatedAt?.Date;
+            });
+            CreateMap<InvoicePaymentHistoryDto, InvoicePaymentHistory>();
+
+            CreateMap<InvoicePaymentHistory, InvoiceAmountPaymentDto>().AfterMap((s, d) =>
+            {
+               
+            });
+            CreateMap<InvoiceAmountPaymentDto, InvoicePaymentHistory>();
+
+
+            CreateMap<ExternalInvoicePaymentHistory, ExternalInvoicePaymentHistoryDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.CreatedAt = s.CreatedAt?.Date;
+                d.UpdatedAt = s.UpdatedAt?.Date;
+            });
+            CreateMap<ExternalInvoicePaymentHistoryDto, ExternalInvoicePaymentHistory>();
+
+            CreateMap<ExternalInvoicePaymentHistory, ExternalInvoiceAmountDto>().AfterMap((s, d) =>
+            {
+
+            });
+            CreateMap<ExternalInvoiceAmountDto, ExternalInvoicePaymentHistory>();
+
+
         }
     }
 }

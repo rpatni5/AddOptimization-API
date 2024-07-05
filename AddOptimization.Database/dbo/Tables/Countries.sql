@@ -3,6 +3,7 @@
     [Id] [uniqueidentifier] NOT NULL,
 	[CountryName] [varchar](200) NOT NULL,
 	[CountryCode] [char](2) NULL,
+	[DialCode] [varchar](50) NULL,
 	[CreatedAt] [datetime2](7) NULL,
 	[CreatedByUserId] [int] NULL,
 	[UpdatedAt] [datetime2](7) NULL,

@@ -1,17 +1,22 @@
-﻿using AddOptimization.Contracts.Dto;
+﻿using AddOptimization.Contracts.Constants;
+using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
 using AddOptimization.Services.Constants;
 using AddOptimization.Utilities.Common;
+using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Enums;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
+using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
 using AutoMapper;
 using iText.StyledXmlParser.Jsoup.Nodes;
+using Microsoft.AspNet.Identity;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 
@@ -25,8 +30,24 @@ namespace AddOptimization.Services.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILeaveStatusesService _leaveStatusesService;
         private readonly IGenericRepository<LeaveStatuses> _leaveStatusesRepository;
+        private readonly IEmailService _emailService;
+        private readonly ITemplateService _templateService;
+        private readonly IConfiguration _configuration;
+        private readonly IGenericRepository<ApplicationUser> _applicationUserRepository;
+        private readonly IApplicationUserService _applicationUserService;
 
-        public AbsenceApprovalSevice(IGenericRepository<AbsenceRequest> absenceApprovalRepository, IGenericRepository<LeaveStatuses> leaveStatusesRepository, ILogger<AbsenceApprovalSevice> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, ILeaveStatusesService leaveStatusesService)
+        public AbsenceApprovalSevice(IGenericRepository<AbsenceRequest> absenceApprovalRepository,
+            IGenericRepository<LeaveStatuses> leaveStatusesRepository,
+            ILogger<AbsenceApprovalSevice> logger,
+            IMapper mapper,
+            IHttpContextAccessor httpContextAccessor,
+            ILeaveStatusesService leaveStatusesService,
+            IConfiguration configuration,
+            IEmailService emailService,
+            ITemplateService templateService,
+            IGenericRepository<ApplicationUser> applicationUserRepository,
+            IApplicationUserService applicationUserService
+            )
         {
             _absenceApprovalRepository = absenceApprovalRepository;
             _leaveStatusesRepository = leaveStatusesRepository;
@@ -34,6 +55,11 @@ namespace AddOptimization.Services.Services
             _mapper = mapper;
             _httpContextAccessor = httpContextAccessor;
             _leaveStatusesService = leaveStatusesService;
+            _emailService = emailService;
+            _templateService = templateService;
+            _configuration = configuration;
+            _applicationUserRepository = applicationUserRepository;
+            _applicationUserService = applicationUserService;
         }
         public async Task<PagedApiResult<AbsenceRequestResponseDto>> Search(PageQueryFiterBase filters)
         {
@@ -74,18 +100,33 @@ namespace AddOptimization.Services.Services
                 if (model.IsApproved)
                 {
                     var approvedStatusId = (await _leaveStatusesRepository.FirstOrDefaultAsync(x => x.Name.ToLower() == LeaveStatusesEnum.Approved.ToString())).Id;
-
                     entity.LeaveStatusId = approvedStatusId;
                 }
                 else
                 {
                     var rejectedStatusId = (await _leaveStatusesRepository.FirstOrDefaultAsync(x => x.Name.ToLower() == LeaveStatusesEnum.Rejected.ToString())).Id;
-
                     entity.LeaveStatusId = rejectedStatusId;
                 }
                 entity.Comment = model.Comment;
+                var result = await _absenceApprovalRepository.UpdateAsync(entity);
+                var accountAdminResult = await _applicationUserService.GetAccountAdmins();
+                var accountAdmin = accountAdminResult.Result.FirstOrDefault();
+                var user = await _applicationUserRepository.FirstOrDefaultAsync(x => x.Id == entity.UserId);
+                if (model.IsApproved)
+                {
+                    Task.Run(() =>
+                        {
+                            SendAbsenceRequestActionEmailEmployee(model.IsApproved, accountAdmin, user, result);
+                        });
+                }
+                else
+                {
+                    Task.Run(() =>
+                        {
+                            SendAbsenceRequestActionEmailEmployee(model.IsApproved, accountAdmin, user, result);
+                        });
+                }
 
-                await _absenceApprovalRepository.UpdateAsync(entity);
                 return ApiResult<bool>.Success(true);
 
             }
@@ -223,6 +264,34 @@ namespace AddOptimization.Services.Services
             }
         }
 
+        private async Task<bool> SendAbsenceRequestActionEmailEmployee(bool isApproved, ApplicationUserDto accountAdmin, ApplicationUser user, AbsenceRequest absenceRequest)
+        {
+            try
+            {
+                var subject = isApproved ? "Absence Request Approved" : "Absence Request Declined";
+                var action = isApproved ? "Approved" : "Declined";
+                var link = GetAbsenceRequestLinkForAccountAdmin(absenceRequest.Id);
+                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.AbsenceRequestActions);
+                emailTemplate = emailTemplate.Replace("[AccountAdminName]", accountAdmin.FullName)
+                                             .Replace("[EmployeeName]", user.FullName)
+                                             .Replace("[Action]", action)
+                                             .Replace("[Date]", absenceRequest.Date.ToString("dd/MM/yyyy"))
+                                             .Replace("[Duration]", absenceRequest.Duration.ToString())
+                                             .Replace("[Comment]", absenceRequest.Comment);
+                return await _emailService.SendEmail(user.Email, subject, emailTemplate);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return false;
+            }
+        }
+
+        public string GetAbsenceRequestLinkForAccountAdmin(Guid schedulerEventId)
+        {
+            var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
+            return $"{baseUrl}admin/timesheets/absence-request";
+        }
     }
 }
 
