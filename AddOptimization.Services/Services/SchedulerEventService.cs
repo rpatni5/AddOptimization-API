@@ -80,7 +80,7 @@ namespace AddOptimization.Services.Services
                     CustomerId = e.CustomerId,
                     ApprovarId = e.ApprovarId,
                     ApprovarName = e.Approvar.FullName,
-                    CustomerName = e.Customer.ManagerName,
+                    CustomerName = e.Customer.Organizations,
                     UserId = e.UserId,
                     UserStatusId = e.UserStatusId,
                     UserName = e.ApplicationUser.FullName,
