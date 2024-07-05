@@ -105,6 +105,7 @@
     <Build Include="dbo\Tables\InvoicePaymentHistory.sql" />
     <Build Include="dbo\Tables\ExternalInvoiceHistory.sql" />
     <Build Include="dbo\Tables\ExternalInvoicePaymentHistory.sql" />
+    <Build Include="dbo\Tables\Settings.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Scripts\SeedData_Script.PostDeployment.sql" />
