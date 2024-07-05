@@ -41,7 +41,7 @@ namespace AddOptimization.Data.Contracts
         Task DeleteAsync(TEntity entity);
         Task BulkDeleteAsync(IList<TEntity> data);
         Task<bool> IsExist(Expression<Func<TEntity, bool>> predicate = null, bool ignoreGlobalFilter = true, params Expression<Func<TEntity, object>>[] includes);
-        Task<int> MaxAsync(Expression<Func<TEntity, int>> select,Expression < Func<TEntity, bool>> predicate = null, bool ignoreGlobalFilter = true);
+        Task<TValue> MaxAsync<TValue>(Expression<Func<TEntity, TValue>> select, Expression<Func<TEntity, bool>> predicate = null, bool ignoreGlobalFilter = true);
         Task<int> ExecuteSqlAsync(FormattableString sql);
         /// <summary>
         /// Trun on identity insert on for TEntity

@@ -4,10 +4,9 @@ namespace AddOptimization.Data.Entities
 {
     public class SchedulerEvent : BaseEntityNew<Guid>
     {
-      
         public Guid UserStatusId { get; set; }
         public Guid AdminStatusId { get; set; }
-        public Guid ClientId { get; set; }
+        public Guid CustomerId { get; set; }
         public int UserId { get; set; }
         public bool IsDraft { get; set; }
         public bool IsDeleted { get; set; }
@@ -25,8 +24,9 @@ namespace AddOptimization.Data.Entities
         [ForeignKey(nameof(UserId))]
         public virtual ApplicationUser ApplicationUser { get; set; }
 
-        [ForeignKey(nameof(ClientId))]
-        public virtual Client Client { get; set; }
+
+        [ForeignKey(nameof(CustomerId))]
+        public virtual Customer Customer { get; set; }
 
         [ForeignKey(nameof(ApprovarId))]
         public virtual ApplicationUser Approvar { get; set; }

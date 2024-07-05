@@ -34,11 +34,11 @@ namespace AddOptimization.API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Save([FromBody] List<SchedulerEventDetailsDto> model)
+        public async Task<IActionResult> Save([FromBody] List<SchedulerEventDetailsDto> schedulerEventDetails)
         {
             try
             {
-                var retVal = await _schedulerEventService.Save(model);
+                var retVal = await _schedulerEventService.Save(schedulerEventDetails);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -76,7 +76,7 @@ namespace AddOptimization.API.Controllers
         }
 
         [HttpPost("create-timesheet")]
-        public async Task<IActionResult> CreateOrViewTimeSheets([FromBody] CreateViewTimesheetRequestDto model)
+        public async Task<IActionResult> CreateOrViewTimeSheets([FromBody] SchedulerEventRequestDto model)
         {
             try
             {
@@ -89,12 +89,12 @@ namespace AddOptimization.API.Controllers
             }
         }
 
-        [HttpGet("schedular-event-details/{id}")]
-        public async Task<IActionResult> GetSchedularEventDetails(Guid id)
+        [HttpGet("scheduler-event-details/{id}")]
+        public async Task<IActionResult> GetSchedulerEventDetails(Guid id)
         {
             try
             {
-                var retVal = await _schedulerEventService.GetSchedularEventDetails(id);
+                var retVal = await _schedulerEventService.GetSchedulerEventDetails(id);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -103,12 +103,12 @@ namespace AddOptimization.API.Controllers
             }
         }
 
-        [HttpPost("schedular-event-details")]
-        public async Task<IActionResult> GetSchedularEventDetails([FromBody] CreateViewTimesheetRequestDto model)
+        [HttpPost("scheduler-event-details")]
+        public async Task<IActionResult> GetSchedulerEventDetails([FromBody] SchedulerEventRequestDto model)
         {
             try
             {
-                var retVal = await _schedulerEventService.GetSchedularEventDetails(model);
+                var retVal = await _schedulerEventService.GetSchedulerEventDetails(model);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -117,8 +117,8 @@ namespace AddOptimization.API.Controllers
             }
         }
 
-        [HttpGet("schedular-event/{id}")]
-        public async Task<IActionResult> GetSchedularEvent(Guid id)
+        [HttpGet("scheduler-event/{id}")]
+        public async Task<IActionResult> GetSchedulerEvent(Guid id)
         {
             try
             {
@@ -133,7 +133,7 @@ namespace AddOptimization.API.Controllers
 
 
         [HttpPost("approve-request")]
-        public async Task<IActionResult> ApproveRequest(CreateViewTimesheetResponseDto model)
+        public async Task<IActionResult> ApproveRequest(AccountAdminActionRequestDto model)
         {
             try
             {
@@ -146,12 +146,26 @@ namespace AddOptimization.API.Controllers
             }
         }
 
-        [HttpPost("reject-request")]
-        public async Task<IActionResult> RejectRequest(CreateViewTimesheetResponseDto model)
+        [HttpPost("decline-request")]
+        public async Task<IActionResult> DeclineRequest(AccountAdminActionRequestDto model)
         {
             try
             {
-                var retVal = await _schedulerEventService.RejectRequest(model);
+                var retVal = await _schedulerEventService.DeclineRequest(model);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpPost("send-email-to-customer/{schedulerEventId}")]
+        public async Task<IActionResult> SendTimesheetApprovalEmailToCustomer(Guid schedulerEventId)
+        {
+            try
+            {
+                var retVal = await _schedulerEventService.SendTimesheetApprovalEmailToCustomer(schedulerEventId);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)

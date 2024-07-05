@@ -5,7 +5,7 @@ using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Utilities.Models;
 
-namespace CustomersManagment.API.Controllers;
+namespace AddOptimization.API.Controllers;
 
 [Authorize]
 public class AddressesController : CustomApiControllerBase

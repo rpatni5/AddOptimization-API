@@ -36,10 +36,13 @@ services.AddMemoryCache();
 services.RegisterUtilityServices();
 services.RegisterDomainServices();
 services.RegisterDataServices(connectionString);
-services.AddHostedService<SendLicenseRenewalEmailBackgroundService>();
+services.AddHostedService<LicenseRenewalEmailBackgroundService>();
+services.AddHostedService<FillTimesheetReminderEmailBackgroundService>();
+services.AddHostedService<PendingTimesheetReminderToCustomerBackgroundService>();
+services.AddHostedService<GenerateInvoiceBackgroundService>();
 services.AddLogging(builder =>
 {
-    builder.AddFile($"logs/log_for.txt",LogLevel.Error);
+    builder.AddFile($"logs/log_for.txt",LogLevel.Information);
 });
 #endregion
 #region configure

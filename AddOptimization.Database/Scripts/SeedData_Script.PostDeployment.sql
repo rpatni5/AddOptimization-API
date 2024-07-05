@@ -1,11 +1,11 @@
 ﻿
 /* Adding Super User */
 
-IF NOT EXISTS (SELECT 1 FROM ApplicationUsers Where Email= 'stein@addoptimization.com')
+IF NOT EXISTS (SELECT 1 FROM ApplicationUsers Where Email= 'stein@addoptimization.es')
 BEGIN 
     INSERT INTO ApplicationUsers(FirstName, LastName, Email, FullName,UserName,Password,IsActive,IsLocked,IsEmailsEnabled,CreatedAt)
     VALUES
-        ('Stein','Geerinck','stein@addoptimization.com','Stein Geerinck','stein@addoptimization.com','ADAot9CKJUhGJu0rG1je4A6BBiyURsKiQPCA2NvDYKhi61C998K5B8mdLMqK3F0DnA==',1,0,0,GETUTCDATE())
+        ('Stein','Geerinck','stein@addoptimization.es','Stein Geerinck','stein@addoptimization.es','ADAot9CKJUhGJu0rG1je4A6BBiyURsKiQPCA2NvDYKhi61C998K5B8mdLMqK3F0DnA==',1,0,0,GETUTCDATE())
 END
 
 /* Adding Active status data in Customer Status */
@@ -53,50 +53,80 @@ BEGIN
         ('45F8C755-E930-4372-96C7-8DE02FDDFDF6','Absence Request')
 END
 
-/* Adding Pending for accountant approval Scheduler Status data in Scheduler Status */
+/* Adding Pending approval Scheduler Status data in Scheduler Status */
 
-IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Pending Account Approval')
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'PENDING_APPROVAL')
 BEGIN 
     INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
     VALUES
-        ('B39271A8-EB3A-42DC-A079-1C76F4A75668','Pending Account Approval','PENDING_ACCOUNT_ADMIN_APPROVAL')
+        (NEWID(),'Pending Approval','PENDING_APPROVAL')
+END
+
+/* Adding Pending for accountant approval Scheduler Status data in Scheduler Status */
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'PENDING_ACCOUNT_APPROVAL')
+BEGIN 
+    INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
+    VALUES
+        (NEWID(),'Pending Account Approval','PENDING_ACCOUNT_APPROVAL')
 END
 
 /* Adding Draft Scheduler Status data in Scheduler Status */
 
-IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Draft')
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'DRAFT')
 BEGIN 
     INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
     VALUES
-        ('905729F2-E9A6-4640-BC04-37A189D77628','Draft','DRAFT')
+        (NEWID(),'Draft','DRAFT')
 END
 
-/* Adding Pending for invoicing Scheduler Status data in Scheduler Status */
+/* Adding Pending for customer appproval Scheduler Status data in Scheduler Status */
 
-IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Pending Invoicing')
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'PENDING_CUSTOMER_APPROVAL')
 BEGIN 
     INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
     VALUES
-        ('0AAD8336-A223-42F4-B6FE-4EDD97ADEDC3','Pending Invoicing','PENDING_INVOICING')
+        (NEWID(),'Pending Customer Appproval','PENDING_CUSTOMER_APPROVAL')
 END
 
-/* Adding Paid by client Scheduler Status data in Scheduler Status */
 
-IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Paid')
+
+/* Adding Declined  Scheduler Status data in Scheduler Status */
+
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'DECLINED')
 BEGIN 
     INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
     VALUES
-        ('F69D2DD9-0165-4CAA-BD6D-96FF663309AF','Paid','CLIENT_PAID')
+        (NEWID(),'Declined','DECLINED')
 END
 
-/* Adding Pending for client appproval Scheduler Status data in Scheduler Status */
+/* Adding Customer Declined Scheduler Status data in Scheduler Status */
 
-IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where Name= 'Pending Client Appproval')
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'CUSTOMER_DECLINED')
 BEGIN 
     INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
     VALUES
-        ('2DB8D005-90BB-40ED-B35E-ACC37B15787E','Pending Client Appproval','PENDING_CLIENT_APPROVAL')
+        (NEWID(),'Customer Declined','CUSTOMER_DECLINED')
 END
+
+/* Adding Customer Approved  Scheduler Status data in Scheduler Status */
+
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'CUSTOMER_APPROVED')
+BEGIN 
+    INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
+    VALUES
+        (NEWID(),'Customer Approved','CUSTOMER_APPROVED')
+END
+
+/* Adding Admin Approved  Scheduler Status data in Scheduler Status */
+
+IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'APPROVED')
+BEGIN 
+    INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
+    VALUES
+        (NEWID(),'Approved','APPROVED')
+END
+
+
 
 
 
@@ -226,6 +256,37 @@ BEGIN
        (NEWID(),'Timesheet management','timesheet_management','/admin/timesheets/timesheets-management')
 END
 
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey= 'view_timesheet')
+BEGIN 
+    INSERT INTO Screens(Id,Name,ScreenKey,Route)
+    VALUES
+       (NEWID(),'View timesheet','view_timesheet','/admin/timesheets/view-timesheet/{}')
+END
+
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey= 'view_quote')
+BEGIN 
+    INSERT INTO Screens(Id,Name,ScreenKey,Route)
+    VALUES
+       (NEWID(),'View quote','view_quote','/admin/quotes/view-quote/{}')
+END
+
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey= 'add_quote')
+BEGIN 
+    INSERT INTO Screens(Id,Name,ScreenKey,Route)
+    VALUES
+       (NEWID(),'Add Quote','add_quote','/admin/quote/quote-add/{}')
+END
+
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey= 'edit_quote')
+BEGIN 
+    INSERT INTO Screens(Id,Name,ScreenKey,Route)
+    VALUES
+       (NEWID(),'Edit Quote','edit_quote','/admin/quotes/quotes-edit/{}')
+END
+
+
+
+
 /* Adding data in role permissions */
 
 GO
@@ -311,7 +372,7 @@ GO
 GO
 DECLARE @UserId int;
 DECLARE @RoleId uniqueidentifier;
-SET @UserId = (Select TOP 1 Id from ApplicationUsers Where Email = 'stein@addoptimization.com');
+SET @UserId = (Select TOP 1 Id from ApplicationUsers Where Email = 'stein@addoptimization.es');
 SET @RoleId = (Select TOP 1 Id from Roles Where Name = 'Super Admin');
 Select @UserId
 Select @RoleId
@@ -344,7 +405,7 @@ END
 --End entry for leave statuses
 
 --Start entry for screens
-IF NOT EXISTS (SELECT 1 FROM Screens Where Name= 'GUI Versions' and ScreenKey ='gui_versions')
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='gui_versions')
 BEGIN 
     INSERT INTO Screens(Id,Name,ScreenKey,Route)
     VALUES
@@ -352,7 +413,7 @@ BEGIN
 END
  
  
-IF NOT EXISTS (SELECT 1 FROM Screens Where Name= 'public-holiday' and ScreenKey ='public-holiday')
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='public-holiday')
 BEGIN 
     INSERT INTO Screens(Id,Name,ScreenKey,Route)
     VALUES
@@ -360,15 +421,8 @@ BEGIN
 END
  
  
-IF NOT EXISTS (SELECT 1 FROM Screens Where Name= 'Clients' and ScreenKey ='client_screen')
-BEGIN 
-    INSERT INTO Screens(Id,Name,ScreenKey,Route)
-    VALUES
-        ('882B0A13-97EC-4979-3B74-08DC68E79066','Clients','client_screen','/admin/clients')
-END
  
- 
-IF NOT EXISTS (SELECT 1 FROM Screens Where Name= 'Admin GUI Versions' and ScreenKey ='admin_gui_versions')
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='admin_gui_versions')
 BEGIN 
     INSERT INTO Screens(Id,Name,ScreenKey,Route)
     VALUES
@@ -376,7 +430,7 @@ BEGIN
 END
  
  
-IF NOT EXISTS (SELECT 1 FROM Screens Where Name= 'User time sheet calendar' and ScreenKey ='user_time_sheet_calendar')
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='user_time_sheet_calendar')
 BEGIN 
     INSERT INTO Screens(Id,Name,ScreenKey,Route)
     VALUES
@@ -386,7 +440,7 @@ END
  
  
  
-IF NOT EXISTS (SELECT 1 FROM Screens Where Name= 'Absence Request' and ScreenKey ='absence_request')
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='absence_request')
 BEGIN 
     INSERT INTO Screens(Id,Name,ScreenKey,Route)
     VALUES
@@ -394,7 +448,7 @@ BEGIN
 END
  
  
-IF NOT EXISTS (SELECT 1 FROM Screens Where Name= 'Admin time sheet review calendar' and ScreenKey ='admin_time_sheet_review_calendar')
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='admin_time_sheet_review_calendar')
 BEGIN 
     INSERT INTO Screens(Id,Name,ScreenKey,Route)
     VALUES
@@ -403,10 +457,130 @@ END
  
  
  
-IF NOT EXISTS (SELECT 1 FROM Screens Where Name= 'Absence Approval' and ScreenKey ='absence_approval')
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='absence_approval')
 BEGIN 
     INSERT INTO Screens(Id,Name,ScreenKey,Route)
     VALUES
         ('B39271A8-EB3A-42DC-A079-1C76F4A75668','Absence Approval','absence_approval','/admin/timesheets/absence-approval')
 END
+
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey ='super_admin_dashboard')
+BEGIN 
+    INSERT INTO Screens(Id,Name,ScreenKey,Route)
+    VALUES
+        ('F7D2F4D6-BA6C-4CEA-A5F1-08DC8AD95661','Super Admin Dashboard','super_admin_dashboard','/admin/admin-super-admin-dashboard')
+END
 --End entry for screens
+
+
+--adding entry for  roles 
+IF NOT EXISTS (SELECT 1 FROM Roles Where Name= 'External Employee')
+BEGIN 
+    INSERT INTO Roles(Id,IsDeleted,Name)
+    VALUES
+       (NEWID(),0,'External Employee')
+END
+
+-- Invoicing seed data starts
+
+/* Adding UNPAID status data in Payment Status */
+
+IF NOT EXISTS (SELECT 1 FROM PaymentStatuses Where StatusKey= 'UNPAID')
+BEGIN 
+    INSERT INTO PaymentStatuses(Id,Name,StatusKey)
+    VALUES
+        (NEWID(),'Unpaid','UNPAID')
+END
+
+/* Adding PARTIAL_PAID status data in Payment Status */
+
+IF NOT EXISTS (SELECT 1 FROM PaymentStatuses Where StatusKey= 'PARTIAL_PAID')
+BEGIN 
+    INSERT INTO PaymentStatuses(Id,Name,StatusKey)
+    VALUES
+        (NEWID(),'Partial paid','PARTIAL_PAID')
+END
+
+/* Adding PAID status data in Payment Status */
+
+IF NOT EXISTS (SELECT 1 FROM PaymentStatuses Where StatusKey= 'PAID')
+BEGIN 
+    INSERT INTO PaymentStatuses(Id,Name,StatusKey)
+    VALUES
+        (NEWID(),'Paid','PAID')
+END
+
+/* Adding DRAFT status data in Invoice Status */
+
+IF NOT EXISTS (SELECT 1 FROM InvoiceStatuses Where StatusKey= 'DRAFT')
+BEGIN 
+    INSERT INTO InvoiceStatuses(Id,Name,StatusKey)
+    VALUES
+        (NEWID(),'Draft','DRAFT')
+END
+
+/* Adding SEND_TO_CUSTOMER status data in Invoice Status */
+
+IF NOT EXISTS (SELECT 1 FROM InvoiceStatuses Where StatusKey= 'SEND_TO_CUSTOMER')
+BEGIN 
+    INSERT INTO InvoiceStatuses(Id,Name,StatusKey)
+    VALUES
+        (NEWID(),'Sent','SEND_TO_CUSTOMER')
+END
+
+/* Adding CLOSED status data in Invoice Status */
+
+IF NOT EXISTS (SELECT 1 FROM InvoiceStatuses Where StatusKey= 'CLOSED')
+BEGIN 
+    INSERT INTO InvoiceStatuses(Id,Name,StatusKey)
+    VALUES
+        (NEWID(),'Closed','CLOSED')
+END
+
+
+/* Adding DECLINED status data in Invoice Status */
+
+IF NOT EXISTS (SELECT 1 FROM InvoiceStatuses Where StatusKey= 'DECLINED')
+BEGIN 
+    INSERT INTO InvoiceStatuses(Id,Name,StatusKey)
+    VALUES
+        (NEWID(),'Declined','DECLINED')
+END
+-- Invoicing seed data ends
+
+
+/* Adding Draft Quote Status data in Quote Status */
+
+IF NOT EXISTS (SELECT 1 FROM QuoteStatuses Where StatusKey= 'DRAFT')
+BEGIN 
+    INSERT INTO QuoteStatuses(Id,Name,StatusKey)
+    VALUES
+        ('6BC0B3F8-74FA-4B59-8A95-4DDB851C2A15','Draft','DRAFT')
+END
+
+/* Adding Cancel Quote Status data in Quote Status */
+
+IF NOT EXISTS (SELECT 1 FROM QuoteStatuses Where StatusKey= 'CANCEL')
+BEGIN 
+    INSERT INTO QuoteStatuses(Id,Name,StatusKey)
+    VALUES
+        ('B4D1B75D-96B4-4B2B-923B-49564866E3E1','Cancel','CANCEL')
+END
+
+/* Adding Finalized Quote Status data in Quote Status */
+
+IF NOT EXISTS (SELECT 1 FROM QuoteStatuses Where StatusKey= 'FINALIZED')
+BEGIN 
+    INSERT INTO QuoteStatuses(Id,Name,StatusKey)
+    VALUES
+        ('7F7EBBE2-C4E9-49D5-9AB5-689EAF6652FB','Finalized','FINALIZED')
+END
+
+/* Adding Send To Customer Quote Status data in Quote Status */
+
+IF NOT EXISTS (SELECT 1 FROM QuoteStatuses Where StatusKey= 'SEND_TO_CUSTOMER')
+BEGIN 
+    INSERT INTO QuoteStatuses(Id,Name,StatusKey)
+    VALUES
+        ('44B14DD6-62DB-4001-A11B-8355F683D758','Send To Customer','SEND_TO_CUSTOMER')
+END

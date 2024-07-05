@@ -54,7 +54,7 @@ public class LicenseService : ILicenseService
     {
         try
         {
-            var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin")).ToList();
+            var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin") || c.Contains("Account Admin")).ToList();
 
             var entities = await _licenseRepository.QueryAsync(include: source => source.Include(o => o.LicenseDevices).Include(o => o.Customer).Include(e => e.CreatedByUser), ignoreGlobalFilter: superAdminRole.Count != 0);
 
@@ -69,9 +69,9 @@ public class LicenseService : ILicenseService
                 CreatedAt = e.CreatedAt,
                 LicenseKey = e.LicenseKey,
                 ExpirationDate = e.ExpirationDate,
-                CustomerEmail = e.Customer.Email,
+                CustomerEmail = e.Customer.ManagerEmail,
+                CustomerName = e.Customer.ManagerName,
                 LicenseDuration = e.LicenseDuration,
-                CustomerName = e.Customer.Name,
                 CreatedBy = e.CreatedByUser.FullName,
                 LicenseDevices = _mapper.Map<List<LicenseDeviceDto>>(e.LicenseDevices),
                 ActivatedDevicesCount = e.LicenseDevices.Any() ? e.LicenseDevices.Count() : 0,
@@ -155,7 +155,7 @@ public class LicenseService : ILicenseService
             if (licenseResult != null)
             {
                 var customer = await _customerRepository.FirstOrDefaultAsync(x => x.Id == licenseResult.CustomerId);
-                await SendCustomerLicenseAddedEmail(customer.Email, customer.Name, licenseResult);
+                Task.Run(() => SendCustomerLicenseAddedEmail(customer.ManagerEmail,customer.ManagerName, licenseResult));
             }
             return await Get(entity.Id);
         }
@@ -224,12 +224,12 @@ public class LicenseService : ILicenseService
 
         filter.GetValue<string>("customerName", (v) =>
         {
-            entities = entities.Where(e => e.Customer != null && e.Customer.Name.ToLower().Contains(v.ToLower()));
+            entities = entities.Where(e => e.Customer != null && e.Customer.ManagerName.ToLower().Contains(v.ToLower()));
         });
 
         filter.GetValue<string>("customerEmail", (v) =>
         {
-            entities = entities.Where(e => e.Customer != null && e.Customer.Email.ToLower().Contains(v.ToLower()));
+            entities = entities.Where(e => e.Customer != null && e.Customer.ManagerEmail.ToLower().Contains(v.ToLower()));
         });
 
 
@@ -334,11 +334,11 @@ public class LicenseService : ILicenseService
                 }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerName).ToUpper())
                 {
-                    orders = orders.OrderBy(o => o.Customer.Name);
+                    orders = orders.OrderBy(o => o.Customer.ManagerName);
                 }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerEmail).ToUpper())
                 {
-                    orders = orders.OrderBy(o => o.Customer.Email);
+                    orders = orders.OrderBy(o => o.Customer.ManagerEmail);
                 }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.LicenseDuration).ToUpper())
                 {
@@ -365,11 +365,11 @@ public class LicenseService : ILicenseService
                 }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerName).ToUpper())
                 {
-                    orders = orders.OrderByDescending(o => o.Customer.Name);
+                    orders = orders.OrderByDescending(o => o.Customer.ManagerName);
                 }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerEmail).ToUpper())
                 {
-                    orders = orders.OrderByDescending(o => o.Customer.Email);
+                    orders = orders.OrderByDescending(o => o.Customer.ManagerEmail);
                 }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.LicenseDuration).ToUpper())
                 {
@@ -386,13 +386,10 @@ public class LicenseService : ILicenseService
         }
     }
 
-    private async Task<bool> SendCustomerLicenseAddedEmail(string email, string userFullName, License license)
+    private async Task<bool> SendCustomerLicenseAddedEmail(string email, string userFullName,  License license)
     {
         try
         {
-            //string path = Path.Combine(_hostingEnvironment.ContentRootPath, "Assets\\Images");
-            //var fileName = "Logo_AddOptimization_blue.png";
-            //var imagePath = $"\"{path}\\{fileName}\"";
             var subject = "Add optimization new license details";
             var message = "A new license has been created for your account. Please find the details below.";
             var emailTemplate = _templateService.ReadTemplate(EmailTemplates.CreateLicense);
@@ -402,7 +399,6 @@ public class LicenseService : ILicenseService
                             .Replace("[LicenseKey]", license.LicenseKey)
                             .Replace("[NoOfDevices]", license.NoOfDevices.ToString())
                             .Replace("[ExpirationDate]", license.ExpirationDate.ToString());
-            //.Replace("[ImageTag]", $"<img src={imagePath} height=\"20\" width=\"120\" />");
             return await _emailService.SendEmail(email, subject, emailTemplate);
         }
         catch (Exception ex)

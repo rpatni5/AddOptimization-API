@@ -6,6 +6,7 @@ namespace AddOptimization.Data.Entities
     {
         public string CountryName { get; set; }
         public string CountryCode { get; set; }
+        public string DialCode { get; set; }
         public bool IsDeleted { get; set; }
     }
 }

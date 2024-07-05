@@ -14,11 +14,7 @@ using AddOptimization.Utilities.Enums;
 using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Constants;
-using AddOptimization.Utilities.Services;
 using Microsoft.Extensions.Configuration;
-using System;
-using iText.StyledXmlParser.Css.Selector.Item;
-
 namespace AddOptimization.Services.Services;
 public class CustomerService : ICustomerService
 {
@@ -35,6 +31,7 @@ public class CustomerService : ICustomerService
     private readonly IGenericRepository<PasswordResetToken> _passwordResetTokenRepository;
     private readonly IGenericRepository<Role> _roleRepository;
     private readonly IGenericRepository<UserRole> _userRoleRepository;
+
 
 
     private readonly IUnitOfWork _unitOfWork;
@@ -69,8 +66,7 @@ public class CustomerService : ICustomerService
             var entities = await _customerRepository.QueryMappedAsync(s => new CustomerSummaryDto
             {
                 Id = s.Id,
-                Name = s.Name,
-            }, e => includeDeleted || (e.CustomerStatus != null && e.CustomerStatus.Name != CustomerStatuses.Inactive), orderBy: (entities) => entities.OrderBy(c => c.Name), ignoreGlobalFilter: true);
+            }, e => includeDeleted || (e.CustomerStatus != null && e.CustomerStatus.Name != CustomerStatuses.Inactive), ignoreGlobalFilter: true);
             return ApiResult<List<CustomerSummaryDto>>.Success(entities.ToList());
         }
         catch (Exception ex)
@@ -83,28 +79,54 @@ public class CustomerService : ICustomerService
     {
         try
         {
-            var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin")).ToList();
+            var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin", StringComparison.InvariantCultureIgnoreCase) || c.Contains("Account Admin", StringComparison.InvariantCultureIgnoreCase)).ToList();
             var entities = await _customerRepository.QueryAsync(include: entities => entities
-            .Include(e => e.CustomerStatus).Include(e => e.Licenses).Include(e => e.BillingAddress), orderBy: (entities) => entities.OrderBy(t => t.Name), ignoreGlobalFilter: superAdminRole.Count != 0);
+            .Include(e => e.CustomerStatus).Include(e => e.Licenses).Include(e => e.BillingAddress).Include(e => e.Country).Include(e => e.PartnerCountry), ignoreGlobalFilter: superAdminRole.Count != 0);
 
             entities = ApplySorting(entities, filter?.Sorted?.FirstOrDefault());
             entities = ApplyFilters(entities, filter);
             var pagedResult = PageHelper<Customer, CustomerDto>.ApplyPaging(entities, filter, entities => entities.Select(e => new CustomerDto
             {
                 Id = e.Id,
-                Name = e.Name,
-                Email = e.Email,
-                BirthDay = e.Birthday,
                 Company = e.Organizations,
                 Notes = e.Notes,
                 Phone = e.Phone,
                 CustomerStatusId = e.CustomerStatusId,
-                ContactInfo = e.ContactInfo,
                 Licenses = _mapper.Map<List<LicenseDetailsDto>>(e.Licenses),
                 CountryCode = e.CountryCode,
                 CustomerStatusName = e.CustomerStatus.Name,
                 BillingAddressString = e.BillingAddress == null ? null : $"{e.BillingAddress.Address1},{e.BillingAddress.Zip},{e.BillingAddress.City}",
-
+                ManagerName = e.ManagerName,
+                ManagerEmail = e.ManagerEmail,
+                ManagerPhone = e.ManagerPhone,
+                VAT = e.VAT,
+                PaymentClearanceDays = e.PaymentClearanceDays,
+                CountryId = e.CountryId,
+                IsApprovalRequired = e.IsApprovalRequired,
+                PartnerName = e.PartnerName,
+                PartnerBankName = e.PartnerBankName,
+                PartnerBankAccountName = e.PartnerBankAccountName,
+                PartnerBankAccountNumber = e.PartnerBankAccountNumber,
+                PartnerBankAddress = e.PartnerBankAddress,
+                PartnerCountryId = e.PartnerCountryId,
+                PartnerAddress = e.PartnerAddress,
+                PartnerAddress2 = e.PartnerAddress2,
+                PartnerVATNumber = e.PartnerVATNumber,
+                VATNumber = e.VATNumber,
+                PartnerDescriptions = e.PartnerDescriptions,
+                State = e.State,
+                PartnerState = e.PartnerState,
+                Address = e.Address,
+                Address2 = e.Address2,
+                City = e.City,
+                ZipCode = e.ZipCode,
+                PartnerCity = e.PartnerCity,
+                PartnerZipCode = e.PartnerZipCode,
+                CountryNames = e.Country.CountryName,
+                PartnerCompany = e.PartnerCompany,
+                PartnerCountryNames = e.PartnerCountry.CountryName,
+                PartnerEmail = e.PartnerEmail,
+                PartnerPhone = e.PartnerPhone,
             }).ToList());
             var retVal = pagedResult;
             return PagedApiResult<CustomerDto>.Success(retVal);
@@ -154,8 +176,8 @@ public class CustomerService : ICustomerService
         await _unitOfWork.BeginTransactionAsync();
         try
         {
-            var isExists = await _customerRepository.IsExist(t => t.Email.ToLower() == model.Email.ToLower(), ignoreGlobalFilter: true);
-            var isExistInAppUser = await _applicationUserRepository.IsExist(t => t.Email.ToLower() == model.Email.ToLower(), ignoreGlobalFilter: true);
+            var isExists = await _customerRepository.IsExist(t => t.ManagerEmail.ToLower() == model.ManagerEmail.ToLower(), ignoreGlobalFilter: true);
+            var isExistInAppUser = await _applicationUserRepository.IsExist(t => t.Email.ToLower() == model.ManagerEmail.ToLower(), ignoreGlobalFilter: true);
 
             if (isExists || isExistInAppUser)
             {
@@ -163,35 +185,15 @@ public class CustomerService : ICustomerService
                 return ApiResult<CustomerDto>.Failure(ValidationCodes.EmailUserNameAlreadyExists, errorMessage);
             }
             var entity = _mapper.Map<Customer>(model);
-            var billingAddressId = entity.BillingAddressId;
-            entity.BillingAddressId = null;
             entity = await _customerRepository.InsertAsync(entity);
-            if (model.Addresses.Any())
-            {
-                model.Addresses.ForEach(a =>
-                {
-                    a.CustomerId = entity.Id;
-                });
-                await _addressService.BulkCreate(model.Addresses);
-                if (billingAddressId != null)
-                {
-                    entity.BillingAddressId = billingAddressId;
-                    await _customerRepository.UpdateAsync(entity);
-                }
-            }
-            var names = model.Name.Split(' ');
-            string firstName = names[0] != null ? names[0] : null;
-            string lastName = names.Length > 1 ? names[names.Count() - 1] : null;
             var appUserEntity = new ApplicationUser
             {
-                Email = model.Email,
-                FirstName = firstName,
-                LastName = lastName,
-                FullName = model.Name,
+                Email = model.ManagerEmail,
+                FullName = model.ManagerName,
                 IsEmailsEnabled = true,
                 IsActive = true,
                 IsLocked = false,
-                UserName = model.Email
+                UserName = model.ManagerEmail
             };
             var appUserEntityValue = await _applicationUserRepository.InsertAsync(appUserEntity);
 
@@ -257,7 +259,7 @@ public class CustomerService : ICustomerService
         await _unitOfWork.BeginTransactionAsync();
         try
         {
-            var isExists = await _customerRepository.IsExist(t => t.Id != id && t.Email.ToLower() == model.Email.ToLower(), ignoreGlobalFilter: true);
+            var isExists = await _customerRepository.IsExist(t => t.Id != id && t.ManagerEmail.ToLower() == model.ManagerEmail.ToLower(), ignoreGlobalFilter: true);
 
             if (isExists)
             {
@@ -272,11 +274,11 @@ public class CustomerService : ICustomerService
             }
 
             //Update application user
-            if (entity.Email != model.Email || entity.Name != model.Name)
+            if (entity.ManagerEmail != model.ManagerEmail || entity.ManagerName != model.ManagerName)
             {
-                var appUserEntityValue = (await _applicationUserRepository.QueryAsync(c => c.Email == entity.Email && c.IsActive)).FirstOrDefault();
+                var appUserEntityValue = (await _applicationUserRepository.QueryAsync(c => c.Email == entity.ManagerEmail && c.IsActive)).FirstOrDefault();
                 appUserEntityValue.FullName = model.Name;
-                appUserEntityValue.Email = model.Email;
+                appUserEntityValue.Email = model.ManagerEmail;
                 await _applicationUserRepository.UpdateAsync(appUserEntityValue);
             }
             _mapper.Map(model, entity);
@@ -318,48 +320,21 @@ public class CustomerService : ICustomerService
         }
     }
 
-    //public async Task<ApiResult<List<CustomerOrderDto>>> GetOrders(Guid customerId)
-    //{
-    //    try
-    //    {
-    //        var entities = await _orderRepository.QueryMappedAsync(e=> new CustomerOrderDto
-    //        {
-    //            Id=e.Id,
-    //            InvoiceNumber= e.InvoiceNumber,
-    //            Duedate=e.Duedate,
-    //            OrderStatusId=e.OrderStatusId,
-    //            OrderStatusName=e.OrderStatus.Name,
-    //            UserId=e.UserId,
-    //            UserFullName=e.UserFullName,
-    //            ShippingAddressString = e.ShippingAddress==null?null:e.ShippingAddress.address1+","+e.ShippingAddress.zip + "," + e.ShippingAddress.city,
-    //            City = e.ShippingAddress==null?null: e.ShippingAddress.city,
-    //            Total = e.Totals==null ? null :e.Totals.total/100
-    //        },e=> e.CustomerId==customerId,include: source => source.Include(o => o.OrderStatus),orderBy:entities=> entities.OrderByDescending(o=> o.CreatedAt));
-
-    //        return ApiResult<List<CustomerOrderDto>>.Success(entities.ToList());
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        _logger.LogException(ex);
-    //        throw;
-    //    }
-    //}
-
     private IQueryable<Customer> ApplyFilters(IQueryable<Customer> entities, PageQueryFiterBase filter)
     {
 
-        filter.GetValue<string>("Name", (v) =>
+        filter.GetValue<string>("Company", (v) =>
         {
-            entities = entities.Where(e => e.Name != null && e.Name.ToLower().Contains(v.ToLower()));
+            entities = entities.Where(e => e.Organizations != null && e.Organizations.ToLower().Contains(v.ToLower()));
         });
-        filter.GetValue<string>("Email", (v) =>
+        filter.GetValue<string>("ManagerName", (v) =>
         {
-            entities = entities.Where(e => e.Email != null && e.Email.ToLower().Contains(v.ToLower()));
+            entities = entities.Where(e => e.ManagerName != null && e.ManagerName.ToLower().Contains(v.ToLower()));
         });
 
-        filter.GetValue<string>("Phone", (v) =>
+        filter.GetValue<string>("CountryNames", (v) =>
         {
-            entities = entities.Where(e => e.Phone != null && e.Phone.ToLower().Contains(v.ToLower()));
+            entities = entities.Where(e => e.Country.CountryName != null && e.Country.CountryName.ToLower().Contains(v.ToLower()));
         });
         filter.GetValue<string>("CustomerStatusId", (v) =>
         {
@@ -384,17 +359,18 @@ public class CustomerService : ICustomerService
             var columnName = sort.Name.ToUpper();
             if (sort.Direction == SortDirection.ascending.ToString())
             {
-                if (columnName.ToUpper() == nameof(CustomerDto.Name).ToUpper())
+
+                if (columnName.ToUpper() == nameof(CustomerDto.Company).ToUpper())
                 {
-                    orders = orders.OrderBy(o => o.Name);
+                    orders = orders.OrderBy(o => o.Organizations);
                 }
-                if (columnName.ToUpper() == nameof(CustomerDto.Email).ToUpper())
+                if (columnName.ToUpper() == nameof(CustomerDto.ManagerName).ToUpper())
                 {
-                    orders = orders.OrderBy(o => o.Email);
+                    orders = orders.OrderBy(o => o.ManagerName);
                 }
-                if (columnName.ToUpper() == nameof(CustomerDto.Phone).ToUpper())
+                if (columnName.ToUpper() == nameof(CustomerDto.CountryNames).ToUpper())
                 {
-                    orders = orders.OrderBy(o => o.Phone);
+                    orders = orders.OrderBy(o => o.Country.CountryName);
                 }
                 if (columnName.ToUpper() == nameof(CustomerDto.CustomerStatus).ToUpper())
                 {
@@ -404,17 +380,17 @@ public class CustomerService : ICustomerService
             }
             else
             {
-                if (columnName.ToUpper() == nameof(CustomerDto.Name).ToUpper())
+                if (columnName.ToUpper() == nameof(CustomerDto.Company).ToUpper())
                 {
-                    orders = orders.OrderByDescending(o => o.Name);
+                    orders = orders.OrderBy(o => o.Organizations);
                 }
-                if (columnName.ToUpper() == nameof(CustomerDto.Email).ToUpper())
+                if (columnName.ToUpper() == nameof(CustomerDto.ManagerName).ToUpper())
                 {
-                    orders = orders.OrderByDescending(o => o.Email);
+                    orders = orders.OrderBy(o => o.ManagerName);
                 }
-                if (columnName.ToUpper() == nameof(CustomerDto.Phone).ToUpper())
+                if (columnName.ToUpper() == nameof(CustomerDto.CountryNames).ToUpper())
                 {
-                    orders = orders.OrderByDescending(o => o.Phone);
+                    orders = orders.OrderBy(o => o.Country.CountryName);
                 }
                 if (columnName.ToUpper() == nameof(CustomerDto.CustomerStatus).ToUpper())
                 {
@@ -452,6 +428,42 @@ public class CustomerService : ICustomerService
         {
             _logger.LogException(ex);
             return false;
+        }
+    }
+
+    public async Task<ApiResult<CustomerDto>> GetCustomerById(Guid id)
+    {
+        try
+        {
+            var entity = await _customerRepository.FirstOrDefaultAsync(t => t.Id == id, include: entity => entity.Include(e => e.Addresses.Where(a => !a.IsDeleted).OrderByDescending(e => e.CreatedAt)).Include(e => e.CustomerStatus).Include(e => e.Country).Include(e => e.PartnerCountry), ignoreGlobalFilter: true);
+            if (entity == null)
+            {
+                return ApiResult<CustomerDto>.NotFound("Customer");
+            }
+            var mappedEntity = _mapper.Map<CustomerDto>(entity);
+
+            return ApiResult<CustomerDto>.Success(mappedEntity);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            throw;
+        }
+    }
+
+    public async Task<ApiResult<List<CustomerDto>>> GetAllCustomers()
+    {
+        try
+        {
+            var activeId = (await _customerStatusRepository.FirstOrDefaultAsync(e => e.Name == CustomerStatuses.Active)).Id;
+            var entities = await _customerRepository.QueryAsync((e => e.CustomerStatusId == activeId), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Id));
+            var mappedEntities = _mapper.Map<List<CustomerDto>>(entities);
+            return ApiResult<List<CustomerDto>>.Success(mappedEntities);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            throw;
         }
     }
 }
