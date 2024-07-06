@@ -91,7 +91,7 @@ public class CustomersController : CustomApiControllerBase
         }
     }
 
-    [HttpPut("send-email/{id}")]
+    [HttpPost("send-email/{id}")]
     [HasPermission(ScreenKeys.Customers, GlobalFields.Update)]
     public async Task<IActionResult> SendEmail(Guid id)
     {
