@@ -236,7 +236,9 @@ public class EmployeeService : IEmployeeService
         {
             var subject = "Account created";
             var emailTemplate = _templateService.ReadTemplate(EmailTemplates.EmployeeAccountCreated);
-            emailTemplate = emailTemplate.Replace("[UserFullName]", employeeFullName);
+            var loginLink = $"{_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl}/login";
+            emailTemplate = emailTemplate.Replace("[UserFullName]", employeeFullName)
+                                         .Replace("[LoginLink]", loginLink);
             return await _emailService.SendEmail(email, subject, emailTemplate);
         }
         catch (Exception ex)

@@ -34,6 +34,8 @@ public class AuthService : IAuthService
     private readonly IGenericRepository<PasswordResetToken> _passwordResetTokenRepository;
     private readonly IEmailService _emailService;
     private readonly IPermissionService _permissionService;
+    private readonly ISettingService _settingService;
+
     public AuthService(IConfiguration configuration, ILogger<AuthService> logger,
         IGenericRepository<ApplicationUser> applicationUserRepository,
         IMapper mapper, IGenericRepository<RefreshToken> tokenRepository,
@@ -41,6 +43,7 @@ public class AuthService : IAuthService
         IEmailService emailService,
         ITemplateService templateService,
         IPermissionService permissionService,
+        ISettingService settingService,
         IGenericRepository<Employee> employeeRepository)
     {
         _logger = logger;
@@ -53,6 +56,7 @@ public class AuthService : IAuthService
         _configuration = configuration;
         _permissionService = permissionService;
         _employeeRepository = employeeRepository;
+        _settingService = settingService;
     }
 
     private (string token, DateTime expiry) GenerateAccessToken(ApplicationUser entity)
@@ -174,10 +178,12 @@ public class AuthService : IAuthService
             {
                 return ApiResult<AuthResponseDto>.Failure(ValidationCodes.InvalidUserName);
             }
-            //if (await IsEmployeeRole(entity))
-            //{
-            //    return ApiResult<AuthResponseDto>.Failure(ValidationCodes.LoginWithMicrosoftProvider);
-            //}
+            var isSsoLoginEnabled = await _settingService.GetSettingByCode(SettingCodes.SSO_LOGIN);
+
+            if (await IsEmployeeRole(entity) && isSsoLoginEnabled.Result != null && isSsoLoginEnabled.Result.IsEnabled)
+            {
+                return ApiResult<AuthResponseDto>.Failure(ValidationCodes.LoginWithMicrosoftProvider);
+            }
 
             if (!entity.IsActive)
             {

@@ -335,6 +335,9 @@ namespace AddOptimization.Services.Mappings
             });
             CreateMap<ExternalInvoiceAmountDto, ExternalInvoicePaymentHistory>();
 
+            CreateMap<SettingDto, Setting>();
+            CreateMap<Setting, SettingDto>();
+
 
         }
     }

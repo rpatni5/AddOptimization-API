@@ -7,6 +7,7 @@ using AddOptimization.Services;
 using AddOptimization.Utilities;
 using AddOptimization.Data;
 using AddOptimization.API.HostedService.BackgroundServices;
+using AddOptimization.Contracts.Services;
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 var builder = WebApplication.CreateBuilder(args);
@@ -40,10 +41,7 @@ services.AddHostedService<LicenseRenewalEmailBackgroundService>();
 services.AddHostedService<FillTimesheetReminderEmailBackgroundService>();
 services.AddHostedService<PendingTimesheetReminderToCustomerBackgroundService>();
 services.AddHostedService<GenerateInvoiceBackgroundService>();
-services.AddLogging(builder =>
-{
-    builder.AddFile($"logs/log_for.txt",LogLevel.Information);
-});
+services.AddLoggingService();
 #endregion
 #region configure
 var app = builder.Build();
