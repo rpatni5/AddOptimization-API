@@ -91,6 +91,21 @@ public class CustomersController : CustomApiControllerBase
         }
     }
 
+    [HttpPut("send-email/{id}")]
+    [HasPermission(ScreenKeys.Customers, GlobalFields.Update)]
+    public async Task<IActionResult> SendEmail(Guid id)
+    {
+        try
+        {
+            var retVal = await _customersService.SendCustomerCreatedAndResetPasswordEmail(id);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
     [HttpDelete("{id}")]
     [HasPermission(ScreenKeys.Customers, GlobalFields.Delete)]
     public async Task<IActionResult> Delete(Guid id)
