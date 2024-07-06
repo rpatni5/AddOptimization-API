@@ -67,14 +67,13 @@ public partial class AddOptimizationContext : DbContext
     public virtual DbSet<QuoteStatuses> QuoteStatuses { get; set; }
     public virtual DbSet<QuoteSummary> QuoteSummaries { get; set; }
     public virtual DbSet<PaymentStatus> PaymentStatuses { get; set; }
-    public virtual DbSet<ExternalInvoice> ExternalInvoices {get; set;}
-    public virtual DbSet<ExternalInvoiceDetail> ExternalInvoiceDetails{get;set; }
+    public virtual DbSet<ExternalInvoice> ExternalInvoices { get; set; }
+    public virtual DbSet<ExternalInvoiceDetail> ExternalInvoiceDetails { get; set; }
     public virtual DbSet<InvoiceHistory> InvoiceHistory { get; set; }
     public virtual DbSet<ExternalInvoiceHistory> ExternalInvoiceHistory { get; set; }
-    public virtual DbSet<ExternalInvoicePaymentHistory> ExternalInvoicePaymentHistory {  get; set; }
-
-
+    public virtual DbSet<ExternalInvoicePaymentHistory> ExternalInvoicePaymentHistory { get; set; }
     public virtual DbSet<InvoicePaymentHistory> InvoicePaymentHistory { get; set; }
+    public virtual DbSet<Setting> Settings { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
