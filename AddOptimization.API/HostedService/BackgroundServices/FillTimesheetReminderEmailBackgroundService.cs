@@ -93,7 +93,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             {
                 var scope = _serviceProvider.CreateScope();
                 var _emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
-                var subject = "Add optimization timesheet submission reminder";
+                var subject = "AddOptimization timesheet submission reminder";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.FillTimesheetReminder);
                 var link = GetMyTimesheetLinkForEmployee();
                 emailTemplate = emailTemplate

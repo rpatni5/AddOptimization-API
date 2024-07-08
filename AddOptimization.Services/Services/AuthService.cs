@@ -427,7 +427,7 @@ public class AuthService : IAuthService
     {
         try
         {
-            var subject = "Reset Your Account Password";
+            var subject = "Reset your account password";
             var emailTemplate = _templateService.ReadTemplate(EmailTemplates.ResetPassword);
             var resetLink = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).ResetPassword).Replace("[token]", token);
             emailTemplate = emailTemplate.Replace("[UserFullName]", userFullName).Replace("[PasswordResetLink]", resetLink);

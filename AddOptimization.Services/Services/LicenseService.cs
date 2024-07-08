@@ -398,7 +398,7 @@ public class LicenseService : ILicenseService
     {
         try
         {
-            var subject = "Add optimization new license details";
+            var subject = "AddOptimization new license details";
             var message = "A new license has been created for your account. Please find the details below.";
             var emailTemplate = _templateService.ReadTemplate(EmailTemplates.CreateLicense);
             emailTemplate = emailTemplate

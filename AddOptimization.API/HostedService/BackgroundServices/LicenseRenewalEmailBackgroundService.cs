@@ -82,7 +82,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             {
                 var scope = _serviceProvider.CreateScope();
                 var _emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
-                var subject = "Add optimization renew license";
+                var subject = "AddOptimization renew license";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.RenewLicense);
                 string[] tableHeaders = { "S.No", "LicenseKey", "NoOfDevices", "ExpirationDate" };
                 var table = GenerateHtmlTable(tableHeaders, license);
