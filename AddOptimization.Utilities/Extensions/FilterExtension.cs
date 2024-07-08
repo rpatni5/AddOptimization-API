@@ -13,6 +13,11 @@ public static class FilterExtension
     {
         try
         {
+            
+            if (filters == null)
+            {
+                return;
+            }
             filterName = filterName.ToLower();
             if ((!filters.Where?.Any()) ?? true)
             {

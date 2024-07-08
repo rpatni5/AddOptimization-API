@@ -48,6 +48,7 @@ public class CompanyService : ICompanyService
                 entity.SwiftCode = model.SwiftCode;
                 entity.State = model.State;
                 entity.TaxNumber = model.TaxNumber;
+                entity.DialCodeId = model.DialCodeId;
 
                 await _companyRepository.UpdateAsync(entity);
             }
@@ -72,6 +73,10 @@ public class CompanyService : ICompanyService
         try
         {
             var entity = await _companyRepository.FirstOrDefaultAsync();
+            if(entity == null)
+            {
+                return null;
+            }
             var mappedEntity = _mapper.Map<CompanyDto>(entity);
             Guid.TryParse(entity.Country, out Guid parsedCountryId);
             var countries = await _countryService.GetCountriesById(parsedCountryId);

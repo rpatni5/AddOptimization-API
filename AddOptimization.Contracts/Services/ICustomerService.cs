@@ -15,5 +15,5 @@ public interface ICustomerService
     Task<ApiResult<CustomerDto>> GetCustomerById(Guid id);
 
     Task<ApiResult<List<CustomerDto>>> GetAllCustomers();
-    // Task<ApiResult<List<CustomerLicenseDto>>> GetLicense(Guid customerId);
+    Task<ApiResult<bool>> SendCustomerCreatedAndResetPasswordEmail(Guid id);
 }
