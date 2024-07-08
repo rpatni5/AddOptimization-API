@@ -454,6 +454,16 @@ namespace AddOptimization.Services.Services
                 int userId = Convert.ToInt32(v);
                 entities = entities.Where(e => e.UserId == userId);
             });
+            filter.GetValue<string>("workDuration", (v) =>
+            {
+                int workDuration = Convert.ToInt32(v);
+                entities = entities.Where(e => e.EventDetails.Where(x => x.EventTypes.Name == "Timesheet").Sum(x => x.Duration) == workDuration);
+            });
+            filter.GetValue<string>("overtime", (v) =>
+            {
+                int overtime = Convert.ToInt32(v);
+                entities = entities.Where(e => e.EventDetails.Where(x => x.EventTypes.Name == "Overtime").Sum(x => x.Duration) == overtime);
+            });
             filter.GetList<DateTime>("duedateRange", (v) =>
             {
                 entities = entities.Where(e => e.StartDate.Date <= v.Max().Date);
