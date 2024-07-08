@@ -584,3 +584,29 @@ BEGIN
     VALUES
         ('44B14DD6-62DB-4001-A11B-8355F683D758','Send To Customer','SEND_TO_CUSTOMER')
 END
+
+/* Adding send email notifications setting in Settings */
+
+IF NOT EXISTS (SELECT 1 FROM Settings Where Code= 'EMAIL_NOTIFICATIONS')
+BEGIN 
+    INSERT INTO Settings(Id,Code,Name,Description, IsEnabled)
+    VALUES
+        (NEWID(),'EMAIL_NOTIFICATIONS','Email Notifications','When email notifications is enabled then email notification are sent otherise not.',1)
+END
+
+/* Adding force sso login setting in Settings */
+
+IF NOT EXISTS (SELECT 1 FROM Settings Where Code= 'SSO_LOGIN')
+BEGIN 
+    INSERT INTO Settings(Id,Code,Name,Description, IsEnabled)
+    VALUES
+        (NEWID(),'SSO_LOGIN','Sso Login','When SSO login is enabled then employee can only login with SSO provider.',1)
+END
+/* Adding log level setting in Settings */
+
+IF NOT EXISTS (SELECT 1 FROM Settings Where Code= 'LOG_LEVEL')
+BEGIN 
+    INSERT INTO Settings(Id,Code,Name,Description, IsEnabled)
+    VALUES
+        (NEWID(),'LOG_LEVEL','Log Level','When log level is enabled the Loglevel is Information otherwise Error.',1)
+END

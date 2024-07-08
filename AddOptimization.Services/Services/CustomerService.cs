@@ -226,23 +226,6 @@ public class CustomerService : ICustomerService
             {
                 return ApiResult<CustomerDto>.Failure(ValidationCodes.PasswordResetLinkLimitReached);
             }
-            string token = GenerateToken();
-            var resetToken = new PasswordResetToken
-            {
-                Token = token,
-                ExpiryDate = DateTime.UtcNow.AddDays(1),
-                CreatedByUserId = appUserEntityValue.Id
-            };
-            resetToken = await _passwordResetTokenRepository.InsertAsync(resetToken);
-
-            //Send password reset email
-            var isEmailSent = await SendCustomerCreatedAndResetPasswordEmail(token, appUserEntityValue.FullName, appUserEntityValue.Email);
-            if (!isEmailSent)
-            {
-                await _passwordResetTokenRepository.DeleteAsync(resetToken);
-                return ApiResult<CustomerDto>.Failure(ValidationCodes.IssueSendingEmail);
-
-            }
             var mappedEntity = _mapper.Map<CustomerDto>(entity);
             return ApiResult<CustomerDto>.Success(mappedEntity);
         }
@@ -252,6 +235,31 @@ public class CustomerService : ICustomerService
             _logger.LogException(ex);
             throw;
         }
+    }
+
+    public async Task<ApiResult<bool>> SendCustomerCreatedAndResetPasswordEmail(Guid id)
+    {
+        var entity = await _customerRepository.FirstOrDefaultAsync(t => t.Id == id, ignoreGlobalFilter: true);
+        if (entity == null)
+        {
+            return ApiResult<bool>.NotFound("Send email to customer.");
+        }
+        var appUserEntityValue = (await _applicationUserRepository.QueryAsync(c => c.Email == entity.ManagerEmail && c.IsActive)).FirstOrDefault();
+        string token = GenerateToken();
+        var resetToken = new PasswordResetToken
+        {
+            Token = token,
+            ExpiryDate = DateTime.UtcNow.AddDays(1),
+            CreatedByUserId = appUserEntityValue.Id,
+        };
+        resetToken = await _passwordResetTokenRepository.InsertAsync(resetToken);
+        var isEmailSent = await SendCustomerCreatedAndResetPasswordEmail(token, appUserEntityValue.FullName, appUserEntityValue.Email);
+        if (!isEmailSent)
+        {
+            await _passwordResetTokenRepository.DeleteAsync(resetToken);
+            return ApiResult<bool>.Failure(ValidationCodes.IssueSendingEmail);
+        }
+        return ApiResult<bool>.Success(true);
     }
 
     public async Task<ApiResult<CustomerDto>> Update(Guid id, CustomerCreateDto model)

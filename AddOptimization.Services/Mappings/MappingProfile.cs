@@ -181,7 +181,7 @@ namespace AddOptimization.Services.Mappings
             CreateMap<CustomerEmployeeAssociation, CustomerEmployeeAssociationDto>().AfterMap((s, d) =>
             {
                 d.ApproverName = s.Approver != null ? s.Approver.FullName : string.Empty;
-                d.CustomerName = s.Customer != null ? s.Customer.ManagerName : string.Empty;
+                d.CustomerName = s.Customer != null ? s.Customer.Organizations: string.Empty;
                 d.EmployeeName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
                 d.CreatedAt = s.CreatedAt?.Date;
                 d.CreatedBy = s.CreatedByUser?.FullName;
@@ -334,6 +334,9 @@ namespace AddOptimization.Services.Mappings
 
             });
             CreateMap<ExternalInvoiceAmountDto, ExternalInvoicePaymentHistory>();
+
+            CreateMap<SettingDto, Setting>();
+            CreateMap<Setting, SettingDto>();
 
 
         }
