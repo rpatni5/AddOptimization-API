@@ -114,7 +114,7 @@ public class EmployeeService : IEmployeeService
             }
 
             await _unitOfWork.CommitTransactionAsync();
-            Task.Run(() => SendEmployeeCreatedEmail(savedEmployee.FullName, savedEmployee.Email));
+            await  SendEmployeeCreatedEmail(savedEmployee.FullName, savedEmployee.Email);
             return ApiResult<bool>.Success(true);
         }
         catch (Exception ex)
