@@ -39,48 +39,14 @@ public  class EmailService: IEmailService
         try
         {
             var isEmailNotificationsEnabled = await _settingService.GetSettingByCode(SettingCodes.EMAIL_NOTIFICATIONS);
-            if (isEmailNotificationsEnabled != null && !isEmailNotificationsEnabled.Result.IsEnabled) 
-            {             
+            if (isEmailNotificationsEnabled != null && !isEmailNotificationsEnabled.Result.IsEnabled)
+            {
                 _logger.LogInformation($"Email notification setting is disabled. Details : Email recipient : {recipientEmails}, Subject: {subject},   Body : {body}.");
                 return false;
             }
-            var emailSettings = _configuration.ReadSection<EmailSettings>(AppSettingsSections.EmailSettings);
-            string smtpServer = emailSettings.SMTPServer;
-            int smtpPort = emailSettings.SMTPPort;
-            string senderEmail = emailSettings.SenderEmail;
-            string senderPassword = emailSettings.SenderPassword;
-            using var smtpClient = new SmtpClient(smtpServer, smtpPort)
-            {
-                UseDefaultCredentials = false,
-                Credentials = new NetworkCredential(senderEmail, senderPassword),
-                EnableSsl = true,
-                Timeout=60000
-            };
-            using var mailMessage = new MailMessage()
-            {
-                Subject = subject,
-                Body = body,
-                From = new MailAddress(senderEmail),
-                IsBodyHtml = hasHtml
-            };
-            foreach (var item in recipientEmails.Split(';'))
-            {
-                if(EmailHelper.IsValidEmail(item))
-                {
-                    mailMessage.To.Add(new MailAddress(item));  
-                }
-            };
-            if (!string.IsNullOrEmpty(cc))
-            {
-                foreach (var item in cc.Split(';'))
-                {
-                    if (EmailHelper.IsValidEmail(item))
-                    {
-                        mailMessage.CC.Add(new MailAddress(item));
-                    }
-                };
-            }
-            smtpClient.Send(mailMessage);
+            SmtpClient smtpClient;
+            MailMessage mailMessage;
+            Task.Run(()=> Send(recipientEmails, subject, body, cc, hasHtml, out smtpClient, out mailMessage));
             return true;
         }
         catch (Exception ex)
@@ -88,5 +54,46 @@ public  class EmailService: IEmailService
             _logger.LogException(ex);
             return false;
         }
+    }
+
+    private void Send(string recipientEmails, string subject, string body, string cc, bool hasHtml, out SmtpClient smtpClient, out MailMessage mailMessage)
+    {
+        var emailSettings = _configuration.ReadSection<EmailSettings>(AppSettingsSections.EmailSettings);
+        string smtpServer = emailSettings.SMTPServer;
+        int smtpPort = emailSettings.SMTPPort;
+        string senderEmail = emailSettings.SenderEmail;
+        string senderPassword = emailSettings.SenderPassword;
+        smtpClient = new SmtpClient(smtpServer, smtpPort)
+        {
+            UseDefaultCredentials = false,
+            Credentials = new NetworkCredential(senderEmail, senderPassword),
+            EnableSsl = true,
+            Timeout = 60000
+        };
+        mailMessage = new MailMessage()
+        {
+            Subject = subject,
+            Body = body,
+            From = new MailAddress(senderEmail),
+            IsBodyHtml = hasHtml
+        };
+        foreach (var item in recipientEmails.Split(';'))
+        {
+            if (EmailHelper.IsValidEmail(item))
+            {
+                mailMessage.To.Add(new MailAddress(item));
+            }
+        };
+        if (!string.IsNullOrEmpty(cc))
+        {
+            foreach (var item in cc.Split(';'))
+            {
+                if (EmailHelper.IsValidEmail(item))
+                {
+                    mailMessage.CC.Add(new MailAddress(item));
+                }
+            };
+        }
+        smtpClient.Send(mailMessage);
     }
 }

@@ -72,7 +72,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                             .Where(s => s.StartDate.Month >= association.CreatedAt.Value.Month).ToList();
                         foreach (var item in events)
                         {
-                            Task.Run(() => SendFillTimesheetReminderEmail(item));
+                            await SendFillTimesheetReminderEmail(item);
                         };
                     }
                 }

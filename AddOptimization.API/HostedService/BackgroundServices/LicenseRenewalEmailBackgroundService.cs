@@ -64,7 +64,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 {
                     var licensesDtoCollection = new List<LicenseDetailsDto>();
                     licensesDtoCollection.AddRange(group);
-                    Task.Run(() => SendCustomerLicenseRenewalEmail(licensesDtoCollection));
+                    await SendCustomerLicenseRenewalEmail(licensesDtoCollection);
                 }
                 return true;
             }

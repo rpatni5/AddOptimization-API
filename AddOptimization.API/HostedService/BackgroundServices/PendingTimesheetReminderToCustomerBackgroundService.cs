@@ -70,7 +70,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
 
                 foreach (var item in schedulerEvents?.Result)
                 {
-                    Task.Run(() => SendFillTimesheetReminderEmail(item));
+                    await SendFillTimesheetReminderEmail(item);
                 };
                 return true;
             }

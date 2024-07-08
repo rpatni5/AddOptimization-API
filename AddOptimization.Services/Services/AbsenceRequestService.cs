@@ -85,10 +85,7 @@ namespace AddOptimization.Services.Services
                 var user = (await _applicationUserRepository.FirstOrDefaultAsync(x => x.Id == mappedEntity.UserId));
                 foreach (var accountAdmin in accountAdminResult.Result.ToList())
                 {
-                    Task.Run(() =>
-                    {
-                        SendAbsenceRequestEmailToAccountAdmin(accountAdmin, user, mappedEntity);
-                    });
+                   await SendAbsenceRequestEmailToAccountAdmin(accountAdmin, user, mappedEntity);
                 }
                 return ApiResult<AbsenceRequestResponseDto>.Success(mappedEntity);
             }
@@ -182,10 +179,7 @@ namespace AddOptimization.Services.Services
                 var user = (await _applicationUserRepository.FirstOrDefaultAsync(x => x.Id == mappedEntity.UserId));
                 foreach (var accountAdmin in accountAdminResult.Result.ToList())
                 {
-                    Task.Run(() =>
-                    {
-                        SendAbsenceRequestEmailToAccountAdmin(accountAdmin, user, mappedEntity, oldComment, oldDuration, true);
-                    });
+                    await SendAbsenceRequestEmailToAccountAdmin(accountAdmin, user, mappedEntity, oldComment, oldDuration, true);
                 }
                 return ApiResult<AbsenceRequestResponseDto>.Success(mappedEntity);
             }
