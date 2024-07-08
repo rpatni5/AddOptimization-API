@@ -1,25 +1,29 @@
 ﻿using System.Net.Mail;
 using System.Net;
-using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using AddOptimization.Utilities.Models;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
-using AddOptimization.Utilities.Interface;
+using AddOptimization.Contracts.Services;
 using AddOptimization.Utilities.Constants;
-using System.Threading.Tasks;
+using AddOptimization.Contracts.Constants;
+using AddOptimization.Contracts.Dto;
+using AddOptimization.Utilities.Common;
 
-namespace AddOptimization.Utilities.Services;
+namespace AddOptimization.Services.Services;
 
 public  class EmailService: IEmailService
 {
     private readonly IConfiguration _configuration;
     private readonly ILogger<EmailService> _logger;
-    public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
+    private readonly ISettingService _settingService;
+
+    public EmailService(IConfiguration configuration, ILogger<EmailService> logger, ISettingService settingService)
     {
         _configuration = configuration;
         _logger = logger;
+        _settingService = settingService;
     }
     /// <summary>
     /// 
@@ -34,6 +38,12 @@ public  class EmailService: IEmailService
     {
         try
         {
+            var isEmailNotificationsEnabled = await _settingService.GetSettingByCode(SettingCodes.EMAIL_NOTIFICATIONS);
+            if (isEmailNotificationsEnabled != null && !isEmailNotificationsEnabled.Result.IsEnabled) 
+            {             
+                _logger.LogInformation($"Email notification setting is disabled. Details : Email recipient : {recipientEmails}, Subject: {subject},   Body : {body}.");
+                return false;
+            }
             var emailSettings = _configuration.ReadSection<EmailSettings>(AppSettingsSections.EmailSettings);
             string smtpServer = emailSettings.SMTPServer;
             int smtpPort = emailSettings.SMTPPort;
