@@ -70,7 +70,7 @@ public class LicenseService : ILicenseService
                 LicenseKey = e.LicenseKey,
                 ExpirationDate = e.ExpirationDate,
                 CustomerEmail = e.Customer.ManagerEmail,
-                CustomerName = e.Customer.ManagerName,
+                CustomerName = e.Customer.Organizations,
                 LicenseDuration = e.LicenseDuration,
                 CreatedBy = e.CreatedByUser.FullName,
                 LicenseDevices = _mapper.Map<List<LicenseDeviceDto>>(e.LicenseDevices),
@@ -224,7 +224,7 @@ public class LicenseService : ILicenseService
 
         filter.GetValue<string>("customerName", (v) =>
         {
-            entities = entities.Where(e => e.Customer != null && e.Customer.ManagerName.ToLower().Contains(v.ToLower()));
+            entities = entities.Where(e => e.Customer != null && e.Customer.Organizations.ToLower().Contains(v.ToLower()));
         });
 
         filter.GetValue<string>("customerEmail", (v) =>
@@ -334,7 +334,7 @@ public class LicenseService : ILicenseService
                 }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerName).ToUpper())
                 {
-                    orders = orders.OrderBy(o => o.Customer.ManagerName);
+                    orders = orders.OrderBy(o => o.Customer.Organizations);
                 }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerEmail).ToUpper())
                 {
@@ -365,7 +365,7 @@ public class LicenseService : ILicenseService
                 }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerName).ToUpper())
                 {
-                    orders = orders.OrderByDescending(o => o.Customer.ManagerName);
+                    orders = orders.OrderByDescending(o => o.Customer.Organizations);
                 }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerEmail).ToUpper())
                 {

@@ -418,7 +418,7 @@ namespace AddOptimization.Services.Services
             });
             filter.GetValue<string>("customerName", (v) =>
             {
-                entities = entities.Where(e => e.Customer != null && (e.Customer.ManagerName.ToLower().Contains(v.ToLower())));
+                entities = entities.Where(e => e.Customer != null && (e.Customer.Organizations.ToLower().Contains(v.ToLower())));
             });
             filter.GetValue<string>("customer", (v) =>
             {
@@ -496,7 +496,7 @@ namespace AddOptimization.Services.Services
                 {
                     if (columnName.ToUpper() == nameof(SchedulerEventResponseDto.CustomerName).ToUpper())
                     {
-                        entities = entities.OrderBy(o => o.Customer.ManagerName);
+                        entities = entities.OrderBy(o => o.Customer.Organizations);
                     }
                     if (columnName.ToUpper() == nameof(SchedulerEventResponseDto.ApprovarName).ToUpper())
                     {
@@ -512,7 +512,7 @@ namespace AddOptimization.Services.Services
                 {
                     if (columnName.ToUpper() == nameof(SchedulerEventResponseDto.CustomerName).ToUpper())
                     {
-                        entities = entities.OrderByDescending(o => o.Customer.ManagerName);
+                        entities = entities.OrderByDescending(o => o.Customer.Organizations);
                     }
                     if (columnName.ToUpper() == nameof(SchedulerEventResponseDto.ApprovarName).ToUpper())
                     {
