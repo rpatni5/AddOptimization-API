@@ -25,6 +25,7 @@
 	[ExternalState] [nvarchar](200) NULL,
 	[ExternalCountryId] [uniqueidentifier] NULL,
 	[ExternalAddress] [nvarchar](200) NULL,
+    [NdaSignDate] [datetime2](7) NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
