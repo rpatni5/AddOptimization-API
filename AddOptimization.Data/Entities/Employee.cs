@@ -21,7 +21,7 @@ namespace AddOptimization.Data.Entities
         public string ExternalCity { get; set; }
         public string ExternalState { get; set; }
         public string Address { get; set; }
-
+        public DateTime? NdaSignDate { get; set; }
         public string ExternalAddress { get; set; }
 
         [MaxLength(200)]
