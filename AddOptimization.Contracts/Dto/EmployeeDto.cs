@@ -37,7 +37,8 @@ namespace AddOptimization.Contracts.Dto
         public string ExternalState { get; set; }
         public string ExternalAddress { get; set; }
         public Guid? ExternalCountryId { get; set; }
-      
+        public DateTime? NdaSignDate { get; set; }
+
 
     }
 }
