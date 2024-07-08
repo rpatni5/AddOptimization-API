@@ -320,6 +320,10 @@ public class LicenseService : ILicenseService
                 {
                     orders = orders.OrderBy(o => o.NoOfDevices);
                 }
+                if (columnName.ToUpper() == nameof(LicenseDetailsDto.PendingDevicesCount).ToUpper())
+                {
+                    orders = orders.OrderBy(e => e.NoOfDevices - (e.LicenseDevices.Any() ? e.LicenseDevices.Count() : 0));
+                }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerId).ToUpper())
                 {
                     orders = orders.OrderBy(o => o.Customer.Id);
@@ -350,6 +354,10 @@ public class LicenseService : ILicenseService
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.NoOfDevices).ToUpper())
                 {
                     orders = orders.OrderByDescending(o => o.NoOfDevices);
+                }
+                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.PendingDevicesCount).ToUpper())
+                {
+                    orders = orders.OrderByDescending(e => e.NoOfDevices - (e.LicenseDevices.Any() ? e.LicenseDevices.Count() : 0));
                 }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerId).ToUpper())
                 {
