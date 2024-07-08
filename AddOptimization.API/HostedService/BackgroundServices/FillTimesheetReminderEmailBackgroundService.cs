@@ -15,18 +15,16 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         #region Private Variables
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<LicenseRenewalEmailBackgroundService> _logger;
-        private readonly IEmailService _emailService;
         private readonly ITemplateService _templateService;
         private readonly IConfiguration _configuration;
         #endregion
 
         #region Constructor
-        public FillTimesheetReminderEmailBackgroundService(IConfiguration configuration, IEmailService emailService, ITemplateService templateService, IServiceProvider serviceProvider, ILogger<LicenseRenewalEmailBackgroundService> logger)
+        public FillTimesheetReminderEmailBackgroundService(IConfiguration configuration, ITemplateService templateService, IServiceProvider serviceProvider, ILogger<LicenseRenewalEmailBackgroundService> logger)
         {
             _configuration = configuration;
             _serviceProvider = serviceProvider;
             _logger = logger;
-            _emailService = emailService;
             _templateService = templateService;
 
         }
@@ -93,6 +91,8 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         {
             try
             {
+                var scope = _serviceProvider.CreateScope();
+                var _emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
                 var subject = "Add optimization timesheet submission reminder";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.FillTimesheetReminder);
                 var link = GetMyTimesheetLinkForEmployee();
