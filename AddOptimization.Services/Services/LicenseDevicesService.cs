@@ -104,7 +104,7 @@ public class LicenseDeviceService : ILicenseDeviceService
                         var mappedLicenseDevice = _mapper.Map<LicenseDeviceDto>(licenseDevice);
                         var customer = await _customerRepository.FirstOrDefaultAsync(x => x.Id == license.Customer.Id);
                         var activeDevicesCount = activeDevices+1;
-                        Task.Run(() => SendCustomerDeviceActivatedEmail(customer.ManagerEmail,customer.ManagerName,  activeDevicesCount, license.NoOfDevices - activeDevicesCount, license, mappedLicenseDevice));
+                        await SendCustomerDeviceActivatedEmail(customer.ManagerEmail,customer.ManagerName,  activeDevicesCount, license.NoOfDevices - activeDevicesCount, license, mappedLicenseDevice);
                         return ApiResult<LicenseDeviceDto>.Success(mappedLicenseDevice);
                     }
                 }

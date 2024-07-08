@@ -114,17 +114,11 @@ namespace AddOptimization.Services.Services
                 var user = await _applicationUserRepository.FirstOrDefaultAsync(x => x.Id == entity.UserId);
                 if (model.IsApproved)
                 {
-                    Task.Run(() =>
-                        {
-                            SendAbsenceRequestActionEmailEmployee(model.IsApproved, accountAdmin, user, result);
-                        });
+                    await SendAbsenceRequestActionEmailEmployee(model.IsApproved, accountAdmin, user, result);
                 }
                 else
-                {
-                    Task.Run(() =>
-                        {
-                            SendAbsenceRequestActionEmailEmployee(model.IsApproved, accountAdmin, user, result);
-                        });
+                {                 
+                    await SendAbsenceRequestActionEmailEmployee(model.IsApproved, accountAdmin, user, result);
                 }
 
                 return ApiResult<bool>.Success(true);

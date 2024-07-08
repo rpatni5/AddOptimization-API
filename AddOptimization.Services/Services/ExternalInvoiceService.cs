@@ -519,10 +519,7 @@ namespace AddOptimization.Services.Services
 
                 if (accountAdmin != null)
                 {
-                    Task.Run(() =>
-                    {
-                        SendInvoiceDeclinedEmailToEmployee(invoiceEntity.ApplicationUser, invoiceEntity.Company.CompanyName, accountAdmin.FullName, invoiceEntity.InvoiceNumber, invoiceEntity.TotalPriceIncludingVat, entity.Comment);
-                    });
+                    await SendInvoiceDeclinedEmailToEmployee(invoiceEntity.ApplicationUser, invoiceEntity.Company.CompanyName, accountAdmin.FullName, invoiceEntity.InvoiceNumber, invoiceEntity.TotalPriceIncludingVat, entity.Comment);
                 }
 
 
