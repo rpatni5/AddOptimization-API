@@ -86,9 +86,6 @@
     <None Update="Assets\Templates\invoice_action.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\Templates\order_account_manager_assigned.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="Assets\Templates\renew_license.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -105,9 +102,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Assets\Templates\reset_password.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Templates\send_invoice.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Assets\Templates\timesheet_actions_employee.html">

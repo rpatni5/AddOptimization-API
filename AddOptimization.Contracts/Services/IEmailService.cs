@@ -1,6 +1,4 @@
-﻿using System.Threading.Tasks;
-
-namespace AddOptimization.Utilities.Interface;
+﻿namespace AddOptimization.Contracts.Services;
 
 public interface IEmailService
 {

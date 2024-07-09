@@ -18,18 +18,16 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         #region Private Variables
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<GenerateInvoiceBackgroundService> _logger;
-        private readonly IEmailService _emailService;
         private readonly ITemplateService _templateService;
         private readonly IConfiguration _configuration;
         #endregion
 
         #region Constructor
-        public GenerateInvoiceBackgroundService(IConfiguration configuration, IEmailService emailService, ITemplateService templateService, IServiceProvider serviceProvider, ILogger<GenerateInvoiceBackgroundService> logger)
+        public GenerateInvoiceBackgroundService(IConfiguration configuration, ITemplateService templateService, IServiceProvider serviceProvider, ILogger<GenerateInvoiceBackgroundService> logger)
         {
             _configuration = configuration;
             _serviceProvider = serviceProvider;
             _logger = logger;
-            _emailService = emailService;
             _templateService = templateService;
         }
         #endregion

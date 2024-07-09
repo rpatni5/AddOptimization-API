@@ -392,10 +392,7 @@ namespace AddOptimization.Services.Services
             var user = (await _appUserRepository.FirstOrDefaultAsync(x => x.Id == result.UserId));
             var details = (await _schedulersDetailsRepository.QueryAsync(x => x.SchedulerEventId == result.Id)).ToList();
             var duration = await CalculateTimesheetsDaysAndOvertimeHours(result, details);
-            Task.Run(() =>
-            {
-                SendRequestTimesheetApprovalEmailToAccountAdmin(approver.Email, result, approver.FullName, user.FullName, duration.Item1, duration.Item2);
-            });
+            await SendRequestTimesheetApprovalEmailToAccountAdmin(approver.Email, result, approver.FullName, user.FullName, duration.Item1, duration.Item2);
             //Send email on timesheet submission to approvar -> send direct link of approval
             return saveResult;
         }
@@ -418,7 +415,7 @@ namespace AddOptimization.Services.Services
             });
             filter.GetValue<string>("customerName", (v) =>
             {
-                entities = entities.Where(e => e.Customer != null && (e.Customer.ManagerName.ToLower().Contains(v.ToLower())));
+                entities = entities.Where(e => e.Customer != null && (e.Customer.Organizations.ToLower().Contains(v.ToLower())));
             });
             filter.GetValue<string>("customer", (v) =>
             {
@@ -456,6 +453,16 @@ namespace AddOptimization.Services.Services
             {
                 int userId = Convert.ToInt32(v);
                 entities = entities.Where(e => e.UserId == userId);
+            });
+            filter.GetValue<string>("workDuration", (v) =>
+            {
+                int workDuration = Convert.ToInt32(v);
+                entities = entities.Where(e => e.EventDetails.Where(x => x.EventTypes.Name == "Timesheet").Sum(x => x.Duration) == workDuration);
+            });
+            filter.GetValue<string>("overtime", (v) =>
+            {
+                int overtime = Convert.ToInt32(v);
+                entities = entities.Where(e => e.EventDetails.Where(x => x.EventTypes.Name == "Overtime").Sum(x => x.Duration) == overtime);
             });
             filter.GetList<DateTime>("duedateRange", (v) =>
             {
@@ -496,7 +503,7 @@ namespace AddOptimization.Services.Services
                 {
                     if (columnName.ToUpper() == nameof(SchedulerEventResponseDto.CustomerName).ToUpper())
                     {
-                        entities = entities.OrderBy(o => o.Customer.ManagerName);
+                        entities = entities.OrderBy(o => o.Customer.Organizations);
                     }
                     if (columnName.ToUpper() == nameof(SchedulerEventResponseDto.ApprovarName).ToUpper())
                     {
@@ -512,7 +519,7 @@ namespace AddOptimization.Services.Services
                 {
                     if (columnName.ToUpper() == nameof(SchedulerEventResponseDto.CustomerName).ToUpper())
                     {
-                        entities = entities.OrderByDescending(o => o.Customer.ManagerName);
+                        entities = entities.OrderByDescending(o => o.Customer.Organizations);
                     }
                     if (columnName.ToUpper() == nameof(SchedulerEventResponseDto.ApprovarName).ToUpper())
                     {
@@ -575,17 +582,11 @@ namespace AddOptimization.Services.Services
                 var duration = await CalculateTimesheetsDaysAndOvertimeHours(result, details);
                 if (customerDetails.IsApprovalRequired)
                 {
-                    Task.Run(() =>
-                    {
-                        SendRequestTimesheetApprovalEmailToCustomer(customerDetails.ManagerEmail, result, customerDetails.ManagerName, user.FullName, duration.Item1, duration.Item2);
-                    });
+                    await SendRequestTimesheetApprovalEmailToCustomer(customerDetails.ManagerEmail, result, customerDetails.ManagerName, user.FullName, duration.Item1, duration.Item2);
                 }
                 else
                 {
-                    Task.Run(() =>
-                    {
-                        SendTimesheetApprovedEmailToEmployee(user.Email, result, user.FullName, model.ApprovarName, duration.Item1, duration.Item2);
-                    });
+                    await SendTimesheetApprovedEmailToEmployee(user.Email, result, user.FullName, model.ApprovarName, duration.Item1, duration.Item2);
                 }
                 
                 return ApiResult<bool>.Success(true);
@@ -621,10 +622,7 @@ namespace AddOptimization.Services.Services
                 var user = (await _appUserRepository.FirstOrDefaultAsync(x => x.Id == result.UserId));
                 var details = (await _schedulersDetailsRepository.QueryAsync(x => x.SchedulerEventId == result.Id)).ToList();
                 var duration = await CalculateTimesheetsDaysAndOvertimeHours(result, details);
-                Task.Run(() =>
-                {
-                    SendTimesheetDeclinedEmailToEmployee(user.Email, result, user.FullName, model.ApprovarName, duration.Item1, duration.Item2, model.Comment);
-                });
+                await SendTimesheetDeclinedEmailToEmployee(user.Email, result, user.FullName, model.ApprovarName, duration.Item1, duration.Item2, model.Comment);
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -672,15 +670,8 @@ namespace AddOptimization.Services.Services
                 var customer = (await _customersRepository.FirstOrDefaultAsync(x => x.Id == result.CustomerId));
                 var details = (await _schedulersDetailsRepository.QueryAsync(x => x.SchedulerEventId == result.Id)).ToList();
                 var duration = await CalculateTimesheetsDaysAndOvertimeHours(result, details);
-                Task.Run(() =>
-                {
-                    SendTimesheetActionEmailToAccountAdmin(approver, customer, user, eventDetails, model.IsApproved, entity.Comment, duration.Item1, duration.Item2);
-                });
-                
-                Task.Run(() =>
-                {
-                    SendTimesheetActionEmailToEmployee(customer, user, eventDetails, model.IsApproved, entity.Comment, duration.Item1, duration.Item2);
-                });
+               await SendTimesheetActionEmailToAccountAdmin(approver, customer, user, eventDetails, model.IsApproved, entity.Comment, duration.Item1, duration.Item2);
+               await SendTimesheetActionEmailToEmployee(customer, user, eventDetails, model.IsApproved, entity.Comment, duration.Item1, duration.Item2);
 
                 return ApiResult<bool>.Success(true);
             }

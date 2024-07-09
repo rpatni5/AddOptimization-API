@@ -85,10 +85,7 @@ namespace AddOptimization.Services.Services
                 var user = (await _applicationUserRepository.FirstOrDefaultAsync(x => x.Id == mappedEntity.UserId));
                 foreach (var accountAdmin in accountAdminResult.Result.ToList())
                 {
-                    Task.Run(() =>
-                    {
-                        SendAbsenceRequestEmailToAccountAdmin(accountAdmin, user, mappedEntity);
-                    });
+                   await SendAbsenceRequestEmailToAccountAdmin(accountAdmin, user, mappedEntity);
                 }
                 return ApiResult<AbsenceRequestResponseDto>.Success(mappedEntity);
             }
@@ -182,10 +179,7 @@ namespace AddOptimization.Services.Services
                 var user = (await _applicationUserRepository.FirstOrDefaultAsync(x => x.Id == mappedEntity.UserId));
                 foreach (var accountAdmin in accountAdminResult.Result.ToList())
                 {
-                    Task.Run(() =>
-                    {
-                        SendAbsenceRequestEmailToAccountAdmin(accountAdmin, user, mappedEntity, oldComment, oldDuration, true);
-                    });
+                    await SendAbsenceRequestEmailToAccountAdmin(accountAdmin, user, mappedEntity, oldComment, oldDuration, true);
                 }
                 return ApiResult<AbsenceRequestResponseDto>.Success(mappedEntity);
             }
@@ -226,7 +220,7 @@ namespace AddOptimization.Services.Services
             try
             {
                 var subject = !isUpdated ? "Absence Request" : "Absence Request Updated";
-                var link = GetAbsenceRequestLinkForAccountAdmin(absenceRequest.Id);
+                var link = GetAbsenceApprovalLinkForAccountAdmin(absenceRequest.Id);
                 var action = !isUpdated ? "submitted" : "updated";
                 var duration = !isUpdated ? absenceRequest.Duration.ToString() : $"{oldDuration} is updated to {absenceRequest.Duration}";
                 var comment = !isUpdated ? absenceRequest.Comment : $"{oldComment} is updated to {absenceRequest.Comment}";
@@ -247,10 +241,10 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        public string GetAbsenceRequestLinkForAccountAdmin(Guid schedulerEventId)
+        public string GetAbsenceApprovalLinkForAccountAdmin(Guid schedulerEventId)
         {
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
-            return $"{baseUrl}admin/timesheets/absence-request";
+            return $"{baseUrl}admin/timesheets/absence-approval";
         }
     }
 }
