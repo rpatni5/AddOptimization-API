@@ -734,10 +734,7 @@ namespace AddOptimization.Services.Services
                 var accountAdmins = (await _applicationService.GetAccountAdmins()).Result;
                 var adminEmails = accountAdmins.Select(admin => new { Name = admin.UserName, Email = admin.Email });
 
-                Task.Run(() =>
-                    {
-                        SendInvoiceDeclinedEmailToAccountAdmins(adminEmails, entities.Customer.ManagerEmail, entities.InvoiceNumber, entities.PaymentClearanceDays, entities.TotalPriceIncludingVat, entity.Comment);
-                    });
+                await SendInvoiceDeclinedEmailToAccountAdmins(adminEmails, entities.Customer.ManagerEmail, entities.InvoiceNumber, entities.PaymentClearanceDays, entities.TotalPriceIncludingVat, entity.Comment);
 
                 return ApiResult<bool>.Success(true);
             }

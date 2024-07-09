@@ -38,5 +38,3 @@ GO
 ALTER TABLE [dbo].[Companies]  WITH CHECK ADD FOREIGN KEY([UpdatedByUserId])
 REFERENCES [dbo].[ApplicationUsers] ([Id])
 GO
-
-

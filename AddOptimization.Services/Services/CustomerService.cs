@@ -424,7 +424,7 @@ public class CustomerService : ICustomerService
     {
         try
         {
-            var subject = "Create your account Password";
+            var subject = "Create your account password";
             var emailTemplate = _templateService.ReadTemplate(EmailTemplates.AccountCreateResetPassword);
             var resetLink = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).ResetPassword).Replace("[token]", token);
             emailTemplate = emailTemplate.Replace("[UserFullName]", userFullName)

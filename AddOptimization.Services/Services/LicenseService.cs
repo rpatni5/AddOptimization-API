@@ -70,7 +70,7 @@ public class LicenseService : ILicenseService
                 LicenseKey = e.LicenseKey,
                 ExpirationDate = e.ExpirationDate,
                 CustomerEmail = e.Customer.ManagerEmail,
-                CustomerName = e.Customer.ManagerName,
+                CustomerName = e.Customer.Organizations,
                 LicenseDuration = e.LicenseDuration,
                 CreatedBy = e.CreatedByUser.FullName,
                 LicenseDevices = _mapper.Map<List<LicenseDeviceDto>>(e.LicenseDevices),
@@ -155,7 +155,7 @@ public class LicenseService : ILicenseService
             if (licenseResult != null)
             {
                 var customer = await _customerRepository.FirstOrDefaultAsync(x => x.Id == licenseResult.CustomerId);
-                Task.Run(() => SendCustomerLicenseAddedEmail(customer.ManagerEmail,customer.ManagerName, licenseResult));
+                await SendCustomerLicenseAddedEmail(customer.ManagerEmail, customer.ManagerName, licenseResult);
             }
             return await Get(entity.Id);
         }
@@ -224,7 +224,7 @@ public class LicenseService : ILicenseService
 
         filter.GetValue<string>("customerName", (v) =>
         {
-            entities = entities.Where(e => e.Customer != null && e.Customer.ManagerName.ToLower().Contains(v.ToLower()));
+            entities = entities.Where(e => e.Customer != null && e.Customer.Organizations.ToLower().Contains(v.ToLower()));
         });
 
         filter.GetValue<string>("customerEmail", (v) =>
@@ -320,6 +320,10 @@ public class LicenseService : ILicenseService
                 {
                     orders = orders.OrderBy(o => o.NoOfDevices);
                 }
+                if (columnName.ToUpper() == nameof(LicenseDetailsDto.PendingDevicesCount).ToUpper())
+                {
+                    orders = orders.OrderBy(e => e.NoOfDevices - (e.LicenseDevices.Any() ? e.LicenseDevices.Count() : 0));
+                }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerId).ToUpper())
                 {
                     orders = orders.OrderBy(o => o.Customer.Id);
@@ -334,7 +338,7 @@ public class LicenseService : ILicenseService
                 }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerName).ToUpper())
                 {
-                    orders = orders.OrderBy(o => o.Customer.ManagerName);
+                    orders = orders.OrderBy(o => o.Customer.Organizations);
                 }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerEmail).ToUpper())
                 {
@@ -351,6 +355,10 @@ public class LicenseService : ILicenseService
                 {
                     orders = orders.OrderByDescending(o => o.NoOfDevices);
                 }
+                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.PendingDevicesCount).ToUpper())
+                {
+                    orders = orders.OrderByDescending(e => e.NoOfDevices - (e.LicenseDevices.Any() ? e.LicenseDevices.Count() : 0));
+                }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerId).ToUpper())
                 {
                     orders = orders.OrderByDescending(o => o.Customer.Id);
@@ -365,7 +373,7 @@ public class LicenseService : ILicenseService
                 }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerName).ToUpper())
                 {
-                    orders = orders.OrderByDescending(o => o.Customer.ManagerName);
+                    orders = orders.OrderByDescending(o => o.Customer.Organizations);
                 }
                 if (columnName.ToUpper() == nameof(LicenseDetailsDto.CustomerEmail).ToUpper())
                 {
@@ -390,7 +398,7 @@ public class LicenseService : ILicenseService
     {
         try
         {
-            var subject = "Add optimization new license details";
+            var subject = "AddOptimization new license details";
             var message = "A new license has been created for your account. Please find the details below.";
             var emailTemplate = _templateService.ReadTemplate(EmailTemplates.CreateLicense);
             emailTemplate = emailTemplate

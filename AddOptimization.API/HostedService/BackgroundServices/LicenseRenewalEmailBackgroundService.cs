@@ -15,18 +15,16 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         #region Private Variables
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<LicenseRenewalEmailBackgroundService> _logger;
-        private readonly IEmailService _emailService;
         private readonly ITemplateService _templateService;
         private readonly IConfiguration _configuration;
         #endregion
 
         #region Constructor
-        public LicenseRenewalEmailBackgroundService(IConfiguration configuration, IEmailService emailService, ITemplateService templateService, IServiceProvider serviceProvider, ILogger<LicenseRenewalEmailBackgroundService> logger)
+        public LicenseRenewalEmailBackgroundService(IConfiguration configuration, ITemplateService templateService, IServiceProvider serviceProvider, ILogger<LicenseRenewalEmailBackgroundService> logger)
         {
             _configuration = configuration;
             _serviceProvider = serviceProvider;
             _logger = logger;
-            _emailService = emailService;
             _templateService = templateService;
 
         }
@@ -66,7 +64,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 {
                     var licensesDtoCollection = new List<LicenseDetailsDto>();
                     licensesDtoCollection.AddRange(group);
-                    Task.Run(() => SendCustomerLicenseRenewalEmail(licensesDtoCollection));
+                    await SendCustomerLicenseRenewalEmail(licensesDtoCollection);
                 }
                 return true;
             }
@@ -82,7 +80,9 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         {
             try
             {
-                var subject = "Add optimization renew license";
+                var scope = _serviceProvider.CreateScope();
+                var _emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
+                var subject = "AddOptimization renew license";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.RenewLicense);
                 string[] tableHeaders = { "S.No", "LicenseKey", "NoOfDevices", "ExpirationDate" };
                 var table = GenerateHtmlTable(tableHeaders, license);

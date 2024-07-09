@@ -46,12 +46,12 @@ public class EmployeeController : CustomApiControllerBase
         }
     }
 
-    [HttpPost("nda/{id}/{isNDASigned}")]
-    public async Task<IActionResult> SignNDA(Guid id, bool isNDASigned)
+    [HttpPost("nda/{isNDASigned}")]
+    public async Task<IActionResult> SignNDA(bool isNDASigned)
     {
         try
         {
-            var retVal = await _employeeService.SignNDA(id, isNDASigned);
+            var retVal = await _employeeService.SignNDA(isNDASigned);
             return HandleResponse(retVal);
         }
         catch (Exception ex)

@@ -14,6 +14,7 @@ using AddOptimization.Utilities.Interface;
 using Microsoft.Extensions.Configuration;
 using System;
 using AddOptimization.Utilities.Constants;
+using iText.StyledXmlParser.Jsoup.Nodes;
 
 namespace AddOptimization.Services.Services;
 public class EmployeeService : IEmployeeService
@@ -33,6 +34,7 @@ public class EmployeeService : IEmployeeService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IApplicationUserService _applicationUserService;
     private readonly IRoleService _roleService;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IGenericRepository<Country> _countryRepository;
     public EmployeeService(IGenericRepository<Employee> employeeRepository, ILogger<EmployeeService> logger, IMapper mapper,
         IAddressService addressService, IUnitOfWork unitOfWork, IEmailService emailService, ITemplateService templateService,
@@ -57,6 +59,7 @@ public class EmployeeService : IEmployeeService
         _applicationUserRepository = applicationUserRepository;
         _applicationUserService = applicationUserService;
         _roleService = roleService;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<ApiResult<bool>> Save(EmployeeDto model)
@@ -114,7 +117,7 @@ public class EmployeeService : IEmployeeService
             }
 
             await _unitOfWork.CommitTransactionAsync();
-            Task.Run(() => SendEmployeeCreatedEmail(savedEmployee.FullName, savedEmployee.Email));
+            await  SendEmployeeCreatedEmail(savedEmployee.FullName, savedEmployee.Email);
             return ApiResult<bool>.Success(true);
         }
         catch (Exception ex)
@@ -155,7 +158,7 @@ public class EmployeeService : IEmployeeService
                 LastName = model.LastName,
                 Roles = userRoles,
             };
-            var userResult = await _applicationUserService.Update(model.UserId, user );
+            var userResult = await _applicationUserService.Update(model.UserId, user);
 
             Employee entity = new Employee { };
             _mapper.Map(model, entity);
@@ -172,16 +175,18 @@ public class EmployeeService : IEmployeeService
         }
     }
 
-    public async Task<ApiResult<bool>> SignNDA(Guid id, bool isNDASigned)
+    public async Task<ApiResult<bool>> SignNDA(bool isNDASigned)
     {
         try
         {
-            var entity = await _employeeRepository.FirstOrDefaultAsync(o => o.Id == id, disableTracking: false, ignoreGlobalFilter: true);
+            var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
+            var entity = await _employeeRepository.FirstOrDefaultAsync(o => o.UserId == userId, disableTracking: false, ignoreGlobalFilter: true);
             if (entity == null)
             {
                 return ApiResult<bool>.Failure("Employee");
             }
             entity.IsNDASigned = isNDASigned;
+            entity.NdaSignDate = DateTime.Now;
             await _employeeRepository.UpdateAsync(entity);
             return ApiResult<bool>.Success(true);
         }

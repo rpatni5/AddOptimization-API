@@ -45,13 +45,13 @@ namespace AddOptimization.Services.Services
         private readonly IConfiguration _configuration;
         private readonly CustomDataProtectionService _protectionService;
 
-        public QuoteService(IGenericRepository<Quote> quoteRepository, ILogger<QuoteService> logger, IMapper mapper, IQuoteStatusService quoteStatusService, IGenericRepository<QuoteSummary> quoteSumamryRepository, IUnitOfWork unitOfWork, IGenericRepository<Company> companyRepository, IConfiguration configuration, IEmailService emailService, ITemplateService templateService, CustomDataProtectionService protectionService)
+        public QuoteService(IGenericRepository<Quote> quoteRepository, ILogger<QuoteService> logger, IMapper mapper, IQuoteStatusService quoteStatusService, IGenericRepository<QuoteSummary> quoteSummaryRepository, IUnitOfWork unitOfWork, IGenericRepository<Company> companyRepository, IConfiguration configuration, IEmailService emailService, ITemplateService templateService, CustomDataProtectionService protectionService)
         {
             _quoteRepository = quoteRepository;
             _logger = logger;
             _mapper = mapper;
             _quoteStatusService = quoteStatusService;
-            _quoteSummaryRepository = quoteSumamryRepository;
+            _quoteSummaryRepository = quoteSummaryRepository;
             _unitOfWork = unitOfWork;
             _companyRepository = companyRepository;
             _configuration = configuration;
