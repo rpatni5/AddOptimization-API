@@ -1,10 +1,11 @@
 ﻿
+
 CREATE TABLE [dbo].[InvoicePaymentHistory](
 	[Id] [uniqueidentifier] NOT NULL,
-	[InvoiceId] [bigint] NOT NULL,	
+	[InvoiceId] [bigint] NOT NULL,
 	[PaymentDate] [datetime2](7) NULL,
 	[Amount] [decimal](10, 2) NULL,
-	[TransactionId] [uniqueidentifier] NOT NULL,
+	[TransactionId] [nvarchar](200) NOT NULL,
 	[IsDeleted] [bit] NOT NULL,
 	[IsActive] [bit] NOT NULL,
 	[CreatedAt] [datetime2](7) NULL,
@@ -24,15 +25,15 @@ GO
 ALTER TABLE [dbo].[InvoicePaymentHistory] ADD  DEFAULT ((1)) FOR [IsActive]
 GO
 
-ALTER TABLE [dbo].[InvoicePaymentHistory]  WITH CHECK ADD FOREIGN KEY([CreatedByUserId])
+ALTER TABLE [dbo].[InvoicePaymentHistory]  WITH NOCHECK ADD FOREIGN KEY([CreatedByUserId])
 REFERENCES [dbo].[ApplicationUsers] ([Id])
 GO
 
-ALTER TABLE [dbo].[InvoicePaymentHistory]  WITH CHECK ADD FOREIGN KEY([InvoiceId])
+ALTER TABLE [dbo].[InvoicePaymentHistory]  WITH NOCHECK ADD FOREIGN KEY([InvoiceId])
 REFERENCES [dbo].[Invoices] ([Id])
 GO
 
-ALTER TABLE [dbo].[InvoicePaymentHistory]  WITH CHECK ADD FOREIGN KEY([UpdatedByUserId])
+ALTER TABLE [dbo].[InvoicePaymentHistory]  WITH NOCHECK ADD FOREIGN KEY([UpdatedByUserId])
 REFERENCES [dbo].[ApplicationUsers] ([Id])
 GO
 
