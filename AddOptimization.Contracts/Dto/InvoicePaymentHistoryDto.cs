@@ -16,7 +16,7 @@ namespace AddOptimization.Contracts.Dto
         public DateTime PaymentDate { get; set; }
         public bool IsDeleted { get; set; }
         public decimal Amount { get; set; }
-        public long TransactionId { get; set; }
+        public string TransactionId { get; set; }
         public string CreatedBy { get; set; }
         public string UpdatedBy { get; set; }
         public DateTime? CreatedAt { get; set; }
