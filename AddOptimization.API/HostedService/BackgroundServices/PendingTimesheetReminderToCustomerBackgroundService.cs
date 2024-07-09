@@ -18,7 +18,6 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         #region Private Variables
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<LicenseRenewalEmailBackgroundService> _logger;
-        private readonly IEmailService _emailService;
         private readonly ITemplateService _templateService;
         private readonly IConfiguration _configuration;
         private readonly CustomDataProtectionService _protectionService;
@@ -27,7 +26,6 @@ namespace AddOptimization.API.HostedService.BackgroundServices
 
         #region Constructor
         public PendingTimesheetReminderToCustomerBackgroundService(IConfiguration configuration,
-            IEmailService emailService,
             ITemplateService templateService,
             IServiceProvider serviceProvider,
             CustomDataProtectionService protectionService,
@@ -36,7 +34,6 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             _configuration = configuration;
             _serviceProvider = serviceProvider;
             _logger = logger;
-            _emailService = emailService;
             _templateService = templateService;
             _protectionService = protectionService;
         }
@@ -73,7 +70,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
 
                 foreach (var item in schedulerEvents?.Result)
                 {
-                    Task.Run(() => SendFillTimesheetReminderEmail(item));
+                    await SendFillTimesheetReminderEmail(item);
                 };
                 return true;
             }
@@ -89,7 +86,9 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         {
             try
             {
-                var subject = "Add optimization approve timesheet reminder";
+                var scope = _serviceProvider.CreateScope();
+                var _emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
+                var subject = "AddOptimization approve timesheet reminder";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.ApproveTimesheetReminder);
                 var link = GetMyTimesheetLinkForCustomer(schedulerEvent.Id);
                 emailTemplate = emailTemplate

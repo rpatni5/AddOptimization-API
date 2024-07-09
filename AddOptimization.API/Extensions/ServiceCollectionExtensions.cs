@@ -22,21 +22,24 @@ public static class ServiceCollectionExtensions
         {
 
             var a = builder.Services.BuildServiceProvider();
-            using (var scope = a.CreateScope())
+            var scope = a.CreateScope();
+            var services = scope.ServiceProvider;
+            try
             {
-                var services = scope.ServiceProvider;
-                try
-                {
-                    var logLevelService = services.GetRequiredService<ISettingService>();
-                    var logLevelSetting = logLevelService.GetSettingByCode(SettingCodes.LOG_LEVEL).Result;
-                    builder.AddFile($"logs/log_for.txt", logLevelSetting.Result!=null && logLevelSetting.Result.IsEnabled ? LogLevel.Information : LogLevel.Error);
-                }
-                catch (Exception ex)
-                {
-                    var logger = services.GetRequiredService<ILogger<Program>>();
-                    logger.LogError(ex, "An error occurred while setting the log level.");
-                }
+                var settingService = services.GetRequiredService<ISettingService>();
+                var logLevelSetting = settingService.GetSettingByCode(SettingCodes.LOG_LEVEL).Result;
+                builder.AddFile($"logs/log_for.txt", logLevelSetting.Result != null && logLevelSetting.Result.IsEnabled ? LogLevel.Information : LogLevel.Error);
+            }
+            catch (Exception ex)
+            {
+                var logger = services.GetRequiredService<ILogger<Program>>();
+                logger.LogError(ex, "An error occurred while setting the log level.");
             }
         });
+
+        //services.AddLogging(builder =>
+        //{
+        //    builder.AddFile($"logs/log_for.txt", LogLevel.Information);
+        //});
     }
 }
