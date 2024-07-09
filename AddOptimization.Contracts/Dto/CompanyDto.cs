@@ -27,7 +27,6 @@ namespace AddOptimization.Contracts.Dto
         public string? SwiftCode { get; set; }
         public string? State { get; set; }
         public string? TaxNumber { get; set; }
-        public Guid? DialCodeId { get; set; }
 
     }
 }
