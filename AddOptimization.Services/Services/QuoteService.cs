@@ -65,7 +65,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _quoteRepository.QueryAsync((e => !e.IsDeleted || e.IsActive), include: source => source.Include(x => x.Customer).Include(x => x.QuoteStatuses), ignoreGlobalFilter: true);
+                var entities = await _quoteRepository.QueryAsync((e => !e.IsDeleted || e.IsActive), include: source => source.Include(x => x.Customer).Include(x => x.QuoteStatuses), orderBy: x => x.OrderByDescending(x => x.CreatedAt), ignoreGlobalFilter: true);
 
                 var result = entities.ToList();
                 var mappedEntities = _mapper.Map<List<QuoteResponseDto>>(result);
@@ -252,7 +252,11 @@ namespace AddOptimization.Services.Services
 
         public async Task<bool> SendQuoteEmailToCustomer(long quoteId)
         {
+            var eventStatus = (await _quoteStatusService.Search()).Result;
+            var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == QuoteStatusesEnum.SEND_TO_CUSTOMER.ToString()).Id;
             var entity = (await _quoteRepository.QueryAsync(x => x.Id == quoteId, include: entities => entities.Include(e => e.Customer))).FirstOrDefault();
+            entity.QuoteStatusId = statusId;
+            await _quoteRepository.UpdateAsync(entity);
             return await SendQuoteToCustomer(entity.Customer.ManagerEmail, entity, entity.Customer.ManagerName, entity.Customer.Organizations);
         }
 

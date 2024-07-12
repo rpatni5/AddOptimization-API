@@ -2,7 +2,7 @@
 
 CREATE TABLE [dbo].[ExternalInvoicePaymentHistory](
 	[Id] [uniqueidentifier] NOT NULL,
-	[InvoiceId] [bigint] NOT NULL,	
+	[InvoiceId] [bigint] NOT NULL,
 	[PaymentDate] [datetime2](7) NULL,
 	[Amount] [decimal](10, 2) NULL,
 	[IsDeleted] [bit] NOT NULL,
@@ -11,7 +11,7 @@ CREATE TABLE [dbo].[ExternalInvoicePaymentHistory](
 	[CreatedByUserId] [int] NULL,
 	[UpdatedAt] [datetime2](7) NULL,
 	[UpdatedByUserId] [int] NULL,
-	[TransactionId] [bigint] NOT NULL,
+	[TransactionId] [nvarchar](200) NOT NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC

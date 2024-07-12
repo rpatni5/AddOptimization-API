@@ -1,6 +1,6 @@
 ﻿
 CREATE TABLE [dbo].[Quotes](
-    [Id] [bigint] IDENTITY(1,1) NOT NULL,
+    [Id] [bigint] NOT NULL,
 	[CustomerId] [uniqueidentifier] NOT NULL,
 	[CustomerAddress] [varchar](400) NOT NULL,
 	[ExpiryDate] [datetime2](7) NOT NULL,
