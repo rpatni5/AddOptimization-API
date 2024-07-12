@@ -16,5 +16,6 @@ namespace AddOptimization.Contracts.Services
         Task<ApiResult<List<QuoteResponseDto>>> Search(PageQueryFiterBase filters);
         Task<ApiResult<QuoteResponseDto>> FetchQuoteDetails(long id);
         Task<bool> SendQuoteEmailToCustomer(long quoteId);
+        Task<ApiResult<InvoiceResponseDto>> ConvertInvoice(long quoteId);
     }
 }
