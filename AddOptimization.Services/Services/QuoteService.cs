@@ -122,7 +122,7 @@ namespace AddOptimization.Services.Services
 
                 Quote entity = new Quote
                 {
-                    Id= id+1,
+                    Id = id + 1,
                     CustomerId = model.CustomerId,
                     ExpiryDate = model.ExpiryDate,
                     QuoteDate = model.QuoteDate,
@@ -131,6 +131,8 @@ namespace AddOptimization.Services.Services
                     CompanyBankAddress = companyBankDetails,
                     QuoteStatusId = statusId,
                     QuoteNo = quoteNo,
+                    TotalPriceExcVat = model.QuoteSummaries.ToList().Sum(x => x.TotalPriceExcVat),
+                    TotalPriceIncVat = model.QuoteSummaries.ToList().Sum(x => x.TotalPriceIncVat),
                     QuoteSummaries = new List<QuoteSummary>()
                 };
                 await _quoteRepository.InsertAsync(entity);
@@ -149,7 +151,7 @@ namespace AddOptimization.Services.Services
 
                     await _quoteSummaryRepository.InsertAsync(quoteSummary);
                     entity.QuoteSummaries.Add(quoteSummary);
-                }
+             }
                 await _unitOfWork.CommitTransactionAsync();
                 var mappedEntity = _mapper.Map<QuoteResponseDto>(entity);
                 return ApiResult<QuoteResponseDto>.Success(mappedEntity);

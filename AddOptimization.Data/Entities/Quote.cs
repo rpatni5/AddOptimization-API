@@ -15,6 +15,8 @@ namespace AddOptimization.Data.Entities
         public long QuoteNo { get; set; }
         public bool IsDeleted { get; set; }
         public bool IsActive { get; set; }
+        public decimal? TotalPriceExcVat { get; set; }
+        public decimal TotalPriceIncVat { get; set; }
 
         [ForeignKey(nameof(CustomerId))]
         public virtual Customer Customer { get; set; }
