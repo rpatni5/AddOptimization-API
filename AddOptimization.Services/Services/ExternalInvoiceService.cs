@@ -473,13 +473,13 @@ namespace AddOptimization.Services.Services
                 return false;
             }
         }
-        private async Task<bool> SendInvoiceDeclinedEmailToEmployee(ApplicationUser employee, string companyName, string accountAdminName, long invoiceNumber, decimal totalAmountDue, string comment)
+        private async Task<bool> SendInvoiceDeclinedEmailToEmployee(ApplicationUser employee, string companyName, string accountAdmin, long invoiceNumber, decimal totalAmountDue, string comment)
         {
             try
             {
                 var subject = "External Invoice Declined";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.DeclinedExternalInvoice);
-                emailTemplate = emailTemplate.Replace("[AccountAdmin]", accountAdminName)
+                emailTemplate = emailTemplate.Replace("[AccountAdmin]", accountAdmin)
                     .Replace("[CompanyName]", companyName)
                                              .Replace("[EmployeeName]", employee.FullName)
                                              .Replace("[InvoiceNumber]", invoiceNumber.ToString())

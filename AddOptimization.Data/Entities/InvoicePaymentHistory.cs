@@ -9,7 +9,7 @@ namespace AddOptimization.Data.Entities
         public DateTime PaymentDate { get; set; }
         public bool IsDeleted { get; set; }
         public decimal Amount { get; set; }
-        public long TransactionId { get; set; }
+        public string TransactionId { get; set; }
 
         [ForeignKey(nameof(InvoiceId))]
         public virtual Invoice Invoice { get; set; }
