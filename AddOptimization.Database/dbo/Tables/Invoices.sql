@@ -20,6 +20,7 @@ CREATE TABLE [dbo].[Invoices](
 	[ExpiryDate] [datetime2](7) NOT NULL,
 	[PaymentClearanceDays] [int] NULL,
 	[DueAmount] [decimal](10, 2)  NOT NULL,
+	[Metadata] [varchar](max) NULL,
  CONSTRAINT [PK_Invoices] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC

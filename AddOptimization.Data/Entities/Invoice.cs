@@ -10,6 +10,7 @@ namespace AddOptimization.Data.Entities
         public Guid CustomerId { get; set; }
         public Guid PaymentStatusId { get; set; }
         public Guid InvoiceStatusId { get; set; }
+        public string? MetaData { get; set; }       
         public string CustomerAddress { get; set; }
         public string CompanyAddress { get; set; }
         public string CompanyBankDetails { get; set; }
