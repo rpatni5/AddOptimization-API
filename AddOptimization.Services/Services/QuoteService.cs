@@ -293,8 +293,6 @@ namespace AddOptimization.Services.Services
             }
         }
 
-
-
         public async Task<ApiResult<InvoiceResponseDto>> ConvertInvoice(long quoteId)
         {
             try
@@ -364,13 +362,5 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-
-
-
-
-
-
-
-
     }
 }
