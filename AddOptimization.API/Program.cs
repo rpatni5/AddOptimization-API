@@ -41,6 +41,7 @@ services.AddHostedService<LicenseRenewalEmailBackgroundService>();
 services.AddHostedService<FillTimesheetReminderEmailBackgroundService>();
 services.AddHostedService<PendingTimesheetReminderToCustomerBackgroundService>();
 services.AddHostedService<GenerateInvoiceBackgroundService>();
+services.AddHostedService<UnpaidInvoiceReminderToCustomerBackgroundService>();
 services.AddLoggingService();
 #endregion
 #region configure
