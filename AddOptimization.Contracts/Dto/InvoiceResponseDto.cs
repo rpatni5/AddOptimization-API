@@ -29,11 +29,11 @@ namespace AddOptimization.Contracts.Dto
         public int? PaymentClearanceDays { get; set; }
         public decimal DueAmount { get; set; }
 
-        //public virtual PaymentStatus PaymentStatus { get; set; }
+        public virtual PaymentStatusDto PaymentStatus { get; set; }
 
-        //public virtual InvoiceStatus InvoiceStatus { get; set; }
+        public virtual InvoiceStatusDto InvoiceStatus { get; set; }
 
-        //public virtual Customer Customer { get; set; }
+        public virtual Customer Customer { get; set; }
 
         public string CreatedBy { get; set; }
         public string UpdatedBy { get; set; }

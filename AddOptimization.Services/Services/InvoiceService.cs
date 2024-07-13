@@ -745,6 +745,15 @@ namespace AddOptimization.Services.Services
             }
         }
 
-
+        public async Task<ApiResult<List<InvoiceResponseDto>>> GetUnpaidInvoicesForEmailReminder()
+        {
+            var entity = await _invoiceRepository.QueryAsync(x => x.PaymentStatus.StatusKey == PaymentStatusesEnum.UNPAID.ToString(), include: entities => entities.Include(e => e.PaymentStatus).Include(e => e.InvoiceStatus).Include(e => e.Customer));
+            if (entity == null || !entity.Any())
+            {
+                return ApiResult<List<InvoiceResponseDto>>.Failure(ValidationCodes.UnpaidInvoiceDoesNotExists);
+            }
+            var response = _mapper.Map<List<InvoiceResponseDto>>(entity);
+            return ApiResult<List<InvoiceResponseDto>>.Success(response);
+        }
     }
 }

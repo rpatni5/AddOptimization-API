@@ -13,7 +13,7 @@ using System.Text;
 
 namespace AddOptimization.API.HostedService.BackgroundServices
 {
-    public class PendingTimesheetReminderToCustomerBackgroundService : BackgroundService
+    public class UnpaidInvoiceReminderToCustomerBackgroundService : BackgroundService
     {
         #region Private Variables
         private readonly IServiceProvider _serviceProvider;
@@ -25,7 +25,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         #endregion
 
         #region Constructor
-        public PendingTimesheetReminderToCustomerBackgroundService(IConfiguration configuration,
+        public UnpaidInvoiceReminderToCustomerBackgroundService(IConfiguration configuration,
             ITemplateService templateService,
             IServiceProvider serviceProvider,
             CustomDataProtectionService protectionService,
@@ -50,54 +50,61 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             while (!stoppingToken.IsCancellationRequested &&
                    await timer.WaitForNextTickAsync(stoppingToken))
             {
-                _logger.LogInformation("Send Approve Pending Timesheet Reminder Email Background Service Started.");
-                await GetNotApprovedTimesheetData();
-                _logger.LogInformation("Send Approve Pending Timesheet Reminder Email Background Service Completed.");
+                _logger.LogInformation("Send Unpaid Invoice Reminder Email Background Service Started.");
+                await GetUnpaidInvoiceData();
+                _logger.LogInformation("Send Unpaid Invoice Reminder Email Background Service Completed.");
             }
             _logger.LogInformation("ExecuteAsync Completed.");
         }
         #endregion
 
         #region Private Methods        
-        private async Task<bool> GetNotApprovedTimesheetData()
+        private async Task<bool> GetUnpaidInvoiceData()
         {
             try
             {
                 using var scope = _serviceProvider.CreateScope();
-                var schedulerEventService = scope.ServiceProvider.GetRequiredService<ISchedulerEventService>();
-                var schedulerEvents = await schedulerEventService.GetSchedulerEventsForApproveEmailReminder();
-                if (schedulerEvents?.Result == null) return false;
+                var invoiceService = scope.ServiceProvider.GetRequiredService<IInvoiceService>();
+                var customerEmployeeAssociationService = scope.ServiceProvider.GetRequiredService<ICustomerEmployeeAssociationService>();
+                var appUserService = scope.ServiceProvider.GetRequiredService<IApplicationUserService>();
 
-                foreach (var item in schedulerEvents?.Result)
+                var invoices = await invoiceService.GetUnpaidInvoicesForEmailReminder();
+                if (invoices?.Result == null) return false;
+
+                foreach (var invoice in invoices?.Result)
                 {
-                    await SendFillTimesheetReminderEmail(item);
+                    var customerEmployeeAssociation = (await customerEmployeeAssociationService.Search()).Result;
+                    var approverId = customerEmployeeAssociation.Where(c => c.CustomerId == invoice.CustomerId && !c.IsDeleted).FirstOrDefault().ApproverId;// Account admin must be similar for multiple employee association.
+                    var approver = appUserService.GetAccountAdmins();
+                    await SendFillTimesheetReminderEmail(invoice);
                 };
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogInformation("An exception occurred while getting scheduler event data for fill timesheet reminder email.");
+                _logger.LogInformation("An exception occurred while getting unpaid invoice data for reminder email.");
                 _logger.LogException(ex);
                 return false;
             }
         }
 
-        private async Task<bool> SendFillTimesheetReminderEmail(SchedulerEventResponseDto schedulerEvent)
+        private async Task<bool> SendFillTimesheetReminderEmail(InvoiceResponseDto invoice)
         {
             try
             {
-                var scope = _serviceProvider.CreateScope();
-                var _emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
-                var subject = "AddOptimization approve timesheet reminder";
-                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.ApproveTimesheetReminder);
-                var link = GetMyTimesheetLinkForCustomer(schedulerEvent.Id);
-                emailTemplate = emailTemplate
-                                .Replace("[CustomerName]", schedulerEvent?.Customer.Name)
-                                .Replace("[EmployeeName]", schedulerEvent?.ApplicationUser.FullName)
-                                .Replace("[StartDate]", schedulerEvent?.StartDate.Date.ToString("d"))
-                                .Replace("[EndDate]", schedulerEvent?.EndDate.Date.ToString("d"))
-                                .Replace("[LinkToApproveTimesheet]", link);
-                return await _emailService.SendEmail(schedulerEvent?.Customer?.ManagerEmail, subject, emailTemplate);
+                return true;
+                //var scope = _serviceProvider.CreateScope();
+                //var _emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
+                //var subject = "AddOptimization approve timesheet reminder";
+                //var emailTemplate = _templateService.ReadTemplate(EmailTemplates.ApproveTimesheetReminder);
+                //var link = GetMyTimesheetLinkForCustomer(invoice.Id);
+                //emailTemplate = emailTemplate
+                //                .Replace("[CustomerName]", invoice?.Customer.Name)
+                //                .Replace("[EmployeeName]", invoice?.ApplicationUser.FullName)
+                //                .Replace("[StartDate]", invoice?.StartDate.Date.ToString("d"))
+                //                .Replace("[EndDate]", invoice?.EndDate.Date.ToString("d"))
+                //                .Replace("[LinkToApproveTimesheet]", link);
+                //return await _emailService.SendEmail(invoice?.Customer?.ManagerEmail, subject, emailTemplate);
             }
             catch (Exception ex)
             {
