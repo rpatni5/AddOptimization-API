@@ -74,6 +74,7 @@ public partial class AddOptimizationContext : DbContext
     public virtual DbSet<ExternalInvoicePaymentHistory> ExternalInvoicePaymentHistory { get; set; }
     public virtual DbSet<InvoicePaymentHistory> InvoicePaymentHistory { get; set; }
     public virtual DbSet<Setting> Settings { get; set; }
+    public virtual DbSet<InvoiceCreditNote> InvoiceCreditNote { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
