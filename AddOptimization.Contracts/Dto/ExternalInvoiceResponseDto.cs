@@ -17,6 +17,7 @@ namespace AddOptimization.Contracts.Dto
         public Guid PaymentStatusId { get; set; }
         public decimal DueAmount { get; set; }
         public Guid InvoiceStatusId { get; set; }
+        public string EmployeeName { get; set; }
         public string InvoiceStatusName { get; set; }
         public string PaymentStatusName { get; set; }
         public string CustomerAddress { get; set; }

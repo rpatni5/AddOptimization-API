@@ -322,6 +322,7 @@ namespace AddOptimization.Services.Services
                 var pagedResult = PageHelper<ExternalInvoice, ExternalInvoiceResponseDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new ExternalInvoiceResponseDto
                 {
                     Id = e.Id,
+                    EmployeeName = e.ApplicationUser.FullName,
                     CompanyName = e.CompanyName,
                     ExpiryDate = e.ExpiryDate,
                     InvoiceDate = e.InvoiceDate,
@@ -571,11 +572,16 @@ namespace AddOptimization.Services.Services
             });
             filter.GetValue<string>("invoiceNumber", (v) =>
             {
-                entities = entities.Where(e => e.InvoiceNumber.ToString() == v);
+                entities = entities.Where(e => e.InvoiceNumber == Convert.ToInt32(v));
             });
+
             filter.GetValue<string>("companyName", (v) =>
             {
                 entities = entities.Where(e => e.CompanyName.ToString() == v);
+            });
+            filter.GetValue<string>("employeeName", (v) =>
+            {
+                entities = entities.Where(e => e.ApplicationUser.FullName.ToString() == v);
             });
             filter.GetValue<string>("companyAddress", (v) =>
             {
@@ -627,6 +633,10 @@ namespace AddOptimization.Services.Services
                     {
                         entities = entities.OrderBy(o => o.Company.CompanyName);
                     }
+                    if (columnName.ToUpper() == nameof(ExternalInvoiceResponseDto.EmployeeName).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.ApplicationUser.FullName);
+                    }
                     if (columnName.ToUpper() == nameof(ExternalInvoiceResponseDto.CompanyAddress).ToUpper())
                     {
                         entities = entities.OrderBy(o => o.Company.CompanyName);
@@ -659,6 +669,10 @@ namespace AddOptimization.Services.Services
                     if (columnName.ToUpper() == nameof(ExternalInvoiceResponseDto.CompanyName).ToUpper())
                     {
                         entities = entities.OrderByDescending(o => o.Company.CompanyName);
+                    }
+                    if (columnName.ToUpper() == nameof(ExternalInvoiceResponseDto.EmployeeName).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.ApplicationUser.FullName);
                     }
                     if (columnName.ToUpper() == nameof(ExternalInvoiceResponseDto.InvoiceNumber).ToUpper())
                     {
