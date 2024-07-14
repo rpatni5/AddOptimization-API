@@ -1,12 +1,4 @@
-﻿using Stripe;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace AddOptimization.Contracts.Dto
+﻿namespace AddOptimization.Contracts.Dto
 {
     public class InvoiceResponseDto : BaseDto<long>
     {
@@ -33,7 +25,7 @@ namespace AddOptimization.Contracts.Dto
 
         public virtual InvoiceStatusDto InvoiceStatus { get; set; }
 
-        public virtual Customer Customer { get; set; }
+        public virtual CustomerDto Customer { get; set; }
 
         public string CreatedBy { get; set; }
         public string UpdatedBy { get; set; }

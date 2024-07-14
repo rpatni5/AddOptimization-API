@@ -71,12 +71,18 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 var invoices = await invoiceService.GetUnpaidInvoicesForEmailReminder();
                 if (invoices?.Result == null) return false;
 
+                var customerEmployeeAssociation = (await customerEmployeeAssociationService.Search()).Result;
+                var approver = await appUserService.GetAccountAdmins();
+                var approverEmail = approver.Result.FirstOrDefault().Email;
                 foreach (var invoice in invoices?.Result)
                 {
-                    var customerEmployeeAssociation = (await customerEmployeeAssociationService.Search()).Result;
-                    var approverId = customerEmployeeAssociation.Where(c => c.CustomerId == invoice.CustomerId && !c.IsDeleted).FirstOrDefault().ApproverId;// Account admin must be similar for multiple employee association.
-                    var approver = appUserService.GetAccountAdmins();
-                    await SendFillTimesheetReminderEmail(invoice);
+                    var paymentClearanceDays = invoice.Customer.PaymentClearanceDays;
+                    if (invoice.InvoiceDate.AddDays(paymentClearanceDays.Value) <= DateTime.Today)
+                    {                        
+                       // var approverId = customerEmployeeAssociation.Where(c => c.CustomerId == invoice.CustomerId && !c.IsDeleted).FirstOrDefault().ApproverId;// Account admin must be similar for multiple employee association.                       
+                        await SendFillTimesheetReminderEmail(invoice, approverEmail);
+                    }
+
                 };
                 return true;
             }
@@ -88,23 +94,22 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             }
         }
 
-        private async Task<bool> SendFillTimesheetReminderEmail(InvoiceResponseDto invoice)
+        private async Task<bool> SendFillTimesheetReminderEmail(InvoiceResponseDto invoice, string approverEmail)
         {
             try
             {
-                return true;
-                //var scope = _serviceProvider.CreateScope();
-                //var _emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
-                //var subject = "AddOptimization approve timesheet reminder";
-                //var emailTemplate = _templateService.ReadTemplate(EmailTemplates.ApproveTimesheetReminder);
-                //var link = GetMyTimesheetLinkForCustomer(invoice.Id);
+                var scope = _serviceProvider.CreateScope();
+                var _emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
+                var subject = "AddOptimization unpaid invoice reminder";
+                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoiceReminder);
+                var link = GetInvoiceLinkForCustomer(invoice.Id);
                 //emailTemplate = emailTemplate
                 //                .Replace("[CustomerName]", invoice?.Customer.Name)
                 //                .Replace("[EmployeeName]", invoice?.ApplicationUser.FullName)
                 //                .Replace("[StartDate]", invoice?.StartDate.Date.ToString("d"))
                 //                .Replace("[EndDate]", invoice?.EndDate.Date.ToString("d"))
                 //                .Replace("[LinkToApproveTimesheet]", link);
-                //return await _emailService.SendEmail(invoice?.Customer?.ManagerEmail, subject, emailTemplate);
+                return await _emailService.SendEmail(invoice?.Customer?.ManagerEmail, subject, emailTemplate);
             }
             catch (Exception ex)
             {
@@ -113,7 +118,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 return false;
             }
         }
-        public string GetMyTimesheetLinkForCustomer(Guid schedulerEventId)
+        public string GetInvoiceLinkForCustomer(long invoiceId)
         {
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
             var encryptedId = _protectionService.Encode(schedulerEventId.ToString());
