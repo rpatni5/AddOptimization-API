@@ -101,6 +101,26 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
+
+        public async Task<ApiResult<CustomerEmployeeAssociationDto>> Get(Guid id)
+        {
+            try
+            {
+                var entity = await _customerEmployeeAssociationRepository.FirstOrDefaultAsync(t => t.Id == id , include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.Approver).Include(e => e.Customer).Include(e => e.ApplicationUser), ignoreGlobalFilter: true);
+                if (entity == null)
+                {
+                    return ApiResult<CustomerEmployeeAssociationDto>.NotFound("association");
+                }
+                var mappedEntity = _mapper.Map<CustomerEmployeeAssociationDto>(entity);
+                return ApiResult<CustomerEmployeeAssociationDto>.Success(mappedEntity);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
     }
 }
 

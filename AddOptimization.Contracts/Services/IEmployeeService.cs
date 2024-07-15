@@ -11,4 +11,5 @@ public interface IEmployeeService
     Task<ApiResult<bool>> SignNDA(bool isNDASigned);
     Task<ApiResult<List<EmployeeDto>>> Search(PageQueryFiterBase filters);
     Task<ApiResult<EmployeeDto>> GetEmployeeById(Guid id);
+    Task<ApiResult<EmployeeDto>> GetEmployeeByUserId(int id);
 }
