@@ -1,4 +1,5 @@
-﻿CREATE TABLE [dbo].[InvoiceCreditNote](
+﻿
+CREATE TABLE [dbo].[InvoiceCreditNotes](
 	[Id] [uniqueidentifier] NOT NULL,
 	[InvoiceId] [bigint] NOT NULL,
 	[PaymentDate] [datetime2](7) NULL,
@@ -17,23 +18,20 @@ PRIMARY KEY CLUSTERED
 ) ON [PRIMARY]
 GO
 
-ALTER TABLE [dbo].[InvoiceCreditNote] ADD  DEFAULT ((0)) FOR [IsDeleted]
+ALTER TABLE [dbo].[InvoiceCreditNotes] ADD  DEFAULT ((0)) FOR [IsDeleted]
 GO
 
-ALTER TABLE [dbo].[InvoiceCreditNote] ADD  DEFAULT ((1)) FOR [IsActive]
+ALTER TABLE [dbo].[InvoiceCreditNotes] ADD  DEFAULT ((1)) FOR [IsActive]
 GO
 
-ALTER TABLE [dbo].[InvoiceCreditNote]  WITH NOCHECK ADD FOREIGN KEY([CreatedByUserId])
+ALTER TABLE [dbo].[InvoiceCreditNotes]  WITH NOCHECK ADD FOREIGN KEY([CreatedByUserId])
 REFERENCES [dbo].[ApplicationUsers] ([Id])
 GO
 
-ALTER TABLE [dbo].[InvoiceCreditNote]  WITH NOCHECK ADD FOREIGN KEY([InvoiceId])
+ALTER TABLE [dbo].[InvoiceCreditNotes]  WITH NOCHECK ADD FOREIGN KEY([InvoiceId])
 REFERENCES [dbo].[Invoices] ([Id])
 GO
 
-ALTER TABLE [dbo].[InvoiceCreditNote]  WITH NOCHECK ADD FOREIGN KEY([UpdatedByUserId])
+ALTER TABLE [dbo].[InvoiceCreditNotes]  WITH NOCHECK ADD FOREIGN KEY([UpdatedByUserId])
 REFERENCES [dbo].[ApplicationUsers] ([Id])
 GO
-
-
-

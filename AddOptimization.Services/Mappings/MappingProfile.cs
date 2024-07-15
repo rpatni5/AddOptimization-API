@@ -342,20 +342,20 @@ namespace AddOptimization.Services.Mappings
 
 
 
-            CreateMap<InvoiceCreditNote, InvoiceCreditNoteDto>().AfterMap((s, d) =>
+            CreateMap<InvoiceCreditNotes, InvoiceCreditNoteDto>().AfterMap((s, d) =>
             {
                 d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
                 d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
                 d.CreatedAt = s.CreatedAt?.Date;
                 d.UpdatedAt = s.UpdatedAt?.Date;
             });
-            CreateMap<InvoiceCreditNoteDto, InvoiceCreditNote>();
+            CreateMap<InvoiceCreditNoteDto, InvoiceCreditNotes>();
 
-            CreateMap<InvoiceCreditNote, InvoiceCreditPaymentDto>().AfterMap((s, d) =>
+            CreateMap<InvoiceCreditNotes, InvoiceCreditPaymentDto>().AfterMap((s, d) =>
             {
 
             });
-            CreateMap<InvoiceCreditPaymentDto, InvoiceCreditNote>();
+            CreateMap<InvoiceCreditPaymentDto, InvoiceCreditNotes>();
 
 
         }

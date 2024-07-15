@@ -10,6 +10,6 @@ namespace AddOptimization.Contracts.Dto
     {
 
         public long InvoiceId { get; set; }
-        public List<InvoiceCreditNoteDto> InvoiceCreditNote { get; set; }
+        public List<InvoiceCreditNoteDto> InvoiceCreditNotes { get; set; }
     }
 }
