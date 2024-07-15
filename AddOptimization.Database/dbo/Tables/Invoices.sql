@@ -1,5 +1,4 @@
-﻿
-CREATE TABLE [dbo].[Invoices](
+﻿CREATE TABLE [dbo].[Invoices](
 	[Id] [bigint] NOT NULL,
 	[InvoiceNumber] [bigint] NOT NULL,
 	[InvoiceDate] [datetime2](7) NOT NULL,
@@ -19,16 +18,21 @@ CREATE TABLE [dbo].[Invoices](
 	[CustomerId] [uniqueidentifier] NOT NULL,
 	[ExpiryDate] [datetime2](7) NOT NULL,
 	[PaymentClearanceDays] [int] NULL,
-	[DueAmount] [decimal](10, 2)  NOT NULL,
+	[DueAmount] [decimal](10, 2) NOT NULL,
 	[Metadata] [varchar](max) NULL,
+	[HasCreditNotes] [bit] NOT NULL,
+	[CreditNoteNumber] [bigint] NULL,
  CONSTRAINT [PK_Invoices] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
-) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
 
 ALTER TABLE [dbo].[Invoices] ADD  CONSTRAINT [DF__Invoices__IsDele__5006DFF2]  DEFAULT ((0)) FOR [IsDeleted]
+GO
+
+ALTER TABLE [dbo].[Invoices] ADD  DEFAULT ((0)) FOR [HasCreditNotes]
 GO
 
 ALTER TABLE [dbo].[Invoices]  WITH CHECK ADD  CONSTRAINT [FK_Invoices_ApplicationUsers_CreatedByUserId] FOREIGN KEY([CreatedByUserId])

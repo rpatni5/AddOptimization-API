@@ -7,6 +7,7 @@ using AddOptimization.Utilities.Common;
 using AddOptimization.Utilities.Extensions;
 using AutoMapper;
 using Microsoft.Extensions.Logging;
+using System.Linq;
 
 namespace AddOptimization.Services.Services
 {
@@ -40,7 +41,6 @@ namespace AddOptimization.Services.Services
                 var eventStatus = (await _invoiceStatusService.Search()).Result;
                 var paymentStatus = (await _paymentStatusService.Search()).Result;
                 var closedStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.CLOSED.ToString()).Id;
-
                 var existingPayments = await _invoiceCreditNoteRepository.QueryAsync(e => e.InvoiceId == model.InvoiceId);
                 foreach (var payment in existingPayments.ToList())
                 {
@@ -95,9 +95,24 @@ namespace AddOptimization.Services.Services
                     paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.UNPAID.ToString()).Id;
                     dueAmount = invoice.TotalPriceIncludingVat;
                 }
+               
+
 
                 invoice.PaymentStatusId = paymentStatusId;
                 invoice.DueAmount = dueAmount;
+                invoice.HasCreditNotes = entities.Any();
+
+                if (invoice.CreditNoteNumber == null && entities.Any())
+                {
+                    long maxInvoiceCreditNoteNumber = (await _invoiceRepository.QueryAsync(x => x.CreditNoteNumber != null)).Count();
+
+                    long newInvoiceCreditNoteNumber = long.Parse($"{DateTime.UtcNow:yyyyMM}{(maxInvoiceCreditNoteNumber + 1)}");
+
+
+                    invoice.CreditNoteNumber = newInvoiceCreditNoteNumber;
+                }
+              
+
                 await _invoiceRepository.UpdateAsync(invoice);
 
                 return ApiResult<InvoiceCreditPaymentDto>.Success(invoiceAmountPayment);
