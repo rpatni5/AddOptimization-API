@@ -35,6 +35,8 @@ public class AuthService : IAuthService
     private readonly IEmailService _emailService;
     private readonly IPermissionService _permissionService;
     private readonly ISettingService _settingService;
+    private readonly IGenericRepository<EmployeeContract> _employeeContractRepository;
+
 
     public AuthService(IConfiguration configuration, ILogger<AuthService> logger,
         IGenericRepository<ApplicationUser> applicationUserRepository,
@@ -44,6 +46,7 @@ public class AuthService : IAuthService
         ITemplateService templateService,
         IPermissionService permissionService,
         ISettingService settingService,
+         IGenericRepository<EmployeeContract> employeeContractRepository,
         IGenericRepository<Employee> employeeRepository)
     {
         _logger = logger;
@@ -57,6 +60,7 @@ public class AuthService : IAuthService
         _permissionService = permissionService;
         _employeeRepository = employeeRepository;
         _settingService = settingService;
+        _employeeContractRepository = employeeContractRepository;
     }
 
     private (string token, DateTime expiry) GenerateAccessToken(ApplicationUser entity)
@@ -213,6 +217,9 @@ public class AuthService : IAuthService
             var resp = await BuildResponse(entity);
             bool? isNDASigned = await GetNDASignedRequired(entity);
             resp.NDASignedRequired = isNDASigned;
+            bool? isContractSigned = await GetContractSignedRequired(entity);
+            resp.ContractSignedRequired = isContractSigned;
+
             entity.LastLogin = DateTime.UtcNow;
             entity.FailedLoginAttampts = 0;
             await _applicationUserRepository.UpdateAsync(entity);
@@ -251,6 +258,10 @@ public class AuthService : IAuthService
         var resp = await BuildResponse(entity);
         bool? isNDASigned = await GetNDASignedRequired(entity);
         resp.NDASignedRequired = isNDASigned;
+
+        bool? isContractSigned = await GetContractSignedRequired(entity);
+        resp.ContractSignedRequired = isContractSigned;
+
         entity.LastLogin = DateTime.UtcNow;
         entity.FailedLoginAttampts = 0;
         await _applicationUserRepository.UpdateAsync(entity);
@@ -267,6 +278,18 @@ public class AuthService : IAuthService
         }
         return null;
     }
+
+    private async Task<bool?> GetContractSignedRequired(ApplicationUser entity)
+    {
+        var isEmployeeRole = entity.UserRoles.Any(c => c.Role.Name.Contains("Employee", StringComparison.InvariantCultureIgnoreCase));
+        if (isEmployeeRole)
+        {
+            var employee = await _employeeContractRepository.FirstOrDefaultAsync(u => u.EmployeeId == entity.Id && !u.IsContractSigned);
+            return employee != null ? !employee.IsContractSigned : false;
+        }
+        return null;
+    }
+
     private async Task<bool> IsEmployeeRole(ApplicationUser entity)
     {
         return entity.UserRoles.Any(c => c.Role.Name.Contains("Employee", StringComparison.InvariantCultureIgnoreCase));

@@ -216,7 +216,8 @@ namespace AddOptimization.Services.Mappings
                 d.FirstName = s.ApplicationUser != null ? s.ApplicationUser.FirstName : string.Empty;
                 d.LastName = s.ApplicationUser != null ? s.ApplicationUser.LastName : string.Empty;
                 d.Password = s.ApplicationUser != null ? s.ApplicationUser.Password : string.Empty;
-                d.isActive = s.ApplicationUser!=null ? s.ApplicationUser.IsActive : false;
+                d.isActive = s.ApplicationUser != null ? s.ApplicationUser.IsActive : false;
+                d.CountryName = s.Country != null ? s.Country.CountryName : string.Empty;
 
             });
             CreateMap<EmployeeDto, Employee>();
@@ -354,6 +355,9 @@ namespace AddOptimization.Services.Mappings
                 d.UpdatedAt = s.UpdatedAt?.Date;
                 d.CustomerName = s.Customer != null ? s.Customer.Organizations : string.Empty;
                 d.EmployeeName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
+                d.InvoicingAndPaymentMode = s.InvoicingPaymentMode != null ? s.InvoicingPaymentMode.Name : string.Empty;
+
+
             });
             CreateMap<EmployeeContractRequestDto, EmployeeContract>();
         }

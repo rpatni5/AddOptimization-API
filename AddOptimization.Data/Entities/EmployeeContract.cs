@@ -15,8 +15,10 @@ namespace AddOptimization.Data.Entities
         public  int NoticePeriod { get; set; }
         public string? JobTitle { get; set; }
         public string? Address { get; set; }
-        public bool? isSigned { get;set; }
+        public bool IsContractSigned { get;set; }
         public DateTime? SignedDate { get; set; }
+        public DateTime? ProjectStartDate { get; set; }
+        public DateTime? ProjectEndDate { get; set; }
 
 
         [ForeignKey(nameof(InvoicingPaymentModeId))]

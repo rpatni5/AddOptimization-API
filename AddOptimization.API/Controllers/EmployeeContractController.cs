@@ -62,5 +62,33 @@ namespace AddOptimization.API.Controllers
             }
         }
 
+        [HttpPost("contract/{contractId}")]
+        public async Task<IActionResult> SignContract(Guid contractId)
+        {
+            try
+            {
+                var retVal = await _contractService.SignContract(contractId);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+
+        [HttpGet("get-contract/{id}")]
+        public async Task<IActionResult> GetEmployeeContractByEmployeeId(int id)
+        {
+            try
+            {
+                var retVal = await _contractService.GetEmployeeContractByEmployeeId(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
     }
 }

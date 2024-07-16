@@ -15,7 +15,7 @@ namespace AddOptimization.Contracts.Dto
         public string CustomerName { get; set; }
         public string EmployeeName { get; set; }
         public string? Address { get; set; }
-        public bool? IsSigned { get; set; }
+        public bool IsContractSigned { get; set; }
         public DateTime? SignedDate { get; set; }
         public string CreatedBy { get; set; }
         public string UpdatedBy { get; set; }
@@ -27,8 +27,13 @@ namespace AddOptimization.Contracts.Dto
         public Guid EmployeeAssociationId { get; set; }
         public Guid CustomerId { get; set; }
         public int EmployeeId { get; set; }
+        public string InvoicingAndPaymentMode { get; set; }
+        public DateTime? ProjectStartDate { get; set; }
+        public DateTime? ProjectEndDate { get; set; }
+
         public virtual CustomerDto Customer { get; set; }
         public virtual ApplicationUserDto ApplicationUser { get; set; }
+        public virtual InvoicingPaymentModeDto PaymentMode { get; set;}
 
     }
 }

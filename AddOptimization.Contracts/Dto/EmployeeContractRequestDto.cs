@@ -16,6 +16,8 @@ namespace AddOptimization.Contracts.Dto
         public string? Address { get; set; }
         public Guid EmployeeAssociationId { get; set; }
         public int EmployeeId { get; set; }
+        public DateTime? ProjectStartDate { get; set; }
+        public DateTime? ProjectEndDate { get; set; }
 
     }
 }
