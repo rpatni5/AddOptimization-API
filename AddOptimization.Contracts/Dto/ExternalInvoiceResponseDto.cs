@@ -34,6 +34,7 @@ namespace AddOptimization.Contracts.Dto
         public DateTime? UpdatedAt { get; set; }
         public int? PaymentClearanceDays { get; set; }
         public virtual CompanyDto Company { get; set; }
+        public string ExternalCompanyName { get; set; }
         public List<ExternalInvoiceDetailDto> ExternalInvoiceDetails { get; set; }
     }
 }
