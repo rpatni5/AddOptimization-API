@@ -7,7 +7,7 @@ using AddOptimization.Utilities.Models;
 using AddOptimization.Utilities.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using NPOI.SS.Formula.Functions;
+
 
 namespace AddOptimization.API.Controllers
 {
@@ -108,6 +108,21 @@ namespace AddOptimization.API.Controllers
                     throw new ArgumentException("Invalid decrypted ID format");
                 }
                 var retVal = await _quoteService.FetchQuoteDetails(decryptedId);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+
+        [HttpPost("convertQuoteToInvoice/{quoteId}")]
+        public async Task<IActionResult> ConvertQuoteToInvoice(long quoteId)
+        {
+            try
+            {
+                var retVal = await _quoteService.ConvertInvoice(quoteId);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
