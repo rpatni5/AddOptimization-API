@@ -32,6 +32,15 @@ namespace AddOptimization.Data.Entities
 
         [MaxLength(200)]
         public string BankAccountNumber { get; set; }
+        public string? SwiftCode { get; set; }
+        [MaxLength(200)]
+        public string?BankAddress { get; set; }
+        public int? BankPostalCode { get; set; }
+        public string? BankCity { get; set; }
+        public string? BankState { get; set; }
+        public string? BankCountry { get; set; }
+
+
 
         [MaxLength(500)]
         public string BillingAddress { get; set; }
