@@ -41,82 +41,81 @@ namespace AddOptimization.Services.Services
                 var eventStatus = (await _invoiceStatusService.Search()).Result;
                 var paymentStatus = (await _paymentStatusService.Search()).Result;
                 var closedStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.CLOSED.ToString()).Id;
+                var existingcreditNote = await _invoiceCreditNoteRepository.QueryAsync(e => e.InvoiceId == model.InvoiceId);
+                foreach (var payment in existingcreditNote.ToList())
+                {
+                    await _invoiceCreditNoteRepository.DeleteAsync(payment);
+                }
 
-                var existingCreditNotes = await _invoiceCreditNoteRepository.QueryAsync(e => e.InvoiceId == model.InvoiceId);
-                var creditNoteEntities = existingCreditNotes.ToList();
+                var entities = new List<InvoiceCreditNotes>();
 
                 foreach (var summary in model.InvoiceCreditNotes)
                 {
-                    var existingCreditNote = creditNoteEntities.FirstOrDefault(e => e.TransactionId == summary.TransactionId);
-                    if (existingCreditNote != null)
+                    var newEntity = new InvoiceCreditNotes
                     {
-                        existingCreditNote.PaymentDate = summary.PaymentDate;
-                        existingCreditNote.Amount = summary.Amount;
-                        await _invoiceCreditNoteRepository.UpdateAsync(existingCreditNote);
-                    }
-                    else
-                    {
-                        var newEntity = new InvoiceCreditNotes
-                        {
-                            Id = Guid.NewGuid(),
-                            InvoiceId = model.InvoiceId,
-                            PaymentDate = summary.PaymentDate,
-                            Amount = summary.Amount,
-                            TransactionId = summary.TransactionId,
-                        };
-                        await _invoiceCreditNoteRepository.InsertAsync(newEntity);
-                        creditNoteEntities.Add(newEntity);
-                    }
+                        Id = Guid.NewGuid(),
+                        InvoiceId = model.InvoiceId,
+                        PaymentDate = summary.PaymentDate,
+                        Amount = summary.Amount,
+                        TransactionId = summary.TransactionId,
+                    };
+                    await _invoiceCreditNoteRepository.InsertAsync(newEntity);
+                    entities.Add(newEntity);
                 }
 
+
+                var mappedEntity = _mapper.Map<List<InvoiceCreditNoteDto>>(entities);
+
+                var invoiceAmountPayment = new InvoiceCreditPaymentDto
+                {
+                    InvoiceId = model.InvoiceId,
+                    InvoiceCreditNotes = mappedEntity
+                };
                 var existingPayments = await _invoicePaymentRepository.QueryAsync(e => e.InvoiceId == model.InvoiceId);
                 var paymentEntities = existingPayments.ToList();
 
-                var totalPaidAmount = paymentEntities.Sum(x => x.Amount) + creditNoteEntities.Sum(x => x.Amount);
+                var totalPaidAmount = paymentEntities.Sum(x => x.Amount) +   invoiceAmountPayment.InvoiceCreditNotes.Where(x => !x.IsDeleted).Sum(x => x.Amount);
 
                 var invoice = await _invoiceRepository.FirstOrDefaultAsync(x => x.Id == model.InvoiceId);
 
                 Guid paymentStatusId;
 
-                var dueAmount = invoice.TotalPriceIncludingVat - totalPaidAmount;
-
-                if (dueAmount <= 0)
+                var dueAmount = invoice.TotalPriceIncludingVat;
+                if (invoice.TotalPriceIncludingVat == totalPaidAmount)
                 {
                     paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.PAID.ToString()).Id;
                     dueAmount = 0;
                     invoice.InvoiceStatusId = closedStatusId;
                 }
-                else if (dueAmount < invoice.TotalPriceIncludingVat)
+                else if (invoice.TotalPriceIncludingVat > 0)
                 {
                     paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.PARTIAL_PAID.ToString()).Id;
+                    dueAmount = invoice.TotalPriceIncludingVat - totalPaidAmount;
                 }
                 else
                 {
                     paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.UNPAID.ToString()).Id;
+                    dueAmount = invoice.TotalPriceIncludingVat;
                 }
 
                 invoice.PaymentStatusId = paymentStatusId;
                 invoice.DueAmount = dueAmount;
-                invoice.HasCreditNotes = creditNoteEntities.Any();
+                invoice.HasCreditNotes = entities.Any();
 
-                if (invoice.CreditNoteNumber == null && creditNoteEntities.Any())
+                if (invoice.CreditNoteNumber == null && entities.Any())
                 {
                     long maxInvoiceCreditNoteNumber = (await _invoiceRepository.QueryAsync(x => x.CreditNoteNumber != null)).Count();
+
                     long newInvoiceCreditNoteNumber = long.Parse($"{DateTime.UtcNow:yyyyMM}{(maxInvoiceCreditNoteNumber + 1)}");
+
+
                     invoice.CreditNoteNumber = newInvoiceCreditNoteNumber;
                 }
 
+
                 await _invoiceRepository.UpdateAsync(invoice);
 
-                var mappedEntity = _mapper.Map<List<InvoiceCreditNoteDto>>(creditNoteEntities);
-
-                var invoiceCreditPayment = new InvoiceCreditPaymentDto
-                {
-                    InvoiceId = model.InvoiceId,
-                    InvoiceCreditNotes = mappedEntity
-                };
-
-                return ApiResult<InvoiceCreditPaymentDto>.Success(invoiceCreditPayment);
+                return ApiResult<InvoiceCreditPaymentDto>.Success(invoiceAmountPayment);
             }
             catch (Exception ex)
             {
