@@ -24,5 +24,7 @@ namespace AddOptimization.Data.Entities
 
         [ForeignKey(nameof(ApproverId))]
         public virtual ApplicationUser Approver { get; set; }
+
+        public ICollection<EmployeeContract> Contracts { get; set; }
     }
 }

@@ -16,15 +16,17 @@ namespace AddOptimization.Services.Services
     public class CustomerEmployeeAssociationService : ICustomerEmployeeAssociationService
     {
         private readonly IGenericRepository<CustomerEmployeeAssociation> _customerEmployeeAssociationRepository;
+        private readonly IGenericRepository<EmployeeContract> _contractRepository;
         private readonly ILogger<CustomerEmployeeAssociationService> _logger;
         private readonly IMapper _mapper;
 
 
-        public CustomerEmployeeAssociationService(IGenericRepository<CustomerEmployeeAssociation> customerEmployeeAssociationRepository, ILogger<CustomerEmployeeAssociationService> logger, IMapper mapper)
+        public CustomerEmployeeAssociationService(IGenericRepository<CustomerEmployeeAssociation> customerEmployeeAssociationRepository, ILogger<CustomerEmployeeAssociationService> logger, IGenericRepository<EmployeeContract> contractRepository, IMapper mapper)
         {
             _customerEmployeeAssociationRepository = customerEmployeeAssociationRepository;
             _logger = logger;
             _mapper = mapper;
+            _contractRepository = contractRepository;
         }
 
         public async Task<ApiResult<CustomerEmployeeAssociationDto>> Create(CustomerEmployeeAssociationDto model)
@@ -55,7 +57,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _customerEmployeeAssociationRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.Approver).Include(e => e.Customer).Include(e => e.ApplicationUser));
+                var entities = await _customerEmployeeAssociationRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.Approver).Include(e => e.Customer).Include(e => e.ApplicationUser).Include(e => e.Contracts));
 
                 var mappedEntities = _mapper.Map<List<CustomerEmployeeAssociationDto>>(entities.ToList());
                 return ApiResult<List<CustomerEmployeeAssociationDto>>.Success(mappedEntities);
@@ -72,12 +74,15 @@ namespace AddOptimization.Services.Services
             try
             {
                 var entity = await _customerEmployeeAssociationRepository.FirstOrDefaultAsync(t => t.Id == id);
+                var contractData = await _contractRepository.FirstOrDefaultAsync(t => t.EmployeeAssociationId == id);
                 if (entity == null)
                 {
                     return ApiResult<bool>.NotFound("Association");
                 }
                 entity.IsDeleted = true;
                 await _customerEmployeeAssociationRepository.UpdateAsync(entity);
+                contractData.IsContractSigned = true;
+                await _contractRepository.UpdateAsync(contractData);
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)

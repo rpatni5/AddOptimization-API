@@ -9,6 +9,7 @@ using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
+using AddOptimization.Utilities.Models;
 
 namespace AddOptimization.Services.Services;
 
@@ -124,5 +125,22 @@ public class EmployeeContractService : IEmployeeContractService
         }
     }
 
+    public async Task<ApiResult<List<EmployeeContractResponseDto>>> Search()
+    {
+        try
+        {
+
+            var entities = await _contractRepository.QueryAsync(include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.InvoicingPaymentMode).Include(e => e.Customer).Include(e => e.CustomerEmployeeAssociation).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
+
+            var mappedEntities = _mapper.Map<List<EmployeeContractResponseDto>>(entities);
+
+            return ApiResult<List<EmployeeContractResponseDto>>.Success(mappedEntities);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            throw;
+        }
+    }
 
 }

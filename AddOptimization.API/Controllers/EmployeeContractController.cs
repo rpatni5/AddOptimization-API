@@ -90,5 +90,19 @@ namespace AddOptimization.API.Controllers
                 return HandleException(ex);
             }
         }
+
+        [HttpPost("search")]
+        public async Task<IActionResult> Search()
+        {
+            try
+            {
+                var retVal = await _contractService.Search();
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
     }
 }

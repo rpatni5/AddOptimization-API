@@ -189,6 +189,7 @@ namespace AddOptimization.Services.Mappings
                 d.CreatedBy = s.CreatedByUser?.FullName;
                 d.UpdatedAt = s.UpdatedAt?.Date;
                 d.UpdatedBy = s.UpdatedByUser?.FullName;
+                d.HasContract = s.Contracts != null && s.Contracts.Count > 0;
             });
 
             CreateMap<HolidayAllocation, HolidayAllocationResponseDto>().AfterMap((s, d) =>
