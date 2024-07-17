@@ -44,9 +44,9 @@ namespace AddOptimization.Services.Services
                 var eventStatus = (await _invoiceStatusService.Search()).Result;
                 var paymentStatus = (await _paymentStatusService.Search()).Result;
                 var closedStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.CLOSED.ToString()).Id;
-
                 var existingPayments = await _invoicePaymentRepository.QueryAsync(e => e.InvoiceId == model.InvoiceId);
-                foreach (var payment in existingPayments.ToList())
+                var paymentList = existingPayments.ToList();
+                foreach (var payment in paymentList)
                 {
                     await _invoicePaymentRepository.DeleteAsync(payment);
                 }
