@@ -610,3 +610,45 @@ BEGIN
     VALUES
         (NEWID(),'LOG_LEVEL','Log Level','When log level is enabled the Loglevel is Information otherwise Error.',1)
 END
+
+
+--start Entry for InvoicingPaymentModes
+
+ /* Adding Monthly Mode  data in Invoicing Payment Modes */
+
+IF NOT EXISTS (SELECT 1 FROM InvoicingPaymentModes Where ModeKey = 'MONTHLY')
+BEGIN 
+    INSERT INTO InvoicingPaymentModes(Id,Name,ModeKey)
+    VALUES
+        (NEWID(),'Monthly','MONTHLY')
+END
+
+ /* Adding Yearly  Mode  data in Invoicing Payment Modes */
+
+IF NOT EXISTS (SELECT 1 FROM InvoicingPaymentModes Where ModeKey = 'YEARLY')
+BEGIN 
+    INSERT INTO InvoicingPaymentModes(Id,Name,ModeKey)
+    VALUES
+        (NEWID(),'Yearly','YEARLY')
+END
+
+
+ /* Adding Weekly  Mode  data in Invoicing Payment Modes */
+
+IF NOT EXISTS (SELECT 1 FROM InvoicingPaymentModes Where ModeKey = 'WEEKLY')
+BEGIN 
+    INSERT INTO InvoicingPaymentModes(Id,Name,ModeKey)
+    VALUES
+        (NEWID(),'Weekly','WEEKLY')
+END
+
+ /* Adding Quarterly  Mode  data in Invoicing Payment Modes */
+
+IF NOT EXISTS (SELECT 1 FROM InvoicingPaymentModes Where ModeKey = 'QUATERLY')
+BEGIN 
+    INSERT INTO InvoicingPaymentModes(Id,Name,ModeKey)
+    VALUES
+        (NEWID(),'Quarterly','QUATERLY')
+END
+
+
