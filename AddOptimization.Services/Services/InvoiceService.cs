@@ -596,6 +596,7 @@ namespace AddOptimization.Services.Services
                     PaymentClearanceDays = e.PaymentClearanceDays,
                     DueAmount = e.DueAmount,
                     HasCreditNotes=e.HasCreditNotes,
+                    CreditNoteNumber = e.CreditNoteNumber,
                 }).ToList());
 
                 var result = pagedResult;
