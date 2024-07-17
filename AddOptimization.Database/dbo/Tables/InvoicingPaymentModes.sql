@@ -2,7 +2,7 @@
 CREATE TABLE [dbo].[InvoicingPaymentModes](
 	[Id] [uniqueidentifier] NOT NULL,
 	[Name] [varchar](100) NOT NULL,
-	[ModeKey] [nvarchar](200) NULL,
+	[ModeKey] [nvarchar](200) NOT NULL,
 	[CreatedAt] [datetime2](7) NULL,
 	[UpdatedAt] [datetime2](7) NULL,
 	[IsDeleted] [bit] NULL,
