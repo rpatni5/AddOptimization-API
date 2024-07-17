@@ -31,9 +31,6 @@ namespace AddOptimization.Contracts.Dto
         public DateTime? ProjectStartDate { get; set; }
         public DateTime? ProjectEndDate { get; set; }
 
-        public virtual CustomerDto Customer { get; set; }
-        public virtual ApplicationUserDto ApplicationUser { get; set; }
-        public virtual InvoicingPaymentModeDto PaymentMode { get; set;}
 
     }
 }

@@ -8,7 +8,7 @@ namespace AddOptimization.Contracts.Dto
 {
     public class InvoicingPaymentModeDto : BaseDto<Guid>
     {
-        public string? ModeKey { get; set; }
+        public string ModeKey { get; set; }
       
     }
 }
