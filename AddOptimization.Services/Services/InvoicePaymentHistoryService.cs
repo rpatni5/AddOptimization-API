@@ -22,7 +22,9 @@ namespace AddOptimization.Services.Services
         private readonly IMapper _mapper;
         private readonly IInvoiceService _invoiceService;
         private readonly IGenericRepository<Invoice> _invoiceRepository;
-        public InvoicePaymentHistoryService(IGenericRepository<InvoicePaymentHistory> invoicePaymentRepository, ILogger<InvoicePaymentHistoryService> logger, IMapper mapper, IInvoiceStatusService invoiceStatusService, IInvoiceService invoiceService, IPaymentStatusService paymentStatusService, IGenericRepository<Invoice> invoiceRepository)
+        private readonly IGenericRepository<InvoiceCreditNotes> _invoiceCreditNoteRepository;
+
+        public InvoicePaymentHistoryService(IGenericRepository<InvoicePaymentHistory> invoicePaymentRepository, ILogger<InvoicePaymentHistoryService> logger, IMapper mapper, IInvoiceStatusService invoiceStatusService, IInvoiceService invoiceService, IPaymentStatusService paymentStatusService, IGenericRepository<Invoice> invoiceRepository, IGenericRepository<InvoiceCreditNotes> invoiceCreditNoteRepository)
         {
             _invoicePaymentRepository = invoicePaymentRepository;
             _logger = logger;
@@ -31,20 +33,19 @@ namespace AddOptimization.Services.Services
             _paymentStatusService = paymentStatusService;
             _invoiceService = invoiceService;
             _invoiceRepository = invoiceRepository;
+            _invoiceCreditNoteRepository= invoiceCreditNoteRepository;
         }
 
+     
         public async Task<ApiResult<InvoiceAmountPaymentDto>> Create(InvoiceAmountPaymentDto model)
         {
             try
             {
-
-
                 var eventStatus = (await _invoiceStatusService.Search()).Result;
                 var paymentStatus = (await _paymentStatusService.Search()).Result;
                 var closedStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.CLOSED.ToString()).Id;
-
-                var existingPayments = await _invoicePaymentRepository.QueryAsync(e => e.InvoiceId == model.InvoiceId);
-                foreach (var payment in existingPayments.ToList())
+                var paymentList = (await _invoicePaymentRepository.QueryAsync(e => e.InvoiceId == model.InvoiceId)).ToList();
+                foreach (var payment in paymentList)
                 {
                     await _invoicePaymentRepository.DeleteAsync(payment);
                 }
@@ -65,7 +66,6 @@ namespace AddOptimization.Services.Services
                     entities.Add(newEntity);
                 }
 
-
                 var mappedEntity = _mapper.Map<List<InvoicePaymentHistoryDto>>(entities);
 
                 var invoiceAmountPayment = new InvoiceAmountPaymentDto
@@ -73,8 +73,9 @@ namespace AddOptimization.Services.Services
                     InvoiceId = model.InvoiceId,
                     InvoicePaymentHistory = mappedEntity
                 };
-
-                var totalPaidAmount = invoiceAmountPayment.InvoicePaymentHistory.Where(x => !x.IsDeleted).Sum(x => x.Amount);
+                var existingCreditNotes = await _invoiceCreditNoteRepository.QueryAsync(e => e.InvoiceId == model.InvoiceId);
+                var creditNoteEntities = existingCreditNotes.ToList();
+                var totalPaidAmount = creditNoteEntities.Sum(x => x.Amount) + invoiceAmountPayment.InvoicePaymentHistory.Where(x => !x.IsDeleted).Sum(x => x.Amount);
 
                 var invoice = await _invoiceRepository.FirstOrDefaultAsync(x => x.Id == model.InvoiceId);
 

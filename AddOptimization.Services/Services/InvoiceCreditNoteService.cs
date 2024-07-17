@@ -13,6 +13,7 @@ namespace AddOptimization.Services.Services
 {
     public class InvoiceCreditNoteService:IInvoiceCreditNoteService
     {
+        private readonly IGenericRepository<InvoicePaymentHistory> _invoicePaymentRepository;
         private readonly IGenericRepository<InvoiceCreditNotes> _invoiceCreditNoteRepository;
         private readonly IInvoiceStatusService _invoiceStatusService;
         private readonly ILogger<InvoiceCreditNoteService> _logger;
@@ -21,7 +22,7 @@ namespace AddOptimization.Services.Services
         private readonly IInvoiceService _invoiceService;
         private readonly IGenericRepository<Invoice> _invoiceRepository;
 
-        public InvoiceCreditNoteService(IGenericRepository<InvoiceCreditNotes> invoiceCreditNoteRepository, ILogger<InvoiceCreditNoteService> logger, IMapper mapper, IInvoiceStatusService invoiceStatusService, IInvoiceService invoiceService, IPaymentStatusService paymentStatusService, IGenericRepository<Invoice> invoiceRepository)
+        public InvoiceCreditNoteService(IGenericRepository<InvoiceCreditNotes> invoiceCreditNoteRepository, IGenericRepository<InvoicePaymentHistory> invoicePaymentRepository, ILogger<InvoiceCreditNoteService> logger, IMapper mapper, IInvoiceStatusService invoiceStatusService, IInvoiceService invoiceService, IPaymentStatusService paymentStatusService, IGenericRepository<Invoice> invoiceRepository)
         {
             _invoiceCreditNoteRepository = invoiceCreditNoteRepository;
             _logger = logger;
@@ -30,19 +31,18 @@ namespace AddOptimization.Services.Services
             _paymentStatusService = paymentStatusService;
             _invoiceService = invoiceService;
             _invoiceRepository = invoiceRepository;
+            _invoicePaymentRepository=invoicePaymentRepository;
         }
 
         public async Task<ApiResult<InvoiceCreditPaymentDto>> Create(InvoiceCreditPaymentDto model)
         {
             try
             {
-
-
                 var eventStatus = (await _invoiceStatusService.Search()).Result;
                 var paymentStatus = (await _paymentStatusService.Search()).Result;
                 var closedStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.CLOSED.ToString()).Id;
-                var existingPayments = await _invoiceCreditNoteRepository.QueryAsync(e => e.InvoiceId == model.InvoiceId);
-                foreach (var payment in existingPayments.ToList())
+                var creditNotesList = (await _invoiceCreditNoteRepository.QueryAsync(e => e.InvoiceId == model.InvoiceId)).ToList();
+                foreach (var payment in creditNotesList)
                 {
                     await _invoiceCreditNoteRepository.DeleteAsync(payment);
                 }
@@ -71,8 +71,10 @@ namespace AddOptimization.Services.Services
                     InvoiceId = model.InvoiceId,
                     InvoiceCreditNotes = mappedEntity
                 };
+                var existingPayments = await _invoicePaymentRepository.QueryAsync(e => e.InvoiceId == model.InvoiceId);
+                var paymentEntities = existingPayments.ToList();
 
-                var totalPaidAmount = invoiceAmountPayment.InvoiceCreditNotes.Where(x => !x.IsDeleted).Sum(x => x.Amount);
+                var totalPaidAmount = paymentEntities.Sum(x => x.Amount) +   invoiceAmountPayment.InvoiceCreditNotes.Where(x => !x.IsDeleted).Sum(x => x.Amount);
 
                 var invoice = await _invoiceRepository.FirstOrDefaultAsync(x => x.Id == model.InvoiceId);
 
@@ -95,8 +97,6 @@ namespace AddOptimization.Services.Services
                     paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.UNPAID.ToString()).Id;
                     dueAmount = invoice.TotalPriceIncludingVat;
                 }
-               
-
 
                 invoice.PaymentStatusId = paymentStatusId;
                 invoice.DueAmount = dueAmount;
@@ -111,7 +111,7 @@ namespace AddOptimization.Services.Services
 
                     invoice.CreditNoteNumber = newInvoiceCreditNoteNumber;
                 }
-              
+
 
                 await _invoiceRepository.UpdateAsync(invoice);
 
@@ -123,8 +123,6 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-
-
         public async Task<ApiResult<List<InvoiceCreditNoteDto>>> GetCreditInfoById(int id)
         {
             try
