@@ -12,6 +12,12 @@ namespace AddOptimization.Contracts.Dto
         public string BankName { get; set; }
         public string BankAccountName { get; set; }
         public string BankAccountNumber { get; set; }
+        public string? SwiftCode { get; set; }
+        public string? BankAddress { get; set; }
+        public int? BankPostalCode { get; set; }
+        public string? BankCity { get; set; }
+        public string? BankState { get; set; }
+        public string? BankCountry { get; set; }
         public string BillingAddress { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }

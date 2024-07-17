@@ -27,6 +27,7 @@ using System.Globalization;
 using AddOptimization.Utilities.Interface;
 using Microsoft.Extensions.Configuration;
 using AddOptimization.Utilities.Services;
+using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 
 namespace AddOptimization.Services.Services
 {
@@ -34,6 +35,10 @@ namespace AddOptimization.Services.Services
     {
         private readonly IGenericRepository<Quote> _quoteRepository;
         private readonly IGenericRepository<QuoteSummary> _quoteSummaryRepository;
+        private readonly IGenericRepository<Invoice> _invoiceRepository;
+        private readonly IGenericRepository<InvoiceDetail> _invoiceDetailRepository;
+        private readonly IPaymentStatusService _paymentStatusService;
+        private readonly IInvoiceStatusService _invoiceStatusService;
         private readonly ILogger<QuoteService> _logger;
         private readonly IMapper _mapper;
         private readonly IQuoteStatusService _quoteStatusService;
@@ -45,12 +50,18 @@ namespace AddOptimization.Services.Services
         private readonly IConfiguration _configuration;
         private readonly CustomDataProtectionService _protectionService;
 
-        public QuoteService(IGenericRepository<Quote> quoteRepository, ILogger<QuoteService> logger, IMapper mapper, IQuoteStatusService quoteStatusService, IGenericRepository<QuoteSummary> quoteSummaryRepository, IUnitOfWork unitOfWork, IGenericRepository<Company> companyRepository, IConfiguration configuration, IEmailService emailService, ITemplateService templateService, CustomDataProtectionService protectionService)
+        public QuoteService(IGenericRepository<Quote> quoteRepository, IGenericRepository<Invoice> invoiceRepository, IGenericRepository<InvoiceDetail> invoiceDetailRepository, IInvoiceStatusService invoiceStatusService,
+            IPaymentStatusService paymentStatusService,
+          ILogger<QuoteService> logger, IMapper mapper, IQuoteStatusService quoteStatusService, IGenericRepository<QuoteSummary> quoteSummaryRepository, IUnitOfWork unitOfWork, IGenericRepository<Company> companyRepository, IConfiguration configuration, IEmailService emailService, ITemplateService templateService, CustomDataProtectionService protectionService)
         {
+            _paymentStatusService = paymentStatusService;
+            _invoiceStatusService = invoiceStatusService;
             _quoteRepository = quoteRepository;
             _logger = logger;
             _mapper = mapper;
             _quoteStatusService = quoteStatusService;
+            _invoiceRepository = invoiceRepository;
+            _invoiceDetailRepository = invoiceDetailRepository;
             _quoteSummaryRepository = quoteSummaryRepository;
             _unitOfWork = unitOfWork;
             _companyRepository = companyRepository;
@@ -111,7 +122,7 @@ namespace AddOptimization.Services.Services
 
                 Quote entity = new Quote
                 {
-                    Id= id+1,
+                    Id = id + 1,
                     CustomerId = model.CustomerId,
                     ExpiryDate = model.ExpiryDate,
                     QuoteDate = model.QuoteDate,
@@ -120,6 +131,8 @@ namespace AddOptimization.Services.Services
                     CompanyBankAddress = companyBankDetails,
                     QuoteStatusId = statusId,
                     QuoteNo = quoteNo,
+                    TotalPriceExcVat = model.QuoteSummaries.ToList().Sum(x => x.TotalPriceExcVat),
+                    TotalPriceIncVat = model.QuoteSummaries.ToList().Sum(x => x.TotalPriceIncVat),
                     QuoteSummaries = new List<QuoteSummary>()
                 };
                 await _quoteRepository.InsertAsync(entity);
@@ -138,7 +151,7 @@ namespace AddOptimization.Services.Services
 
                     await _quoteSummaryRepository.InsertAsync(quoteSummary);
                     entity.QuoteSummaries.Add(quoteSummary);
-                }
+             }
                 await _unitOfWork.CommitTransactionAsync();
                 var mappedEntity = _mapper.Map<QuoteResponseDto>(entity);
                 return ApiResult<QuoteResponseDto>.Success(mappedEntity);
@@ -279,6 +292,76 @@ namespace AddOptimization.Services.Services
             {
                 _logger.LogException(ex);
                 return false;
+            }
+        }
+
+        public async Task<ApiResult<InvoiceResponseDto>> ConvertInvoice(long quoteId)
+        {
+            try
+            {
+                await _unitOfWork.BeginTransactionAsync();
+                var quoteStatus = (await _quoteStatusService.Search()).Result;
+                var quotestatusId = quoteStatus.FirstOrDefault(x => x.StatusKey == QuoteStatusesEnum.FINALIZED.ToString()).Id;
+                var eventStatus = (await _invoiceStatusService.Search()).Result;
+                var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.DRAFT.ToString()).Id;
+
+                var paymentStatus = (await _paymentStatusService.Search()).Result;
+                var paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.UNPAID.ToString()).Id;
+                var quote = await _quoteRepository.FirstOrDefaultAsync(e => e.Id == quoteId, include: source => source.Include(x => x.QuoteSummaries));
+                var maxId = await _invoiceRepository.MaxAsync(e => (int)e.Id, ignoreGlobalFilter: true) + 1;
+                var newId = maxId + 1;
+                var invoiceNumber = long.Parse($"{DateTime.UtcNow:yyyyMM}{newId}");
+
+                if (quote == null)
+                {
+                    return ApiResult<InvoiceResponseDto>.NotFound("Quote not found");
+                }
+                quote.QuoteStatusId = quotestatusId;
+
+                var invoice = new Invoice
+                {
+                    Id = newId,
+                    InvoiceNumber = Convert.ToInt64(invoiceNumber),
+                    CustomerId = quote.CustomerId,
+                    InvoiceDate = DateTime.UtcNow,
+                    CustomerAddress = quote.CustomerAddress,
+                    PaymentStatusId = paymentStatusId,
+                    InvoiceStatusId = statusId,
+                    MetaData = Convert.ToString(quoteId),
+                    VatValue = quote.QuoteSummaries.Sum(x => (x.UnitPrice * x.Quantity * x.Vat) / 100),
+                    TotalPriceIncludingVat = quote.QuoteSummaries.Sum(x => x.TotalPriceIncVat),
+                    TotalPriceExcludingVat = quote.QuoteSummaries.Sum(x => x.TotalPriceExcVat),
+                    InvoiceDetails = new List<InvoiceDetail>()
+                };
+
+                foreach (var quoteSummary in quote.QuoteSummaries)
+                {
+                    var invoiceDetail = new InvoiceDetail
+                    {
+                        InvoiceId = invoice.Id,
+                        Description = quoteSummary.Name,
+                        Quantity = quoteSummary.Quantity,
+                        UnitPrice = quoteSummary.UnitPrice,
+                        VatPercent = quoteSummary.Vat,
+
+                        TotalPriceExcludingVat = quoteSummary.TotalPriceExcVat,
+                        TotalPriceIncludingVat = quoteSummary.TotalPriceIncVat,
+
+                    };
+                    invoice.InvoiceDetails.Add(invoiceDetail);
+                }
+                await _quoteRepository.UpdateAsync(quote);
+                await _invoiceRepository.InsertAsync(invoice);
+                await _unitOfWork.CommitTransactionAsync();
+
+                var mappedInvoice = _mapper.Map<InvoiceResponseDto>(invoice);
+                return ApiResult<InvoiceResponseDto>.Success(mappedInvoice);
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                _logger.LogException(ex);
+                throw;
             }
         }
     }

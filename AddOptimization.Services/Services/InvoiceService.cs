@@ -519,7 +519,7 @@ namespace AddOptimization.Services.Services
                 var maxId = await _invoiceRepository.MaxAsync<Int64>(e => e.Id, ignoreGlobalFilter: true);
                 var newId = maxId + 1;
                 var invoiceNumber = long.Parse($"{DateTime.UtcNow:yyyyMM}{newId}");
-
+                
                 Invoice entity = new Invoice
                 {
                     Id = newId,
@@ -594,7 +594,9 @@ namespace AddOptimization.Services.Services
                     CustomerName = e.Customer.Organizations,
                     ExpiryDate = e.ExpiryDate,
                     PaymentClearanceDays = e.PaymentClearanceDays,
-                    DueAmount = e.DueAmount
+                    DueAmount = e.DueAmount,
+                    HasCreditNotes=e.HasCreditNotes,
+                    CreditNoteNumber = e.CreditNoteNumber,
                 }).ToList());
 
                 var result = pagedResult;
@@ -631,7 +633,7 @@ namespace AddOptimization.Services.Services
                 model.TotalPriceExcludingVat = entity.TotalPriceExcludingVat;
                 model.TotalPriceIncludingVat = entity.TotalPriceIncludingVat;
                 model.PaymentClearanceDays = entity.PaymentClearanceDays;
-
+                model.CreditNoteNumber = entity.CreditNoteNumber;
                 var invoiceSummary = (await _invoiceDetailRepository.QueryAsync(e => e.InvoiceId == id, disableTracking: true)).ToList();
                 model.InvoiceDetails = _mapper.Map<List<InvoiceDetailDto>>(invoiceSummary);
                 return ApiResult<InvoiceResponseDto>.Success(model);

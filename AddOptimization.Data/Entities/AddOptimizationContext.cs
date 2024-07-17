@@ -76,6 +76,7 @@ public partial class AddOptimizationContext : DbContext
     public virtual DbSet<Setting> Settings { get; set; }
     public virtual DbSet<InvoicingPaymentMode> InvoicingPaymentModes { get; set; }
     public virtual DbSet<EmployeeContract> EmployeeContracts { get; set; }
+    public virtual DbSet<InvoiceCreditNotes> InvoiceCreditNotes { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
