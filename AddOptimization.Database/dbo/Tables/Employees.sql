@@ -12,7 +12,7 @@
 	[CreatedByUserId] [int] NULL,
 	[UpdatedAt] [datetime2](7) NULL,
 	[UpdatedByUserId] [int] NULL,
-    [CountryId] [uniqueidentifier] NULL,
+	[CountryId] [uniqueidentifier] NULL,
 	[State] [varchar](400) NULL,
 	[ZipCode] [int] NULL,
 	[VATNumber] [varchar](400) NULL,
@@ -25,7 +25,13 @@
 	[ExternalState] [nvarchar](200) NULL,
 	[ExternalCountryId] [uniqueidentifier] NULL,
 	[ExternalAddress] [nvarchar](200) NULL,
-    [NdaSignDate] [datetime2](7) NULL,
+	[NdaSignDate] [datetime2](7) NULL,
+	[BankAddress] [nvarchar](200) NULL,
+	[BankState] [nvarchar](100) NULL,
+	[BankCity] [nvarchar](100) NULL,
+	[BankCountry] [nvarchar](100) NULL,
+	[SwiftCode] [nvarchar](100) NULL,
+	[BankPostalCode] [int] NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -39,22 +45,24 @@ GO
 ALTER TABLE [dbo].[Employees] ADD  DEFAULT ((0)) FOR [IsNDASigned]
 GO
 
-ALTER TABLE [dbo].[Employees]  WITH CHECK ADD FOREIGN KEY([CreatedByUserId])
-REFERENCES [dbo].[ApplicationUsers] ([Id])
-GO
-
-ALTER TABLE [dbo].[Employees]  WITH CHECK ADD FOREIGN KEY([UpdatedByUserId])
-REFERENCES [dbo].[ApplicationUsers] ([Id])
-GO
-
-ALTER TABLE [dbo].[Employees]  WITH CHECK ADD FOREIGN KEY([UserId])
-REFERENCES [dbo].[ApplicationUsers] ([Id])
-GO
-
-ALTER TABLE [dbo].[Employees]  WITH CHECK ADD FOREIGN KEY([CountryId])
+ALTER TABLE [dbo].[Employees]  WITH NOCHECK ADD FOREIGN KEY([CountryId])
 REFERENCES [dbo].[Countries] ([Id])
 GO
 
-ALTER TABLE [dbo].[Employees]  WITH CHECK ADD FOREIGN KEY([ExternalCountryId])
+ALTER TABLE [dbo].[Employees]  WITH NOCHECK ADD FOREIGN KEY([CreatedByUserId])
+REFERENCES [dbo].[ApplicationUsers] ([Id])
+GO
+
+ALTER TABLE [dbo].[Employees]  WITH NOCHECK ADD FOREIGN KEY([ExternalCountryId])
 REFERENCES [dbo].[Countries] ([Id])
 GO
+
+ALTER TABLE [dbo].[Employees]  WITH NOCHECK ADD FOREIGN KEY([UpdatedByUserId])
+REFERENCES [dbo].[ApplicationUsers] ([Id])
+GO
+
+ALTER TABLE [dbo].[Employees]  WITH NOCHECK ADD FOREIGN KEY([UserId])
+REFERENCES [dbo].[ApplicationUsers] ([Id])
+GO
+
+
