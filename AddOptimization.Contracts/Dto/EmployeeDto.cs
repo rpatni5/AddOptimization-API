@@ -5,7 +5,7 @@ namespace AddOptimization.Contracts.Dto
 {
     public class EmployeeDto
     {
-        public Guid Id { get; set; }    
+        public Guid Id { get; set; }
         public int UserId { get; set; }
         public bool IsExternal { get; set; }
         public decimal? Salary { get; set; }
@@ -29,7 +29,7 @@ namespace AddOptimization.Contracts.Dto
         public string Password { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
-        public bool isActive {  get; set; }
+        public bool isActive { get; set; }
         public string VATNumber { get; set; }
         public int ZipCode { get; set; }
         public string State { get; set; }
@@ -44,6 +44,8 @@ namespace AddOptimization.Contracts.Dto
         public string ExternalAddress { get; set; }
         public Guid? ExternalCountryId { get; set; }
         public DateTime? NdaSignDate { get; set; }
+        public string CountryName { get; set; }
+        public virtual CountryDto Country { get; set; }
 
 
     }

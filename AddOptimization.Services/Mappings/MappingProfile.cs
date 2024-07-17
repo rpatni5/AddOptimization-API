@@ -189,6 +189,7 @@ namespace AddOptimization.Services.Mappings
                 d.CreatedBy = s.CreatedByUser?.FullName;
                 d.UpdatedAt = s.UpdatedAt?.Date;
                 d.UpdatedBy = s.UpdatedByUser?.FullName;
+                d.HasContract = s.Contracts != null && s.Contracts.Count > 0;
             });
 
             CreateMap<HolidayAllocation, HolidayAllocationResponseDto>().AfterMap((s, d) =>
@@ -216,7 +217,8 @@ namespace AddOptimization.Services.Mappings
                 d.FirstName = s.ApplicationUser != null ? s.ApplicationUser.FirstName : string.Empty;
                 d.LastName = s.ApplicationUser != null ? s.ApplicationUser.LastName : string.Empty;
                 d.Password = s.ApplicationUser != null ? s.ApplicationUser.Password : string.Empty;
-                d.isActive = s.ApplicationUser!=null ? s.ApplicationUser.IsActive : false;
+                d.isActive = s.ApplicationUser != null ? s.ApplicationUser.IsActive : false;
+                d.CountryName = s.Country != null ? s.Country.CountryName : string.Empty;
 
             });
             CreateMap<EmployeeDto, Employee>();
@@ -340,7 +342,25 @@ namespace AddOptimization.Services.Mappings
             CreateMap<SettingDto, Setting>();
             CreateMap<Setting, SettingDto>();
 
+            CreateMap<InvoicingPaymentMode, InvoicingPaymentModeDto>().AfterMap((s, d) =>
+            {
 
+            });
+            CreateMap<InvoicingPaymentModeDto, InvoicingPaymentMode>();
+
+            CreateMap<EmployeeContract, EmployeeContractResponseDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.CreatedAt = s.CreatedAt?.Date;
+                d.UpdatedAt = s.UpdatedAt?.Date;
+                d.CustomerName = s.Customer != null ? s.Customer.Organizations : string.Empty;
+                d.EmployeeName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
+                d.InvoicingAndPaymentMode = s.InvoicingPaymentMode != null ? s.InvoicingPaymentMode.Name : string.Empty;
+
+
+            });
+            CreateMap<EmployeeContractRequestDto, EmployeeContract>();
 
             CreateMap<InvoiceCreditNotes, InvoiceCreditNoteDto>().AfterMap((s, d) =>
             {
