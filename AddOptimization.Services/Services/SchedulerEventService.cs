@@ -864,8 +864,15 @@ namespace AddOptimization.Services.Services
             && x.StartDate.Year == month.StartDate.Year
             && x.AdminStatus.StatusKey == SchedulerStatusesEnum.CUSTOMER_APPROVED.ToString()));
 
+            if (result.Count() < employeeIds.Count)
+            {
+                _logger.LogInformation($"All employees timesheets are not in customer approved status for {customerId}.");
+                return false;
+
+            }
             var IsApproved = result.All(x => employeeIds.Contains(x.UserId));
             return IsApproved;
+
         }
 
         #endregion

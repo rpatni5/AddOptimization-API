@@ -148,6 +148,7 @@ namespace AddOptimization.Services.Services
                     InvoiceStatusId = draftStatusId,
                     PaymentStatusId = unPaidStatusId,
                     PaymentClearanceDays = customer.PaymentClearanceDays.HasValue ? customer.PaymentClearanceDays.Value : 15,
+                    MetaData = "Timesheet",
                 };
                 var invoiceResult = await _invoiceRepository.InsertAsync(invoice);
 
@@ -298,35 +299,44 @@ namespace AddOptimization.Services.Services
         private async Task CalculateAndSaveInvoiceDetails(Invoice invoice, List<SchedulerEventDetails> schedulerEventDetails, decimal daily, decimal vat, string description)
         {
             var quantity = schedulerEventDetails.Sum(c => c.Duration);
-            var invoiceDetail = new InvoiceDetail
+            if(quantity > 0)
             {
-                InvoiceId = invoice.Id,
-                Description = description,
-                Quantity = quantity,
-                UnitPrice = daily,
-                TotalPriceExcludingVat = daily * quantity,
-                TotalPriceIncludingVat = (daily * quantity) + (daily * quantity * vat / 100),
-                VatPercent = vat,
-            };
-            await _invoiceDetailRepository.InsertAsync(invoiceDetail);
+                var invoiceDetail = new InvoiceDetail
+                {
+                    InvoiceId = invoice.Id,
+                    Description = description,
+                    Quantity = quantity,
+                    UnitPrice = daily,
+                    TotalPriceExcludingVat = daily * quantity,
+                    TotalPriceIncludingVat = (daily * quantity) + (daily * quantity * vat / 100),
+                    VatPercent = vat,
+                    Metadata = "Timesheet"
+                };
+                await _invoiceDetailRepository.InsertAsync(invoiceDetail);
+            }            
         }
 
         private async Task CalculateInvoiceDetailsForWeekend(Invoice invoice, List<SchedulerEventDetails> schedulerEventDetails, decimal unitPrice, decimal vat, string description, Guid timesheetEventId, Guid overtimeEventId)
         {
-            var timesheetQuantityInHr = schedulerEventDetails.Where(x => x.SchedulerEventId == timesheetEventId).Sum(c => c.Duration) * 8;
-            var overtimeQuantityInHr = schedulerEventDetails.Where(x => x.SchedulerEventId == overtimeEventId).Sum(c => c.Duration);
+            var timesheetQuantityInHr = schedulerEventDetails.Where(x => x.EventTypeId == timesheetEventId).Sum(c => c.Duration) * 8;
+            var overtimeQuantityInHr = schedulerEventDetails.Where(x => x.EventTypeId == overtimeEventId).Sum(c => c.Duration);
+
             var quantity = timesheetQuantityInHr + overtimeQuantityInHr;
-            var invoiceDetail = new InvoiceDetail
+            if (quantity > 0)
             {
-                InvoiceId = invoice.Id,
-                Description = description,
-                Quantity = quantity,
-                UnitPrice = unitPrice,
-                TotalPriceExcludingVat = unitPrice * quantity,
-                TotalPriceIncludingVat = (unitPrice * quantity) + (unitPrice * quantity * vat / 100),
-                VatPercent = vat,
-            };
-            await _invoiceDetailRepository.InsertAsync(invoiceDetail);
+                var invoiceDetail = new InvoiceDetail
+                {
+                    InvoiceId = invoice.Id,
+                    Description = description,
+                    Quantity = quantity,
+                    UnitPrice = unitPrice,
+                    TotalPriceExcludingVat = unitPrice * quantity,
+                    TotalPriceIncludingVat = (unitPrice * quantity) + (unitPrice * quantity * vat / 100),
+                    VatPercent = vat,
+                    Metadata = "Timesheet"
+                };
+                await _invoiceDetailRepository.InsertAsync(invoiceDetail);
+            }
         }
 
         private async Task<bool> SendRequestInvoiceEmailToCustomer(string email, Invoice invoice, string customerName, long invoiceNumber, int? dueDate, decimal totalAmountDue
