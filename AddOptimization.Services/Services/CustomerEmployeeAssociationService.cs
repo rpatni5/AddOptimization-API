@@ -101,7 +101,7 @@ namespace AddOptimization.Services.Services
                 await _customerEmployeeAssociationRepository.UpdateAsync(entity);
                 if(contractData != null)
                 {
-                    contractData.IsContractSigned = true;
+                    contractData.IsDeleted = true;
                     await _contractRepository.UpdateAsync(contractData);
                 }
                 return ApiResult<bool>.Success(true);

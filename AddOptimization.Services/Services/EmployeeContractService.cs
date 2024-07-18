@@ -52,7 +52,7 @@ public class EmployeeContractService : IEmployeeContractService
     {
         try
         {
-            var entity = await _contractRepository.FirstOrDefaultAsync(t => t.EmployeeAssociationId == id, include: entity => entity.Include(e => e.InvoicingPaymentMode).Include(e => e.Customer).Include(e => e.CustomerEmployeeAssociation).Include(e => e.ApplicationUser), ignoreGlobalFilter: true);
+            var entity = await _contractRepository.FirstOrDefaultAsync(t => t.EmployeeAssociationId == id && !t.IsDeleted , include: entity => entity.Include(e => e.InvoicingPaymentMode).Include(e => e.Customer).Include(e => e.CustomerEmployeeAssociation).Include(e => e.ApplicationUser), ignoreGlobalFilter: true);
             if (entity == null)
             {
                 return null;
@@ -112,7 +112,7 @@ public class EmployeeContractService : IEmployeeContractService
     {
         try
         {
-            var entity = await _contractRepository.FirstOrDefaultAsync(t => t.EmployeeId == id && !t.IsContractSigned, include: entity => entity.Include(e => e.InvoicingPaymentMode).Include(e => e.Customer).Include(e => e.CustomerEmployeeAssociation).Include(e => e.ApplicationUser), ignoreGlobalFilter: true);
+            var entity = await _contractRepository.FirstOrDefaultAsync(t => t.EmployeeId == id && !t.IsContractSigned && !t.IsDeleted, include: entity => entity.Include(e => e.InvoicingPaymentMode).Include(e => e.Customer).Include(e => e.CustomerEmployeeAssociation).Include(e => e.ApplicationUser), ignoreGlobalFilter: true);
             if (entity == null)
             {
                 return null;
@@ -133,7 +133,7 @@ public class EmployeeContractService : IEmployeeContractService
         try
         {
 
-            var entities = await _contractRepository.QueryAsync((t => t.IsContractSigned), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.InvoicingPaymentMode).Include(e => e.Customer).Include(e => e.CustomerEmployeeAssociation).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
+            var entities = await _contractRepository.QueryAsync((t => t.IsContractSigned && !t.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.InvoicingPaymentMode).Include(e => e.Customer).Include(e => e.CustomerEmployeeAssociation).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
             entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
             entities = ApplyFilters(entities, filters);
 
