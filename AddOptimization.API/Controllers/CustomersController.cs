@@ -122,6 +122,7 @@ public class CustomersController : CustomApiControllerBase
     }
 
     [HttpGet("get-customer/{id}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetCustomerById(Guid id)
     {
         try
