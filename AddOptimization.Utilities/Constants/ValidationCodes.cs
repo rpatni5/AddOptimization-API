@@ -42,5 +42,7 @@ public class ValidationCodes
     public const string SchedulerEventsDoesNotExists = "SchedulerEventsDoesNotExists";
     public const string EmployeeAlreadyExists = "EmployeeAlreadyExists";
     public const string LoginWithMicrosoftProvider = "LoginWithMicrosoftProvider";
+    public const string NotFound = "CustomerEmployeeAssociationNotFound";
+
     public const string EmailNotificationSettingIsDisabled = "EmailNotificationSettingIsDisabled";
 }
