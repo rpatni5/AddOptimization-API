@@ -7,8 +7,6 @@ using AddOptimization.Utilities.Models;
 using AddOptimization.Utilities.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
-
 namespace AddOptimization.API.Controllers
 {
     [Authorize]
@@ -35,7 +33,7 @@ namespace AddOptimization.API.Controllers
                 return HandleException(ex);
             }
         }
-
+      
 
         [HttpPost]
         public async Task<IActionResult> Create(QuoteRequestDto model)
