@@ -46,7 +46,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             //            return;
             //#endif
             _logger.LogInformation("ExecuteAsync Started.");
-            using var timer = new CronTimer("* * * * *", TimeZoneInfo.Local);
+            using var timer = new CronTimer("*/2 * * * *", TimeZoneInfo.Local);
             while (!stoppingToken.IsCancellationRequested &&
                    await timer.WaitForNextTickAsync(stoppingToken))
             {
@@ -73,14 +73,13 @@ namespace AddOptimization.API.HostedService.BackgroundServices
 
                 var customerEmployeeAssociation = (await customerEmployeeAssociationService.Search()).Result;
                 var approver = await appUserService.GetAccountAdmins();
-                var approverEmail = approver.Result.FirstOrDefault().Email;
                 foreach (var invoice in invoices?.Result)
                 {
                     var paymentClearanceDays = invoice.Customer.PaymentClearanceDays;
                     if (invoice.InvoiceDate.AddDays(paymentClearanceDays.Value) <= DateTime.Today)
                     {                        
-                       // var approverId = customerEmployeeAssociation.Where(c => c.CustomerId == invoice.CustomerId && !c.IsDeleted).FirstOrDefault().ApproverId;// Account admin must be similar for multiple employee association.                       
-                        await SendFillTimesheetReminderEmail(invoice, approverEmail);
+                        await SendUnpaidInvoiceReminderEmailCustomer(invoice);
+                        await SendUnpaidInvoiceReminderEmailAccountAdmin(invoice, approver.Result.FirstOrDefault());
                     }
 
                 };
@@ -94,7 +93,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             }
         }
 
-        private async Task<bool> SendFillTimesheetReminderEmail(InvoiceResponseDto invoice, string approverEmail)
+        private async Task<bool> SendUnpaidInvoiceReminderEmailCustomer(InvoiceResponseDto invoice)
         {
             try
             {
@@ -115,7 +114,34 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             }
             catch (Exception ex)
             {
-                _logger.LogInformation("An exception occurred while sending customer approve timesheet reminder email.");
+                _logger.LogInformation("An exception occurred while sending unpaid invoice reminder email to customer.");
+                _logger.LogException(ex);
+                return false;
+            }
+        }
+        private async Task<bool> SendUnpaidInvoiceReminderEmailAccountAdmin(InvoiceResponseDto invoice, ApplicationUserDto accountAdmin)
+        {
+            try
+            {
+                var scope = _serviceProvider.CreateScope();
+                var _emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
+                var subject = "AddOptimization unpaid invoice reminder";
+                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoiceReminderAccountAdmin);
+                var link = GetInvoiceLinkForAccountAdmin(invoice.Id);
+                _ = int.TryParse(invoice?.Customer?.PaymentClearanceDays.ToString(), out int clearanceDays);
+                emailTemplate = emailTemplate
+                                .Replace("[AccountAdminName]", accountAdmin.FullName)
+                                .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
+                                .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
+                                .Replace("[InvoiceDate]", invoice?.InvoiceDate.Date.ToString("d"))
+                                .Replace("[TotalAmountDue]", invoice?.DueAmount.ToString())
+                                .Replace("[DueDate]", invoice?.InvoiceDate.AddDays(clearanceDays).Date.ToString("d"))
+                                .Replace("[LinkToInvoice]", link);
+                return await _emailService.SendEmail(accountAdmin.Email, subject, emailTemplate);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation("An exception occurred while sending unpaid invoice reminder email to account admin.");
                 _logger.LogException(ex);
                 return false;
             }
@@ -124,7 +150,13 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         {
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
             var encryptedId = _protectionService.Encode(invoiceId.ToString());
-            return $"{baseUrl}timesheet/approval/{encryptedId}";
+            return $"{baseUrl}invoice/approval/{encryptedId}";
+        }
+
+        public string GetInvoiceLinkForAccountAdmin(long invoiceId)
+        {
+            var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
+            return $"{baseUrl}admin/invoicing-management/add-invoice/{invoiceId}";
         }
         #endregion
     }
