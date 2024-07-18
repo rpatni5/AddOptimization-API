@@ -92,11 +92,11 @@ namespace AddOptimization.API.Controllers
         }
 
         [HttpPost("search")]
-        public async Task<IActionResult> Search()
+        public async Task<IActionResult> Search([FromBody] PageQueryFiterBase filters)
         {
             try
             {
-                var retVal = await _contractService.Search();
+                var retVal = await _contractService.Search(filters);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
