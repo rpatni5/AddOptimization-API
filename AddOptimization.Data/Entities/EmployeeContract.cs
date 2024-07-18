@@ -20,6 +20,8 @@ namespace AddOptimization.Data.Entities
         public DateTime? ProjectStartDate { get; set; }
         public DateTime? ProjectEndDate { get; set; }
 
+        public bool IsDeleted { get; set; }
+
 
         [ForeignKey(nameof(InvoicingPaymentModeId))]
         public virtual InvoicingPaymentMode InvoicingPaymentMode { get; set; }
