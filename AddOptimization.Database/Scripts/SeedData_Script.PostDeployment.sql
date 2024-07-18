@@ -307,7 +307,19 @@ BEGIN
        (NEWID(),'Employee Customer Contract','employee_customer_contract','/admin/employee-contract/employee-contract-view/{}')
 END
 
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey= 'contract')
+BEGIN 
+    INSERT INTO Screens(Id,Name,ScreenKey,Route)
+    VALUES
+       (NEWID(),'Contract','contract','/admin/documents-group/view-contract')
+END
 
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey= 'view_nda')
+BEGIN 
+    INSERT INTO Screens(Id,Name,ScreenKey,Route)
+    VALUES
+       (NEWID(),'View Nda','view_nda','/admin/documents-group/view-nda')
+END
 
 /* Adding data in role permissions */
 
