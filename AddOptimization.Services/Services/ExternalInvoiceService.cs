@@ -316,12 +316,13 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _externalInvoiceRepository.QueryAsync((e => !e.IsDeleted), include: source => source.Include(x => x.Company).Include(x => x.InvoiceStatus).Include(x => x.PaymentStatus).Include(x => x.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt), ignoreGlobalFilter: true);
+                var entities = await _externalInvoiceRepository.QueryAsync((e => !e.IsDeleted), include: source => source.Include(x => x.Company).Include(x => x.InvoiceStatus).Include(x => x.PaymentStatus).Include(x => x.ApplicationUser), ignoreGlobalFilter: true);
                 entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
                 entities = ApplyFilters(entities, filters);
                 var pagedResult = PageHelper<ExternalInvoice, ExternalInvoiceResponseDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new ExternalInvoiceResponseDto
                 {
                     Id = e.Id,
+                    EmployeeId = e.EmployeeId,
                     EmployeeName = e.ApplicationUser.FullName,
                     CompanyName = e.CompanyName,
                     ExpiryDate = e.ExpiryDate,
@@ -573,6 +574,14 @@ namespace AddOptimization.Services.Services
                 var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
                 entities = entities.Where(e => e.EmployeeId == userId);
             });
+
+
+            filter.GetValue<bool>("excludeDraft", (v) =>
+            {
+                var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
+                entities = entities.Where(e => !e.InvoiceStatus.StatusKey.ToLower().Contains("draft"));
+            });
+
             filter.GetValue<string>("invoiceNumber", (v) =>
             {
                 entities = entities.Where(e => e.InvoiceNumber == Convert.ToInt32(v));
@@ -580,26 +589,52 @@ namespace AddOptimization.Services.Services
 
             filter.GetValue<string>("companyName", (v) =>
             {
-                entities = entities.Where(e => e.CompanyName.ToString() == v);
+                var searchTerms = v.Split(' ');
+                foreach (var term in searchTerms)
+                {
+                    var lowerCaseTerm = term.ToLower();
+                    entities = entities.Where(e => e.CompanyName != null && e.CompanyName.ToLower().Contains(lowerCaseTerm));
+                }
             });
+          
             filter.GetValue<string>("employeeName", (v) =>
             {
-                entities = entities.Where(e => e.ApplicationUser.FullName.ToString() == v);
+                var searchTerms = v.Split(' ');
+                foreach (var term in searchTerms)
+                {
+                    var lowerCaseTerm = term.ToLower();
+                    entities = entities.Where(e => e.ApplicationUser.FullName != null && e.ApplicationUser.FullName.ToLower().Contains(lowerCaseTerm));
+                }
             });
+
             filter.GetValue<string>("companyAddress", (v) =>
             {
-                entities = entities.Where(e => e.CompanyAddress.ToString() == v);
+                var searchTerms = v.Split(' ');
+                foreach (var term in searchTerms)
+                {
+                    var lowerCaseTerm = term.ToLower();
+                    entities = entities.Where(e => e.CompanyAddress != null && e.CompanyAddress.ToLower().Contains(lowerCaseTerm));
+                }
             });
-            filter.GetList<DateTime>("invoiceDate", (v) =>
+            filter.GetValue<DateTime>("invoiceDate", (v) =>
             {
-                var date = new DateTime(v.Max().Year, v.Max().Month, 1);
-                entities = entities.Where(e => e.InvoiceDate == date);
-            });
-            filter.GetList<DateTime>("expiredDate", (v) =>
+                entities = entities.Where(e => e.InvoiceDate != null && e.InvoiceDate < v);
+            }, OperatorType.lessthan, true);
+            filter.GetValue<DateTime>("invoiceDate", (v) =>
             {
-                var date = new DateTime(v.Max().Year, v.Max().Month, 1);
-                entities = entities.Where(e => e.ExpiryDate == date);
-            });
+                entities = entities.Where(e => e.InvoiceDate != null && e.InvoiceDate > v);
+            }, OperatorType.greaterthan, true);
+
+
+            filter.GetValue<DateTime>("expiryDate", (v) =>
+            {
+                entities = entities.Where(e => e.ExpiryDate != null && e.ExpiryDate < v);
+            }, OperatorType.lessthan, true);
+            filter.GetValue<DateTime>("expiryDate", (v) =>
+            {
+                entities = entities.Where(e => e.ExpiryDate != null && e.ExpiryDate > v);
+            }, OperatorType.greaterthan, true);
+
 
             filter.GetValue<string>("invoiceStatusId", (v) =>
             {

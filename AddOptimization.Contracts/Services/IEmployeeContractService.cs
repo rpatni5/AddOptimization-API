@@ -12,7 +12,7 @@ public interface IEmployeeContractService
     Task<ApiResult<bool>> SignContract(Guid contractId);
     Task<ApiResult<EmployeeContractResponseDto>> GetEmployeeContractByEmployeeId(int id);
 
-    Task<ApiResult<List<EmployeeContractResponseDto>>> Search();
+    Task<PagedApiResult<EmployeeContractResponseDto>> Search(PageQueryFiterBase filters);
 
 
 }

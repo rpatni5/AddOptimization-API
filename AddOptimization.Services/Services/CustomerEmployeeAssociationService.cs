@@ -33,17 +33,35 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-
-                var isExists = await _customerEmployeeAssociationRepository.IsExist(t => t.CustomerId == model.CustomerId && t.EmployeeId == model.EmployeeId && !t.IsDeleted, ignoreGlobalFilter: true);
-                if (isExists)
+                CustomerEmployeeAssociationDto mappedEntity = null;
+                if (model.Id != null)
                 {
-                    return ApiResult<CustomerEmployeeAssociationDto>.Failure(ValidationCodes.CustomerEmployeeAssociationAlreadyExists, ValidationErrorMessage.CustomerEmployeeAssociationExist);
+                    var existingAssociation = await _customerEmployeeAssociationRepository.FirstOrDefaultAsync(x => x.Id == model.Id);
+                    if (existingAssociation != null)
+                    {
+                        _mapper.Map(model, existingAssociation);
+                        await _customerEmployeeAssociationRepository.UpdateAsync(existingAssociation);
+                        mappedEntity = _mapper.Map<CustomerEmployeeAssociationDto>(existingAssociation);
+                    }
+                    else
+                    {
+                        return ApiResult<CustomerEmployeeAssociationDto>.Failure(ValidationCodes.NotFound, ValidationErrorMessage.CustomerEmployeeAssociationNotExist);
+                    }
                 }
+                else
+                {
 
-                CustomerEmployeeAssociation entity = new CustomerEmployeeAssociation();
-                _mapper.Map(model, entity);
-                await _customerEmployeeAssociationRepository.InsertAsync(entity);
-                var mappedEntity = _mapper.Map<CustomerEmployeeAssociationDto>(entity);
+                    var isExists = await _customerEmployeeAssociationRepository.IsExist(t => t.CustomerId == model.CustomerId && t.EmployeeId == model.EmployeeId && !t.IsDeleted, ignoreGlobalFilter: true);
+                    if (isExists)
+                    {
+                        return ApiResult<CustomerEmployeeAssociationDto>.Failure(ValidationCodes.CustomerEmployeeAssociationAlreadyExists, ValidationErrorMessage.CustomerEmployeeAssociationExist);
+                    }
+
+                    CustomerEmployeeAssociation entity = new CustomerEmployeeAssociation();
+                    _mapper.Map(model, entity);
+                    await _customerEmployeeAssociationRepository.InsertAsync(entity);
+                    mappedEntity = _mapper.Map<CustomerEmployeeAssociationDto>(entity);
+                }
                 return ApiResult<CustomerEmployeeAssociationDto>.Success(mappedEntity);
             }
             catch (Exception ex)

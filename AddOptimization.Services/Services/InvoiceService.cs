@@ -380,17 +380,22 @@ namespace AddOptimization.Services.Services
         {
             filter.GetValue<string>("invoiceNumber", (v) =>
             {
-                entities = entities.Where(e => e.InvoiceNumber.ToString() == v);
+                entities = entities.Where(e => e.InvoiceNumber == Convert.ToInt32(v));
             });
+
             filter.GetValue<string>("customerName", (v) =>
             {
-                entities = entities.Where(e => e.CustomerId.ToString() == v);
+                entities = entities.Where(e => e.Customer.Organizations.ToLower().Contains(v.ToLower()));
             });
-            filter.GetList<DateTime>("invoiceDate", (v) =>
+            filter.GetValue<DateTime>("invoiceDate", (v) =>
             {
-                var date = new DateTime(v.Max().Year, v.Max().Month, 1);
-                entities = entities.Where(e => e.InvoiceDate == date);
-            });
+                entities = entities.Where(e => e.InvoiceDate != null && e.InvoiceDate < v);
+            }, OperatorType.lessthan, true);
+            filter.GetValue<DateTime>("invoiceDate", (v) =>
+            {
+                entities = entities.Where(e => e.InvoiceDate != null && e.InvoiceDate > v);
+            }, OperatorType.greaterthan, true);
+
             filter.GetValue<int>("totalPriceExcludingVat", (v) =>
             {
                 entities = entities.Where(e => e.TotalPriceExcludingVat == v);
@@ -571,7 +576,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _invoiceRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(x => x.Customer).Include(x => x.PaymentStatus).Include(x => x.InvoiceStatus), orderBy: x => x.OrderByDescending(x => x.CreatedAt), ignoreGlobalFilter: true);
+                var entities = await _invoiceRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(x => x.Customer).Include(x => x.PaymentStatus).Include(x => x.InvoiceStatus), ignoreGlobalFilter: true);
                 entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
                 entities = ApplyFilters(entities, filters);
                 entities = entities.Where(e => !(e.InvoiceStatus.Name == "Draft" && e.ExpiryDate < DateTime.UtcNow));

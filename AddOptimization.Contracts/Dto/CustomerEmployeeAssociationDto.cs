@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace AddOptimization.Contracts.Dto
 {
-    public class CustomerEmployeeAssociationDto : BaseDto<Guid>
+    public class CustomerEmployeeAssociationDto : BaseDto<Guid?>
     {
         public Guid CustomerId { get; set; }
         public string CustomerName { get; set; }

@@ -28,6 +28,7 @@ using AddOptimization.Utilities.Interface;
 using Microsoft.Extensions.Configuration;
 using AddOptimization.Utilities.Services;
 using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
+using AddOptimization.Utilities.Enums;
 
 namespace AddOptimization.Services.Services
 {
@@ -72,16 +73,28 @@ namespace AddOptimization.Services.Services
             _protectionService = protectionService;
         }
 
-        public async Task<ApiResult<List<QuoteResponseDto>>> Search(PageQueryFiterBase filters)
+        public async Task<PagedApiResult<QuoteResponseDto>> Search(PageQueryFiterBase filters)
+
         {
             try
             {
-                var entities = await _quoteRepository.QueryAsync((e => !e.IsDeleted || e.IsActive), include: source => source.Include(x => x.Customer).Include(x => x.QuoteStatuses), orderBy: x => x.OrderByDescending(x => x.CreatedAt), ignoreGlobalFilter: true);
+                var entities = await _quoteRepository.QueryAsync((e => !e.IsDeleted), include: source => source.Include(x => x.Customer).Include(x => x.QuoteStatuses));
+                entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
+                entities = ApplyFilters(entities, filters);
+                var pagedResult = PageHelper<Quote, QuoteResponseDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new QuoteResponseDto
+                {
+                    Id = e.Id,
+                    CustomerId = e.CustomerId,
+                    CustomerAddress = e.CustomerAddress,
+                    QuoteDate = e.QuoteDate,
+                    CustomerName=e.Customer.Organizations,
+                    ExpiryDate = e.ExpiryDate,
+                    QuoteStatusId = e.QuoteStatusId,
+                    QuoteStatusesName = e.QuoteStatuses.Name,
 
-                var result = entities.ToList();
-                var mappedEntities = _mapper.Map<List<QuoteResponseDto>>(result);
-
-                return ApiResult<List<QuoteResponseDto>>.Success(mappedEntities);
+                }).ToList());
+                var retVal = pagedResult;
+                return PagedApiResult<QuoteResponseDto>.Success(retVal);
             }
             catch (Exception ex)
             {
@@ -89,7 +102,7 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-
+        
         public async Task<ApiResult<QuoteResponseDto>> Create(QuoteRequestDto model)
         {
             try
@@ -364,5 +377,127 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
+
+
+
+        private IQueryable<Quote> ApplyFilters(IQueryable<Quote> entities, PageQueryFiterBase filter)
+        {
+            filter.GetValue<string>("customerName", (v) =>
+            {
+                entities = entities.Where(e => e.Customer.Organizations == v);
+            });
+
+            filter.GetValue<string>("customerAddress", (v) =>
+            {
+                var searchTerms = v.Split(' ');
+                foreach (var term in searchTerms)
+                {
+                    var lowerCaseTerm = term.ToLower();
+                    entities = entities.Where(e => e.CustomerAddress != null && e.CustomerAddress.ToLower().Contains(lowerCaseTerm));
+                }
+            });
+            
+            filter.GetValue<DateTime>("quoteDate", (v) =>
+            {
+                entities = entities.Where(e => e.QuoteDate != null && e.QuoteDate < v);
+            }, OperatorType.lessthan, true);
+            filter.GetValue<DateTime>("quoteDate", (v) =>
+            {
+                entities = entities.Where(e => e.QuoteDate != null && e.QuoteDate > v);
+            }, OperatorType.greaterthan, true);
+           
+
+                filter.GetValue<DateTime>("expiryDate", (v) =>
+            {
+                entities = entities.Where(e => e.ExpiryDate != null && e.ExpiryDate < v);
+            }, OperatorType.lessthan, true);
+            filter.GetValue<DateTime>("expiryDate", (v) =>
+            {
+                entities = entities.Where(e => e.ExpiryDate != null && e.ExpiryDate > v);
+            }, OperatorType.greaterthan, true);
+
+            filter.GetValue<string>("quoteStatusId", (v) =>
+            {
+                entities = entities.Where(e => e.QuoteStatusId.ToString() == v);
+            });
+
+            filter.GetValue<string>("quoteStatusesName", (v) =>
+            {
+                var lowerV = v.ToLower();
+                entities = entities.Where(e => e.QuoteStatuses.Name.ToLower().Contains(lowerV));
+            });
+
+            return entities;
+        }
+
+        private IQueryable<Quote> ApplySorting(IQueryable<Quote> orders, SortModel sort)
+        {
+            try
+            {
+                if (sort?.Name == null)
+                {
+                    orders = orders.OrderByDescending(o => o.CreatedAt);
+                    return orders;
+                }
+                var columnName = sort.Name.ToUpper();
+                if (sort.Direction == SortDirection.ascending.ToString())
+                {
+                    if (columnName.ToUpper() == nameof(QuoteResponseDto.CustomerName).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.Customer.Organizations);
+                    }
+                    if (columnName.ToUpper() == nameof(QuoteResponseDto.CustomerAddress).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.CustomerAddress);
+                    }
+                    if (columnName.ToUpper() == nameof(QuoteResponseDto.QuoteStatusesName).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.QuoteStatuses.Name);
+                    }
+                    if (columnName.ToUpper() == nameof(QuoteResponseDto.ExpiryDate).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.ExpiryDate);
+                    }
+                    if (columnName.ToUpper() == nameof(QuoteResponseDto.QuoteDate).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.QuoteDate);
+                    }
+
+                }
+                else
+                {
+                    if (columnName.ToUpper() == nameof(QuoteResponseDto.CustomerName).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.Customer.Organizations);
+                    }
+                    if (columnName.ToUpper() == nameof(QuoteResponseDto.CustomerAddress).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.CustomerAddress);
+                    }
+                    if (columnName.ToUpper() == nameof(QuoteResponseDto.QuoteStatusesName).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.QuoteStatuses.Name);
+                    }
+                    if (columnName.ToUpper() == nameof(QuoteResponseDto.ExpiryDate).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.ExpiryDate);
+                    }
+                    if (columnName.ToUpper() == nameof(QuoteResponseDto.QuoteDate).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.QuoteDate);
+                    }
+                }
+                return orders;
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return orders;
+            }
+        }
+
+
+
     }
 }
