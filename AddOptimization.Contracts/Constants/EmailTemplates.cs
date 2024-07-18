@@ -26,6 +26,6 @@ public class EmailTemplates
     public const string DeclinedExternalInvoice = "external_invoice_action.html";
     public const string AbsenceRequestApproval = "absence_request_approval.html";
     public const string AbsenceRequestActions = "absence_request_actions.html";
-
-
+    public const string UnpaidInvoiceReminder = "unpaid_invoice_reminder.html";
+    public const string UnpaidInvoiceReminderAccountAdmin = "unpaid_invoice_reminder_accountadmin.html";
 }

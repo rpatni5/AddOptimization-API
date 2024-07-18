@@ -46,7 +46,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             //            return;
             //#endif
             _logger.LogInformation("ExecuteAsync Started.");
-            using var timer = new CronTimer("0 8 * * */2", TimeZoneInfo.Local);
+            using var timer = new CronTimer("0 8 */2 * *", TimeZoneInfo.Local);
             while (!stoppingToken.IsCancellationRequested &&
                    await timer.WaitForNextTickAsync(stoppingToken))
             {

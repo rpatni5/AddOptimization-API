@@ -335,10 +335,10 @@ namespace AddOptimization.Services.Services
             try
             {
                 var subject = "Invoice Request";
-                var link = GetInvoiceLinkForCustomer((int)invoice.Id);
-                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.RequestInvoice);
+                var link = GetInvoiceLinkForCustomer(invoice.Id);
+                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoiceReminder);
                 emailTemplate = emailTemplate.Replace("[CustomerName]", customerName)
-                                             .Replace("[LinkToOrder]", link)
+                                             .Replace("[LinkToInvoice]", link)
                                              .Replace("[InvoiceNumber]", invoiceNumber.ToString())
                                              .Replace("[TotalAmountDue]", totalAmountDue.ToString())
                                              .Replace("[DueDate]", dueDate.ToString());
@@ -693,7 +693,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        public string GetInvoiceLinkForCustomer(int invoiceId)
+        public string GetInvoiceLinkForCustomer(long invoiceId)
         {
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
             var encryptedId = _protectionService.Encode(invoiceId.ToString());
@@ -752,6 +752,15 @@ namespace AddOptimization.Services.Services
             }
         }
 
-
+        public async Task<ApiResult<List<InvoiceResponseDto>>> GetUnpaidInvoicesForEmailReminder()
+        {
+            var entity = await _invoiceRepository.QueryAsync(x => x.PaymentStatus.StatusKey == PaymentStatusesEnum.UNPAID.ToString() && !x.IsDeleted, include: entities => entities.Include(e => e.Customer));
+            if (entity == null || !entity.Any())
+            {
+                return ApiResult<List<InvoiceResponseDto>>.Failure(ValidationCodes.UnpaidInvoiceDoesNotExists);
+            }
+            var response = _mapper.Map<List<InvoiceResponseDto>>(entity);
+            return ApiResult<List<InvoiceResponseDto>>.Success(response);
+        }
     }
 }

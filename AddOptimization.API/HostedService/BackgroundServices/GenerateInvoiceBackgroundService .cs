@@ -72,7 +72,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 {
                     var customerEmployeeAssociation = (await customerEmployeeAssociationService.Search()).Result;
 
-                    var associatedEmployees = customerEmployeeAssociation.Where(c => c.CustomerId == c.CustomerId && !c.IsDeleted).ToList();
+                    var associatedEmployees = customerEmployeeAssociation.Where(c => c.CustomerId == customer.Id && !c.IsDeleted).ToList();
 
                     var months = MonthDateRangeHelper.GetMonthDateRanges();
 
