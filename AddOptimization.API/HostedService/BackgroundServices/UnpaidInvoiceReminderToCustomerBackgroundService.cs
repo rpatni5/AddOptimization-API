@@ -46,7 +46,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             //            return;
             //#endif
             _logger.LogInformation("ExecuteAsync Started.");
-            using var timer = new CronTimer("0 8 */2 * *", TimeZoneInfo.Local);
+            using var timer = new CronTimer("* * * * *", TimeZoneInfo.Local);
             while (!stoppingToken.IsCancellationRequested &&
                    await timer.WaitForNextTickAsync(stoppingToken))
             {
@@ -103,12 +103,14 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 var subject = "AddOptimization unpaid invoice reminder";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoiceReminder);
                 var link = GetInvoiceLinkForCustomer(invoice.Id);
-                //emailTemplate = emailTemplate
-                //                .Replace("[CustomerName]", invoice?.Customer.Name)
-                //                .Replace("[EmployeeName]", invoice?.ApplicationUser.FullName)
-                //                .Replace("[StartDate]", invoice?.StartDate.Date.ToString("d"))
-                //                .Replace("[EndDate]", invoice?.EndDate.Date.ToString("d"))
-                //                .Replace("[LinkToApproveTimesheet]", link);
+                _ = int.TryParse(invoice?.Customer?.PaymentClearanceDays.ToString(), out int clearanceDays);
+                emailTemplate = emailTemplate
+                                .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
+                                .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
+                                .Replace("[InvoiceDate]", invoice?.InvoiceDate.Date.ToString("d"))
+                                .Replace("[TotalAmountDue]", invoice?.DueAmount.ToString())
+                                .Replace("[DueDate]", invoice?.InvoiceDate.AddDays(clearanceDays).Date.ToString("d"))
+                                .Replace("[LinkToInvoice]", link);
                 return await _emailService.SendEmail(invoice?.Customer?.ManagerEmail, subject, emailTemplate);
             }
             catch (Exception ex)
@@ -121,7 +123,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         public string GetInvoiceLinkForCustomer(long invoiceId)
         {
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
-            var encryptedId = _protectionService.Encode(schedulerEventId.ToString());
+            var encryptedId = _protectionService.Encode(invoiceId.ToString());
             return $"{baseUrl}timesheet/approval/{encryptedId}";
         }
         #endregion
