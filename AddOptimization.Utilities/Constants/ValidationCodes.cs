@@ -45,4 +45,5 @@ public class ValidationCodes
     public const string NotFound = "CustomerEmployeeAssociationNotFound";
 
     public const string EmailNotificationSettingIsDisabled = "EmailNotificationSettingIsDisabled";
+    public const string UnpaidInvoiceDoesNotExists = "UnpaidInvoiceDoesNotExists";
 }

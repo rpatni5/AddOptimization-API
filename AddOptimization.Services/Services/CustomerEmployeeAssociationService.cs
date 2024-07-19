@@ -99,8 +99,11 @@ namespace AddOptimization.Services.Services
                 }
                 entity.IsDeleted = true;
                 await _customerEmployeeAssociationRepository.UpdateAsync(entity);
-                contractData.IsContractSigned = true;
-                await _contractRepository.UpdateAsync(contractData);
+                if(contractData != null)
+                {
+                    contractData.IsDeleted = true;
+                    await _contractRepository.UpdateAsync(contractData);
+                }
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)

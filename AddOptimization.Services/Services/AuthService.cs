@@ -284,7 +284,7 @@ public class AuthService : IAuthService
         var isEmployeeRole = entity.UserRoles.Any(c => c.Role.Name.Contains("Employee", StringComparison.InvariantCultureIgnoreCase));
         if (isEmployeeRole)
         {
-            var employee = await _employeeContractRepository.FirstOrDefaultAsync(u => u.EmployeeId == entity.Id && !u.IsContractSigned);
+            var employee = await _employeeContractRepository.FirstOrDefaultAsync(u => u.EmployeeId == entity.Id && !u.IsContractSigned && !u.IsDeleted);
             return employee != null ? !employee.IsContractSigned : false;
         }
         return null;
