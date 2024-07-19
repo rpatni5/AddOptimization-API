@@ -649,6 +649,7 @@ namespace AddOptimization.Services.Services
                 model.TotalPriceIncludingVat = entity.TotalPriceIncludingVat;
                 model.PaymentClearanceDays = entity.PaymentClearanceDays;
                 model.CreditNoteNumber = entity.CreditNoteNumber;
+                model.CreatedAt = entity.CreatedAt;
                 var invoiceSummary = (await _invoiceDetailRepository.QueryAsync(e => e.InvoiceId == id, disableTracking: true)).ToList();
                 model.InvoiceDetails = _mapper.Map<List<InvoiceDetailDto>>(invoiceSummary);
                 return ApiResult<InvoiceResponseDto>.Success(model);
