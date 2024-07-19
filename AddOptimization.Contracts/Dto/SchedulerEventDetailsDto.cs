@@ -13,7 +13,7 @@ namespace AddOptimization.Contracts.Dto
         public DateTime? Date { get; set; }
         public string Summary { get; set; }
         public Guid EventTypeId { get; set; }
-        public int UserId { get; set; }
+        public int? UserId { get; set; }
         public bool IsDeleted { get; set; }
         public bool IsActive { get; set; }
         public string CreatedBy { get; set; }
