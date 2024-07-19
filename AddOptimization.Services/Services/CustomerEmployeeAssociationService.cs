@@ -39,9 +39,13 @@ namespace AddOptimization.Services.Services
                     var existingAssociation = await _customerEmployeeAssociationRepository.FirstOrDefaultAsync(x => x.Id == model.Id);
                     if (existingAssociation != null)
                     {
-                        _mapper.Map(model, existingAssociation);
+                        existingAssociation.ApproverId=model.ApproverId;
+                        existingAssociation.DailyWeightage = model.DailyWeightage;
+                        existingAssociation.PublicHoliday = model.PublicHoliday;
+                        existingAssociation.Saturday = model.Saturday;
+                        existingAssociation.Sunday = model.Sunday;
+                        existingAssociation.Overtime = model.Overtime;
                         await _customerEmployeeAssociationRepository.UpdateAsync(existingAssociation);
-                        mappedEntity = _mapper.Map<CustomerEmployeeAssociationDto>(existingAssociation);
                     }
                     else
                     {
