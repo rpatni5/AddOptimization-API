@@ -354,8 +354,8 @@ namespace AddOptimization.Services.Services
             try
             {
                 var model = new ExternalInvoiceResponseDto();
-                var entity = await _externalInvoiceRepository.FirstOrDefaultAsync(e => e.Id == id, include: source => source.Include(x => x.InvoiceStatus).Include(x => x.PaymentStatus), ignoreGlobalFilter: true);
-                var employeeObject = await _employeeRepository.FirstOrDefaultAsync(e => e.UserId == entity.EmployeeId, ignoreGlobalFilter: true);
+                var entity = await _externalInvoiceRepository.FirstOrDefaultAsync(e => e.Id == id, include: source => source.Include(x => x.InvoiceStatus).Include(x => x.PaymentStatus).Include(x => x.ApplicationUser), ignoreGlobalFilter: true);
+                var employee = await _employeeRepository.FirstOrDefaultAsync(e => e.UserId == entity.EmployeeId, ignoreGlobalFilter: true);
                 model.Id = entity.Id;
                 model.CompanyId = entity.CompanyId;
                 model.EmployeeId = entity.EmployeeId;
@@ -363,6 +363,7 @@ namespace AddOptimization.Services.Services
                 model.ExpiryDate = entity.ExpiryDate;
                 model.InvoiceDate = entity.InvoiceDate;
                 model.CompanyAddress = entity.CompanyAddress;
+                model.CustomerAddress=entity.CustomerAddress;
                 model.InvoiceStatusId = entity.InvoiceStatusId;
                 model.InvoiceStatusName = entity.InvoiceStatus.Name;
                 model.PaymentStatusId = entity.PaymentStatusId;
@@ -372,7 +373,23 @@ namespace AddOptimization.Services.Services
                 model.VatValue = entity.VatValue;
                 model.TotalPriceExcludingVat = entity.TotalPriceExcludingVat;
                 model.TotalPriceIncludingVat = entity.TotalPriceIncludingVat;
-                model.ExternalCompanyName = employeeObject?.CompanyName;
+                model.ExternalCompanyName = employee?.CompanyName;
+                model.ExternalCompanyAddress = employee?.ExternalAddress;
+                model.ExternalCompanyCity = employee?.ExternalCity;
+                model.ExternalCompanyState = employee?.ExternalState;
+                model.ExternalCompanyZipCode = employee?.ExternalZipCode;
+                model.BankName=employee?.BankName;
+                model.BankAddress=employee?.BankAddress;
+                model.BankCity=employee?.BankCity;
+                model.BankState=employee?.BankState;
+                model.BankAccountName=employee?.BankAccountName;
+                model.BankZipCode=employee?.BankPostalCode;
+                model.ExternalEmployeeAddress = employee?.Address;
+                model.ExternalCity=employee?.City;
+                model.ExternalState=employee?.State;
+                model.ExternalZipCode=employee?.ZipCode;
+                model.BankAccountNumber=employee?.BankAccountNumber;
+                model.EmployeeName = entity.ApplicationUser.FullName;
 
                 var externalInvoiceSummary = (await _invoiceDetailRepository.QueryAsync(e => e.ExternalInvoiceId == id, disableTracking: true)).ToList();
                 model.ExternalInvoiceDetails = _mapper.Map<List<ExternalInvoiceDetailDto>>(externalInvoiceSummary);

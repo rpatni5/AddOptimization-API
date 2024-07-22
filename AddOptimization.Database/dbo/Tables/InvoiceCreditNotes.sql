@@ -1,16 +1,19 @@
-﻿
-CREATE TABLE [dbo].[InvoiceCreditNotes](
+﻿CREATE TABLE [dbo].[InvoiceCreditNotes](
 	[Id] [uniqueidentifier] NOT NULL,
 	[InvoiceId] [bigint] NOT NULL,
 	[PaymentDate] [datetime2](7) NULL,
-	[Amount] [decimal](10, 2) NULL,
-	[TransactionId] [nvarchar](200) NOT NULL,
+	[Description] [nvarchar](500) NOT NULL,
 	[IsDeleted] [bit] NOT NULL,
 	[IsActive] [bit] NOT NULL,
 	[CreatedAt] [datetime2](7) NULL,
 	[CreatedByUserId] [int] NULL,
 	[UpdatedAt] [datetime2](7) NULL,
 	[UpdatedByUserId] [int] NULL,
+	[Quantity] [decimal](10, 2) NULL,
+	[VatPercent] [decimal](10, 2) NULL,
+	[TotalPriceIncludingVat] [decimal](10, 2) NULL,
+	[TotalPriceExcludingVat] [decimal](10, 2) NULL,
+	[UnitPrice] [decimal](10, 2) NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -35,3 +38,5 @@ GO
 ALTER TABLE [dbo].[InvoiceCreditNotes]  WITH NOCHECK ADD FOREIGN KEY([UpdatedByUserId])
 REFERENCES [dbo].[ApplicationUsers] ([Id])
 GO
+
+
