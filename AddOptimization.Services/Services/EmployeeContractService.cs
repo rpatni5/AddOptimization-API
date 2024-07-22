@@ -15,6 +15,8 @@ using AddOptimization.Utilities.Enums;
 using AddOptimization.Utilities.Helpers;
 using NPOI.SS.Formula.Functions;
 using AddOptimization.Contracts.Constants;
+using AddOptimization.Utilities.Interface;
+using System.Diagnostics.Contracts;
 
 namespace AddOptimization.Services.Services;
 
@@ -39,6 +41,17 @@ public class EmployeeContractService : IEmployeeContractService
     {
         try
         {
+            var activeContracts = (await _contractRepository.QueryAsync(e => e.EmployeeAssociationId == model.EmployeeAssociationId)).ToList();
+            if (activeContracts != null)
+            {
+                foreach (var contract in activeContracts)
+                {
+                    contract.IsDeleted = true;
+                    
+                }
+                await _contractRepository.BulkUpdateAsync(activeContracts);
+            }
+
             var datepart = DateTime.UtcNow.ToString("yyyymmdd");
             var guidpart = Guid.NewGuid().ToString().Substring(0, 6).ToUpper();
             var contractNumber = (await _contractRepository.QueryAsync()).Count()+1;
