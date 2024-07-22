@@ -339,19 +339,21 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private async Task<bool> SendRequestInvoiceEmailToCustomer(string email, Invoice invoice, string customerName, long invoiceNumber, int? dueDate, decimal totalAmountDue
-           )
+        private async Task<bool> SendRequestInvoiceEmailToCustomer(string email, Invoice invoice)
         {
             try
             {
                 var subject = "Invoice Request";
                 var link = GetInvoiceLinkForCustomer(invoice.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoiceReminder);
-                emailTemplate = emailTemplate.Replace("[CustomerName]", customerName)
-                                             .Replace("[LinkToInvoice]", link)
-                                             .Replace("[InvoiceNumber]", invoiceNumber.ToString())
-                                             .Replace("[TotalAmountDue]", totalAmountDue.ToString())
-                                             .Replace("[DueDate]", dueDate.ToString());
+                _ = int.TryParse(invoice?.Customer?.PaymentClearanceDays.ToString(), out int clearanceDays);
+                emailTemplate = emailTemplate
+                                .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
+                                .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
+                                .Replace("[InvoiceDate]", invoice?.InvoiceDate.Date.ToString("d"))
+                                .Replace("[TotalAmountDue]", invoice?.DueAmount.ToString())
+                                .Replace("[DueDate]", invoice?.InvoiceDate.AddDays(clearanceDays).Date.ToString("d"))
+                                .Replace("[LinkToInvoice]", link);
                 return await _emailService.SendEmail(email, subject, emailTemplate);
             }
             catch (Exception ex)
@@ -715,7 +717,7 @@ namespace AddOptimization.Services.Services
         {
             var entity = (await _invoiceRepository.QueryAsync(x => x.Id == invoiceId, include: entities => entities.Include(e => e.Customer))).FirstOrDefault();
             var details = (await _invoiceDetailRepository.QueryAsync(x => x.InvoiceId == invoiceId)).ToList();
-            return await SendRequestInvoiceEmailToCustomer(entity.Customer.ManagerEmail, entity, entity.Customer.ManagerName, entity.InvoiceNumber, entity.PaymentClearanceDays, entity.TotalPriceIncludingVat);
+            return await SendRequestInvoiceEmailToCustomer(entity.Customer.ManagerEmail, entity);
         }
 
 
@@ -729,7 +731,7 @@ namespace AddOptimization.Services.Services
             await _invoiceRepository.UpdateAsync(entity);
 
             var details = (await _invoiceDetailRepository.QueryAsync(x => x.InvoiceId == invoiceId)).ToList();
-            return await SendRequestInvoiceEmailToCustomer(entity.Customer.ManagerEmail, entity, entity.Customer.ManagerName, entity.InvoiceNumber, entity.PaymentClearanceDays, entity.TotalPriceIncludingVat);
+            return await SendRequestInvoiceEmailToCustomer(entity.Customer.ManagerEmail, entity);
         }
 
         public async Task<ApiResult<bool>> DeclineRequest(InvoiceActionRequestDto model)
