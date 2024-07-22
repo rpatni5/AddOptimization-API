@@ -36,6 +36,30 @@ namespace AddOptimization.Contracts.Dto
         public int? PaymentClearanceDays { get; set; }
         public virtual CompanyDto Company { get; set; }
         public string ExternalCompanyName { get; set; }
+
+        public string ExternalEmployeeAddress { get; set; }
+        public string ExternalCompanyAddress { get; set; }
+        public string ExternalCompanyCity { get; set; }
+        public int? ExternalCompanyZipCode { get; set; }
+        public string ExternalCompanyState { get; set; }
+
+        public string ExternalCity { get; set; }
+        public string ExternalState { get; set; }
+
+        public int? ExternalZipCode { get; set; }
+
+        public string BankName { get; set; }
+
+        public string BankAddress { get; set; }
+
+        public string BankCity { get; set; }
+
+        public string BankState { get; set; }
+        public string BankAccountName { get; set; }
+
+        public int? BankZipCode { get; set; }
+
+
         public List<ExternalInvoiceDetailDto> ExternalInvoiceDetails { get; set; }
     }
 }

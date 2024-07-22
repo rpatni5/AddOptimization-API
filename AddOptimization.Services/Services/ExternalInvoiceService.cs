@@ -363,6 +363,7 @@ namespace AddOptimization.Services.Services
                 model.ExpiryDate = entity.ExpiryDate;
                 model.InvoiceDate = entity.InvoiceDate;
                 model.CompanyAddress = entity.CompanyAddress;
+                model.CustomerAddress=entity.CustomerAddress;
                 model.InvoiceStatusId = entity.InvoiceStatusId;
                 model.InvoiceStatusName = entity.InvoiceStatus.Name;
                 model.PaymentStatusId = entity.PaymentStatusId;
@@ -373,6 +374,20 @@ namespace AddOptimization.Services.Services
                 model.TotalPriceExcludingVat = entity.TotalPriceExcludingVat;
                 model.TotalPriceIncludingVat = entity.TotalPriceIncludingVat;
                 model.ExternalCompanyName = employeeObject?.CompanyName;
+                model.ExternalCompanyAddress = employeeObject?.ExternalAddress;
+                model.ExternalCompanyCity = employeeObject?.ExternalCity;
+                model.ExternalCompanyState = employeeObject?.ExternalState;
+                model.ExternalCompanyZipCode = employeeObject?.ExternalZipCode;
+                model.BankName=employeeObject?.BankName;
+                model.BankAddress=employeeObject?.BankAddress;
+                model.BankCity=employeeObject?.BankCity;
+                model.BankState=employeeObject?.BankState;
+                model.BankAccountName=employeeObject?.BankAccountName;
+                model.BankZipCode=employeeObject?.BankPostalCode;
+                model.ExternalEmployeeAddress = employeeObject?.Address;
+                model.ExternalCity=employeeObject?.City;
+                model.ExternalState=employeeObject?.State;
+                model.ExternalZipCode=employeeObject?.ZipCode;
 
                 var externalInvoiceSummary = (await _invoiceDetailRepository.QueryAsync(e => e.ExternalInvoiceId == id, disableTracking: true)).ToList();
                 model.ExternalInvoiceDetails = _mapper.Map<List<ExternalInvoiceDetailDto>>(externalInvoiceSummary);

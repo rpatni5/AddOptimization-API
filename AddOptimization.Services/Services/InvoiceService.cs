@@ -641,6 +641,7 @@ namespace AddOptimization.Services.Services
                 model.ExpiryDate = entity.ExpiryDate;
                 model.InvoiceDate = entity.InvoiceDate;
                 model.CustomerAddress = entity.CustomerAddress;
+                model.CompanyAddress = entity.CompanyAddress;
                 model.InvoiceStatusId = entity.InvoiceStatusId;
                 model.PaymentStatusId = entity.PaymentStatusId;
                 model.InvoiceNumber = entity.InvoiceNumber;
