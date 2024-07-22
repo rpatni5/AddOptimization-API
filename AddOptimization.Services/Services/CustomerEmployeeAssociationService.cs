@@ -17,16 +17,18 @@ namespace AddOptimization.Services.Services
     {
         private readonly IGenericRepository<CustomerEmployeeAssociation> _customerEmployeeAssociationRepository;
         private readonly IGenericRepository<EmployeeContract> _contractRepository;
+        private readonly IGenericRepository<Employee> _employeeRepository;
         private readonly ILogger<CustomerEmployeeAssociationService> _logger;
         private readonly IMapper _mapper;
 
 
-        public CustomerEmployeeAssociationService(IGenericRepository<CustomerEmployeeAssociation> customerEmployeeAssociationRepository, ILogger<CustomerEmployeeAssociationService> logger, IGenericRepository<EmployeeContract> contractRepository, IMapper mapper)
+        public CustomerEmployeeAssociationService(IGenericRepository<CustomerEmployeeAssociation> customerEmployeeAssociationRepository, ILogger<CustomerEmployeeAssociationService> logger, IGenericRepository<EmployeeContract> contractRepository, IMapper mapper , IGenericRepository<Employee> employeeRepository)
         {
             _customerEmployeeAssociationRepository = customerEmployeeAssociationRepository;
             _logger = logger;
             _mapper = mapper;
             _contractRepository = contractRepository;
+            _employeeRepository = employeeRepository;
         }
 
         public async Task<ApiResult<CustomerEmployeeAssociationDto>> Create(CustomerEmployeeAssociationDto model)
@@ -78,6 +80,10 @@ namespace AddOptimization.Services.Services
                 var entities = await _customerEmployeeAssociationRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.Approver).Include(e => e.Customer).Include(e => e.ApplicationUser).Include(e => e.Contracts));
 
                 var mappedEntities = _mapper.Map<List<CustomerEmployeeAssociationDto>>(entities.ToList());
+                foreach(var entity in mappedEntities)
+                {
+                    entity.isExternal = (await _employeeRepository.FirstOrDefaultAsync(e=>e.UserId == entity.EmployeeId))?.IsExternal;
+                }
                 return ApiResult<List<CustomerEmployeeAssociationDto>>.Success(mappedEntities);
             }
             catch (Exception ex)

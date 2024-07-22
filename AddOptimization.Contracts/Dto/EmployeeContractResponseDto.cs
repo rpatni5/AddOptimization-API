@@ -28,8 +28,13 @@ namespace AddOptimization.Contracts.Dto
         public Guid CustomerId { get; set; }
         public int EmployeeId { get; set; }
         public string InvoicingAndPaymentMode { get; set; }
+        public string ProjectFeePaymentMode { get; set; }
+
         public DateTime? ProjectStartDate { get; set; }
         public DateTime? ProjectEndDate { get; set; }
+        public Guid ProjectFeePaymentModeId { get; set; }
+        public string? WorkMode { get; set; }
+        public string ContractName { get; set; }
 
 
     }

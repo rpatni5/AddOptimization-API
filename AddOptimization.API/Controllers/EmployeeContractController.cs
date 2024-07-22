@@ -104,5 +104,48 @@ namespace AddOptimization.API.Controllers
                 return HandleException(ex);
             }
         }
+
+        [HttpGet("contracts/{id}")]
+        public async Task<IActionResult> GetContractsByAsscociationId(Guid id)
+        {
+            try
+            {
+                var retVal = await _contractService.GetContractsByAsscociationId(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpPost("searchAll")]
+        public async Task<IActionResult> SearchAllContracts([FromBody] PageQueryFiterBase filters)
+        {
+            try
+            {
+                var retVal = await _contractService.SearchAllContracts(filters);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            try
+            {
+                var retVal = await _contractService.Delete(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
     }
 }
