@@ -2,7 +2,7 @@
 	[Id] [uniqueidentifier] NOT NULL,
 	[InvoiceId] [bigint] NOT NULL,
 	[PaymentDate] [datetime2](7) NULL,
-	[Description] [nvarchar](200) NOT NULL,
+	[Description] [nvarchar](500) NOT NULL,
 	[IsDeleted] [bit] NOT NULL,
 	[IsActive] [bit] NOT NULL,
 	[CreatedAt] [datetime2](7) NULL,
