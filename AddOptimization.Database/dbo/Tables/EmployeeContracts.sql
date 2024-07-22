@@ -21,6 +21,9 @@ CREATE TABLE [dbo].[EmployeeContracts](
 	[ProjectStartDate] [datetime2](7) NULL,
 	[ProjectEndDate] [datetime2](7) NULL,
 	[IsContractSigned] [bit] NOT NULL,
+	[ProjectFeePaymentModeId] [uniqueidentifier] NOT NULL,
+	[WorkMode] [varchar](50) NULL,
+	[ContractName] [nvarchar](200) NOT NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -63,6 +66,10 @@ ALTER TABLE [dbo].[EmployeeContracts] CHECK CONSTRAINT [FK__EmployeeC__Emplo__45
 GO
 
 ALTER TABLE [dbo].[EmployeeContracts]  WITH CHECK ADD FOREIGN KEY([InvoicingPaymentModeId])
+REFERENCES [dbo].[InvoicingPaymentModes] ([Id])
+GO
+
+ALTER TABLE [dbo].[EmployeeContracts]  WITH CHECK ADD FOREIGN KEY([ProjectFeePaymentModeId])
 REFERENCES [dbo].[InvoicingPaymentModes] ([Id])
 GO
 
