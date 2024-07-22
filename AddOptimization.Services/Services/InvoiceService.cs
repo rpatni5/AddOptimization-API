@@ -350,6 +350,7 @@ namespace AddOptimization.Services.Services
                 emailTemplate = emailTemplate.Replace("[CustomerName]", customerName)
                                              .Replace("[LinkToInvoice]", link)
                                              .Replace("[InvoiceNumber]", invoiceNumber.ToString())
+                                             .Replace("[InvoiceDate]", invoice.InvoiceDate.ToString("dd-MM-yyyy"))
                                              .Replace("[TotalAmountDue]", totalAmountDue.ToString())
                                              .Replace("[DueDate]", dueDate.ToString());
                 return await _emailService.SendEmail(email, subject, emailTemplate);
