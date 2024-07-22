@@ -354,7 +354,7 @@ namespace AddOptimization.Services.Services
             try
             {
                 var model = new ExternalInvoiceResponseDto();
-                var entity = await _externalInvoiceRepository.FirstOrDefaultAsync(e => e.Id == id, include: source => source.Include(x => x.InvoiceStatus).Include(x => x.PaymentStatus), ignoreGlobalFilter: true);
+                var entity = await _externalInvoiceRepository.FirstOrDefaultAsync(e => e.Id == id, include: source => source.Include(x => x.InvoiceStatus).Include(x => x.PaymentStatus).Include(x => x.ApplicationUser), ignoreGlobalFilter: true);
                 var employeeObject = await _employeeRepository.FirstOrDefaultAsync(e => e.UserId == entity.EmployeeId, ignoreGlobalFilter: true);
                 model.Id = entity.Id;
                 model.CompanyId = entity.CompanyId;
@@ -388,6 +388,8 @@ namespace AddOptimization.Services.Services
                 model.ExternalCity=employeeObject?.City;
                 model.ExternalState=employeeObject?.State;
                 model.ExternalZipCode=employeeObject?.ZipCode;
+                model.BankAccountNumber=employeeObject?.BankAccountNumber;
+                model.EmployeeName = entity.ApplicationUser.FullName;
 
                 var externalInvoiceSummary = (await _invoiceDetailRepository.QueryAsync(e => e.ExternalInvoiceId == id, disableTracking: true)).ToList();
                 model.ExternalInvoiceDetails = _mapper.Map<List<ExternalInvoiceDetailDto>>(externalInvoiceSummary);
