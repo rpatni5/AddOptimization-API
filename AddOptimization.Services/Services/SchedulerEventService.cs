@@ -226,8 +226,8 @@ namespace AddOptimization.Services.Services
 
 
                 entity = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == entity.Id, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer));
-                entity.StartDate = entity.StartDate.ToUtc();
-                entity.EndDate = entity.EndDate.ToUtc();
+                entity.StartDate = entity.StartDate;
+                entity.EndDate = entity.EndDate;
                 var mappedEntity = _mapper.Map<SchedulerEventResponseDto>(entity);
                 return ApiResult<SchedulerEventResponseDto>.Success(mappedEntity);
             }
@@ -250,8 +250,8 @@ namespace AddOptimization.Services.Services
             mappedEntity.WorkDuration = entity.EventDetails.Where(x => x.EventTypeId == timesheetEventId).Sum(x => x.Duration);
             mappedEntity.Overtime = entity.EventDetails.Where(x => x.EventTypeId == overtimeId).Sum(x => x.Duration);
             mappedEntity.IsCustomerApprovalPending = mappedEntity.AdminStatusId.ToString() == statusId.ToString();
-            mappedEntity.StartDate = mappedEntity.StartDate.ToUtc();
-            mappedEntity.EndDate = mappedEntity.EndDate.ToUtc();
+            mappedEntity.StartDate = mappedEntity.StartDate;
+            mappedEntity.EndDate = mappedEntity.EndDate;
             return ApiResult<SchedulerEventResponseDto>.Success(mappedEntity);
         }
 
@@ -361,7 +361,7 @@ namespace AddOptimization.Services.Services
                     return ApiResult<List<SchedulerEventDetailsDto>>.NotFound("SchedulerEventDetails");
                 }
                 var mappedEntity = _mapper.Map<List<SchedulerEventDetailsDto>>(entity);
-                mappedEntity.ForEach(x => x.Date = x.Date.Value.ToUtc());
+                mappedEntity.ForEach(x => x.Date = x.Date.Value);
                 return ApiResult<List<SchedulerEventDetailsDto>>.Success(mappedEntity);
             }
             catch (Exception ex)
