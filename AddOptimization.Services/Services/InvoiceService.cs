@@ -529,6 +529,9 @@ namespace AddOptimization.Services.Services
                 await _unitOfWork.BeginTransactionAsync();
                 var eventStatus = (await _invoiceStatusService.Search()).Result;
                 var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.DRAFT.ToString()).Id;
+                var company = await _companyRepository.FirstOrDefaultAsync(ignoreGlobalFilter: true);
+                string companyAddress = await GenerateCompanyAddress(company);
+                string companyBankDetails = GenerateCompanyBankDetails(company);
 
                 var paymentStatus = (await _paymentStatusService.Search()).Result;
                 var paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.UNPAID.ToString()).Id;
@@ -551,6 +554,8 @@ namespace AddOptimization.Services.Services
                     CustomerAddress = model.CustomerAddress,
                     InvoiceStatusId = statusId,
                     PaymentClearanceDays = model.PaymentClearanceDays,
+                    CompanyAddress = companyAddress,
+                    CompanyBankDetails = companyBankDetails,
                 };
                 entity.DueAmount = entity.TotalPriceIncludingVat;
                 await _invoiceRepository.InsertAsync(entity);
@@ -644,6 +649,7 @@ namespace AddOptimization.Services.Services
                 model.InvoiceDate = entity.InvoiceDate;
                 model.CustomerAddress = entity.CustomerAddress;
                 model.CompanyAddress = entity.CompanyAddress;
+                model.CompanyBankDetails= entity.CompanyBankDetails;
                 model.InvoiceStatusId = entity.InvoiceStatusId;
                 model.PaymentStatusId = entity.PaymentStatusId;
                 model.InvoiceNumber = entity.InvoiceNumber;
