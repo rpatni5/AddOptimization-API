@@ -46,7 +46,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             //            return;
             //#endif
             _logger.LogInformation("ExecuteAsync Started.");
-            using var timer = new CronTimer("0 6 */2 * *", TimeZoneInfo.Utc);
+            using var timer = new CronTimer("0 12 */2 * *", TimeZoneInfo.Utc);
             while (!stoppingToken.IsCancellationRequested &&
                    await timer.WaitForNextTickAsync(stoppingToken))
             {
@@ -76,12 +76,12 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 foreach (var invoice in invoices?.Result)
                 {
                     var paymentClearanceDays = invoice.Customer.PaymentClearanceDays;
-                    if (invoice.InvoiceDate.AddDays(paymentClearanceDays.Value) <= DateTime.Today)
-                    {                        
+                    if (invoice.InvoiceDate.AddDays(paymentClearanceDays.Value) <= DateTime.Today
+                        && invoice?.DueAmount > 0)
+                    {
                         await SendUnpaidInvoiceReminderEmailCustomer(invoice);
                         await SendUnpaidInvoiceReminderEmailAccountAdmin(invoice, approver.Result.FirstOrDefault());
                     }
-
                 };
                 return true;
             }
@@ -99,16 +99,17 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             {
                 var scope = _serviceProvider.CreateScope();
                 var _emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
-                var subject = "AddOptimization unpaid invoice reminder";
+                var amount = string.Format("es-ES", "€{{0:N2}}", invoice?.DueAmount.ToString());
+                var subject = $"AddOptimization invoice pending for {invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy")} of {amount}";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoiceReminder);
                 var link = GetInvoiceLinkForCustomer(invoice.Id);
                 _ = int.TryParse(invoice?.Customer?.PaymentClearanceDays.ToString(), out int clearanceDays);
                 emailTemplate = emailTemplate
                                 .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
                                 .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
-                                .Replace("[InvoiceDate]", invoice?.InvoiceDate.Date.ToString("d"))
+                                .Replace("[InvoiceDate]", invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy"))
                                 .Replace("[TotalAmountDue]", invoice?.DueAmount.ToString())
-                                .Replace("[DueDate]", invoice?.InvoiceDate.AddDays(clearanceDays).Date.ToString("d"))
+                                .Replace("[DueDate]", invoice?.InvoiceDate.AddDays(clearanceDays).Date.ToString("dd/MM/yyyy"))
                                 .Replace("[LinkToInvoice]", link);
                 return await _emailService.SendEmail(invoice?.Customer?.ManagerEmail, subject, emailTemplate);
             }
@@ -125,7 +126,8 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             {
                 var scope = _serviceProvider.CreateScope();
                 var _emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
-                var subject = "AddOptimization unpaid invoice reminder";
+                var amount = string.Format("es-ES", "€{{0:N2}}", invoice?.DueAmount.ToString());
+                var subject = $"AddOptimization invoice pending for {invoice?.Customer?.ManagerName} dated {invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy")} of {amount}";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoiceReminderAccountAdmin);
                 var link = GetInvoiceLinkForAccountAdmin(invoice.Id);
                 _ = int.TryParse(invoice?.Customer?.PaymentClearanceDays.ToString(), out int clearanceDays);
@@ -133,9 +135,9 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                                 .Replace("[AccountAdminName]", accountAdmin.FullName)
                                 .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
                                 .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
-                                .Replace("[InvoiceDate]", invoice?.InvoiceDate.Date.ToString("d"))
+                                .Replace("[InvoiceDate]", invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy"))
                                 .Replace("[TotalAmountDue]", invoice?.DueAmount.ToString())
-                                .Replace("[DueDate]", invoice?.InvoiceDate.AddDays(clearanceDays).Date.ToString("d"))
+                                .Replace("[DueDate]", invoice?.InvoiceDate.AddDays(clearanceDays).Date.ToString("dd/MM/yyyy"))
                                 .Replace("[LinkToInvoice]", link);
                 return await _emailService.SendEmail(accountAdmin.Email, subject, emailTemplate);
             }
