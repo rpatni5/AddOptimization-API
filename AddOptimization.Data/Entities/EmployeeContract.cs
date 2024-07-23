@@ -21,7 +21,14 @@ namespace AddOptimization.Data.Entities
         public DateTime? ProjectEndDate { get; set; }
 
         public bool IsDeleted { get; set; }
+        public bool IsActive { get; set; }
 
+        public Guid ProjectFeePaymentModeId { get; set; }
+        public string? WorkMode { get; set; }
+        public string ContractName {  get; set; }
+
+        [ForeignKey(nameof(ProjectFeePaymentModeId))]
+        public virtual InvoicingPaymentMode ProjectFeePaymentMode { get; set; }
 
         [ForeignKey(nameof(InvoicingPaymentModeId))]
         public virtual InvoicingPaymentMode InvoicingPaymentMode { get; set; }
