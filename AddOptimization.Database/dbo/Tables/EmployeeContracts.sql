@@ -23,7 +23,7 @@ CREATE TABLE [dbo].[EmployeeContracts](
 	[IsContractSigned] [bit] NOT NULL,
 	[ProjectFeePaymentModeId] [uniqueidentifier] NOT NULL,
 	[WorkMode] [varchar](50) NULL,
-	[ContractName] [nvarchar](200) NOT NULL,
+    [ContractName] [varchar](255) NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
