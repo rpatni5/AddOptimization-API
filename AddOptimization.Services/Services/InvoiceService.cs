@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Org.BouncyCastle.Asn1.Cms;
 using System.Text;
 
 namespace AddOptimization.Services.Services
@@ -556,6 +557,7 @@ namespace AddOptimization.Services.Services
                     PaymentClearanceDays = model.PaymentClearanceDays,
                     CompanyAddress = companyAddress,
                     CompanyBankDetails = companyBankDetails,
+                    MetaData = "Manual",
                 };
                 entity.DueAmount = entity.TotalPriceIncludingVat;
                 await _invoiceRepository.InsertAsync(entity);
@@ -570,7 +572,8 @@ namespace AddOptimization.Services.Services
                         VatPercent = summary.VatPercent,
                         UnitPrice = summary.UnitPrice,
                         TotalPriceExcludingVat = summary.TotalPriceExcludingVat,
-                        TotalPriceIncludingVat = summary.TotalPriceIncludingVat
+                        TotalPriceIncludingVat = summary.TotalPriceIncludingVat,
+                        Metadata = "Manual",
 
                     };
 
@@ -695,7 +698,8 @@ namespace AddOptimization.Services.Services
                         VatPercent = summary.VatPercent,
                         UnitPrice = summary.UnitPrice,
                         TotalPriceExcludingVat = summary.TotalPriceExcludingVat,
-                        TotalPriceIncludingVat = summary.TotalPriceIncludingVat
+                        TotalPriceIncludingVat = summary.TotalPriceIncludingVat,
+                        Metadata = summary.Metadata,
 
                     };
                     await _invoiceDetailRepository.InsertAsync(invoiceDetail);
