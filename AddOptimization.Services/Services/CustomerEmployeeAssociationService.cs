@@ -82,7 +82,7 @@ namespace AddOptimization.Services.Services
                 var mappedEntities = _mapper.Map<List<CustomerEmployeeAssociationDto>>(entities.ToList());
                 foreach(var entity in mappedEntities)
                 {
-                    entity.isExternal = (await _employeeRepository.FirstOrDefaultAsync(e=>e.UserId == entity.EmployeeId))?.IsExternal;
+                    entity.IsExternal = (await _employeeRepository.FirstOrDefaultAsync(e=>e.UserId == entity.EmployeeId))?.IsExternal;
                 }
                 return ApiResult<List<CustomerEmployeeAssociationDto>>.Success(mappedEntities);
             }

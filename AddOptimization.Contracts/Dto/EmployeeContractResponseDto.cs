@@ -33,7 +33,7 @@ namespace AddOptimization.Contracts.Dto
         public DateTime? ProjectStartDate { get; set; }
         public DateTime? ProjectEndDate { get; set; }
         public Guid ProjectFeePaymentModeId { get; set; }
-        public string? WorkMode { get; set; }
+        public string WorkMode { get; set; }
         public string ContractName { get; set; }
 
 

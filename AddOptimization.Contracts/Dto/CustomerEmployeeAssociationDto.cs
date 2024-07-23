@@ -27,7 +27,7 @@ namespace AddOptimization.Contracts.Dto
         public bool IsDeleted { get; set; }
         public bool IsActive { get; set; }
         public bool? HasContract { get; set; }
-        public bool? isExternal { get; set; }
+        public bool? IsExternal { get; set; }
 
 
 

@@ -41,7 +41,7 @@ public class EmployeeContractService : IEmployeeContractService
     {
         try
         {
-            var activeContracts = (await _contractRepository.QueryAsync(e => e.EmployeeAssociationId == model.EmployeeAssociationId)).ToList();
+            var activeContracts = (await _contractRepository.QueryAsync(e => e.EmployeeAssociationId == model.EmployeeAssociationId && !e.IsDeleted)).ToList();
             if (activeContracts != null)
             {
                 foreach (var contract in activeContracts)
@@ -260,7 +260,7 @@ public class EmployeeContractService : IEmployeeContractService
                 JobTitle = e.JobTitle,
                 Address = e.Address,
                 CreatedAt = e.CreatedAt,
-                IsActive = e.IsDeleted,
+                IsActive = e.IsActive,
                 IsDeleted = e.IsDeleted,
 
 
@@ -365,7 +365,7 @@ public class EmployeeContractService : IEmployeeContractService
     {
         try
         {
-            var entity = await _contractRepository.FirstOrDefaultAsync(t => t.Id == id, include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.InvoicingPaymentMode).Include(e => e.Customer).Include(e => e.CustomerEmployeeAssociation).Include(e => e.ApplicationUser));
+            var entity = await _contractRepository.FirstOrDefaultAsync(t => t.Id == id, ignoreGlobalFilter: true);
             if (entity == null)
             {
                 return ApiResult<bool>.NotFound("Contract");

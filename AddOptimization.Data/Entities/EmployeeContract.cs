@@ -21,6 +21,7 @@ namespace AddOptimization.Data.Entities
         public DateTime? ProjectEndDate { get; set; }
 
         public bool IsDeleted { get; set; }
+        public bool IsActive { get; set; }
 
         public Guid ProjectFeePaymentModeId { get; set; }
         public string? WorkMode { get; set; }

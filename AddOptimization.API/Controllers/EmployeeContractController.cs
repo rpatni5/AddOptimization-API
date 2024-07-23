@@ -119,7 +119,7 @@ namespace AddOptimization.API.Controllers
             }
         }
 
-        [HttpPost("searchAll")]
+        [HttpPost("search-all")]
         public async Task<IActionResult> SearchAllContracts([FromBody] PageQueryFiterBase filters)
         {
             try
