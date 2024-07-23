@@ -77,7 +77,7 @@ public class EmployeeContractService : IEmployeeContractService
     {
         try
         {
-            var entity = await _contractRepository.FirstOrDefaultAsync(t => t.Id == id && !t.IsDeleted , include: entity => entity.Include(e => e.InvoicingPaymentMode).Include(e => e.Customer).Include(e => e.CustomerEmployeeAssociation).Include(e => e.ApplicationUser).Include(e => e.ProjectFeePaymentMode), ignoreGlobalFilter: true);
+            var entity = await _contractRepository.FirstOrDefaultAsync(t => t.Id == id , include: entity => entity.Include(e => e.InvoicingPaymentMode).Include(e => e.Customer).Include(e => e.CustomerEmployeeAssociation).Include(e => e.ApplicationUser).Include(e => e.ProjectFeePaymentMode), ignoreGlobalFilter: true);
             if (entity == null)
             {
                 return null;
