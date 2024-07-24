@@ -20,6 +20,7 @@ public class CustomerCreateDto:BaseDto<Guid?>
     public string VATNumber { get; set; }
     public string PartnerVATNumber { get; set; }
     public Guid? CountryId { get; set; }
+    public Guid? CountryCodeId { get; set; }
     public bool IsApprovalRequired { get; set; }
     public string PartnerName { get; set; }
     public string PartnerPhone { get; set; }

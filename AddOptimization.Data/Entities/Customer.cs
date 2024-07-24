@@ -23,7 +23,7 @@ public partial class Customer : BaseEntityNew<Guid>
     public virtual Address BillingAddress { get; set; }
     public virtual ICollection<License> Licenses { get; set; }
     public virtual ICollection<Address> Addresses { get; set; }
-    public string CountryCode { get; set; }
+    public Guid? CountryCodeId { get; set; }
     public Guid? CountryId { get; set; }
     public bool IsApprovalRequired { get; set; }
     public int? PaymentClearanceDays { get; set; }
@@ -70,6 +70,9 @@ public partial class Customer : BaseEntityNew<Guid>
 
     [ForeignKey(nameof(CountryId))]
     public virtual Country Country { get; set; }
+
+    [ForeignKey(nameof(CountryCodeId))]
+    public virtual Country CountryCodes { get; set; }
 
     [ForeignKey(nameof(PartnerCountryId))]
     public virtual Country PartnerCountry { get; set; }
