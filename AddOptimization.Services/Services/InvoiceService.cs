@@ -645,6 +645,7 @@ namespace AddOptimization.Services.Services
                     var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin") || c.Contains("Account Admin")).ToList();
                     ignoreGlobalFilter = superAdminRole.Count != 0;
                 }
+                var company = await _companyRepository.FirstOrDefaultAsync(ignoreGlobalFilter: true);
                 var model = new InvoiceResponseDto();
                 var entity = await _invoiceRepository.FirstOrDefaultAsync(e => e.Id == id, ignoreGlobalFilter: true);
                 model.Id = entity.Id;
@@ -652,7 +653,14 @@ namespace AddOptimization.Services.Services
                 model.ExpiryDate = entity.ExpiryDate;
                 model.InvoiceDate = entity.InvoiceDate;
                 model.CustomerAddress = entity.CustomerAddress;
-                model.CompanyAddress = entity.CompanyAddress;
+                model.CompanyAddress = company.Address;
+                model.CompanyCity = company.City;
+                model.CompanyState = company.State;
+                model.CompanyZipCode = company.ZipCode;
+                model.CompanyBankName = company.BankName;
+                model.CompanyBankAccountName = company.BankAccountName;
+                model.CompanyBankAccontNumber = company.BankAccountNumber;
+                model.CompanyBankAddress = company.BankAddress;
                 model.CompanyBankDetails= entity.CompanyBankDetails;
                 model.InvoiceStatusId = entity.InvoiceStatusId;
                 model.PaymentStatusId = entity.PaymentStatusId;
