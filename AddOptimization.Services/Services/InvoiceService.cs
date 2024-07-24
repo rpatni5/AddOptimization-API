@@ -645,6 +645,10 @@ namespace AddOptimization.Services.Services
                     ignoreGlobalFilter = superAdminRole.Count != 0;
                 }
                 var company = await _companyRepository.FirstOrDefaultAsync(ignoreGlobalFilter: true);
+
+                _ = Guid.TryParse(company.Country, out Guid countryId);
+                var country = await _countryRepository.FirstOrDefaultAsync(c => c.Id == countryId, ignoreGlobalFilter: true);
+               
                 var model = new InvoiceResponseDto();
                 var entity = await _invoiceRepository.FirstOrDefaultAsync(e => e.Id == id, ignoreGlobalFilter: true);
                 model.Id = entity.Id;
@@ -654,6 +658,7 @@ namespace AddOptimization.Services.Services
                 model.CustomerAddress = entity.CustomerAddress;
                 model.CompanyAddress = company.Address;
                 model.CompanyCity = company.City;
+                model.CompanyCountry = country.CountryName;
                 model.CompanyState = company.State;
                 model.CompanyZipCode = company.ZipCode;
                 model.CompanyBankName = company.BankName;
