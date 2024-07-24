@@ -13,7 +13,7 @@ namespace AddOptimization.Contracts.Dto
         public CustomerStatusDto CustomerStatus { get; set; }
         public List<LicenseDetailsDto>  Licenses{  get; set; }  
         
-        public string CountryCode {  get; set; }
+        public string CountryCodeId {  get; set; }
         public string CountryNames { get; set; }
         public string ManagerName { get; set; }
         public string ManagerPhone { get; set; }
