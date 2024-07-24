@@ -37,7 +37,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             //            return;
             //#endif
             _logger.LogInformation("ExecuteAsync Started.");
-            using var timer = new CronTimer("0 6 * * *", TimeZoneInfo.Utc);
+            using var timer = new CronTimer("0 4 * * *", TimeZoneInfo.Utc);
             while (!stoppingToken.IsCancellationRequested && await timer.WaitForNextTickAsync(stoppingToken))
             {
                 _logger.LogInformation("Send Fill Timesheet Reminder Email Background Service Started.");

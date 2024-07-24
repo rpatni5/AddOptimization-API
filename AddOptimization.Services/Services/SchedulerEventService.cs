@@ -869,6 +869,7 @@ namespace AddOptimization.Services.Services
             var result = (await _schedulersRepository.QueryAsync(x => x.CustomerId == customerId
             && x.StartDate.Month == month.StartDate.Month
             && x.StartDate.Year == month.StartDate.Year
+            && employeeIds.Contains(x.UserId)
             && x.AdminStatus.StatusKey == SchedulerStatusesEnum.CUSTOMER_APPROVED.ToString()));
 
             if (result.Count() < employeeIds.Count)

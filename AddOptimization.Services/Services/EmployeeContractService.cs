@@ -13,6 +13,10 @@ using AddOptimization.Utilities.Models;
 using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 using AddOptimization.Utilities.Enums;
 using AddOptimization.Utilities.Helpers;
+using NPOI.SS.Formula.Functions;
+using AddOptimization.Contracts.Constants;
+using AddOptimization.Utilities.Interface;
+using System.Diagnostics.Contracts;
 
 namespace AddOptimization.Services.Services;
 
@@ -20,6 +24,8 @@ public class EmployeeContractService : IEmployeeContractService
 {
     private readonly ILogger<EmployeeContractService> _logger;
     private readonly IGenericRepository<EmployeeContract> _contractRepository;
+    private readonly IGenericRepository<Customer> _customerRepository;
+    private readonly IGenericRepository<Employee> _employeeRepository;
     private readonly IMapper _mapper;
     private readonly IHttpContextAccessor _httpContextAccessor;
     public EmployeeContractService(ILogger<EmployeeContractService> logger, IGenericRepository<EmployeeContract> contractRepository, IMapper mapper, IHttpContextAccessor httpContextAccessor)
@@ -30,13 +36,31 @@ public class EmployeeContractService : IEmployeeContractService
         _httpContextAccessor = httpContextAccessor;
     }
 
-
+   
     public async Task<ApiResult<EmployeeContractResponseDto>> Create(EmployeeContractRequestDto model)
     {
         try
         {
+            var activeContracts = (await _contractRepository.QueryAsync(e => e.EmployeeAssociationId == model.EmployeeAssociationId && !e.IsDeleted)).ToList();
+            if (activeContracts != null)
+            {
+                foreach (var contract in activeContracts)
+                {
+                    contract.IsDeleted = true;
+                    
+                }
+                await _contractRepository.BulkUpdateAsync(activeContracts);
+            }
+
+            var datepart = DateTime.UtcNow.ToString("yyyymmdd");
+            var guidpart = Guid.NewGuid().ToString().Substring(0, 6).ToUpper();
+            var contractNumber = (await _contractRepository.QueryAsync()).Count()+1;
+            var contractName = $"{model.CustomerName}_{model.EmployeeName}_{contractNumber}";
+
             var entity = _mapper.Map<EmployeeContract>(model);
             entity.IsContractSigned = false;
+            entity.ContractName = contractName;
+           
             await _contractRepository.InsertAsync(entity);
             var mappedEntity = _mapper.Map<EmployeeContractResponseDto>(entity);
             return ApiResult<EmployeeContractResponseDto>.Success(mappedEntity);
@@ -48,11 +72,12 @@ public class EmployeeContractService : IEmployeeContractService
         }
     }
 
+
     public async Task<ApiResult<EmployeeContractResponseDto>> GetEmployeeContractById(Guid id)
     {
         try
         {
-            var entity = await _contractRepository.FirstOrDefaultAsync(t => t.EmployeeAssociationId == id && !t.IsDeleted , include: entity => entity.Include(e => e.InvoicingPaymentMode).Include(e => e.Customer).Include(e => e.CustomerEmployeeAssociation).Include(e => e.ApplicationUser), ignoreGlobalFilter: true);
+            var entity = await _contractRepository.FirstOrDefaultAsync(t => t.Id == id , include: entity => entity.Include(e => e.InvoicingPaymentMode).Include(e => e.Customer).Include(e => e.CustomerEmployeeAssociation).Include(e => e.ApplicationUser).Include(e => e.ProjectFeePaymentMode), ignoreGlobalFilter: true);
             if (entity == null)
             {
                 return null;
@@ -112,7 +137,7 @@ public class EmployeeContractService : IEmployeeContractService
     {
         try
         {
-            var entity = await _contractRepository.FirstOrDefaultAsync(t => t.EmployeeId == id && !t.IsContractSigned && !t.IsDeleted, include: entity => entity.Include(e => e.InvoicingPaymentMode).Include(e => e.Customer).Include(e => e.CustomerEmployeeAssociation).Include(e => e.ApplicationUser), ignoreGlobalFilter: true);
+            var entity = await _contractRepository.FirstOrDefaultAsync(t => t.EmployeeId == id && !t.IsContractSigned && !t.IsDeleted, include: entity => entity.Include(e => e.InvoicingPaymentMode).Include(e => e.Customer).Include(e => e.CustomerEmployeeAssociation).Include(e => e.ApplicationUser).Include(e => e.ProjectFeePaymentMode), ignoreGlobalFilter: true);
             if (entity == null)
             {
                 return null;
@@ -149,6 +174,7 @@ public class EmployeeContractService : IEmployeeContractService
                 EmployeeAssociationId = e.EmployeeAssociationId,
                 JobTitle = e.JobTitle,
                 Address = e.Address,
+                CreatedAt = e.CreatedAt,
 
 
             }).ToList());
@@ -163,6 +189,94 @@ public class EmployeeContractService : IEmployeeContractService
             throw;
         }
     }
+
+    public async Task<ApiResult<List<EmployeeContractResponseDto>>> GetContractsByAsscociationId(Guid id)
+    {
+        try
+        {
+            var entity = await _contractRepository.QueryAsync(o => o.EmployeeAssociationId == id && !o.IsDeleted, include: entities => entities
+            .Include(e => e.CreatedByUser),  ignoreGlobalFilter: true);
+
+            if (entity == null)
+            {
+                return ApiResult<List<EmployeeContractResponseDto>>.NotFound("Contracts");
+            }
+            var mappedEntity = _mapper.Map<List<EmployeeContractResponseDto>>(entity);
+            return ApiResult<List<EmployeeContractResponseDto>>.Success(mappedEntity);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            throw;
+        }
+    }
+
+    public async Task<PagedApiResult<EmployeeContractResponseDto>> SearchAllContracts(PageQueryFiterBase filters)
+    {
+        try
+        {
+
+            var entities = await _contractRepository.QueryAsync( include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.InvoicingPaymentMode).Include(e => e.Customer).Include(e => e.CustomerEmployeeAssociation).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
+            filters.GetValue<Guid>("contractId", (v) =>
+            {
+                entities = entities.Where(e => e.Id == v);
+            });
+            filters.GetValue<int>("employeeId", (v) =>
+            {
+                entities = entities.Where(e => e.EmployeeId == v);
+            });
+            filters.GetValue<Guid>("customerId", (v) =>
+            {
+                entities = entities.Where(e => e.CustomerId == v);
+            });
+            filters.GetValue<string>("employeeName", (v) =>
+            {
+                entities = entities.Where(e => e.ApplicationUser != null && (e.ApplicationUser.FullName.ToLower().Contains(v.ToLower())));
+            });
+            filters.GetValue<string>("customerName", (v) =>
+            {
+                entities = entities.Where(e => e.Customer != null && (e.Customer.Organizations.ToLower().Contains(v.ToLower())));
+            });
+
+            filters.GetValue<DateTime>("createdAt", (v) =>
+            {
+                entities = entities.Where(e => e.CreatedAt != null && e.CreatedAt < v);
+            }, OperatorType.lessthan, true);
+            filters.GetValue<DateTime>("contractDate", (v) =>
+            {
+                entities = entities.Where(e => e.CreatedAt != null && e.CreatedAt > v);
+            }, OperatorType.greaterthan, true);
+            entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
+            var pagedResult = PageHelper<EmployeeContract, EmployeeContractResponseDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new EmployeeContractResponseDto
+            {
+                Id = e.Id,
+                CustomerId = e.CustomerId,
+                CustomerName = e.Customer.Organizations,
+                EmployeeId = e.EmployeeId,
+                EmployeeName = e.ApplicationUser.FullName,
+                SignedDate = e.SignedDate,
+                IsContractSigned = e.IsContractSigned,
+                EmployeeAssociationId = e.EmployeeAssociationId,
+                JobTitle = e.JobTitle,
+                Address = e.Address,
+                CreatedAt = e.CreatedAt,
+                IsActive = e.IsActive,
+                IsDeleted = e.IsDeleted,
+
+
+            }).ToList());
+
+            var result = pagedResult;
+            return PagedApiResult<EmployeeContractResponseDto>.Success(result);
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            throw;
+        }
+    }
+
 
     private IQueryable<EmployeeContract> ApplyFilters(IQueryable<EmployeeContract> entities, PageQueryFiterBase filter)
     {
@@ -246,5 +360,27 @@ public class EmployeeContractService : IEmployeeContractService
         }
 
     }
+
+    public async Task<ApiResult<bool>> Delete(Guid id)
+    {
+        try
+        {
+            var entity = await _contractRepository.FirstOrDefaultAsync(t => t.Id == id, ignoreGlobalFilter: true);
+            if (entity == null)
+            {
+                return ApiResult<bool>.NotFound("Contract");
+            }
+          
+            entity.IsDeleted = true;
+            await _contractRepository.UpdateAsync(entity);
+            return ApiResult<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            throw;
+        }
+    }
+
 
 }
