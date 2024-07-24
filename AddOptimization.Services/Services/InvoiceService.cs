@@ -241,7 +241,7 @@ namespace AddOptimization.Services.Services
 
         private async Task<string> GenerateCompanyAddress(Company company)
         {
-            _ = Guid.TryParse(company.Country, out Guid countryId);
+            var countryId = company.CountryId;
             var country = await _countryRepository.FirstOrDefaultAsync(c => c.Id == countryId, ignoreGlobalFilter: true);
             StringBuilder companyAddress = new StringBuilder();
             companyAddress.AppendLine(company.CompanyName);
@@ -644,13 +644,12 @@ namespace AddOptimization.Services.Services
                     var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin") || c.Contains("Account Admin")).ToList();
                     ignoreGlobalFilter = superAdminRole.Count != 0;
                 }
-                var company = await _companyRepository.FirstOrDefaultAsync(ignoreGlobalFilter: true);
+                var company = await _companyRepository.FirstOrDefaultAsync(include: entities => entities
+            .Include(e => e.CountryName),ignoreGlobalFilter: true);
 
-                _ = Guid.TryParse(company.Country, out Guid countryId);
-                var country = await _countryRepository.FirstOrDefaultAsync(c => c.Id == countryId, ignoreGlobalFilter: true);
-               
+             
                 var model = new InvoiceResponseDto();
-                var entity = await _invoiceRepository.FirstOrDefaultAsync(e => e.Id == id, ignoreGlobalFilter: true);
+                var entity = await _invoiceRepository.FirstOrDefaultAsync(e => e.Id == id , ignoreGlobalFilter: true);
                 model.Id = entity.Id;
                 model.CustomerId = entity.CustomerId;
                 model.ExpiryDate = entity.ExpiryDate;
@@ -658,7 +657,7 @@ namespace AddOptimization.Services.Services
                 model.CustomerAddress = entity.CustomerAddress;
                 model.CompanyAddress = company.Address;
                 model.CompanyCity = company.City;
-                model.CompanyCountry = country.CountryName;
+                model.CompanyCountry = company.CountryName.CountryName;
                 model.CompanyState = company.State;
                 model.CompanyZipCode = company.ZipCode;
                 model.CompanyBankName = company.BankName;
