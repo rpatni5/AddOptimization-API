@@ -176,7 +176,6 @@ public class EmployeeContractService : IEmployeeContractService
                 Address = e.Address,
                 CreatedAt = e.CreatedAt,
 
-
             }).ToList());
 
             var result = pagedResult;
@@ -237,6 +236,11 @@ public class EmployeeContractService : IEmployeeContractService
             {
                 entities = entities.Where(e => e.Customer != null && (e.Customer.Organizations.ToLower().Contains(v.ToLower())));
             });
+            filters.GetValue<string>("contractName", (v) =>
+            {
+                entities = entities.Where(e => e.ContractName != null && (e.ContractName.ToLower().Contains(v.ToLower())));
+            });
+
 
             filters.GetValue<DateTime>("createdAt", (v) =>
             {
@@ -262,6 +266,7 @@ public class EmployeeContractService : IEmployeeContractService
                 CreatedAt = e.CreatedAt,
                 IsActive = e.IsActive,
                 IsDeleted = e.IsDeleted,
+                ContractName = e.ContractName,
 
 
             }).ToList());
