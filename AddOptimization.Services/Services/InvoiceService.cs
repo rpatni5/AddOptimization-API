@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 using System.Text;
 
 namespace AddOptimization.Services.Services
@@ -351,7 +352,7 @@ namespace AddOptimization.Services.Services
                                 .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
                                 .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
                                 .Replace("[InvoiceDate]", invoice?.InvoiceDate.Date.ToString("d"))
-                                .Replace("[TotalAmountDue]", invoice?.DueAmount.ToString())
+                                .Replace("[TotalAmountDue]", invoice?.DueAmount.ToString("N2", CultureInfo.InvariantCulture))
                                 .Replace("[DueDate]", invoice?.InvoiceDate.AddDays(clearanceDays).Date.ToString("d"))
                                 .Replace("[LinkToInvoice]", link);
                 return await _emailService.SendEmail(email, subject, emailTemplate);
@@ -371,7 +372,7 @@ namespace AddOptimization.Services.Services
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.DeclinedInvoice);
                 emailTemplate = emailTemplate.Replace("[CustomerName]", customerName)
                                              .Replace("[InvoiceNumber]", invoiceNumber.ToString())
-                                             .Replace("[TotalAmountDue]", totalAmountDue.ToString())
+                                             .Replace("[TotalAmountDue]", totalAmountDue.ToString("N2", CultureInfo.InvariantCulture))
                                              .Replace("[DueDate]", dueDate.ToString())
                                              .Replace("[Comment]", !string.IsNullOrEmpty(comment) ? comment : "No comment added.");
                 foreach (var admin in accountAdmins)

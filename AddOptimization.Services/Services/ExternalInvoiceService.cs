@@ -461,7 +461,7 @@ namespace AddOptimization.Services.Services
                                              .Replace("[EmployeeName]", employeeName)
                                              .Replace("[LinkToOrder]", link)
                                              .Replace("[InvoiceNumber]", invoiceNumber.ToString())
-                                             .Replace("[TotalAmountDue]", totalAmountDue.ToString());
+                                             .Replace("[TotalAmountDue]", totalAmountDue.ToString("N2", CultureInfo.InvariantCulture));
 
                 foreach (var admin in accountAdmins)
                 {
@@ -488,7 +488,7 @@ namespace AddOptimization.Services.Services
                     .Replace("[CompanyName]", companyName)
                                              .Replace("[EmployeeName]", employee.FullName)
                                              .Replace("[InvoiceNumber]", invoiceNumber.ToString())
-                                             .Replace("[TotalAmountDue]", totalAmountDue.ToString())
+                                             .Replace("[TotalAmountDue]", totalAmountDue.ToString("N2", CultureInfo.InvariantCulture))
                                              .Replace("[Comment]", !string.IsNullOrEmpty(comment) ? comment : "No comment added.");
 
                 await _emailService.SendEmail(employee.Email, subject, emailTemplate);
@@ -556,7 +556,7 @@ namespace AddOptimization.Services.Services
                                              .Replace("[EmployeeName]", employeeName)
                                              .Replace("[LinkToOrder]", link)
                                              .Replace("[InvoiceNumber]", invoiceNumber.ToString())
-                                             .Replace("[TotalAmountDue]", totalAmountDue.ToString())
+                                             .Replace("[TotalAmountDue]", totalAmountDue.ToString("N2", CultureInfo.InvariantCulture))
                 ;
 
                 return await _emailService.SendEmail(email, subject, emailTemplate);
