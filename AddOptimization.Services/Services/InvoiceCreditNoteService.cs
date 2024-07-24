@@ -80,7 +80,7 @@ namespace AddOptimization.Services.Services
                 var existingPayments = await _invoicePaymentRepository.QueryAsync(e => e.InvoiceId == model.InvoiceId);
                 var paymentEntities = existingPayments.ToList();
 
-                var totalPaidAmount = paymentEntities.Sum(x => x.Amount) +   invoiceAmountPayment.InvoiceCreditNotes.Where(x => !x.IsDeleted).Sum(x => x.TotalPriceExcludingVat);
+                var totalPaidAmount = paymentEntities.Sum(x => x.Amount) +   invoiceAmountPayment.InvoiceCreditNotes.Where(x => !x.IsDeleted).Sum(x => x.TotalPriceIncludingVat);
 
                 var invoice = await _invoiceRepository.FirstOrDefaultAsync(x => x.Id == model.InvoiceId);
 
