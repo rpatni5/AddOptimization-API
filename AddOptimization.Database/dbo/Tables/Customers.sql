@@ -9,7 +9,6 @@
 	[CreatedByUserId] [int] NULL,
 	[UpdatedAt] [datetime2](7) NULL,
 	[UpdatedByUserId] [int] NULL,
-	[CountryCode] [nvarchar](50) NULL,
 	[ManagerName] [nvarchar](200) NULL,
 	[IsApprovalRequired] [bit] NOT NULL,
 	[CountryId] [uniqueidentifier] NULL,
@@ -40,6 +39,7 @@
 	[PartnerEmail] [varchar](400) NULL,
 	[PartnerPhone] [varchar](400) NULL,
 	[PartnerBankAddress] [varchar](400) NULL,
+	[CountryCodeId] [uniqueidentifier] NULL,
  CONSTRAINT [PK_Customers] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -54,6 +54,10 @@ ALTER TABLE [dbo].[Customers] ADD  CONSTRAINT [DF_Customers_CustomerStatusId]  D
 GO
 
 ALTER TABLE [dbo].[Customers] ADD  DEFAULT ((0)) FOR [IsApprovalRequired]
+GO
+
+ALTER TABLE [dbo].[Customers]  WITH CHECK ADD FOREIGN KEY([CountryCodeId])
+REFERENCES [dbo].[Countries] ([Id])
 GO
 
 ALTER TABLE [dbo].[Customers]  WITH CHECK ADD  CONSTRAINT [FK_Customers_Addresses_BillingAddressId] FOREIGN KEY([BillingAddressId])
@@ -98,5 +102,4 @@ GO
 
 ALTER TABLE [dbo].[Customers] CHECK CONSTRAINT [FK_Customers_CustomerStatuses_CustomerStatusId]
 GO
-
 
