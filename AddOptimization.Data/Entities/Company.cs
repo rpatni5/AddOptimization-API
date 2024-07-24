@@ -1,5 +1,6 @@
 ﻿using AddOptimization.Data.Common;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AddOptimization.Data.Entities;
 
@@ -32,7 +33,10 @@ public class Company : BaseEntityNew<Guid>
     public Guid? DialCodeId { get; set; }
     public string Address { get; set; }
     public string City { get; set; }
-    public string Country { get; set; }
+    public Guid? CountryId { get; set; }
+
+    [ForeignKey(nameof(CountryId))]
+    public virtual Country CountryName { get; set; }
     public int? ZipCode { get; set; }
     public string? SwiftCode { get; set; }
     public string? State { get; set; }

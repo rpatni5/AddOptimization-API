@@ -13,6 +13,7 @@
         public string CustomerAddress { get; set; }
         public string CompanyAddress { get; set; }
         public string CompanyCity { get; set; }
+        public string CompanyCountry { get; set; }
         public string CompanyState { get; set; }
         public int? CompanyZipCode { get; set; }
         public string CompanyBankName { get; set; }
