@@ -6,11 +6,11 @@ namespace AddOptimization.Contracts.Dto
     public class EmployeeContractResponseDto
     {
         public Guid Id { get; set; }
-        public Guid InvoicingPaymentModeId { get; set; }
-        public int Hours { get; set; }
-        public decimal ProjectFees { get; set; }
+        public Guid? InvoicingPaymentModeId { get; set; }
+        public int? Hours { get; set; }
+        public decimal? ProjectFees { get; set; }
         public decimal? ExpensePaymentFees { get; set; }
-        public int NoticePeriod { get; set; }
+        public int? NoticePeriod { get; set; }
         public string? JobTitle { get; set; }
         public string CustomerName { get; set; }
         public string EmployeeName { get; set; }
@@ -21,20 +21,24 @@ namespace AddOptimization.Contracts.Dto
         public string UpdatedBy { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
-        public int UserId { get; set; }
+        public int? UserId { get; set; }
         public bool IsDeleted { get; set; }
         public bool IsActive { get; set; }
-        public Guid EmployeeAssociationId { get; set; }
-        public Guid CustomerId { get; set; }
-        public int EmployeeId { get; set; }
+        public Guid? EmployeeAssociationId { get; set; }
+        public Guid? CustomerId { get; set; }
+        public int? EmployeeId { get; set; }
         public string InvoicingAndPaymentMode { get; set; }
         public string ProjectFeePaymentMode { get; set; }
 
         public DateTime? ProjectStartDate { get; set; }
         public DateTime? ProjectEndDate { get; set; }
-        public Guid ProjectFeePaymentModeId { get; set; }
+        public Guid? ProjectFeePaymentModeId { get; set; }
         public string WorkMode { get; set; }
         public string ContractName { get; set; }
+        public bool IsExternal { get; set; }
+        public decimal? Salary { get; set; }
+        public int? PublicHoliday { get; set; }
+        public string? NIENumber { get; set; }
 
 
     }

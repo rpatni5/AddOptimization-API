@@ -220,11 +220,12 @@ namespace AddOptimization.Services.Mappings
                 d.Password = s.ApplicationUser != null ? s.ApplicationUser.Password : string.Empty;
                 d.isActive = s.ApplicationUser != null ? s.ApplicationUser.IsActive : false;
                 d.CountryName = s.Country != null ? s.Country.CountryName : string.Empty;
+                //d.HasContract = s.Contracts != null && s.Contracts.Count > 0;
 
             });
             CreateMap<EmployeeDto, Employee>();
 
-            CreateMap<Company, CompanyDto>().AfterMap((s, d) =>
+            CreateMap<Company, CompanyDto>().AfterMap((s, d) => 
             {
                 d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
                 d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;

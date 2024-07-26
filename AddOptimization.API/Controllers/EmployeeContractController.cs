@@ -147,5 +147,36 @@ namespace AddOptimization.API.Controllers
                 return HandleException(ex);
             }
         }
+
+        [HttpPost("internal-contract")]
+        public async Task<IActionResult> CreateInternalContract([FromBody] EmployeeContractRequestDto model)
+        {
+            try
+            {
+                var retVal = await _contractService.CreateInternalEmployeeContract(model);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+
+        [HttpGet("internal-contract/{id}")]
+        public async Task<IActionResult> GetInternalContractByEmployeeId(int id)
+        {
+            try
+            {
+                var retVal = await _contractService.GetInternalContractByEmployeeId(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+
     }
 }

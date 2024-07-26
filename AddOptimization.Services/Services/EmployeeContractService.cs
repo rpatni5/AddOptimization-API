@@ -267,6 +267,11 @@ public class EmployeeContractService : IEmployeeContractService
                 IsActive = e.IsActive,
                 IsDeleted = e.IsDeleted,
                 ContractName = e.ContractName,
+                IsExternal = e.IsExternal,
+                PublicHoliday =e.PublicHoliday,
+                Salary = e.Salary,
+                Hours = e.Hours,
+                NIENumber = e.NIENumber,
 
 
             }).ToList());
@@ -388,4 +393,64 @@ public class EmployeeContractService : IEmployeeContractService
     }
 
 
+
+ //------------------------Internal Contract----------------------------------
+
+    public async Task<ApiResult<EmployeeContractResponseDto>> CreateInternalEmployeeContract(EmployeeContractRequestDto model)
+    {
+        try
+        {
+            var activeContracts = (await _contractRepository.QueryAsync(e => e.EmployeeId == model.EmployeeId && !e.IsDeleted)).ToList();
+            if (activeContracts != null)
+            {
+                foreach (var contract in activeContracts)
+                {
+                    contract.IsDeleted = true;
+
+                }
+                await _contractRepository.BulkUpdateAsync(activeContracts);
+            }
+            var datepart = DateTime.UtcNow.ToString("yyyymmdd");
+            var guidpart = Guid.NewGuid().ToString().Substring(0, 6).ToUpper();
+            var contractNumber = (await _contractRepository.QueryAsync()).Count() + 1;
+            var contractName = $"{model.EmployeeName}_{contractNumber}";
+
+            var entity = _mapper.Map<EmployeeContract>(model);
+            entity.IsContractSigned = false;
+            entity.ContractName = contractName;
+            entity.IsExternal = false;
+
+            await _contractRepository.InsertAsync(entity);
+            var mappedEntity = _mapper.Map<EmployeeContractResponseDto>(entity);
+            return ApiResult<EmployeeContractResponseDto>.Success(mappedEntity);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            throw;
+        }
+    }
+
+    public async Task<ApiResult<List<EmployeeContractResponseDto>>> GetInternalContractByEmployeeId(int id)
+    {
+        try
+        {
+            var entity = await _contractRepository.QueryAsync(o => o.EmployeeId == id && !o.IsDeleted, include: entities => entities
+            .Include(e => e.CreatedByUser), ignoreGlobalFilter: true);
+
+            if (entity == null)
+            {
+                return ApiResult<List<EmployeeContractResponseDto>>.NotFound("Contracts");
+            }
+            var mappedEntity = _mapper.Map<List<EmployeeContractResponseDto>>(entity);
+            return ApiResult<List<EmployeeContractResponseDto>>.Success(mappedEntity);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            throw;
+        }
+    }
+
+ 
 }

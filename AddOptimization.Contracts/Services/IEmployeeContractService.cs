@@ -20,4 +20,9 @@ public interface IEmployeeContractService
     Task<ApiResult<bool>> Delete(Guid id);
 
 
+
+    Task<ApiResult<EmployeeContractResponseDto>> CreateInternalEmployeeContract(EmployeeContractRequestDto model);
+    Task<ApiResult<List<EmployeeContractResponseDto>>> GetInternalContractByEmployeeId(int id);
+
+
 }
