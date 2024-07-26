@@ -26,6 +26,8 @@ namespace AddOptimization.Services.Services
     {
         private readonly IGenericRepository<Invoice> _invoiceRepository;
         private readonly IGenericRepository<InvoiceDetail> _invoiceDetailRepository;
+        private readonly IGenericRepository<InvoicePaymentHistory> _invoicePaymentRepository;
+        private readonly IGenericRepository<InvoiceCreditNotes> _invoiceCreditNoteRepository;
         private readonly IGenericRepository<Customer> _customer;
         private readonly IGenericRepository<Country> _countryRepository;
         private readonly IGenericRepository<SchedulerEvent> _schedulersRepository;
@@ -72,9 +74,11 @@ namespace AddOptimization.Services.Services
             ITemplateService templateService,
             IEmailService emailService,
             IGenericRepository<InvoiceHistory> invoiceHistoryRepository,
-             IGenericRepository<ApplicationUser> appUserRepository,
-             IGenericRepository<Role> roleRepository,
-              IApplicationUserService applicationService,
+            IGenericRepository<ApplicationUser> appUserRepository,
+            IGenericRepository<Role> roleRepository,
+            IApplicationUserService applicationService,
+            IGenericRepository<InvoiceCreditNotes> invoiceCreditNoteRepository,
+            IGenericRepository<InvoicePaymentHistory> invoicePaymentRepository,
 
         ILogger<InvoiceService> logger)
         {
@@ -104,6 +108,8 @@ namespace AddOptimization.Services.Services
             _appUserRepository = appUserRepository;
             _roleRepository = roleRepository;
             _applicationService = applicationService;
+            _invoiceCreditNoteRepository = invoiceCreditNoteRepository;
+            _invoicePaymentRepository = invoicePaymentRepository;
         }
 
         public async Task<ApiResult<bool>> GenerateInvoice(Guid customerId, MonthDateRange month,
@@ -691,16 +697,18 @@ namespace AddOptimization.Services.Services
             try
             {
                 var entity = await _invoiceRepository.FirstOrDefaultAsync(e => e.Id == id);
-                var summaries = await _invoiceDetailRepository.QueryAsync(e => e.InvoiceId == id);
-
-                foreach (var summary in summaries.ToList())
-                {
-                    await _invoiceDetailRepository.DeleteAsync(summary);
-                }
                 if (entity == null)
                 {
                     return ApiResult<InvoiceResponseDto>.NotFound("Invoice");
                 }
+
+                var existingDetails = await _invoiceDetailRepository.QueryAsync(e => e.InvoiceId == id);
+                foreach (var detail in existingDetails.ToList())
+                {
+                    await _invoiceDetailRepository.DeleteAsync(detail);
+                }
+
+                var newInvoiceDetails = new List<InvoiceDetail>();
                 foreach (var summary in model.InvoiceDetails)
                 {
                     var invoiceDetail = new InvoiceDetail
@@ -713,13 +721,26 @@ namespace AddOptimization.Services.Services
                         TotalPriceExcludingVat = summary.TotalPriceExcludingVat,
                         TotalPriceIncludingVat = summary.TotalPriceIncludingVat,
                         Metadata = summary.Metadata,
-
                     };
                     await _invoiceDetailRepository.InsertAsync(invoiceDetail);
+                    newInvoiceDetails.Add(invoiceDetail);
                 }
+
+                entity.VatValue = newInvoiceDetails.Sum(x => (x.UnitPrice * x.Quantity * x.VatPercent) / 100);
+                entity.TotalPriceIncludingVat = newInvoiceDetails.Sum(x => x.TotalPriceIncludingVat);
+                entity.TotalPriceExcludingVat = newInvoiceDetails.Sum(x => x.TotalPriceExcludingVat);
+
+                var existingCreditNotes = await _invoiceCreditNoteRepository.QueryAsync(e => e.InvoiceId == id);
+                var existingPayments = await _invoicePaymentRepository.QueryAsync(e => e.InvoiceId == id);
+                var totalCreditNotes = existingCreditNotes.Sum(x => x.TotalPriceIncludingVat);
+                var totalPayments = existingPayments.Sum(x => x.Amount);
+                var totalPaidAmount = totalPayments + totalCreditNotes;
+                entity.DueAmount = entity.TotalPriceIncludingVat - totalPaidAmount;
+
                 _mapper.Map(model, entity);
-                entity.InvoiceDetails = null;
+                entity.InvoiceDetails = newInvoiceDetails;
                 await _invoiceRepository.UpdateAsync(entity);
+
                 var mappedEntity = _mapper.Map<InvoiceResponseDto>(entity);
                 return ApiResult<InvoiceResponseDto>.Success(mappedEntity);
             }
