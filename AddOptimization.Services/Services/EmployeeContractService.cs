@@ -60,6 +60,7 @@ public class EmployeeContractService : IEmployeeContractService
             var entity = _mapper.Map<EmployeeContract>(model);
             entity.IsContractSigned = false;
             entity.ContractName = contractName;
+            entity.IsExternal = true;
            
             await _contractRepository.InsertAsync(entity);
             var mappedEntity = _mapper.Map<EmployeeContractResponseDto>(entity);
@@ -452,5 +453,26 @@ public class EmployeeContractService : IEmployeeContractService
         }
     }
 
- 
+
+    public async Task<ApiResult<EmployeeContractResponseDto>> GetContractByEmployeeId(int id)
+    {
+        try
+        {
+            var entity = await _contractRepository.FirstOrDefaultAsync(t => t.EmployeeId == id , include: entity => entity.Include(e => e.InvoicingPaymentMode).Include(e => e.Customer).Include(e => e.CustomerEmployeeAssociation).Include(e => e.ApplicationUser).Include(e => e.ProjectFeePaymentMode), ignoreGlobalFilter: true);
+            if (entity == null)
+            {
+                return null;
+            }
+            var mappedEntity = _mapper.Map<EmployeeContractResponseDto>(entity);
+
+            return ApiResult<EmployeeContractResponseDto>.Success(mappedEntity);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            throw;
+        }
+    }
+
+
 }

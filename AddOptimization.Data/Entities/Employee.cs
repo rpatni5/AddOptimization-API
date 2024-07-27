@@ -53,7 +53,6 @@ namespace AddOptimization.Data.Entities
 
         [ForeignKey(nameof(ExternalCountryId))]
         public virtual Country ExternalCountry { get; set; }
-        //public ICollection<EmployeeContract> Contracts { get; set; }
     }
 
 }

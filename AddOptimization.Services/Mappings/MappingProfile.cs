@@ -220,7 +220,6 @@ namespace AddOptimization.Services.Mappings
                 d.Password = s.ApplicationUser != null ? s.ApplicationUser.Password : string.Empty;
                 d.isActive = s.ApplicationUser != null ? s.ApplicationUser.IsActive : false;
                 d.CountryName = s.Country != null ? s.Country.CountryName : string.Empty;
-                //d.HasContract = s.Contracts != null && s.Contracts.Count > 0;
 
             });
             CreateMap<EmployeeDto, Employee>();

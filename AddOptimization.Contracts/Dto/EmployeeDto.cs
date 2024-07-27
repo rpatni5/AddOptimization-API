@@ -46,7 +46,7 @@ namespace AddOptimization.Contracts.Dto
         public DateTime? NdaSignDate { get; set; }
         public string CountryName { get; set; }
         public virtual CountryDto Country { get; set; }
-        //public bool? HasContract { get; set; }
+        public bool? HasContract { get; set; }
 
 
     }

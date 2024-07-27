@@ -177,6 +177,20 @@ namespace AddOptimization.API.Controllers
             }
         }
 
+        [HttpGet("contract-employee/{id}")]
+        public async Task<IActionResult> GetContractByEmployeeId(int id)
+        {
+            try
+            {
+                var retVal = await _contractService.GetContractByEmployeeId(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
 
     }
 }
