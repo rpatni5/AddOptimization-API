@@ -181,21 +181,25 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var isExists = await _quoteRepository.IsExist(e => e.Id != id);
-                var entity = await _quoteRepository.FirstOrDefaultAsync(e => e.Id == id);
-                var summaries = await _quoteSummaryRepository.QueryAsync(e => e.QuoteId == id);
 
-                foreach (var summary in summaries.ToList())
-                {
-                    await _quoteSummaryRepository.DeleteAsync(summary);
-                }
+                var entity = await _quoteRepository.FirstOrDefaultAsync(e => e.Id == id);
                 if (entity == null)
                 {
-                    return ApiResult<QuoteResponseDto>.NotFound("Quote");
+                    return ApiResult<QuoteResponseDto>.NotFound("Quote not found");
                 }
+
+                var existingSummaries = await _quoteSummaryRepository.QueryAsync(e => e.QuoteId == id);
+
+               
+                    foreach (var summary in existingSummaries.ToList())
+                    {
+                        await _quoteSummaryRepository.DeleteAsync(summary);
+                    }
+               
+                var newSummaries = new List<QuoteSummary>();
                 foreach (var summary in model.QuoteSummaries)
                 {
-                    var quoteSummary = new QuoteSummary
+                    var quotesummaries = new QuoteSummary
                     {
                         QuoteId = entity.Id,
                         Name = summary.Name,
@@ -205,10 +209,15 @@ namespace AddOptimization.Services.Services
                         TotalPriceExcVat = summary.TotalPriceExcVat,
                         TotalPriceIncVat = summary.TotalPriceIncVat
                     };
-                    await _quoteSummaryRepository.InsertAsync(quoteSummary);
+                    await _quoteSummaryRepository.InsertAsync(quotesummaries);
+                    newSummaries.Add(quotesummaries);
                 }
 
+                entity.TotalPriceIncVat = newSummaries.Sum(x => x.TotalPriceIncVat);
+                entity.TotalPriceExcVat = newSummaries.Sum(x => x.TotalPriceExcVat);
+
                 _mapper.Map(model, entity);
+                entity.QuoteSummaries = newSummaries;
                 await _quoteRepository.UpdateAsync(entity);
                 var mappedEntity = _mapper.Map<QuoteResponseDto>(entity);
                 return ApiResult<QuoteResponseDto>.Success(mappedEntity);
