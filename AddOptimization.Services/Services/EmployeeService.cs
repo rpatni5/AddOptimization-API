@@ -215,7 +215,7 @@ public class EmployeeService : IEmployeeService
             var mappedEntities = _mapper.Map<List<EmployeeDto>>(entities);
             foreach (var entity in mappedEntities)
             {
-                entity.HasContract = (await _employeeContract.QueryAsync(x =>x.EmployeeId == entity.UserId && !x.IsDeleted )).Any();
+                entity.HasContract = (await _employeeContract.QueryAsync(x =>x.EmployeeId == entity.UserId  )).Any();
             }
 
             return ApiResult<List<EmployeeDto>>.Success(mappedEntities);
