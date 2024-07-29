@@ -224,7 +224,7 @@ namespace AddOptimization.Services.Mappings
             });
             CreateMap<EmployeeDto, Employee>();
 
-            CreateMap<Company, CompanyDto>().AfterMap((s, d) =>
+            CreateMap<Company, CompanyDto>().AfterMap((s, d) => 
             {
                 d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
                 d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
