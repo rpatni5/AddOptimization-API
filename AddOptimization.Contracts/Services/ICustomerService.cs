@@ -13,7 +13,6 @@ public interface ICustomerService
     Task<ApiResult<CustomerDetailsDto>> Get(Guid id, bool includeOrderStats);
     Task<ApiResult<bool>> Delete(Guid id);
     Task<ApiResult<CustomerDto>> GetCustomerById(Guid id);
-
     Task<ApiResult<List<CustomerDto>>> GetAllCustomers();
     Task<ApiResult<bool>> SendCustomerCreatedAndResetPasswordEmail(Guid id);
 }

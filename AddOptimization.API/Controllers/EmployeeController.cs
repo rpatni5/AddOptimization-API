@@ -88,4 +88,18 @@ public class EmployeeController : CustomApiControllerBase
         }
     }
 
+    [HttpGet("get-employee-byUserId/{id}")]
+    public async Task<IActionResult> GetEmployeeByUserId(int id)
+    {
+        try
+        {
+            var retVal = await _employeeService.GetEmployeeByUserId(id);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
 }

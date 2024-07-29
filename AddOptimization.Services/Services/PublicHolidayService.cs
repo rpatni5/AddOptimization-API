@@ -71,6 +71,7 @@ namespace AddOptimization.Services.Services
                     return ApiResult<PublicHolidayResponseDto>.Failure(ValidationCodes.FieldNameAlreadyExists);
                 }
                 var entity = _mapper.Map<PublicHoliday>(model);
+                entity.Date = entity.Date.Date;
                 await _publicholidayRepository.InsertAsync(entity);
                 var mappedEntity = _mapper.Map<PublicHolidayResponseDto>(entity);
                 return ApiResult<PublicHolidayResponseDto>.Success(mappedEntity);

@@ -1,12 +1,4 @@
-﻿using Stripe;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace AddOptimization.Contracts.Dto
+﻿namespace AddOptimization.Contracts.Dto
 {
     public class InvoiceResponseDto : BaseDto<long>
     {
@@ -20,6 +12,15 @@ namespace AddOptimization.Contracts.Dto
         public string InvoiceStatusName { get; set; }
         public string CustomerAddress { get; set; }
         public string CompanyAddress { get; set; }
+        public string CompanyCity { get; set; }
+        public string CompanyCountry { get; set; }
+        public string CompanyState { get; set; }
+        public int? CompanyZipCode { get; set; }
+        public string CompanyBankName { get; set; }
+        public string CompanyBankAccountName { get; set; }
+        public string CompanyBankAccontNumber { get; set; }
+        public string CompanyBankAddress { get; set; }
+
         public string CompanyBankDetails { get; set; }
         public decimal VatValue { get; set; }
         public decimal TotalPriceIncludingVat { get; set; }
@@ -28,12 +29,11 @@ namespace AddOptimization.Contracts.Dto
         public DateTime ExpiryDate { get; set; }
         public int? PaymentClearanceDays { get; set; }
         public decimal DueAmount { get; set; }
-
-        //public virtual PaymentStatus PaymentStatus { get; set; }
-
-        //public virtual InvoiceStatus InvoiceStatus { get; set; }
-
-        //public virtual Customer Customer { get; set; }
+        public long? CreditNoteNumber { get; set; }
+        public bool HasCreditNotes { get; set; }
+        public virtual PaymentStatusDto PaymentStatus { get; set; }
+        public virtual InvoiceStatusDto InvoiceStatus { get; set; }
+        public virtual CustomerDto Customer { get; set; }
 
         public string CreatedBy { get; set; }
         public string UpdatedBy { get; set; }

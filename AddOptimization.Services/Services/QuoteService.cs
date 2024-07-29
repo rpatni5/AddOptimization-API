@@ -27,6 +27,8 @@ using System.Globalization;
 using AddOptimization.Utilities.Interface;
 using Microsoft.Extensions.Configuration;
 using AddOptimization.Utilities.Services;
+using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
+using AddOptimization.Utilities.Enums;
 
 namespace AddOptimization.Services.Services
 {
@@ -34,6 +36,10 @@ namespace AddOptimization.Services.Services
     {
         private readonly IGenericRepository<Quote> _quoteRepository;
         private readonly IGenericRepository<QuoteSummary> _quoteSummaryRepository;
+        private readonly IGenericRepository<Invoice> _invoiceRepository;
+        private readonly IGenericRepository<InvoiceDetail> _invoiceDetailRepository;
+        private readonly IPaymentStatusService _paymentStatusService;
+        private readonly IInvoiceStatusService _invoiceStatusService;
         private readonly ILogger<QuoteService> _logger;
         private readonly IMapper _mapper;
         private readonly IQuoteStatusService _quoteStatusService;
@@ -45,12 +51,18 @@ namespace AddOptimization.Services.Services
         private readonly IConfiguration _configuration;
         private readonly CustomDataProtectionService _protectionService;
 
-        public QuoteService(IGenericRepository<Quote> quoteRepository, ILogger<QuoteService> logger, IMapper mapper, IQuoteStatusService quoteStatusService, IGenericRepository<QuoteSummary> quoteSummaryRepository, IUnitOfWork unitOfWork, IGenericRepository<Company> companyRepository, IConfiguration configuration, IEmailService emailService, ITemplateService templateService, CustomDataProtectionService protectionService)
+        public QuoteService(IGenericRepository<Quote> quoteRepository, IGenericRepository<Invoice> invoiceRepository, IGenericRepository<InvoiceDetail> invoiceDetailRepository, IInvoiceStatusService invoiceStatusService,
+            IPaymentStatusService paymentStatusService,
+          ILogger<QuoteService> logger, IMapper mapper, IQuoteStatusService quoteStatusService, IGenericRepository<QuoteSummary> quoteSummaryRepository, IUnitOfWork unitOfWork, IGenericRepository<Company> companyRepository, IConfiguration configuration, IEmailService emailService, ITemplateService templateService, CustomDataProtectionService protectionService)
         {
+            _paymentStatusService = paymentStatusService;
+            _invoiceStatusService = invoiceStatusService;
             _quoteRepository = quoteRepository;
             _logger = logger;
             _mapper = mapper;
             _quoteStatusService = quoteStatusService;
+            _invoiceRepository = invoiceRepository;
+            _invoiceDetailRepository = invoiceDetailRepository;
             _quoteSummaryRepository = quoteSummaryRepository;
             _unitOfWork = unitOfWork;
             _companyRepository = companyRepository;
@@ -61,16 +73,28 @@ namespace AddOptimization.Services.Services
             _protectionService = protectionService;
         }
 
-        public async Task<ApiResult<List<QuoteResponseDto>>> Search(PageQueryFiterBase filters)
+        public async Task<PagedApiResult<QuoteResponseDto>> Search(PageQueryFiterBase filters)
+
         {
             try
             {
-                var entities = await _quoteRepository.QueryAsync((e => !e.IsDeleted || e.IsActive), include: source => source.Include(x => x.Customer).Include(x => x.QuoteStatuses), orderBy: x => x.OrderByDescending(x => x.CreatedAt), ignoreGlobalFilter: true);
+                var entities = await _quoteRepository.QueryAsync((e => !e.IsDeleted), include: source => source.Include(x => x.Customer).Include(x => x.QuoteStatuses));
+                entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
+                entities = ApplyFilters(entities, filters);
+                var pagedResult = PageHelper<Quote, QuoteResponseDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new QuoteResponseDto
+                {
+                    Id = e.Id,
+                    CustomerId = e.CustomerId,
+                    CustomerAddress = e.CustomerAddress,
+                    QuoteDate = e.QuoteDate,
+                    CustomerName=e.Customer.Organizations,
+                    ExpiryDate = e.ExpiryDate,
+                    QuoteStatusId = e.QuoteStatusId,
+                    QuoteStatusesName = e.QuoteStatuses.Name,
 
-                var result = entities.ToList();
-                var mappedEntities = _mapper.Map<List<QuoteResponseDto>>(result);
-
-                return ApiResult<List<QuoteResponseDto>>.Success(mappedEntities);
+                }).ToList());
+                var retVal = pagedResult;
+                return PagedApiResult<QuoteResponseDto>.Success(retVal);
             }
             catch (Exception ex)
             {
@@ -78,7 +102,7 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-
+        
         public async Task<ApiResult<QuoteResponseDto>> Create(QuoteRequestDto model)
         {
             try
@@ -111,7 +135,7 @@ namespace AddOptimization.Services.Services
 
                 Quote entity = new Quote
                 {
-                    Id= id+1,
+                    Id = id + 1,
                     CustomerId = model.CustomerId,
                     ExpiryDate = model.ExpiryDate,
                     QuoteDate = model.QuoteDate,
@@ -120,6 +144,8 @@ namespace AddOptimization.Services.Services
                     CompanyBankAddress = companyBankDetails,
                     QuoteStatusId = statusId,
                     QuoteNo = quoteNo,
+                    TotalPriceExcVat = model.QuoteSummaries.ToList().Sum(x => x.TotalPriceExcVat),
+                    TotalPriceIncVat = model.QuoteSummaries.ToList().Sum(x => x.TotalPriceIncVat),
                     QuoteSummaries = new List<QuoteSummary>()
                 };
                 await _quoteRepository.InsertAsync(entity);
@@ -138,7 +164,7 @@ namespace AddOptimization.Services.Services
 
                     await _quoteSummaryRepository.InsertAsync(quoteSummary);
                     entity.QuoteSummaries.Add(quoteSummary);
-                }
+             }
                 await _unitOfWork.CommitTransactionAsync();
                 var mappedEntity = _mapper.Map<QuoteResponseDto>(entity);
                 return ApiResult<QuoteResponseDto>.Success(mappedEntity);
@@ -155,21 +181,25 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var isExists = await _quoteRepository.IsExist(e => e.Id != id);
-                var entity = await _quoteRepository.FirstOrDefaultAsync(e => e.Id == id);
-                var summaries = await _quoteSummaryRepository.QueryAsync(e => e.QuoteId == id);
 
-                foreach (var summary in summaries.ToList())
-                {
-                    await _quoteSummaryRepository.DeleteAsync(summary);
-                }
+                var entity = await _quoteRepository.FirstOrDefaultAsync(e => e.Id == id);
                 if (entity == null)
                 {
-                    return ApiResult<QuoteResponseDto>.NotFound("Quote");
+                    return ApiResult<QuoteResponseDto>.NotFound("Quote not found");
                 }
+
+                var existingSummaries = await _quoteSummaryRepository.QueryAsync(e => e.QuoteId == id);
+
+               
+                    foreach (var summary in existingSummaries.ToList())
+                    {
+                        await _quoteSummaryRepository.DeleteAsync(summary);
+                    }
+               
+                var newSummaries = new List<QuoteSummary>();
                 foreach (var summary in model.QuoteSummaries)
                 {
-                    var quoteSummary = new QuoteSummary
+                    var quotesummaries = new QuoteSummary
                     {
                         QuoteId = entity.Id,
                         Name = summary.Name,
@@ -179,10 +209,15 @@ namespace AddOptimization.Services.Services
                         TotalPriceExcVat = summary.TotalPriceExcVat,
                         TotalPriceIncVat = summary.TotalPriceIncVat
                     };
-                    await _quoteSummaryRepository.InsertAsync(quoteSummary);
+                    await _quoteSummaryRepository.InsertAsync(quotesummaries);
+                    newSummaries.Add(quotesummaries);
                 }
 
+                entity.TotalPriceIncVat = newSummaries.Sum(x => x.TotalPriceIncVat);
+                entity.TotalPriceExcVat = newSummaries.Sum(x => x.TotalPriceExcVat);
+
                 _mapper.Map(model, entity);
+                entity.QuoteSummaries = newSummaries;
                 await _quoteRepository.UpdateAsync(entity);
                 var mappedEntity = _mapper.Map<QuoteResponseDto>(entity);
                 return ApiResult<QuoteResponseDto>.Success(mappedEntity);
@@ -281,5 +316,197 @@ namespace AddOptimization.Services.Services
                 return false;
             }
         }
+
+        public async Task<ApiResult<InvoiceResponseDto>> ConvertInvoice(long quoteId)
+        {
+            try
+            {
+                await _unitOfWork.BeginTransactionAsync();
+                var quoteStatus = (await _quoteStatusService.Search()).Result;
+                var quotestatusId = quoteStatus.FirstOrDefault(x => x.StatusKey == QuoteStatusesEnum.FINALIZED.ToString()).Id;
+                var eventStatus = (await _invoiceStatusService.Search()).Result;
+                var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.DRAFT.ToString()).Id;
+
+                var paymentStatus = (await _paymentStatusService.Search()).Result;
+                var paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.UNPAID.ToString()).Id;
+                var quote = await _quoteRepository.FirstOrDefaultAsync(e => e.Id == quoteId, include: source => source.Include(x => x.QuoteSummaries));
+                var maxId = await _invoiceRepository.MaxAsync(e => (int)e.Id, ignoreGlobalFilter: true) + 1;
+                var newId = maxId + 1;
+                var invoiceNumber = long.Parse($"{DateTime.UtcNow:yyyyMM}{newId}");
+
+                if (quote == null)
+                {
+                    return ApiResult<InvoiceResponseDto>.NotFound("Quote not found");
+                }
+                quote.QuoteStatusId = quotestatusId;
+
+                var invoice = new Invoice
+                {
+                    Id = newId,
+                    InvoiceNumber = Convert.ToInt64(invoiceNumber),
+                    CustomerId = quote.CustomerId,
+                    InvoiceDate = DateTime.UtcNow,
+                    CustomerAddress = quote.CustomerAddress,
+                    PaymentStatusId = paymentStatusId,
+                    InvoiceStatusId = statusId,
+                    MetaData = Convert.ToString(quoteId),
+                    VatValue = quote.QuoteSummaries.Sum(x => (x.UnitPrice * x.Quantity * x.Vat) / 100),
+                    TotalPriceIncludingVat = quote.QuoteSummaries.Sum(x => x.TotalPriceIncVat),
+                    TotalPriceExcludingVat = quote.QuoteSummaries.Sum(x => x.TotalPriceExcVat),
+                    InvoiceDetails = new List<InvoiceDetail>()
+                };
+
+                foreach (var quoteSummary in quote.QuoteSummaries)
+                {
+                    var invoiceDetail = new InvoiceDetail
+                    {
+                        InvoiceId = invoice.Id,
+                        Description = quoteSummary.Name,
+                        Quantity = quoteSummary.Quantity,
+                        UnitPrice = quoteSummary.UnitPrice,
+                        VatPercent = quoteSummary.Vat,
+
+                        TotalPriceExcludingVat = quoteSummary.TotalPriceExcVat,
+                        TotalPriceIncludingVat = quoteSummary.TotalPriceIncVat,
+
+                    };
+                    invoice.InvoiceDetails.Add(invoiceDetail);
+                }
+                await _quoteRepository.UpdateAsync(quote);
+                await _invoiceRepository.InsertAsync(invoice);
+                await _unitOfWork.CommitTransactionAsync();
+
+                var mappedInvoice = _mapper.Map<InvoiceResponseDto>(invoice);
+                return ApiResult<InvoiceResponseDto>.Success(mappedInvoice);
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+
+
+        private IQueryable<Quote> ApplyFilters(IQueryable<Quote> entities, PageQueryFiterBase filter)
+        {
+            filter.GetValue<string>("customerName", (v) =>
+            {
+                entities = entities.Where(e => e.Customer.Organizations == v);
+            });
+
+            filter.GetValue<string>("customerAddress", (v) =>
+            {
+                var searchTerms = v.Split(' ');
+                foreach (var term in searchTerms)
+                {
+                    var lowerCaseTerm = term.ToLower();
+                    entities = entities.Where(e => e.CustomerAddress != null && e.CustomerAddress.ToLower().Contains(lowerCaseTerm));
+                }
+            });
+            
+            filter.GetValue<DateTime>("quoteDate", (v) =>
+            {
+                entities = entities.Where(e => e.QuoteDate != null && e.QuoteDate < v);
+            }, OperatorType.lessthan, true);
+            filter.GetValue<DateTime>("quoteDate", (v) =>
+            {
+                entities = entities.Where(e => e.QuoteDate != null && e.QuoteDate > v);
+            }, OperatorType.greaterthan, true);
+           
+
+                filter.GetValue<DateTime>("expiryDate", (v) =>
+            {
+                entities = entities.Where(e => e.ExpiryDate != null && e.ExpiryDate < v);
+            }, OperatorType.lessthan, true);
+            filter.GetValue<DateTime>("expiryDate", (v) =>
+            {
+                entities = entities.Where(e => e.ExpiryDate != null && e.ExpiryDate > v);
+            }, OperatorType.greaterthan, true);
+
+            filter.GetValue<string>("quoteStatusId", (v) =>
+            {
+                entities = entities.Where(e => e.QuoteStatusId.ToString() == v);
+            });
+
+            filter.GetValue<string>("quoteStatusesName", (v) =>
+            {
+                var lowerV = v.ToLower();
+                entities = entities.Where(e => e.QuoteStatuses.Name.ToLower().Contains(lowerV));
+            });
+
+            return entities;
+        }
+
+        private IQueryable<Quote> ApplySorting(IQueryable<Quote> orders, SortModel sort)
+        {
+            try
+            {
+                if (sort?.Name == null)
+                {
+                    orders = orders.OrderByDescending(o => o.CreatedAt);
+                    return orders;
+                }
+                var columnName = sort.Name.ToUpper();
+                if (sort.Direction == SortDirection.ascending.ToString())
+                {
+                    if (columnName.ToUpper() == nameof(QuoteResponseDto.CustomerName).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.Customer.Organizations);
+                    }
+                    if (columnName.ToUpper() == nameof(QuoteResponseDto.CustomerAddress).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.CustomerAddress);
+                    }
+                    if (columnName.ToUpper() == nameof(QuoteResponseDto.QuoteStatusesName).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.QuoteStatuses.Name);
+                    }
+                    if (columnName.ToUpper() == nameof(QuoteResponseDto.ExpiryDate).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.ExpiryDate);
+                    }
+                    if (columnName.ToUpper() == nameof(QuoteResponseDto.QuoteDate).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.QuoteDate);
+                    }
+
+                }
+                else
+                {
+                    if (columnName.ToUpper() == nameof(QuoteResponseDto.CustomerName).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.Customer.Organizations);
+                    }
+                    if (columnName.ToUpper() == nameof(QuoteResponseDto.CustomerAddress).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.CustomerAddress);
+                    }
+                    if (columnName.ToUpper() == nameof(QuoteResponseDto.QuoteStatusesName).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.QuoteStatuses.Name);
+                    }
+                    if (columnName.ToUpper() == nameof(QuoteResponseDto.ExpiryDate).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.ExpiryDate);
+                    }
+                    if (columnName.ToUpper() == nameof(QuoteResponseDto.QuoteDate).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.QuoteDate);
+                    }
+                }
+                return orders;
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return orders;
+            }
+        }
+
+
+
     }
 }

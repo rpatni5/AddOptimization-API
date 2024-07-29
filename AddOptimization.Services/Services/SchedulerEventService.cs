@@ -91,8 +91,8 @@ namespace AddOptimization.Services.Services
                     AdminStatusKey = e.AdminStatus.StatusKey,
                     UserStatusName = e.UserStatus.Name,
                     UserStatusKey = e.UserStatus.StatusKey,
-                    WorkDuration = e.EventDetails.Where(x => x.EventTypes.Name == "Timesheet").Sum(x => x.Duration),
-                    Overtime = e.EventDetails.Where(x => x.EventTypes.Name == "Overtime").Sum(x => x.Duration),
+                    WorkDuration = e.EventDetails.Where(x => !x.IsDeleted && x.EventTypes.Name == "Timesheet").Sum(x => x.Duration),
+                    Overtime = e.EventDetails.Where(x => !x.IsDeleted && x.EventTypes.Name == "Overtime").Sum(x => x.Duration),
                     IsCustomerApprovalPending = e.AdminStatus.StatusKey.ToString() == SchedulerStatusesEnum.PENDING_CUSTOMER_APPROVAL.ToString(),
                 }).ToList());
 
@@ -123,8 +123,15 @@ namespace AddOptimization.Services.Services
         }
         public async Task<ApiResult<bool>> Save(List<SchedulerEventDetailsDto> schedulerEventDetails)
         {
-            var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
-            schedulerEventDetails.ForEach(x => x.UserId = userId);
+            var userId = schedulerEventDetails.FirstOrDefault(x => x.UserId != null)?.UserId ?? _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
+
+            schedulerEventDetails.ForEach(x =>
+            {
+                if (x.UserId == null)
+                {
+                    x.UserId = userId;
+                }
+            });
             await _unitOfWork.BeginTransactionAsync();
             var schedluerEventsToUpdate = new List<SchedulerEventDetails>();
             var schedluerEventsToInsert = new List<SchedulerEventDetails>();
@@ -219,8 +226,8 @@ namespace AddOptimization.Services.Services
 
 
                 entity = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == entity.Id, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer));
-                entity.StartDate = entity.StartDate.ToUtc();
-                entity.EndDate = entity.EndDate.ToUtc();
+                entity.StartDate = entity.StartDate;
+                entity.EndDate = entity.EndDate;
                 var mappedEntity = _mapper.Map<SchedulerEventResponseDto>(entity);
                 return ApiResult<SchedulerEventResponseDto>.Success(mappedEntity);
             }
@@ -243,8 +250,8 @@ namespace AddOptimization.Services.Services
             mappedEntity.WorkDuration = entity.EventDetails.Where(x => x.EventTypeId == timesheetEventId).Sum(x => x.Duration);
             mappedEntity.Overtime = entity.EventDetails.Where(x => x.EventTypeId == overtimeId).Sum(x => x.Duration);
             mappedEntity.IsCustomerApprovalPending = mappedEntity.AdminStatusId.ToString() == statusId.ToString();
-            mappedEntity.StartDate = mappedEntity.StartDate.ToUtc();
-            mappedEntity.EndDate = mappedEntity.EndDate.ToUtc();
+            mappedEntity.StartDate = mappedEntity.StartDate;
+            mappedEntity.EndDate = mappedEntity.EndDate;
             return ApiResult<SchedulerEventResponseDto>.Success(mappedEntity);
         }
 
@@ -343,7 +350,7 @@ namespace AddOptimization.Services.Services
                 if (getRoleBasedData)
                 {
                     var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin") || c.Contains("Account Admin")).ToList();
-                     ignoreGlobalFilter = superAdminRole.Count != 0;
+                    ignoreGlobalFilter = superAdminRole.Count != 0;
                 }
 
                 var entity = await _schedulersDetailsRepository.QueryAsync(include: entities => entities
@@ -354,7 +361,7 @@ namespace AddOptimization.Services.Services
                     return ApiResult<List<SchedulerEventDetailsDto>>.NotFound("SchedulerEventDetails");
                 }
                 var mappedEntity = _mapper.Map<List<SchedulerEventDetailsDto>>(entity);
-                mappedEntity.ForEach(x => x.Date = x.Date.Value.ToUtc());
+                mappedEntity.ForEach(x => x.Date = x.Date.Value);
                 return ApiResult<List<SchedulerEventDetailsDto>>.Success(mappedEntity);
             }
             catch (Exception ex)
@@ -588,7 +595,7 @@ namespace AddOptimization.Services.Services
                 {
                     await SendTimesheetApprovedEmailToEmployee(user.Email, result, user.FullName, model.ApprovarName, duration.Item1, duration.Item2);
                 }
-                
+
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -670,8 +677,8 @@ namespace AddOptimization.Services.Services
                 var customer = (await _customersRepository.FirstOrDefaultAsync(x => x.Id == result.CustomerId));
                 var details = (await _schedulersDetailsRepository.QueryAsync(x => x.SchedulerEventId == result.Id)).ToList();
                 var duration = await CalculateTimesheetsDaysAndOvertimeHours(result, details);
-               await SendTimesheetActionEmailToAccountAdmin(approver, customer, user, eventDetails, model.IsApproved, entity.Comment, duration.Item1, duration.Item2);
-               await SendTimesheetActionEmailToEmployee(customer, user, eventDetails, model.IsApproved, entity.Comment, duration.Item1, duration.Item2);
+                await SendTimesheetActionEmailToAccountAdmin(approver, customer, user, eventDetails, model.IsApproved, entity.Comment, duration.Item1, duration.Item2);
+                await SendTimesheetActionEmailToEmployee(customer, user, eventDetails, model.IsApproved, entity.Comment, duration.Item1, duration.Item2);
 
                 return ApiResult<bool>.Success(true);
             }
@@ -768,7 +775,7 @@ namespace AddOptimization.Services.Services
                                              .Replace("[Approver]", approverName)
                                              .Replace("[WorkDuration]", totalWorkingDays.ToString())
                                              .Replace("[Overtime]", overtimeHours.ToString())
-                                             .Replace("[Comment]", declinedReason); 
+                                             .Replace("[Comment]", declinedReason);
                 return await _emailService.SendEmail(email, subject, emailTemplate);
             }
             catch (Exception ex)
@@ -859,13 +866,21 @@ namespace AddOptimization.Services.Services
 
         public async Task<bool> IsTimesheetApproved(Guid customerId, List<int> employeeIds, MonthDateRange month)
         {
-            var result =  (await _schedulersRepository.QueryAsync(x => x.CustomerId == customerId 
-            && x.StartDate.Month == month.StartDate.Month 
+            var result = (await _schedulersRepository.QueryAsync(x => x.CustomerId == customerId
+            && x.StartDate.Month == month.StartDate.Month
             && x.StartDate.Year == month.StartDate.Year
+            && employeeIds.Contains(x.UserId)
             && x.AdminStatus.StatusKey == SchedulerStatusesEnum.CUSTOMER_APPROVED.ToString()));
 
+            if (result.Count() < employeeIds.Count)
+            {
+                _logger.LogInformation($"All employees timesheets are not in customer approved status for {customerId}.");
+                return false;
+
+            }
             var IsApproved = result.All(x => employeeIds.Contains(x.UserId));
             return IsApproved;
+
         }
 
         #endregion

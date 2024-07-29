@@ -36,12 +36,13 @@ public class EmployeeService : IEmployeeService
     private readonly IRoleService _roleService;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IGenericRepository<Country> _countryRepository;
+    private readonly IGenericRepository<EmployeeContract> _employeeContract;
     public EmployeeService(IGenericRepository<Employee> employeeRepository, ILogger<EmployeeService> logger, IMapper mapper,
         IAddressService addressService, IUnitOfWork unitOfWork, IEmailService emailService, ITemplateService templateService,
         IGenericRepository<PasswordResetToken> passwordResetTokenRepository,
         IGenericRepository<UserRole> userRoleRepository, IRoleService roleService,
         IGenericRepository<Role> roleRepository, IApplicationUserService applicationUserService,
-    IGenericRepository<ApplicationUser> applicationUserRepository, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+    IGenericRepository<ApplicationUser> applicationUserRepository, IConfiguration configuration, IGenericRepository<EmployeeContract> employeeContract, IHttpContextAccessor httpContextAccessor)
     {
         _configuration = configuration;
         _applicationUserRepository = applicationUserRepository;
@@ -60,6 +61,7 @@ public class EmployeeService : IEmployeeService
         _applicationUserService = applicationUserService;
         _roleService = roleService;
         _httpContextAccessor = httpContextAccessor;
+        _employeeContract = employeeContract;
     }
 
     public async Task<ApiResult<bool>> Save(EmployeeDto model)
@@ -87,6 +89,12 @@ public class EmployeeService : IEmployeeService
                 BankName = model.BankName,
                 BankAccountName = model.BankAccountName,
                 BankAccountNumber = model.BankAccountNumber,
+                SwiftCode = model.SwiftCode,
+                BankAddress = model.BankAddress,
+                BankState = model.BankState,
+                BankCity = model.BankCity,
+                BankCountry = model.BankCountry,
+                BankPostalCode = model.BankPostalCode,
                 IsExternal = model.IsExternal,
                 BillingAddress = model.BillingAddress,
                 UserId = savedEmployee.Id,
@@ -205,6 +213,10 @@ public class EmployeeService : IEmployeeService
 
 
             var mappedEntities = _mapper.Map<List<EmployeeDto>>(entities);
+            foreach (var entity in mappedEntities)
+            {  
+                entity.HasContract = (await _employeeContract.QueryAsync(x =>x.EmployeeId == entity.UserId )).Any();
+            }
 
             return ApiResult<List<EmployeeDto>>.Success(mappedEntities);
         }
@@ -250,6 +262,26 @@ public class EmployeeService : IEmployeeService
         {
             _logger.LogException(ex);
             return false;
+        }
+    }
+
+    public async Task<ApiResult<EmployeeDto>> GetEmployeeByUserId(int id)
+    {
+        try
+        {
+            var entity = await _employeeRepository.FirstOrDefaultAsync(t => t.UserId == id, include: entity => entity.Include(e => e.ApplicationUser).Include(e => e.Country), ignoreGlobalFilter: true);
+            if (entity == null)
+            {
+                return ApiResult<EmployeeDto>.NotFound("Employee");
+            }
+            var mappedEntity = _mapper.Map<EmployeeDto>(entity);
+
+            return ApiResult<EmployeeDto>.Success(mappedEntity);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            throw;
         }
     }
 

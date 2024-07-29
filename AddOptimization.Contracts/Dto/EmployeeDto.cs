@@ -5,13 +5,19 @@ namespace AddOptimization.Contracts.Dto
 {
     public class EmployeeDto
     {
-        public Guid Id { get; set; }    
+        public Guid Id { get; set; }
         public int UserId { get; set; }
         public bool IsExternal { get; set; }
         public decimal? Salary { get; set; }
         public string BankName { get; set; }
         public string BankAccountName { get; set; }
         public string BankAccountNumber { get; set; }
+        public string? SwiftCode { get; set; }
+        public string? BankAddress { get; set; }
+        public int? BankPostalCode { get; set; }
+        public string? BankCity { get; set; }
+        public string? BankState { get; set; }
+        public string? BankCountry { get; set; }
         public string BillingAddress { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
@@ -23,7 +29,7 @@ namespace AddOptimization.Contracts.Dto
         public string Password { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
-        public bool isActive {  get; set; }
+        public bool isActive { get; set; }
         public string VATNumber { get; set; }
         public int ZipCode { get; set; }
         public string State { get; set; }
@@ -38,6 +44,9 @@ namespace AddOptimization.Contracts.Dto
         public string ExternalAddress { get; set; }
         public Guid? ExternalCountryId { get; set; }
         public DateTime? NdaSignDate { get; set; }
+        public string CountryName { get; set; }
+        public virtual CountryDto Country { get; set; }
+        public bool? HasContract { get; set; }
 
 
     }

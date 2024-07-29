@@ -43,7 +43,7 @@ public class CompanyService : ICompanyService
                 entity.BankAddress = model.BankAddress;
                 entity.City = model.City;
                 entity.Address = model.Address;
-                entity.Country = model.Country;
+                entity.CountryId = model.CountryId;
                 entity.ZipCode = model.ZipCode;
                 entity.SwiftCode = model.SwiftCode;
                 entity.State = model.State;
@@ -78,10 +78,6 @@ public class CompanyService : ICompanyService
                 return null;
             }
             var mappedEntity = _mapper.Map<CompanyDto>(entity);
-            Guid.TryParse(entity.Country, out Guid parsedCountryId);
-            var countries = await _countryService.GetCountriesById(parsedCountryId);
-            mappedEntity.CountryName = countries.Result.CountryName;
-
             return ApiResult<CompanyDto>.Success(mappedEntity);
         }
         catch (Exception ex)

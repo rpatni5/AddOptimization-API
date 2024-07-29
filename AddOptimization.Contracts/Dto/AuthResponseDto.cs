@@ -7,5 +7,6 @@
         public DateTime Expiry { get; set; }
         public UserSummaryDto User { get; set; }
         public bool? NDASignedRequired { get; set; }
+        public bool? ContractSignedRequired { get; set; }
     }
 }

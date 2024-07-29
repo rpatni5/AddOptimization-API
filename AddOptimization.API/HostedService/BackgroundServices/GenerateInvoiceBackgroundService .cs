@@ -39,7 +39,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             //            return;
             //#endif
             _logger.LogInformation("ExecuteAsync Started.");
-            using var timer = new CronTimer("0 8 * * *", TimeZoneInfo.Local);
+            using var timer = new CronTimer("0 6 * * *", TimeZoneInfo.Utc);
             while (!stoppingToken.IsCancellationRequested &&
                    await timer.WaitForNextTickAsync(stoppingToken))
             {
@@ -66,29 +66,30 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 var customerEmployeeAssociationService = scope.ServiceProvider.GetRequiredService<ICustomerEmployeeAssociationService>();
                 var expirationThresholdValue = _configuration.ReadSection<BackgroundServiceSettings>(AppSettingsSections.BackgroundServiceSettings).ExpirationThresholdInDays;
 
-                var customers = (await customerService.GetAllCustomers()).Result;
 
-                foreach (var customer in customers)
+                var customerEmployeeAssociation = (await customerEmployeeAssociationService.Search()).Result;
+                var customers = customerEmployeeAssociation.Select(c => c.CustomerId).Distinct().ToList();
+                foreach (var id in customers)
+                
                 {
-                    var customerEmployeeAssociation = (await customerEmployeeAssociationService.Search()).Result;
 
-                    var associatedEmployees = customerEmployeeAssociation.Where(c => c.CustomerId == c.CustomerId && !c.IsDeleted).ToList();
+                    var associatedEmployees = customerEmployeeAssociation.Where(c => c.CustomerId == id && !c.IsDeleted).ToList();
 
                     var months = MonthDateRangeHelper.GetMonthDateRanges();
 
                     foreach (var month in months)
                     {
-                        var filteredAssociations = associatedEmployees.Where(s => s.CreatedAt.Value.Month < month.StartDate.Month && month.StartDate.Year == s.CreatedAt.Value.Year).ToList();
+                        var filteredAssociations = associatedEmployees.Where(s => (s.CreatedAt.Value.Month <= month.StartDate.Month && s.CreatedAt.Value.Year == month.StartDate.Year) || s.CreatedAt.Value.Date < month.StartDate.Date).ToList();
 
-                        bool allTimesheetApprovedForMonth = await schedulerEventService.IsTimesheetApproved(customer.Id, filteredAssociations.Select(x => x.EmployeeId).ToList(), month);
-                        if (allTimesheetApprovedForMonth)
+                        bool allTimesheetApprovedForMonth = await schedulerEventService.IsTimesheetApproved(id, filteredAssociations.Select(x => x.EmployeeId).ToList(), month);
+                        if (allTimesheetApprovedForMonth && filteredAssociations.Any())
                         {
                             //check invoice already exist of not
                             //code pending
-                            var invoice = (await invoiceRepository.QueryAsync(i => i.CustomerId == customer.Id && i.InvoiceDate.Month == month.StartDate.Month && i.InvoiceDate.Year == month.StartDate.Year)).ToList();
+                            var invoice = (await invoiceRepository.QueryAsync(i => i.CustomerId == id && i.InvoiceDate.Month == month.StartDate.Month && i.InvoiceDate.Year == month.StartDate.Year && i.MetaData == "Timesheet")).ToList();
                             if (!invoice.Any())
                             {
-                                await invoiceService.GenerateInvoice(customer.Id, month, filteredAssociations);
+                                await invoiceService.GenerateInvoice(id, month, filteredAssociations);
                             }
                             //create invoice for customer {customer.Id} for month {month}
                         }

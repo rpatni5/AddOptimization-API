@@ -2,6 +2,7 @@
 using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Services.Services;
+using AddOptimization.Utilities.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -65,6 +66,35 @@ namespace AddOptimization.API.Controllers
             try
             {
                 var retVal = await _customerEmployeeAssociationService.GetAssociatedCustomers(employeeId);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(Guid id)
+        {
+            try
+            {
+                var retVal = await _customerEmployeeAssociationService.Get(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpPost("search-all")]
+        public async Task<IActionResult> SearchALL([FromBody] PageQueryFiterBase filter)
+        {
+            try
+            {
+                var retVal = await _customerEmployeeAssociationService.SearchAllAssociations(filter);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)

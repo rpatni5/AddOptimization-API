@@ -284,8 +284,42 @@ BEGIN
        (NEWID(),'Edit Quote','edit_quote','/admin/quotes/quotes-edit/{}')
 END
 
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey= 'employee_contracts')
+BEGIN 
+    INSERT INTO Screens(Id,Name,ScreenKey,Route)
+    VALUES
+       (NEWID(),'Employee Contracts','employee_contracts','/admin/employee-contract')
+END
 
 
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey= 'add_employee_contract')
+BEGIN 
+    INSERT INTO Screens(Id,Name,ScreenKey,Route)
+    VALUES
+       (NEWID(),'Add Employee Contract','add_employee_contract','/admin/employee-contract/add-employee-contract/{}')
+END
+
+
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey= 'employee_customer_contract')
+BEGIN 
+    INSERT INTO Screens(Id,Name,ScreenKey,Route)
+    VALUES
+       (NEWID(),'Employee Customer Contract','employee_customer_contract','/admin/employee-contract/employee-contract-view/{}')
+END
+
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey= 'contract')
+BEGIN 
+    INSERT INTO Screens(Id,Name,ScreenKey,Route)
+    VALUES
+       (NEWID(),'Contract','contract','/admin/documents-group/view-contract')
+END
+
+IF NOT EXISTS (SELECT 1 FROM Screens Where ScreenKey= 'view_nda')
+BEGIN 
+    INSERT INTO Screens(Id,Name,ScreenKey,Route)
+    VALUES
+       (NEWID(),'View Nda','view_nda','/admin/documents-group/view-nda')
+END
 
 /* Adding data in role permissions */
 
@@ -610,3 +644,54 @@ BEGIN
     VALUES
         (NEWID(),'LOG_LEVEL','Log Level','When log level is enabled the Loglevel is Information otherwise Error.',1)
 END
+
+
+--start Entry for InvoicingPaymentModes
+
+ /* Adding Monthly Mode  data in Invoicing Payment Modes */
+
+IF NOT EXISTS (SELECT 1 FROM InvoicingPaymentModes Where ModeKey = 'MONTHLY')
+BEGIN 
+    INSERT INTO InvoicingPaymentModes(Id,Name,ModeKey)
+    VALUES
+        (NEWID(),'Monthly','MONTHLY')
+END
+
+ /* Adding Yearly  Mode  data in Invoicing Payment Modes */
+
+IF NOT EXISTS (SELECT 1 FROM InvoicingPaymentModes Where ModeKey = 'YEARLY')
+BEGIN 
+    INSERT INTO InvoicingPaymentModes(Id,Name,ModeKey)
+    VALUES
+        (NEWID(),'Yearly','YEARLY')
+END
+
+
+ /* Adding Weekly  Mode  data in Invoicing Payment Modes */
+
+IF NOT EXISTS (SELECT 1 FROM InvoicingPaymentModes Where ModeKey = 'WEEKLY')
+BEGIN 
+    INSERT INTO InvoicingPaymentModes(Id,Name,ModeKey)
+    VALUES
+        (NEWID(),'Weekly','WEEKLY')
+END
+
+ /* Adding Quarterly  Mode  data in Invoicing Payment Modes */
+
+IF NOT EXISTS (SELECT 1 FROM InvoicingPaymentModes Where ModeKey = 'QUATERLY')
+BEGIN 
+    INSERT INTO InvoicingPaymentModes(Id,Name,ModeKey)
+    VALUES
+        (NEWID(),'Quarterly','QUATERLY')
+END
+
+
+ /* Adding Daily  Mode  data in Invoicing Payment Modes */
+
+IF NOT EXISTS (SELECT 1 FROM InvoicingPaymentModes Where ModeKey = 'DAILY')
+BEGIN 
+    INSERT INTO InvoicingPaymentModes(Id,Name,ModeKey)
+    VALUES
+        (NEWID(),'Daily','DAILY')
+END
+

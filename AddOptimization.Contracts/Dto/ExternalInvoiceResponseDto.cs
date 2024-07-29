@@ -17,6 +17,7 @@ namespace AddOptimization.Contracts.Dto
         public Guid PaymentStatusId { get; set; }
         public decimal DueAmount { get; set; }
         public Guid InvoiceStatusId { get; set; }
+        public string EmployeeName { get; set; }
         public string InvoiceStatusName { get; set; }
         public string PaymentStatusName { get; set; }
         public string CustomerAddress { get; set; }
@@ -34,6 +35,31 @@ namespace AddOptimization.Contracts.Dto
         public DateTime? UpdatedAt { get; set; }
         public int? PaymentClearanceDays { get; set; }
         public virtual CompanyDto Company { get; set; }
+        public string ExternalCompanyName { get; set; }
+
+        public string ExternalEmployeeAddress { get; set; }
+        public string ExternalCompanyAddress { get; set; }
+        public string ExternalCompanyCity { get; set; }
+        public int? ExternalCompanyZipCode { get; set; }
+        public string ExternalCompanyState { get; set; }
+
+        public string ExternalCity { get; set; }
+        public string ExternalState { get; set; }
+
+        public int? ExternalZipCode { get; set; }
+
+        public string BankName { get; set; }
+
+        public string BankAddress { get; set; }
+
+        public string BankCity { get; set; }
+
+        public string BankState { get; set; }
+        public string BankAccountName { get; set; }
+        public string BankAccountNumber { get; set; }
+
+        public int? BankZipCode { get; set; }
+
         public List<ExternalInvoiceDetailDto> ExternalInvoiceDetails { get; set; }
     }
 }

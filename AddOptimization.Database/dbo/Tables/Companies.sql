@@ -14,7 +14,7 @@
 	[UpdatedByUserId] [int] NULL,
 	[Address] [nvarchar](200) NULL,
 	[City] [nvarchar](200) NULL,
-	[Country] [nvarchar](200) NULL,
+	[CountryId] [uniqueidentifier] NULL,
 	[ZipCode] [int] NULL,
 	[SwiftCode] [varchar](100) NULL,
 	[State] [varchar](100) NULL,
@@ -38,3 +38,5 @@ GO
 ALTER TABLE [dbo].[Companies]  WITH CHECK ADD FOREIGN KEY([UpdatedByUserId])
 REFERENCES [dbo].[ApplicationUsers] ([Id])
 GO
+
+
