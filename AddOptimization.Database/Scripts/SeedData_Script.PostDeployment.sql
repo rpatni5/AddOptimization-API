@@ -686,3 +686,12 @@ BEGIN
 END
 
 
+ /* Adding Daily  Mode  data in Invoicing Payment Modes */
+
+IF NOT EXISTS (SELECT 1 FROM InvoicingPaymentModes Where ModeKey = 'DAILY')
+BEGIN 
+    INSERT INTO InvoicingPaymentModes(Id,Name,ModeKey)
+    VALUES
+        (NEWID(),'Daily','DAILY')
+END
+

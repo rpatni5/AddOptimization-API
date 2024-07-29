@@ -56,8 +56,14 @@ namespace AddOptimization.Services.Services
                         Id = Guid.NewGuid(),
                         InvoiceId = model.InvoiceId,
                         PaymentDate = summary.PaymentDate,
-                        Amount = summary.Amount,
-                        TransactionId = summary.TransactionId,
+                        Description = summary.Description,
+                        TotalPriceIncludingVat = summary.TotalPriceIncludingVat,
+                        TotalPriceExcludingVat = summary.TotalPriceExcludingVat,
+                        VatPercent = summary.VatPercent,
+                        UnitPrice = summary.UnitPrice,
+                        Quantity = summary.Quantity,
+
+
                     };
                     await _invoiceCreditNoteRepository.InsertAsync(newEntity);
                     entities.Add(newEntity);
@@ -74,7 +80,7 @@ namespace AddOptimization.Services.Services
                 var existingPayments = await _invoicePaymentRepository.QueryAsync(e => e.InvoiceId == model.InvoiceId);
                 var paymentEntities = existingPayments.ToList();
 
-                var totalPaidAmount = paymentEntities.Sum(x => x.Amount) +   invoiceAmountPayment.InvoiceCreditNotes.Where(x => !x.IsDeleted).Sum(x => x.Amount);
+                var totalPaidAmount = paymentEntities.Sum(x => x.Amount) +   invoiceAmountPayment.InvoiceCreditNotes.Where(x => !x.IsDeleted).Sum(x => x.TotalPriceIncludingVat);
 
                 var invoice = await _invoiceRepository.FirstOrDefaultAsync(x => x.Id == model.InvoiceId);
 

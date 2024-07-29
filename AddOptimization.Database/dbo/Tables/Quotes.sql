@@ -1,6 +1,5 @@
-﻿
-CREATE TABLE [dbo].[Quotes](
-    [Id] [bigint] NOT NULL,
+﻿CREATE TABLE [dbo].[Quotes](
+	[Id] [bigint] NOT NULL,
 	[CustomerId] [uniqueidentifier] NOT NULL,
 	[CustomerAddress] [varchar](400) NOT NULL,
 	[ExpiryDate] [datetime2](7) NOT NULL,
@@ -15,6 +14,8 @@ CREATE TABLE [dbo].[Quotes](
 	[QuoteNo] [bigint] NOT NULL,
 	[CompanyAddress] [varchar](400) NULL,
 	[CompanyBankAddress] [varchar](400) NULL,
+	[TotalPriceExcVat] [decimal](10, 2) NULL,
+	[TotalPriceIncVat] [decimal](10, 2) NULL,
  CONSTRAINT [PK_Quotes] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -28,34 +29,34 @@ GO
 ALTER TABLE [dbo].[Quotes] ADD  DEFAULT ((1)) FOR [IsActive]
 GO
 
-ALTER TABLE [dbo].[Quotes]  WITH CHECK ADD FOREIGN KEY([CreatedByUserId])
+ALTER TABLE [dbo].[Quotes]  WITH NOCHECK ADD FOREIGN KEY([CreatedByUserId])
 REFERENCES [dbo].[ApplicationUsers] ([Id])
 GO
 
-ALTER TABLE [dbo].[Quotes]  WITH CHECK ADD FOREIGN KEY([CreatedByUserId])
+ALTER TABLE [dbo].[Quotes]  WITH NOCHECK ADD FOREIGN KEY([CreatedByUserId])
 REFERENCES [dbo].[ApplicationUsers] ([Id])
 GO
 
-ALTER TABLE [dbo].[Quotes]  WITH CHECK ADD FOREIGN KEY([CustomerId])
+ALTER TABLE [dbo].[Quotes]  WITH NOCHECK ADD FOREIGN KEY([CustomerId])
 REFERENCES [dbo].[Customers] ([Id])
 GO
 
-ALTER TABLE [dbo].[Quotes]  WITH CHECK ADD FOREIGN KEY([CustomerId])
+ALTER TABLE [dbo].[Quotes]  WITH NOCHECK ADD FOREIGN KEY([CustomerId])
 REFERENCES [dbo].[Customers] ([Id])
 GO
 
-ALTER TABLE [dbo].[Quotes]  WITH CHECK ADD FOREIGN KEY([QuoteStatusId])
+ALTER TABLE [dbo].[Quotes]  WITH NOCHECK ADD FOREIGN KEY([QuoteStatusId])
 REFERENCES [dbo].[QuoteStatuses] ([Id])
 GO
 
-ALTER TABLE [dbo].[Quotes]  WITH CHECK ADD FOREIGN KEY([QuoteStatusId])
+ALTER TABLE [dbo].[Quotes]  WITH NOCHECK ADD FOREIGN KEY([QuoteStatusId])
 REFERENCES [dbo].[QuoteStatuses] ([Id])
 GO
 
-ALTER TABLE [dbo].[Quotes]  WITH CHECK ADD FOREIGN KEY([UpdatedByUserId])
+ALTER TABLE [dbo].[Quotes]  WITH NOCHECK ADD FOREIGN KEY([UpdatedByUserId])
 REFERENCES [dbo].[ApplicationUsers] ([Id])
 GO
 
-ALTER TABLE [dbo].[Quotes]  WITH CHECK ADD FOREIGN KEY([UpdatedByUserId])
+ALTER TABLE [dbo].[Quotes]  WITH NOCHECK ADD FOREIGN KEY([UpdatedByUserId])
 REFERENCES [dbo].[ApplicationUsers] ([Id])
 GO

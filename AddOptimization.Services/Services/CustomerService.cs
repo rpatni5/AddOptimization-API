@@ -93,7 +93,7 @@ public class CustomerService : ICustomerService
                 Phone = e.Phone,
                 CustomerStatusId = e.CustomerStatusId,
                 Licenses = _mapper.Map<List<LicenseDetailsDto>>(e.Licenses),
-                CountryCode = e.CountryCode,
+                CountryCodeId = e.CountryCodeId.ToString(),
                 CustomerStatusName = e.CustomerStatus.Name,
                 BillingAddressString = e.BillingAddress == null ? null : $"{e.BillingAddress.Address1},{e.BillingAddress.Zip},{e.BillingAddress.City}",
                 ManagerName = e.ManagerName,

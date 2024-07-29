@@ -75,7 +75,7 @@ namespace AddOptimization.Services.Services
                 };
                 var existingCreditNotes = await _invoiceCreditNoteRepository.QueryAsync(e => e.InvoiceId == model.InvoiceId);
                 var creditNoteEntities = existingCreditNotes.ToList();
-                var totalPaidAmount = creditNoteEntities.Sum(x => x.Amount) + invoiceAmountPayment.InvoicePaymentHistory.Where(x => !x.IsDeleted).Sum(x => x.Amount);
+                var totalPaidAmount = creditNoteEntities.Sum(x => x.TotalPriceIncludingVat) + invoiceAmountPayment.InvoicePaymentHistory.Where(x => !x.IsDeleted).Sum(x => x.Amount);
 
                 var invoice = await _invoiceRepository.FirstOrDefaultAsync(x => x.Id == model.InvoiceId);
 

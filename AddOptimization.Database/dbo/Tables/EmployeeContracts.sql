@@ -1,10 +1,10 @@
 ﻿
 CREATE TABLE [dbo].[EmployeeContracts](
 	[Id] [uniqueidentifier] NOT NULL,
-	[InvoicingPaymentModeId] [uniqueidentifier] NOT NULL,
-	[Hours] [int] NOT NULL,
-	[ProjectFees] [decimal](10, 2) NOT NULL,
-	[NoticePeriod] [int] NOT NULL,
+	[InvoicingPaymentModeId] [uniqueidentifier] NULL,
+	[Hours] [int] NULL,
+	[ProjectFees] [decimal](10, 2) NULL,
+	[NoticePeriod] [int] NULL,
 	[ExpensePaymentFees] [decimal](10, 2) NULL,
 	[SignedDate] [datetime2](7) NULL,
 	[IsDeleted] [bit] NULL,
@@ -15,12 +15,19 @@ CREATE TABLE [dbo].[EmployeeContracts](
 	[UpdatedByUserId] [int] NULL,
 	[JobTitle] [nvarchar](255) NULL,
 	[Address] [nvarchar](255) NULL,
-	[EmployeeAssociationId] [uniqueidentifier] NOT NULL,
-	[EmployeeId] [int] NOT NULL,
-	[CustomerId] [uniqueidentifier] NOT NULL,
+	[EmployeeAssociationId] [uniqueidentifier] NULL,
+	[EmployeeId] [int] NULL,
+	[CustomerId] [uniqueidentifier] NULL,
 	[ProjectStartDate] [datetime2](7) NULL,
 	[ProjectEndDate] [datetime2](7) NULL,
 	[IsContractSigned] [bit] NOT NULL,
+	[ProjectFeePaymentModeId] [uniqueidentifier] NULL,
+	[WorkMode] [varchar](50) NULL,
+	[ContractName] [varchar](255) NULL,
+	[IsExternal] [bit] NOT NULL,
+	[Salary] [decimal](10, 2) NULL,
+	[PublicHoliday] [int] NULL,
+	[NIENumber] [varchar](50) NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -37,9 +44,14 @@ GO
 ALTER TABLE [dbo].[EmployeeContracts] ADD  DEFAULT ((1)) FOR [IsContractSigned]
 GO
 
+ALTER TABLE [dbo].[EmployeeContracts] ADD  DEFAULT ((1)) FOR [IsExternal]
+GO
+
 ALTER TABLE [dbo].[EmployeeContracts]  WITH CHECK ADD FOREIGN KEY([CreatedByUserId])
 REFERENCES [dbo].[ApplicationUsers] ([Id])
 GO
+
+
 
 ALTER TABLE [dbo].[EmployeeContracts]  WITH CHECK ADD  CONSTRAINT [FK__EmployeeC__Custo__43F60EC8] FOREIGN KEY([EmployeeAssociationId])
 REFERENCES [dbo].[CustomerEmployeeAssociations] ([Id])
@@ -63,6 +75,10 @@ ALTER TABLE [dbo].[EmployeeContracts] CHECK CONSTRAINT [FK__EmployeeC__Emplo__45
 GO
 
 ALTER TABLE [dbo].[EmployeeContracts]  WITH CHECK ADD FOREIGN KEY([InvoicingPaymentModeId])
+REFERENCES [dbo].[InvoicingPaymentModes] ([Id])
+GO
+
+ALTER TABLE [dbo].[EmployeeContracts]  WITH CHECK ADD FOREIGN KEY([ProjectFeePaymentModeId])
 REFERENCES [dbo].[InvoicingPaymentModes] ([Id])
 GO
 

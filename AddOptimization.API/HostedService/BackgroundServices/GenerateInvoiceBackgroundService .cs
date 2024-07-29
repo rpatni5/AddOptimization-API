@@ -39,7 +39,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             //            return;
             //#endif
             _logger.LogInformation("ExecuteAsync Started.");
-            using var timer = new CronTimer("0 4 * * *", TimeZoneInfo.Utc);
+            using var timer = new CronTimer("0 6 * * *", TimeZoneInfo.Utc);
             while (!stoppingToken.IsCancellationRequested &&
                    await timer.WaitForNextTickAsync(stoppingToken))
             {
@@ -79,7 +79,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
 
                     foreach (var month in months)
                     {
-                        var filteredAssociations = associatedEmployees.Where(s => s.CreatedAt.Value.Month <= month.StartDate.Month && month.StartDate.Year == s.CreatedAt.Value.Year).ToList();
+                        var filteredAssociations = associatedEmployees.Where(s => (s.CreatedAt.Value.Month <= month.StartDate.Month && s.CreatedAt.Value.Year == month.StartDate.Year) || s.CreatedAt.Value.Date < month.StartDate.Date).ToList();
 
                         bool allTimesheetApprovedForMonth = await schedulerEventService.IsTimesheetApproved(id, filteredAssociations.Select(x => x.EmployeeId).ToList(), month);
                         if (allTimesheetApprovedForMonth && filteredAssociations.Any())

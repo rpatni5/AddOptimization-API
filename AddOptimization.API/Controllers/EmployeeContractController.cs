@@ -104,5 +104,93 @@ namespace AddOptimization.API.Controllers
                 return HandleException(ex);
             }
         }
+
+        [HttpGet("contracts/{id}")]
+        public async Task<IActionResult> GetContractsByAsscociationId(Guid id)
+        {
+            try
+            {
+                var retVal = await _contractService.GetContractsByAsscociationId(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpPost("search-all")]
+        public async Task<IActionResult> SearchAllContracts([FromBody] PageQueryFiterBase filters)
+        {
+            try
+            {
+                var retVal = await _contractService.SearchAllContracts(filters);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            try
+            {
+                var retVal = await _contractService.Delete(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpPost("internal-contract")]
+        public async Task<IActionResult> CreateInternalContract([FromBody] EmployeeContractRequestDto model)
+        {
+            try
+            {
+                var retVal = await _contractService.CreateInternalEmployeeContract(model);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+
+        [HttpGet("internal-contract/{id}")]
+        public async Task<IActionResult> GetInternalContractByEmployeeId(int id)
+        {
+            try
+            {
+                var retVal = await _contractService.GetInternalContractByEmployeeId(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpGet("contract-employee/{id}")]
+        public async Task<IActionResult> GetContractByEmployeeId(int id)
+        {
+            try
+            {
+                var retVal = await _contractService.GetContractByEmployeeId(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+
     }
 }

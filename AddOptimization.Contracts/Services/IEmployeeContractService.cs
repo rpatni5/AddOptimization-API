@@ -14,5 +14,16 @@ public interface IEmployeeContractService
 
     Task<PagedApiResult<EmployeeContractResponseDto>> Search(PageQueryFiterBase filters);
 
+    Task<ApiResult<List<EmployeeContractResponseDto>>> GetContractsByAsscociationId(Guid id);
+
+    Task<PagedApiResult<EmployeeContractResponseDto>> SearchAllContracts(PageQueryFiterBase filters);
+    Task<ApiResult<bool>> Delete(Guid id);
+
+
+
+    Task<ApiResult<EmployeeContractResponseDto>> CreateInternalEmployeeContract(EmployeeContractRequestDto model);
+    Task<ApiResult<List<EmployeeContractResponseDto>>> GetInternalContractByEmployeeId(int id);
+    Task<ApiResult<EmployeeContractResponseDto>> GetContractByEmployeeId(int id);
+
 
 }

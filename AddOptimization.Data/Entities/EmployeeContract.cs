@@ -5,14 +5,14 @@ namespace AddOptimization.Data.Entities
 {
     public class EmployeeContract : BaseEntityNew<Guid>
     {
-        public Guid InvoicingPaymentModeId { get; set; }
-        public Guid EmployeeAssociationId { get; set; }
-        public Guid CustomerId { get; set; }
-        public int EmployeeId { get; set; }
-        public  int Hours { get; set; }
-        public  decimal ProjectFees { get; set; }
+        public Guid? InvoicingPaymentModeId { get; set; }
+        public Guid? EmployeeAssociationId { get; set; }
+        public Guid? CustomerId { get; set; }
+        public int? EmployeeId { get; set; }
+        public  int? Hours { get; set; }
+        public  decimal? ProjectFees { get; set; }
         public  decimal? ExpensePaymentFees { get; set; }
-        public  int NoticePeriod { get; set; }
+        public  int? NoticePeriod { get; set; }
         public string? JobTitle { get; set; }
         public string? Address { get; set; }
         public bool IsContractSigned { get;set; }
@@ -21,7 +21,19 @@ namespace AddOptimization.Data.Entities
         public DateTime? ProjectEndDate { get; set; }
 
         public bool IsDeleted { get; set; }
+        public bool IsActive { get; set; }
 
+        public Guid? ProjectFeePaymentModeId { get; set; }
+        public string? WorkMode { get; set; }
+        public string ContractName {  get; set; }
+        public bool IsExternal { get; set; }
+        public decimal? Salary {  get; set; }
+        public int? PublicHoliday {  get; set; }
+
+        public string? NIENumber { get; set; }
+
+        [ForeignKey(nameof(ProjectFeePaymentModeId))]
+        public virtual InvoicingPaymentMode ProjectFeePaymentMode { get; set; }
 
         [ForeignKey(nameof(InvoicingPaymentModeId))]
         public virtual InvoicingPaymentMode InvoicingPaymentMode { get; set; }

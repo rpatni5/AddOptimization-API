@@ -36,12 +36,13 @@ public class EmployeeService : IEmployeeService
     private readonly IRoleService _roleService;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IGenericRepository<Country> _countryRepository;
+    private readonly IGenericRepository<EmployeeContract> _employeeContract;
     public EmployeeService(IGenericRepository<Employee> employeeRepository, ILogger<EmployeeService> logger, IMapper mapper,
         IAddressService addressService, IUnitOfWork unitOfWork, IEmailService emailService, ITemplateService templateService,
         IGenericRepository<PasswordResetToken> passwordResetTokenRepository,
         IGenericRepository<UserRole> userRoleRepository, IRoleService roleService,
         IGenericRepository<Role> roleRepository, IApplicationUserService applicationUserService,
-    IGenericRepository<ApplicationUser> applicationUserRepository, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+    IGenericRepository<ApplicationUser> applicationUserRepository, IConfiguration configuration, IGenericRepository<EmployeeContract> employeeContract, IHttpContextAccessor httpContextAccessor)
     {
         _configuration = configuration;
         _applicationUserRepository = applicationUserRepository;
@@ -60,6 +61,7 @@ public class EmployeeService : IEmployeeService
         _applicationUserService = applicationUserService;
         _roleService = roleService;
         _httpContextAccessor = httpContextAccessor;
+        _employeeContract = employeeContract;
     }
 
     public async Task<ApiResult<bool>> Save(EmployeeDto model)
@@ -211,6 +213,10 @@ public class EmployeeService : IEmployeeService
 
 
             var mappedEntities = _mapper.Map<List<EmployeeDto>>(entities);
+            foreach (var entity in mappedEntities)
+            {  
+                entity.HasContract = (await _employeeContract.QueryAsync(x =>x.EmployeeId == entity.UserId )).Any();
+            }
 
             return ApiResult<List<EmployeeDto>>.Success(mappedEntities);
         }

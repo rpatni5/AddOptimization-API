@@ -190,6 +190,7 @@ namespace AddOptimization.Services.Mappings
                 d.UpdatedAt = s.UpdatedAt?.Date;
                 d.UpdatedBy = s.UpdatedByUser?.FullName;
                 d.HasContract = s.Contracts != null && s.Contracts.Count > 0;
+
             });
 
             CreateMap<HolidayAllocation, HolidayAllocationResponseDto>().AfterMap((s, d) =>
@@ -223,7 +224,7 @@ namespace AddOptimization.Services.Mappings
             });
             CreateMap<EmployeeDto, Employee>();
 
-            CreateMap<Company, CompanyDto>().AfterMap((s, d) =>
+            CreateMap<Company, CompanyDto>().AfterMap((s, d) => 
             {
                 d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
                 d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
@@ -258,7 +259,7 @@ namespace AddOptimization.Services.Mappings
             {
                 d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
                 d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
-                d.CreatedAt = s.CreatedAt?.Date;
+                d.CreatedAt = s.CreatedAt;
                 d.UpdatedAt = s.UpdatedAt?.Date;
 
             });
@@ -357,6 +358,7 @@ namespace AddOptimization.Services.Mappings
                 d.CustomerName = s.Customer != null ? s.Customer.Organizations : string.Empty;
                 d.EmployeeName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
                 d.InvoicingAndPaymentMode = s.InvoicingPaymentMode != null ? s.InvoicingPaymentMode.Name : string.Empty;
+                d.ProjectFeePaymentMode = s.ProjectFeePaymentMode != null ? s.ProjectFeePaymentMode.Name : string.Empty;
 
 
             });
