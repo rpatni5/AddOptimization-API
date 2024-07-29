@@ -30,6 +30,7 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<ExternalInvoice> _externalInvoiceRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IGenericRepository<ExternalInvoiceDetail> _invoiceDetailRepository;
+        private readonly IGenericRepository<ExternalInvoicePaymentHistory> _externalInvoicePaymentRepository;
         private readonly IEmailService _emailService;
         private readonly ITemplateService _templateService;
         private readonly IConfiguration _configuration;
@@ -55,6 +56,7 @@ namespace AddOptimization.Services.Services
         public ExternalInvoiceService(IGenericRepository<ExternalInvoice> externalInvoiceRepository,
             IGenericRepository<Customer> customer,
             IGenericRepository<CustomerEmployeeAssociation> customerEmployeeAssociation,
+            IGenericRepository<ExternalInvoicePaymentHistory> externalInvoicePaymentRepository,
             IGenericRepository<SchedulerEvent> schedulersRepository,
             IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository,
             ISchedulersStatusService schedulersStatusService,
@@ -95,6 +97,7 @@ namespace AddOptimization.Services.Services
             _employeeRepository = employeeRepository;
             _externalInvoiceHistoryRepository = externalInvoiceHistoryRepository;
             _applicationService = applicationService;
+            _externalInvoicePaymentRepository= externalInvoicePaymentRepository;
             _currentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
             _logger = logger;
             _mapper = mapper;
@@ -407,16 +410,18 @@ namespace AddOptimization.Services.Services
             try
             {
                 var entity = await _externalInvoiceRepository.FirstOrDefaultAsync(e => e.Id == id);
-                var details = await _invoiceDetailRepository.QueryAsync(e => e.ExternalInvoiceId == id);
-
-                foreach (var detail in details.ToList())
-                {
-                    await _invoiceDetailRepository.DeleteAsync(detail);
-                }
                 if (entity == null)
                 {
                     return ApiResult<ExternalInvoiceResponseDto>.NotFound("External Invoice");
                 }
+
+                var existingDetails = await _invoiceDetailRepository.QueryAsync(e => e.ExternalInvoiceId == id);
+                foreach (var detail in existingDetails.ToList())
+                {
+                    await _invoiceDetailRepository.DeleteAsync(detail);
+                }
+
+                var newInvoiceDetails = new List<ExternalInvoiceDetail>();
                 foreach (var detail in model.ExternalInvoiceDetails)
                 {
                     var externalInvoiceDetail = new ExternalInvoiceDetail
@@ -430,13 +435,25 @@ namespace AddOptimization.Services.Services
                         TotalPriceExcludingVat = detail.TotalPriceExcludingVat,
                     };
                     await _invoiceDetailRepository.InsertAsync(externalInvoiceDetail);
+                    newInvoiceDetails.Add(externalInvoiceDetail);
                 }
 
+                entity.VatValue = newInvoiceDetails.Sum(x => (x.UnitPrice * x.Quantity * x.VatPercent) / 100);
+                entity.TotalPriceIncludingVat = newInvoiceDetails.Sum(x => x.TotalPriceIncludingVat);
+                entity.TotalPriceExcludingVat = newInvoiceDetails.Sum(x => x.TotalPriceExcludingVat);
+
+                var existingPayments = await _externalInvoicePaymentRepository.QueryAsync(e => e.InvoiceId == id);
+                var totalPayments = existingPayments.Sum(x => x.Amount);
+                var totalPaidAmount = totalPayments; 
+
+                entity.DueAmount = entity.TotalPriceIncludingVat - totalPaidAmount;
+
                 _mapper.Map(model, entity);
+                entity.InvoiceDetails = newInvoiceDetails;
                 await _externalInvoiceRepository.UpdateAsync(entity);
+
                 var mappedEntity = _mapper.Map<ExternalInvoiceResponseDto>(entity);
                 return ApiResult<ExternalInvoiceResponseDto>.Success(mappedEntity);
-
             }
             catch (Exception ex)
             {
