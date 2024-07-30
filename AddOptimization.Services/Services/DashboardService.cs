@@ -61,7 +61,7 @@ namespace AddOptimization.Services.Services
 
         }
 
-        public async Task<ApiResult<List<DashboardDetailDto>>> GetAllDashboardDetail(string id)
+        public async Task<ApiResult<List<DashboardDetailDto>>> GetAllDashboardDetail()
         {
 
             try
@@ -119,7 +119,7 @@ namespace AddOptimization.Services.Services
                 foreach (var entity in entitiesQoutesStatus.ToList())
                 {
                     DashboardDetailDto dtoQoutes = new DashboardDetailDto();
-                    dtoQoutes.Type = "Qoutes";
+                    dtoQoutes.Type = "Quotes";
                     if (entity.StatusKey == nameof(StatusKey.DRAFT))
                     {
                         dtoQoutes.NoOfInvoice = entitiesQoutes.Where(x => x.QuoteStatusId == entity.Id).Count();
@@ -138,7 +138,7 @@ namespace AddOptimization.Services.Services
                         dtoQoutes.Color = ColorStatus.Open;
                         dtoList.Add(dtoQoutes);
                         DashboardDetailDto dtoQoutes1 = new DashboardDetailDto();
-                        dtoQoutes1.Type = "Qoutes";
+                        dtoQoutes1.Type = "Quotes";
                         dtoQoutes1.NoOfInvoice = entitiesQoutes.Where(x => x.QuoteStatusId == entity.Id && x.ExpiryDate < DateTime.UtcNow).Count();
                         dtoQoutes1.Amount = entitiesQoutes.Where(x => x.QuoteStatusId == entity.Id && x.ExpiryDate < DateTime.UtcNow).Sum(x => x.TotalPriceIncVat);
                         dtoQoutes1.Name = nameof(StatusName.Overdue);
