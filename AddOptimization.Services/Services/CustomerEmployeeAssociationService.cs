@@ -116,6 +116,7 @@ namespace AddOptimization.Services.Services
                     Id = e.Id,
                     CustomerId = e.CustomerId,
                     EmployeeId = e.EmployeeId,
+                    ApproverId = e.ApproverId,
                     DailyWeightage = e.DailyWeightage,
                     Overtime = e.Overtime,
                     PublicHoliday = e.PublicHoliday,
