@@ -17,13 +17,13 @@ namespace AddOptimization.API.Controllers
             _dashboardService = dashboardService;
         }
 
-        [HttpGet("dashboard-details/{id}")]
-        public async Task<IActionResult> GetAllDashboardDetail(string id)
+        [HttpGet("dashboard-details")]
+        public async Task<IActionResult> GetAllDashboardDetail()
         {
             try
             {
                
-                var retVal = await _dashboardService.GetAllDashboardDetail(id);
+                var retVal = await _dashboardService.GetAllDashboardDetail();
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
