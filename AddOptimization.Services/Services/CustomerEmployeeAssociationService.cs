@@ -116,6 +116,7 @@ namespace AddOptimization.Services.Services
                     Id = e.Id,
                     CustomerId = e.CustomerId,
                     EmployeeId = e.EmployeeId,
+                    ApproverId =    e.ApproverId,
                     DailyWeightage = e.DailyWeightage,
                     Overtime = e.Overtime,
                     PublicHoliday = e.PublicHoliday,
@@ -219,7 +220,7 @@ namespace AddOptimization.Services.Services
             });
             filter.GetValue<string>("approverName", (v) =>
             {
-                entities = entities.Where(e => e.ApplicationUser != null && e.ApplicationUser.FullName.ToLower().Contains(v.ToLower()));
+                entities = entities.Where(e => e.Approver != null && e.Approver.FullName.ToLower().Contains(v.ToLower()));
             });
             filter.GetValue<string>("dailyWeightage", (v) =>
             {
