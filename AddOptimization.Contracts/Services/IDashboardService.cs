@@ -11,6 +11,6 @@ namespace AddOptimization.Contracts.Services
 {
     public interface IDashboardService
     {
-        Task<ApiResult<List<DashboardDetailDto>>> GetAllDashboardDetail(string id);
+        Task<ApiResult<List<DashboardDetailDto>>> GetAllDashboardDetail();
     }
 }
