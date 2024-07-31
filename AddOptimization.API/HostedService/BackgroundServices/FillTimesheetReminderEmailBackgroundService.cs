@@ -37,7 +37,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             //            return;
             //#endif
             _logger.LogInformation("ExecuteAsync Started.");
-            using var timer = new CronTimer("0 4 * * *", TimeZoneInfo.Utc);
+            using var timer = new CronTimer("*/1 * * * *", TimeZoneInfo.Utc);
             while (!stoppingToken.IsCancellationRequested && await timer.WaitForNextTickAsync(stoppingToken))
             {
                 _logger.LogInformation("Send Fill Timesheet Reminder Email Background Service Started.");
@@ -68,8 +68,9 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                         if (schedulerEvents?.Result == null) continue;
 
                         //Filter scheduler events which happened before current month of the client employee association.
+                      
                         var events = schedulerEvents.Result
-                            .Where(s => s.StartDate.Month >= association.CreatedAt.Value.Month).ToList();
+                            .Where(s => (association.CreatedAt.Value.Month <= s.StartDate.Month && association.CreatedAt.Value.Year == s.StartDate.Year) || association.CreatedAt.Value.Date < s.StartDate.Date).ToList();
                         foreach (var item in events)
                         {
                             await SendFillTimesheetReminderEmail(item);
