@@ -134,7 +134,7 @@ namespace AddOptimization.Services.Services
                 var company = await _companyRepository.FirstOrDefaultAsync(ignoreGlobalFilter: true);
                 string companyAddress = await GenerateCompanyAddress(company);
                 string companyBankDetails = GenerateCompanyBankDetails(company);
-                var invoiceNumber = await GenerateInvoiceNumber();
+                var invoiceNumber = await GenerateInvoiceNumber(month);
 
                 var invoiceStatus = (await _invoiceStatusService.Search()).Result;
                 var draftStatusId = invoiceStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusEnum.DRAFT.ToString()).Id;
@@ -259,17 +259,17 @@ namespace AddOptimization.Services.Services
             return companyAddress.ToString();
         }
 
-        private async Task<string> GenerateInvoiceNumber()
+        private async Task<string> GenerateInvoiceNumber(MonthDateRange month)
         {
             var invoice = (await _invoiceRepository.QueryAsync(ignoreGlobalFilter: true)).ToList();
-            var maxInvoiceNo = invoice.Max(c => c.Id);
+            var maxInvoiceNo = invoice.Count == 0 ? 0 : invoice.Max(c => c.Id);
             if (maxInvoiceNo != 0)
             {
-                return $"{DateTime.UtcNow.Year}{DateTime.UtcNow.Month}{maxInvoiceNo + 1}";
+                return $"{month.StartDate.Year}{month.StartDate.Month}{maxInvoiceNo + 1}";
             }
             else
             {
-                return $"{DateTime.UtcNow.Year}{DateTime.UtcNow.Month}{maxInvoiceNo + 1}";
+                return $"{month.StartDate.Year}{month.StartDate.Month}{maxInvoiceNo + 1}";
             }
         }
 
