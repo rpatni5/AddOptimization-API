@@ -101,6 +101,7 @@ public class EmployeeContractService : IEmployeeContractService
             var entity = await _contractRepository.FirstOrDefaultAsync(e => e.Id == id);
             _mapper.Map(model, entity);
             entity.IsContractSigned = false;
+            entity.IsExternal = model.IsExternal;
             await _contractRepository.UpdateAsync(entity);
             var mappedEntity = _mapper.Map<EmployeeContractResponseDto>(entity);
             return ApiResult<EmployeeContractResponseDto>.Success(mappedEntity);
@@ -176,6 +177,7 @@ public class EmployeeContractService : IEmployeeContractService
                 JobTitle = e.JobTitle,
                 Address = e.Address,
                 CreatedAt = e.CreatedAt,
+                IsExternal = e.IsExternal,
 
             }).ToList());
 

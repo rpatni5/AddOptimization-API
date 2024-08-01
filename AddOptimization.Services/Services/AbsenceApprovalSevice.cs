@@ -74,6 +74,7 @@ namespace AddOptimization.Services.Services
                     Comment = e.Comment,
                     Date = e.Date,
                     UserId = e.UserId,
+                    LeaveStatusId = e.LeaveStatusId,
                     LeaveStatusName = e.LeaveStatuses.Name,
                     UpdatedBy = e.CreatedByUser.FullName,
                     Duration = e.Duration,

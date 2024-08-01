@@ -68,8 +68,9 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                         if (schedulerEvents?.Result == null) continue;
 
                         //Filter scheduler events which happened before current month of the client employee association.
+                      
                         var events = schedulerEvents.Result
-                            .Where(s => s.StartDate.Month >= association.CreatedAt.Value.Month).ToList();
+                            .Where(s => (association.CreatedAt.Value.Month <= s.StartDate.Month && association.CreatedAt.Value.Year == s.StartDate.Year) || association.CreatedAt.Value.Date < s.StartDate.Date).ToList();
                         foreach (var item in events)
                         {
                             await SendFillTimesheetReminderEmail(item);
