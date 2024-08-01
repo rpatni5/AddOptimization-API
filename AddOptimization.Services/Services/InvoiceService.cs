@@ -350,7 +350,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var amount = string.Format("es-ES", "€{{0:N2}}", invoice?.DueAmount.ToString());
+                var amount = String.Format(new CultureInfo("en-US"), "€{0:N2}", invoice?.DueAmount);
                 var subject = $"AddOptimization invoice pending for {invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy")} of {amount}";
                 var link = GetInvoiceLinkForCustomer(invoice.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoiceReminder);
