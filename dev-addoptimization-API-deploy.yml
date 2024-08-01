@@ -27,7 +27,12 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
-      Rename-Item -Path "$(Build.SourcesDirectory)/AddOptimization.API/appsettings.Dev.json" -NewName "appsettings.json" -Force
+      $sourcePath = "$(Build.SourcesDirectory)/AddOptimization.API/appsettings.Dev.json"
+      $targetPath = "$(Build.SourcesDirectory)/AddOptimization.API/appsettings.json"
+      if (Test-Path -Path $targetPath) {
+        Remove-Item -Path $targetPath -Force
+      }
+      Rename-Item -Path $sourcePath -NewName "appsettings.json" -Force
     errorActionPreference: 'Stop'
 
 - task: VSBuild@1
