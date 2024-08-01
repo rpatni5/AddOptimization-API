@@ -26,7 +26,7 @@ steps:
 - task: PowerShell@2
   inputs:
     targetType: 'inline'
-    script: 'Rename-Item -Path "$(Build.ArtifactStagingDirectory)/appsettings.Dev.json" -NewName "appsettings.json" -Force'
+    script: 'Rename-Item -Path "$(Build.ArtifactStagingDirectory)/AddOptimization.API/appsettings.Dev.json" -NewName "AddOptimization.API/appsettings.json" -Force'
 
 - task: VSTest@2
   inputs:
