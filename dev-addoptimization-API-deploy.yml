@@ -32,7 +32,6 @@ steps:
       if (Test-Path -Path $targetPath) {
         Remove-Item -Path $targetPath -Force
       }
-      Remove-Item -Path "$(Build.ArtifactStagingDirectory)/wwwroot" -Recurse -Force
       Rename-Item -Path $sourcePath -NewName "appsettings.json" -Force
     errorActionPreference: 'Stop'
 
