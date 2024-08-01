@@ -32,6 +32,7 @@ steps:
       if (Test-Path -Path $targetPath) {
         Remove-Item -Path $targetPath -Force
       }
+      Remove-Item -Path "$(Build.ArtifactStagingDirectory)/wwwroot" -Recurse -Force
       Rename-Item -Path $sourcePath -NewName "appsettings.json" -Force
     errorActionPreference: 'Stop'
 
@@ -47,11 +48,11 @@ steps:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-    ArtifactName: 'drop'
-    publishLocation: 'Container'
+# - task: PublishBuildArtifacts@1
+#   inputs:
+#     PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+#     ArtifactName: 'drop'
+#     publishLocation: 'Container'
 
 - task: AzureRmWebAppDeployment@4
   inputs:
