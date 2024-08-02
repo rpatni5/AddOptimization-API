@@ -114,7 +114,7 @@ IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'CUSTOMER_APPROV
 BEGIN 
     INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
     VALUES
-        (NEWID(),'Customer Approved','CUSTOMER_APPROVED')
+        (NEWID(),'Approved','CUSTOMER_APPROVED')
 END
 
 /* Adding Admin Approved  Scheduler Status data in Scheduler Status */
