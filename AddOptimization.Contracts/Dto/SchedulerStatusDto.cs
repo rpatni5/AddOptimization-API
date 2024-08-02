@@ -11,5 +11,7 @@ namespace AddOptimization.Contracts.Dto
         public string StatusKey { get; set; }
         public string CreatedBy { get; set; }
         public string UpdatedBy { get; set; }
+        public bool? IsAdmin { get; set; }
+
     }
 }
