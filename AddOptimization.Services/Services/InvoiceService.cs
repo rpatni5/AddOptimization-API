@@ -134,7 +134,7 @@ namespace AddOptimization.Services.Services
                 var company = await _companyRepository.FirstOrDefaultAsync(ignoreGlobalFilter: true);
                 string companyAddress = await GenerateCompanyAddress(company);
                 string companyBankDetails = GenerateCompanyBankDetails(company);
-                var invoiceNumber = await GenerateInvoiceNumber();
+                var invoiceNumber = await GenerateInvoiceNumber(month);
 
                 var invoiceStatus = (await _invoiceStatusService.Search()).Result;
                 var draftStatusId = invoiceStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusEnum.DRAFT.ToString()).Id;
@@ -258,18 +258,18 @@ namespace AddOptimization.Services.Services
             companyAddress.AppendLine(country.CountryName);
             return companyAddress.ToString();
         }
-
-        private async Task<string> GenerateInvoiceNumber()
+        
+        private async Task<string> GenerateInvoiceNumber(MonthDateRange month)
         {
             var invoice = (await _invoiceRepository.QueryAsync(ignoreGlobalFilter: true)).ToList();
-            var maxInvoiceNo = invoice.Max(c => c.Id);
+            var maxInvoiceNo = invoice.Count == 0 ? 0 : invoice.Max(c => c.Id);
             if (maxInvoiceNo != 0)
             {
-                return $"{DateTime.UtcNow.Year}{DateTime.UtcNow.Month}{maxInvoiceNo + 1}";
+                return $"{month.StartDate.Year}{month.StartDate.Month}{maxInvoiceNo + 1}";
             }
             else
             {
-                return $"{DateTime.UtcNow.Year}{DateTime.UtcNow.Month}{maxInvoiceNo + 1}";
+                return $"{month.StartDate.Year}{month.StartDate.Month}{maxInvoiceNo + 1}";
             }
         }
 
@@ -277,30 +277,30 @@ namespace AddOptimization.Services.Services
         {
             var customerAddress = string.Empty;
             var country = await _countryRepository.FirstOrDefaultAsync(c => c.Id == customer.CountryId, ignoreGlobalFilter: true);
+            string sb = string.Empty;
+
             if (customer.PartnerName != null)
             {
-                StringBuilder sb = new StringBuilder();
-                sb.AppendLine(customer.PartnerAddress);
-                sb.AppendLine(customer.PartnerAddress2);
-                sb.AppendLine(customer.PartnerCity);
-                sb.AppendLine(customer.PartnerState);
-                sb.AppendLine(customer.PartnerZipCode?.ToString());
-                sb.AppendLine(country.CountryName);
-                customerAddress = sb.ToString();
+                sb+=JoinNonNull(customer.PartnerAddress, customer.PartnerAddress2);
+                sb+=JoinNonNull(customer.PartnerCity, customer.PartnerState);
+                sb+=JoinNonNull(customer.PartnerZipCode?.ToString(), country.CountryName);
             }
             else
             {
-                StringBuilder sb = new StringBuilder();
-                sb.AppendLine(customer.Organizations);
-                sb.AppendLine(customer.Address);
-                sb.AppendLine(customer.Address2);
-                sb.AppendLine(customer.City);
-                sb.AppendLine(customer.State);
-                sb.AppendLine(country.CountryName);
-                sb.AppendLine(customer.ZipCode.ToString());
-                customerAddress = sb.ToString();
+                sb += JoinNonNull(customer.Address, customer.Address2);
+                sb += JoinNonNull(customer.City, customer.State);
+                sb += JoinNonNull(country.CountryName, customer.ZipCode.ToString());
             }
+            customerAddress = sb.ToString();
+
             return customerAddress;
+        }
+
+        public string JoinNonNull(params string[] values)
+        {
+            var nonNullValues = values.Where(v => !string.IsNullOrEmpty(v)).ToList();
+            var newString =  string.Join(", ", nonNullValues);
+            return string.IsNullOrEmpty(newString) ? string.Empty : newString + Environment.NewLine;
         }
 
         private async Task CalculateAndSaveInvoiceDetails(Invoice invoice, List<SchedulerEventDetails> schedulerEventDetails, decimal daily, decimal vat, string description)
@@ -350,7 +350,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var amount = string.Format("es-ES", "€{{0:N2}}", invoice?.DueAmount.ToString());
+                var amount = String.Format(new CultureInfo("en-US"), "€{0:N2}", invoice?.DueAmount);
                 var subject = $"AddOptimization invoice pending for {invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy")} of {amount}";
                 var link = GetInvoiceLinkForCustomer(invoice.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoiceReminder);
@@ -359,7 +359,7 @@ namespace AddOptimization.Services.Services
                                 .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
                                 .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
                                 .Replace("[InvoiceDate]", invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy"))
-                                                      .Replace("[TotalAmountDue]", invoice?.DueAmount.ToString("N2", CultureInfo.InvariantCulture))
+                                .Replace("[TotalAmountDue]", invoice?.DueAmount.ToString("N2", CultureInfo.InvariantCulture))
                                 .Replace("[DueDate]", invoice?.InvoiceDate.AddDays(clearanceDays).Date.ToString("dd/MM/yyyy"))
                                 .Replace("[LinkToInvoice]", link);
                 return await _emailService.SendEmail(email, subject, emailTemplate);
@@ -681,6 +681,7 @@ namespace AddOptimization.Services.Services
                 model.PaymentClearanceDays = entity.PaymentClearanceDays;
                 model.CreditNoteNumber = entity.CreditNoteNumber;
                 model.CreatedAt = entity.CreatedAt;
+                model.SwiftCode = company.SwiftCode;
                 var invoiceSummary = (await _invoiceDetailRepository.QueryAsync(e => e.InvoiceId == id, disableTracking: true)).ToList();
                 model.InvoiceDetails = _mapper.Map<List<InvoiceDetailDto>>(invoiceSummary);
                 return ApiResult<InvoiceResponseDto>.Success(model);

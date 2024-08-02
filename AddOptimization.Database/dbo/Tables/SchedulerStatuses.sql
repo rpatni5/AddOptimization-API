@@ -7,6 +7,7 @@
 	[UpdatedByUserId] [int] NULL,
 	[IsDeleted] [bit] NULL,
 	[StatusKey] [nvarchar](200) NULL,
+	[IsAdmin] [bit] NULL,
  CONSTRAINT [PK_SchedulerStatuses] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC

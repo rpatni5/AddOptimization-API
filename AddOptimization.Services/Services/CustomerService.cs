@@ -464,8 +464,60 @@ public class CustomerService : ICustomerService
         try
         {
             var activeId = (await _customerStatusRepository.FirstOrDefaultAsync(e => e.Name == CustomerStatuses.Active)).Id;
-            var entities = await _customerRepository.QueryAsync((e => e.CustomerStatusId == activeId), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Id));
-            var mappedEntities = _mapper.Map<List<CustomerDto>>(entities);
+
+            var entities = await _customerRepository.QueryAsync(
+                e => e.CustomerStatusId == activeId,
+                include: entities => entities
+                    .Include(e => e.CreatedByUser)
+                    .Include(e => e.UpdatedByUser)
+                    .Include(e => e.Country), 
+                orderBy: x => x.OrderBy(x => x.Id)
+            );
+
+            var mappedEntities = entities.Select(e => new CustomerDto
+            {
+                Id = e.Id,
+                Company = e.Organizations,
+                Notes = e.Notes,
+                Phone = e.Phone,
+                CustomerStatusId = e.CustomerStatusId,
+                Licenses = _mapper.Map<List<LicenseDetailsDto>>(e.Licenses),
+                CountryCodeId = e.CountryCodeId.ToString(),
+                CustomerStatusName = e.CustomerStatus.Name,
+                BillingAddressString = e.BillingAddress == null ? null : $"{e.BillingAddress.Address1},{e.BillingAddress.Zip},{e.BillingAddress.City}",
+                ManagerName = e.ManagerName,
+                ManagerEmail = e.ManagerEmail,
+                ManagerPhone = e.ManagerPhone,
+                VAT = e.VAT,
+                PaymentClearanceDays = e.PaymentClearanceDays,
+                CountryId = e.CountryId,
+                IsApprovalRequired = e.IsApprovalRequired,
+                PartnerName = e.PartnerName,
+                PartnerBankName = e.PartnerBankName,
+                PartnerBankAccountName = e.PartnerBankAccountName,
+                PartnerBankAccountNumber = e.PartnerBankAccountNumber,
+                PartnerBankAddress = e.PartnerBankAddress,
+                PartnerCountryId = e.PartnerCountryId,
+                PartnerAddress = e.PartnerAddress,
+                PartnerAddress2 = e.PartnerAddress2,
+                PartnerVATNumber = e.PartnerVATNumber,
+                VATNumber = e.VATNumber,
+                PartnerDescriptions = e.PartnerDescriptions,
+                State = e.State,
+                PartnerState = e.PartnerState,
+                Address = e.Address,
+                Address2 = e.Address2,
+                City = e.City,
+                ZipCode = e.ZipCode,
+                PartnerCity = e.PartnerCity,
+                PartnerZipCode = e.PartnerZipCode,
+                CountryNames = e.Country.CountryName, 
+                PartnerCompany = e.PartnerCompany,
+                PartnerCountryNames = e.PartnerCountry.CountryName,
+                PartnerEmail = e.PartnerEmail,
+                PartnerPhone = e.PartnerPhone,
+            }).ToList();
+
             return ApiResult<List<CustomerDto>>.Success(mappedEntities);
         }
         catch (Exception ex)

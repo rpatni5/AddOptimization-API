@@ -2,7 +2,7 @@
 
 namespace AddOptimization.Contracts.Dto
 {
-    public class DashboardDetailDto : BaseDto<Guid>
+    public class DashboardDetailDto 
     {
         public string Name { get; set; }
         public string Color { get; set; }
