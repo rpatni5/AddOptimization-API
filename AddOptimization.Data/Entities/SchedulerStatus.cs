@@ -5,5 +5,6 @@ namespace AddOptimization.Data.Entities
     {
         public string Name { get; set; }
         public string StatusKey { get; set; }
+        public bool? IsAdmin { get; set; }
     }
 }

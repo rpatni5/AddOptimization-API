@@ -57,35 +57,35 @@ END
 
 IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'PENDING_APPROVAL')
 BEGIN 
-    INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
+    INSERT INTO SchedulerStatuses(Id,Name,StatusKey,IsAdmin)
     VALUES
-        (NEWID(),'Pending Approval','PENDING_APPROVAL')
+        (NEWID(),'Pending Approval','PENDING_APPROVAL',0)
 END
 
 /* Adding Pending for accountant approval Scheduler Status data in Scheduler Status */
 IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'PENDING_ACCOUNT_APPROVAL')
 BEGIN 
-    INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
+    INSERT INTO SchedulerStatuses(Id,Name,StatusKey,IsAdmin)
     VALUES
-        (NEWID(),'Pending Account Approval','PENDING_ACCOUNT_APPROVAL')
+        (NEWID(),'Pending Account Approval','PENDING_ACCOUNT_APPROVAL',1)
 END
 
 /* Adding Draft Scheduler Status data in Scheduler Status */
 
 IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'DRAFT')
 BEGIN 
-    INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
+    INSERT INTO SchedulerStatuses(Id,Name,StatusKey,IsAdmin)
     VALUES
-        (NEWID(),'Draft','DRAFT')
+        (NEWID(),'Draft','DRAFT',NULL)
 END
 
 /* Adding Pending for customer appproval Scheduler Status data in Scheduler Status */
 
 IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'PENDING_CUSTOMER_APPROVAL')
 BEGIN 
-    INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
+    INSERT INTO SchedulerStatuses(Id,Name,StatusKey,IsAdmin)
     VALUES
-        (NEWID(),'Pending Customer Appproval','PENDING_CUSTOMER_APPROVAL')
+        (NEWID(),'Pending Customer Appproval','PENDING_CUSTOMER_APPROVAL',1)
 END
 
 
@@ -94,36 +94,36 @@ END
 
 IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'DECLINED')
 BEGIN 
-    INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
+    INSERT INTO SchedulerStatuses(Id,Name,StatusKey,IsAdmin)
     VALUES
-        (NEWID(),'Declined','DECLINED')
+        (NEWID(),'Declined','DECLINED',0)
 END
 
 /* Adding Customer Declined Scheduler Status data in Scheduler Status */
 
 IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'CUSTOMER_DECLINED')
 BEGIN 
-    INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
+    INSERT INTO SchedulerStatuses(Id,Name,StatusKey,IsAdmin)
     VALUES
-        (NEWID(),'Customer Declined','CUSTOMER_DECLINED')
+        (NEWID(),'Customer Declined','CUSTOMER_DECLINED',1)
 END
 
 /* Adding Customer Approved  Scheduler Status data in Scheduler Status */
 
 IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'CUSTOMER_APPROVED')
 BEGIN 
-    INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
+    INSERT INTO SchedulerStatuses(Id,Name,StatusKey,IsAdmin)
     VALUES
-        (NEWID(),'Customer Approved','CUSTOMER_APPROVED')
+        (NEWID(),'Approved','CUSTOMER_APPROVED',1)
 END
 
 /* Adding Admin Approved  Scheduler Status data in Scheduler Status */
 
 IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'APPROVED')
 BEGIN 
-    INSERT INTO SchedulerStatuses(Id,Name,StatusKey)
+    INSERT INTO SchedulerStatuses(Id,Name,StatusKey,IsAdmin)
     VALUES
-        (NEWID(),'Approved','APPROVED')
+        (NEWID(),'Approved','APPROVED',0)
 END
 
 
