@@ -9,6 +9,7 @@ using AddOptimization.Utilities.Models;
 using AddOptimization.Utilities.Services;
 using NPOI.SS.Formula.Functions;
 using Sgbj.Cron;
+using System.Globalization;
 using System.Text;
 
 namespace AddOptimization.API.HostedService.BackgroundServices
@@ -99,7 +100,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             {
                 var scope = _serviceProvider.CreateScope();
                 var _emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
-                var amount = string.Format("es-ES", "€{{0:N2}}", invoice?.DueAmount.ToString());
+                var amount = String.Format(new CultureInfo("en-US"), "€{0:N2}", invoice?.DueAmount);
                 var subject = $"AddOptimization invoice pending for {invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy")} of {amount}";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoiceReminder);
                 var link = GetInvoiceLinkForCustomer(invoice.Id);
@@ -107,8 +108,9 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 emailTemplate = emailTemplate
                                 .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
                                 .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
+                                .Replace("[CompanyName]", invoice?.Customer?.Company)
                                 .Replace("[InvoiceDate]", invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy"))
-                                .Replace("[TotalAmountDue]", invoice?.DueAmount.ToString())
+                                .Replace("[TotalAmountDue]", invoice?.DueAmount.ToString("N2", CultureInfo.InvariantCulture))
                                 .Replace("[DueDate]", invoice?.InvoiceDate.AddDays(clearanceDays).Date.ToString("dd/MM/yyyy"))
                                 .Replace("[LinkToInvoice]", link);
                 return await _emailService.SendEmail(invoice?.Customer?.ManagerEmail, subject, emailTemplate);
@@ -126,7 +128,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             {
                 var scope = _serviceProvider.CreateScope();
                 var _emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
-                var amount = string.Format("es-ES", "€{{0:N2}}", invoice?.DueAmount.ToString());
+                var amount = String.Format(new CultureInfo("en-US"), "€{0:N2}", invoice?.DueAmount);
                 var subject = $"AddOptimization invoice pending for {invoice?.Customer?.ManagerName} dated {invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy")} of {amount}";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoiceReminderAccountAdmin);
                 var link = GetInvoiceLinkForAccountAdmin(invoice.Id);
@@ -134,9 +136,10 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 emailTemplate = emailTemplate
                                 .Replace("[AccountAdminName]", accountAdmin.FullName)
                                 .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
+                                .Replace("[CompanyName]",invoice?.Customer?.Company)
                                 .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
                                 .Replace("[InvoiceDate]", invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy"))
-                                .Replace("[TotalAmountDue]", invoice?.DueAmount.ToString())
+                                .Replace("[TotalAmountDue]", invoice?.DueAmount.ToString("N2", CultureInfo.InvariantCulture))
                                 .Replace("[DueDate]", invoice?.InvoiceDate.AddDays(clearanceDays).Date.ToString("dd/MM/yyyy"))
                                 .Replace("[LinkToInvoice]", link);
                 return await _emailService.SendEmail(accountAdmin.Email, subject, emailTemplate);
