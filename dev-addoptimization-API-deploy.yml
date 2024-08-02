@@ -1,5 +1,5 @@
 trigger:
-- develop
+- develop_off
 
 pool:
   vmImage: 'windows-latest'
