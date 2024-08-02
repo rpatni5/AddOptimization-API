@@ -258,7 +258,7 @@ namespace AddOptimization.Services.Services
             companyAddress.AppendLine(country.CountryName);
             return companyAddress.ToString();
         }
-
+        
         private async Task<string> GenerateInvoiceNumber(MonthDateRange month)
         {
             var invoice = (await _invoiceRepository.QueryAsync(ignoreGlobalFilter: true)).ToList();
@@ -277,30 +277,30 @@ namespace AddOptimization.Services.Services
         {
             var customerAddress = string.Empty;
             var country = await _countryRepository.FirstOrDefaultAsync(c => c.Id == customer.CountryId, ignoreGlobalFilter: true);
+            string sb = string.Empty;
+
             if (customer.PartnerName != null)
             {
-                StringBuilder sb = new StringBuilder();
-                sb.AppendLine(customer.PartnerAddress);
-                sb.AppendLine(customer.PartnerAddress2);
-                sb.AppendLine(customer.PartnerCity);
-                sb.AppendLine(customer.PartnerState);
-                sb.AppendLine(customer.PartnerZipCode?.ToString());
-                sb.AppendLine(country.CountryName);
-                customerAddress = sb.ToString();
+                sb+=JoinNonNull(customer.PartnerAddress, customer.PartnerAddress2);
+                sb+=JoinNonNull(customer.PartnerCity, customer.PartnerState);
+                sb+=JoinNonNull(customer.PartnerZipCode?.ToString(), country.CountryName);
             }
             else
             {
-                StringBuilder sb = new StringBuilder();
-                sb.AppendLine(customer.Organizations);
-                sb.AppendLine(customer.Address);
-                sb.AppendLine(customer.Address2);
-                sb.AppendLine(customer.City);
-                sb.AppendLine(customer.State);
-                sb.AppendLine(country.CountryName);
-                sb.AppendLine(customer.ZipCode.ToString());
-                customerAddress = sb.ToString();
+                sb += JoinNonNull(customer.Address, customer.Address2);
+                sb += JoinNonNull(customer.City, customer.State);
+                sb += JoinNonNull(country.CountryName, customer.ZipCode.ToString());
             }
+            customerAddress = sb.ToString();
+
             return customerAddress;
+        }
+
+        public string JoinNonNull(params string[] values)
+        {
+            var nonNullValues = values.Where(v => !string.IsNullOrEmpty(v)).ToList();
+            var newString =  string.Join(", ", nonNullValues);
+            return string.IsNullOrEmpty(newString) ? string.Empty : newString + Environment.NewLine;
         }
 
         private async Task CalculateAndSaveInvoiceDetails(Invoice invoice, List<SchedulerEventDetails> schedulerEventDetails, decimal daily, decimal vat, string description)
