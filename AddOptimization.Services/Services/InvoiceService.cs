@@ -441,12 +441,12 @@ namespace AddOptimization.Services.Services
                 entities = entities.Where(e => e.PaymentStatus.Name.ToLower().Contains(v.ToLower()) || e.PaymentStatus.Name.ToLower().Contains(v.ToLower()));
             });
 
-            filter.GetValue<DateTime>("compareDate", (v) =>
+            filter.GetValue<DateTime>("dueInvoiceDate", (v) =>
             {
                 entities = entities.Where(e => e.InvoiceDate.AddDays(e.PaymentClearanceDays.Value) < v);
             }, OperatorType.lessthan, true);
 
-            filter.GetValue<DateTime>("compareDate", (v) =>
+            filter.GetValue<DateTime>("dueInvoiceDate", (v) =>
             {
                 entities = entities.Where(e => e.InvoiceDate.AddDays(e.PaymentClearanceDays.Value) > v);
             }, OperatorType.greaterthan, true);
