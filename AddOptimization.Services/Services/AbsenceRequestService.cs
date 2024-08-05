@@ -18,6 +18,7 @@ using System.Globalization;
 using AddOptimization.Utilities.Interface;
 using Microsoft.Extensions.Configuration;
 using AddOptimization.Data.Repositories;
+using System.Reflection.Metadata.Ecma335;
 
 
 namespace AddOptimization.Services.Services
@@ -34,6 +35,7 @@ namespace AddOptimization.Services.Services
         private readonly ITemplateService _templateService;
         private readonly IConfiguration _configuration;
         private readonly IGenericRepository<ApplicationUser> _applicationUserRepository;
+        private readonly IHolidayAllocationService _holidayAllocationService;
 
 
         public AbsenceRequestService(IGenericRepository<AbsenceRequest> absenceRequestRepository,
@@ -45,6 +47,7 @@ namespace AddOptimization.Services.Services
             IConfiguration configuration,
             IEmailService emailService,
             ITemplateService templateService,
+            IHolidayAllocationService holidayAllocationService,
             IGenericRepository<ApplicationUser> applicationUserRepository)
         {
             _absenceRequestRepository = absenceRequestRepository;
@@ -53,6 +56,7 @@ namespace AddOptimization.Services.Services
             _httpContextAccessor = httpContextAccessor;
             _leaveStatusesService = leaveStatusesService;
             _applicationUserService = applicationUserService;
+            _holidayAllocationService = holidayAllocationService;
             _emailService = emailService;
             _templateService = templateService;
             _configuration = configuration;
@@ -75,7 +79,11 @@ namespace AddOptimization.Services.Services
                 {
                     return ApiResult<AbsenceRequestResponseDto>.Failure(ValidationCodes.AbsenceRequestedProhibited, "You have already submitted requested for this date.");
                 }
-
+                var leaveBalanceResult = await _holidayAllocationService.GetEmployeeLeaveBalance(userId);
+                var leaveBalance = leaveBalanceResult.Result;
+                if (leaveBalance.leavesLeft<=model.Duration) {
+                    return ApiResult<AbsenceRequestResponseDto>.Failure(ValidationCodes.AbsenceRequestedProhibited, "You don’t have enough balance to request holiday");
+                }
                 model.UserId = userId;
                 model.LeaveStatusId = requestedStatusId;
                 var entity = _mapper.Map<AbsenceRequest>(model);
