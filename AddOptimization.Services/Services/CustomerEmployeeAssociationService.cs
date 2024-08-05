@@ -226,7 +226,7 @@ namespace AddOptimization.Services.Services
             {
                 if (!string.IsNullOrEmpty(v))
                 {
-                    entities = entities.Where(e => e.DailyWeightage == Convert.ToInt32(v));
+                    entities = entities.Where(e => e.DailyWeightage == Convert.ToDecimal(v));
                 }
             });
 
