@@ -59,6 +59,7 @@ namespace AddOptimization.Contracts.Dto
         public string BankAccountNumber { get; set; }
 
         public int? BankZipCode { get; set; }
+        public string? VATNumber { get; set; }
 
         public List<ExternalInvoiceDetailDto> ExternalInvoiceDetails { get; set; }
     }
