@@ -394,7 +394,7 @@ namespace AddOptimization.Services.Services
                 model.BankAccountNumber = employee?.BankAccountNumber;
                 model.EmployeeName = entity.ApplicationUser.FullName;
                 model.VATNumber = employee?.VATNumber;
-
+                model.DueAmount = entity.DueAmount;
                 var externalInvoiceSummary = (await _invoiceDetailRepository.QueryAsync(e => e.ExternalInvoiceId == id, disableTracking: true)).ToList();
                 model.ExternalInvoiceDetails = _mapper.Map<List<ExternalInvoiceDetailDto>>(externalInvoiceSummary);
                 return ApiResult<ExternalInvoiceResponseDto>.Success(model);

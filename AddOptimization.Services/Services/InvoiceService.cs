@@ -693,6 +693,7 @@ namespace AddOptimization.Services.Services
                 model.CreditNoteNumber = entity.CreditNoteNumber;
                 model.CreatedAt = entity.CreatedAt;
                 model.SwiftCode = company.SwiftCode;
+                model.DueAmount = entity.DueAmount;
                 var invoiceSummary = (await _invoiceDetailRepository.QueryAsync(e => e.InvoiceId == id, disableTracking: true)).ToList();
                 model.InvoiceDetails = _mapper.Map<List<InvoiceDetailDto>>(invoiceSummary);
                 return ApiResult<InvoiceResponseDto>.Success(model);
