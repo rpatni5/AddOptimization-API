@@ -2,6 +2,7 @@
 using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Data.Entities;
+using AddOptimization.Services.Constants;
 using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Interface;
@@ -68,17 +69,20 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 var invoiceService = scope.ServiceProvider.GetRequiredService<IInvoiceService>();
                 var customerEmployeeAssociationService = scope.ServiceProvider.GetRequiredService<ICustomerEmployeeAssociationService>();
                 var appUserService = scope.ServiceProvider.GetRequiredService<IApplicationUserService>();
+                var invoiceStatusService= scope.ServiceProvider.GetRequiredService<IInvoiceStatusService>();
 
                 var invoices = await invoiceService.GetUnpaidInvoicesForEmailReminder();
                 if (invoices?.Result == null) return false;
 
                 var customerEmployeeAssociation = (await customerEmployeeAssociationService.Search()).Result;
                 var approver = await appUserService.GetAccountAdmins();
+                var eventStatus = (await invoiceStatusService.Search()).Result;
+                var invoiceStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusEnum.SEND_TO_CUSTOMER.ToString()).Id;
                 foreach (var invoice in invoices?.Result)
                 {
                     var paymentClearanceDays = invoice.Customer.PaymentClearanceDays;
                     if (invoice.InvoiceDate.AddDays(paymentClearanceDays.Value) <= DateTime.Today
-                        && invoice?.DueAmount > 0)
+                        && invoice?.DueAmount > 0 && invoice.InvoiceStatusId == invoiceStatusId)
                     {
                         await SendUnpaidInvoiceReminderEmailCustomer(invoice);
                         await SendUnpaidInvoiceReminderEmailAccountAdmin(invoice, approver.Result.FirstOrDefault());
@@ -111,7 +115,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                                 .Replace("[CompanyName]", invoice?.Customer?.Company)
                                 .Replace("[InvoiceDate]", invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy"))
                                 .Replace("[TotalAmountDue]", invoice?.DueAmount.ToString("N2", CultureInfo.InvariantCulture))
-                                .Replace("[DueDate]", invoice?.InvoiceDate.AddDays(clearanceDays).Date.ToString("dd/MM/yyyy"))
+                                .Replace("[DueDate]", invoice?.CreatedAt?.AddDays(clearanceDays).Date.ToString("dd/MM/yyyy"))
                                 .Replace("[LinkToInvoice]", link);
                 return await _emailService.SendEmail(invoice?.Customer?.ManagerEmail, subject, emailTemplate);
             }
@@ -140,7 +144,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                                 .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
                                 .Replace("[InvoiceDate]", invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy"))
                                 .Replace("[TotalAmountDue]", invoice?.DueAmount.ToString("N2", CultureInfo.InvariantCulture))
-                                .Replace("[DueDate]", invoice?.InvoiceDate.AddDays(clearanceDays).Date.ToString("dd/MM/yyyy"))
+                                .Replace("[DueDate]", invoice?.CreatedAt?.AddDays(clearanceDays).Date.ToString("dd/MM/yyyy"))
                                 .Replace("[LinkToInvoice]", link);
                 return await _emailService.SendEmail(accountAdmin.Email, subject, emailTemplate);
             }
