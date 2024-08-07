@@ -70,14 +70,13 @@ namespace AddOptimization.Services.Services
                 var entitiesInvoiceStatus = await _invoiceStatusRepository.QueryAsync(); ;
                 List<DashboardDetailDto> dtoList = new List<DashboardDetailDto>();
 
-
                 foreach ( var entity in entitiesInvoiceStatus.ToList())
                 {
                     DashboardDetailDto dto = new DashboardDetailDto();
                     dto.Type = "Invoice";
                     if (entity.StatusKey == nameof(StatusKey.DRAFT))
                     {
-                        dto.NoOfInvoice = entities.Where(x => x.InvoiceStatusId == entity.Id).Count();
+                        dto.NoOfInvoice = entities.Where(x => x.InvoiceStatusId == entity.Id && x.ExpiryDate >= DateTime.UtcNow).Count();
                         dto.Amount = entities.Where(x => x.InvoiceStatusId == entity.Id).Sum(x => x.DueAmount);
                         dto.Name = nameof(StatusName.Draft);
                         dto.Color = ColorStatus.Draft;

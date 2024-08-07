@@ -117,11 +117,14 @@ namespace AddOptimization.Services.Services
                 var companyAddress = string.Empty;
 
                 StringBuilder sb = new StringBuilder();
-                sb.AppendLine(company.CompanyName ?? string.Empty);
                 sb.AppendLine(company.Address ?? string.Empty);
-                sb.AppendLine(company.City ?? string.Empty);
-                sb.AppendLine(company.State ?? string.Empty);
-                sb.AppendLine(company.ZipCode.ToString() ?? string.Empty);
+                string postalCityState = $"{company.ZipCode.ToString() ?? string.Empty} {company.City ?? string.Empty}";
+                if (!string.IsNullOrWhiteSpace(company.State))
+                {
+                    postalCityState += $" ({company.State ?? string.Empty})";
+                }
+                sb.AppendLine(postalCityState);
+                sb.AppendLine($"IGIC/VAT : {company.TaxNumber ?? string.Empty}");
                 companyAddress = sb.ToString();
 
                 var companyBankDetails = string.Empty;
