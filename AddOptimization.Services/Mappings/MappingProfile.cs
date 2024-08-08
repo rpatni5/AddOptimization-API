@@ -230,6 +230,7 @@ namespace AddOptimization.Services.Mappings
                 d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
                 d.CreatedAt = s.CreatedAt?.Date;
                 d.UpdatedAt = s.UpdatedAt?.Date;
+                d.CountryName = s.CountryName != null ? s.CountryName.CountryName : string.Empty;
             });
             CreateMap<CompanyDto, Company>();
 
