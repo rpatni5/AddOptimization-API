@@ -361,7 +361,7 @@ namespace AddOptimization.Services.Services
                                 .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
                                 .Replace("[InvoiceDate]", invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy"))
                                 .Replace("[TotalAmountDue]", invoice?.DueAmount.ToString("N2", CultureInfo.InvariantCulture))
-                                .Replace("[DueDate]", invoice?.InvoiceDate.AddDays(clearanceDays).Date.ToString("dd/MM/yyyy"))
+                                .Replace("[DueDate]", invoice?.ExpiryDate.Date.ToString("dd/MM/yyyy"))
                                 .Replace("[LinkToInvoice]", link);
                 return await _emailService.SendEmail(email, subject, emailTemplate);
             }
