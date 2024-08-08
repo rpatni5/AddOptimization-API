@@ -9,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using AddOptimization.Utilities.Constants;
 using AutoMapper;
 using NPOI.SS.Formula.Functions;
+using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace AddOptimization.Services.Services;
 public class CompanyService : ICompanyService
@@ -72,7 +74,7 @@ public class CompanyService : ICompanyService
     {
         try
         {
-            var entity = await _companyRepository.FirstOrDefaultAsync();
+            var entity = await _companyRepository.FirstOrDefaultAsync(include: entities => entities.Include(e => e.CountryName), ignoreGlobalFilter: true);
             if(entity == null)
             {
                 return null;
