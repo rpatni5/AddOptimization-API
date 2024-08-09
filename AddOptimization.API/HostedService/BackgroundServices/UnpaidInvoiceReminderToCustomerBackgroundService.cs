@@ -81,7 +81,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 foreach (var invoice in invoices?.Result)
                 {
                     var paymentClearanceDays = invoice.Customer.PaymentClearanceDays;
-                    if (invoice.CreatedAt?.AddDays(paymentClearanceDays.Value) <= DateTime.Today
+                    if (invoice.CreatedAt?.AddDays(paymentClearanceDays.Value) < DateTime.Today
                         && invoice?.DueAmount > 0 && invoice.InvoiceStatusId == invoiceStatusId)
                     {
                         await SendUnpaidInvoiceReminderEmailCustomer(invoice);
