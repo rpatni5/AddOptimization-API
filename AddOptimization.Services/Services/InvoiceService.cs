@@ -346,7 +346,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private async Task<bool> SendRequestInvoiceEmailToCustomer(string email, Invoice invoice)
+        private async Task<bool> SendRequestInvoiceEmailReminderToCustomer(string email, Invoice invoice)
         {
             try
             {
@@ -372,7 +372,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private async Task<bool> SendRequestInvoiceEmailToCustomer1(string email, Invoice invoice)
+        private async Task<bool> SendRequestInvoiceEmailToCustomer(string email, Invoice invoice)
         {
             try
             {
@@ -796,11 +796,11 @@ namespace AddOptimization.Services.Services
             return $"{baseUrl}invoice/approval/{encryptedId}";
         }
 
-        public async Task<bool> SendInvoiceEmailToCustomer(int invoiceId)
+        public async Task<bool> SendInvoiceEmailReminderToCustomer(int invoiceId)
         {
             var entity = (await _invoiceRepository.QueryAsync(x => x.Id == invoiceId, include: entities => entities.Include(e => e.Customer))).FirstOrDefault();
             var details = (await _invoiceDetailRepository.QueryAsync(x => x.InvoiceId == invoiceId)).ToList();
-            return await SendRequestInvoiceEmailToCustomer(entity.Customer.ManagerEmail, entity);
+            return await SendRequestInvoiceEmailReminderToCustomer(entity.Customer.ManagerEmail, entity);
         }
 
 
@@ -814,7 +814,7 @@ namespace AddOptimization.Services.Services
             await _invoiceRepository.UpdateAsync(entity);
 
             var details = (await _invoiceDetailRepository.QueryAsync(x => x.InvoiceId == invoiceId)).ToList();
-            return await SendRequestInvoiceEmailToCustomer1(entity.Customer.ManagerEmail, entity);
+            return await SendRequestInvoiceEmailToCustomer(entity.Customer.ManagerEmail, entity);
         }
 
         public async Task<ApiResult<bool>> DeclineRequest(InvoiceActionRequestDto model)
