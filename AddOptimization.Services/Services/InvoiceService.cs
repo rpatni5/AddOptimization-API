@@ -346,7 +346,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private async Task<bool> SendRequestInvoiceEmailToCustomer(string email, Invoice invoice)
+        private async Task<bool> SendRequestInvoiceEmailReminderToCustomer(string email, Invoice invoice)
         {
             try
             {
@@ -354,6 +354,32 @@ namespace AddOptimization.Services.Services
                 var subject = $"AddOptimization invoice pending for {invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy")} of {amount}";
                 var link = GetInvoiceLinkForCustomer(invoice.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoiceReminder);
+                _ = int.TryParse(invoice?.Customer?.PaymentClearanceDays.ToString(), out int clearanceDays);
+                emailTemplate = emailTemplate
+                                .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
+                                .Replace("[CompanyName]", invoice?.Customer?.Organizations)
+                                .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
+                                .Replace("[InvoiceDate]", invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy"))
+                                .Replace("[TotalAmountDue]", invoice?.DueAmount.ToString("N2", CultureInfo.InvariantCulture))
+                                .Replace("[DueDate]", invoice?.ExpiryDate.Date.ToString("dd/MM/yyyy"))
+                                .Replace("[LinkToInvoice]", link);
+                return await _emailService.SendEmail(email, subject, emailTemplate);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return false;
+            }
+        }
+
+        private async Task<bool> SendRequestInvoiceEmailToCustomer(string email, Invoice invoice)
+        {
+            try
+            {
+                var amount = String.Format(new CultureInfo("en-US"), "€{0:N2}", invoice?.DueAmount);
+                var subject = $"AddOptimization invoice pending for {invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy")} of {amount}";
+                var link = GetInvoiceLinkForCustomer(invoice.Id);
+                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoice);
                 _ = int.TryParse(invoice?.Customer?.PaymentClearanceDays.ToString(), out int clearanceDays);
                 emailTemplate = emailTemplate
                                 .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
@@ -770,11 +796,11 @@ namespace AddOptimization.Services.Services
             return $"{baseUrl}invoice/approval/{encryptedId}";
         }
 
-        public async Task<bool> SendInvoiceEmailToCustomer(int invoiceId)
+        public async Task<bool> SendInvoiceEmailReminderToCustomer(int invoiceId)
         {
             var entity = (await _invoiceRepository.QueryAsync(x => x.Id == invoiceId, include: entities => entities.Include(e => e.Customer))).FirstOrDefault();
             var details = (await _invoiceDetailRepository.QueryAsync(x => x.InvoiceId == invoiceId)).ToList();
-            return await SendRequestInvoiceEmailToCustomer(entity.Customer.ManagerEmail, entity);
+            return await SendRequestInvoiceEmailReminderToCustomer(entity.Customer.ManagerEmail, entity);
         }
 
 
