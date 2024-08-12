@@ -86,15 +86,15 @@ namespace AddOptimization.Services.Services
                     else if(entity.StatusKey == nameof(StatusKey.SEND_TO_CUSTOMER))
                     {
                         
-                        dto.NoOfInvoice = entities.Where(x => x.InvoiceStatusId == entity.Id && x.InvoiceDate.AddDays((double)x.PaymentClearanceDays) >= DateTime.UtcNow).Count();
-                        dto.Amount = entities.Where(x => x.InvoiceStatusId == entity.Id && x.InvoiceDate.AddDays((double)x.PaymentClearanceDays) >= DateTime.UtcNow).Sum(x => x.DueAmount);
+                        dto.NoOfInvoice = entities.Where(x => x.InvoiceStatusId == entity.Id && x.ExpiryDate >= DateTime.UtcNow).Count();
+                        dto.Amount = entities.Where(x => x.InvoiceStatusId == entity.Id && x.ExpiryDate >= DateTime.UtcNow).Sum(x => x.DueAmount);
                         dto.Name = nameof(StatusName.Unpaid);
                         dto.Color = ColorStatus.Unpaid;
                         dtoList.Add(dto);
                         DashboardDetailDto dto1 = new DashboardDetailDto();
                         dto1.Type = "Invoice";
-                        dto1.NoOfInvoice = entities.Where(x => x.InvoiceStatusId == entity.Id && x.InvoiceDate.AddDays((double)x.PaymentClearanceDays) < DateTime.UtcNow).Count();
-                        dto1.Amount = entities.Where(x => x.InvoiceStatusId == entity.Id && x.InvoiceDate.AddDays((double)x.PaymentClearanceDays) < DateTime.UtcNow).Sum(x => x.DueAmount);
+                        dto1.NoOfInvoice = entities.Where(x => x.InvoiceStatusId == entity.Id && x.ExpiryDate < DateTime.UtcNow).Count();
+                        dto1.Amount = entities.Where(x => x.InvoiceStatusId == entity.Id && x.ExpiryDate < DateTime.UtcNow).Sum(x => x.DueAmount);
                         dto1.Name = nameof(StatusName.Overdue);
                         dto1.Color = ColorStatus.Overdue;
                         dtoList.Add(dto1);
@@ -102,7 +102,7 @@ namespace AddOptimization.Services.Services
                     else if (entity.StatusKey == nameof(StatusKey.CLOSED))
                     {
                         dto.NoOfInvoice = entities.Where(x => x.InvoiceStatusId == entity.Id ).Count();
-                        dto.Amount = entities.Where(x => x.InvoiceStatusId == entity.Id).Sum(x => x.DueAmount);
+                        dto.Amount = entities.Where(x => x.InvoiceStatusId == entity.Id).Sum(x => x.TotalPriceIncludingVat);
                         dto.Name = nameof(StatusName.Paid);
                         dto.Color = ColorStatus.Paid;
                         dtoList.Add(dto);
