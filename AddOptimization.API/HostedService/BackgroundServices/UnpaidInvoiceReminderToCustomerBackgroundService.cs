@@ -80,8 +80,8 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 var invoiceStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusEnum.SEND_TO_CUSTOMER.ToString()).Id;
                 foreach (var invoice in invoices?.Result)
                 {
-                    var paymentClearanceDays = invoice.Customer.PaymentClearanceDays;
-                    if (invoice.CreatedAt?.AddDays(paymentClearanceDays.Value) <= DateTime.Today
+                    var paymentClearanceDays = invoice.PaymentClearanceDays;
+                    if (invoice.CreatedAt?.AddDays(paymentClearanceDays.Value) < DateTime.Today
                         && invoice?.DueAmount > 0 && invoice.InvoiceStatusId == invoiceStatusId)
                     {
                         await SendUnpaidInvoiceReminderEmailCustomer(invoice);
@@ -108,7 +108,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 var subject = $"AddOptimization invoice pending for {invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy")} of {amount}";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoiceReminder);
                 var link = GetInvoiceLinkForCustomer(invoice.Id);
-                _ = int.TryParse(invoice?.Customer?.PaymentClearanceDays.ToString(), out int clearanceDays);
+                _ = int.TryParse(invoice?.PaymentClearanceDays.ToString(), out int clearanceDays);
                 emailTemplate = emailTemplate
                                 .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
                                 .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
@@ -136,7 +136,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 var subject = $"AddOptimization invoice pending for {invoice?.Customer?.ManagerName} dated {invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy")} of {amount}";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoiceReminderAccountAdmin);
                 var link = GetInvoiceLinkForAccountAdmin(invoice.Id);
-                _ = int.TryParse(invoice?.Customer?.PaymentClearanceDays.ToString(), out int clearanceDays);
+                _ = int.TryParse(invoice?.PaymentClearanceDays.ToString(), out int clearanceDays);
                 emailTemplate = emailTemplate
                                 .Replace("[AccountAdminName]", accountAdmin.FullName)
                                 .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
