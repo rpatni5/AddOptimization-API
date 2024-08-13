@@ -40,13 +40,13 @@ namespace AddOptimization.Contracts.Dto
         public string ExternalEmployeeAddress { get; set; }
         public string ExternalCompanyAddress { get; set; }
         public string ExternalCompanyCity { get; set; }
-        public int? ExternalCompanyZipCode { get; set; }
+        public string? ExternalCompanyZipCode { get; set; }
         public string ExternalCompanyState { get; set; }
 
         public string ExternalCity { get; set; }
         public string ExternalState { get; set; }
 
-        public int? ExternalZipCode { get; set; }
+        public string? ExternalZipCode { get; set; }
 
         public string BankName { get; set; }
 
@@ -58,7 +58,7 @@ namespace AddOptimization.Contracts.Dto
         public string BankAccountName { get; set; }
         public string BankAccountNumber { get; set; }
 
-        public int? BankZipCode { get; set; }
+        public string? BankZipCode { get; set; }
         public string? VATNumber { get; set; }
 
         public List<ExternalInvoiceDetailDto> ExternalInvoiceDetails { get; set; }

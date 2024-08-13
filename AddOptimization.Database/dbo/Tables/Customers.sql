@@ -24,9 +24,9 @@
 	[Address] [nvarchar](200) NULL,
 	[City] [nvarchar](200) NULL,
 	[Country] [nvarchar](200) NULL,
-	[ZipCode] [int] NULL,
+	[ZipCode] [varchar](200) NULL,
 	[PartnerCity] [nvarchar](200) NULL,
-	[PartnerZipCode] [int] NULL,
+    [PartnerZipCode] [varchar](200) NULL,
 	[PartnerAddress2] [varchar](400) NULL,
 	[Address2] [varchar](400) NULL,
 	[VATNumber] [varchar](400) NULL,
@@ -40,6 +40,7 @@
 	[PartnerPhone] [varchar](400) NULL,
 	[PartnerBankAddress] [varchar](400) NULL,
 	[CountryCodeId] [uniqueidentifier] NULL,
+	[PartnerVAT] [decimal](5, 2) NULL,
  CONSTRAINT [PK_Customers] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC

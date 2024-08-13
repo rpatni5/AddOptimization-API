@@ -14,7 +14,7 @@ namespace AddOptimization.Contracts.Dto
         public string BankAccountNumber { get; set; }
         public string? SwiftCode { get; set; }
         public string? BankAddress { get; set; }
-        public int? BankPostalCode { get; set; }
+        public string? BankPostalCode { get; set; }
         public string? BankCity { get; set; }
         public string? BankState { get; set; }
         public string? BankCountry { get; set; }
@@ -31,14 +31,14 @@ namespace AddOptimization.Contracts.Dto
         public string LastName { get; set; }
         public bool isActive { get; set; }
         public string VATNumber { get; set; }
-        public int ZipCode { get; set; }
+        public string ZipCode { get; set; }
         public string State { get; set; }
         public string JobTitle { get; set; }
         public string City { get; set; }
         public string CompanyName { get; set; }
         public Guid? CountryId { get; set; }
         public string Address { get; set; }
-        public int ExternalZipCode { get; set; }
+        public string ExternalZipCode { get; set; }
         public string ExternalCity { get; set; }
         public string ExternalState { get; set; }
         public string ExternalAddress { get; set; }

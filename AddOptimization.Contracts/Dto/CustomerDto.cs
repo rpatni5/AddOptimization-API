@@ -20,6 +20,7 @@ namespace AddOptimization.Contracts.Dto
         public string ManagerEmail { get; set; }
         public int? PaymentClearanceDays { get; set; }
         public decimal? VAT { get; set; }
+        public decimal? PartnerVAT { get; set; }
         public string VATNumber { get; set; }
         public string PartnerVATNumber { get; set; }
         public Guid? CountryId { get; set; }
@@ -41,9 +42,9 @@ namespace AddOptimization.Contracts.Dto
         public string Address2 { get; set; }
         public string City { get; set; }
         public string State { get; set; }
-        public int? ZipCode { get; set; }
+        public string? ZipCode { get; set; }
         public string PartnerCity { get; set; }
-        public int? PartnerZipCode { get; set; }
+        public string? PartnerZipCode { get; set; }
         public string PartnerCompany { get; set; }
         public string PartnerBankAddress { get; set; }
 
