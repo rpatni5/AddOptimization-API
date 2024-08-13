@@ -14,13 +14,13 @@
 	[UpdatedByUserId] [int] NULL,
 	[CountryId] [uniqueidentifier] NULL,
 	[State] [varchar](400) NULL,
-	[ZipCode] [int] NULL,
+	[ZipCode] [varchar](200) NULL,
 	[VATNumber] [varchar](400) NULL,
 	[JobTitle] [nvarchar](200) NULL,
 	[City] [nvarchar](200) NULL,
 	[CompanyName] [nvarchar](200) NULL,
 	[Address] [nvarchar](200) NULL,
-	[ExternalZipCode] [int] NULL,
+    [ExternalZipCode] [varchar](200) NULL,
 	[ExternalCity] [nvarchar](200) NULL,
 	[ExternalState] [nvarchar](200) NULL,
 	[ExternalCountryId] [uniqueidentifier] NULL,
@@ -31,7 +31,7 @@
 	[BankCity] [nvarchar](100) NULL,
 	[BankCountry] [nvarchar](100) NULL,
 	[SwiftCode] [nvarchar](100) NULL,
-	[BankPostalCode] [int] NULL,
+    [BankPostalCode] [varchar](200) NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC

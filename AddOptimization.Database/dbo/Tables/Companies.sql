@@ -15,7 +15,7 @@
 	[Address] [nvarchar](200) NULL,
 	[City] [nvarchar](200) NULL,
 	[CountryId] [uniqueidentifier] NULL,
-	[ZipCode] [int] NULL,
+	[ZipCode] [varchar](200) NULL,
 	[SwiftCode] [varchar](100) NULL,
 	[State] [varchar](100) NULL,
 	[TaxNumber] [varchar](100) NULL,
