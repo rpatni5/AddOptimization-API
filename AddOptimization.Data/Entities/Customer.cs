@@ -63,9 +63,9 @@ public partial class Customer : BaseEntityNew<Guid>
     public string Address { get; set; }
     public string Address2 { get; set; }
     public string City { get; set; }
-    public int? ZipCode { get; set; }
+    public string? ZipCode { get; set; }
     public string PartnerCity { get; set; }
-    public int? PartnerZipCode { get; set; }
+    public string? PartnerZipCode { get; set; }
     public string PartnerCompany { get; set; }
     public string PartnerBankAddress { get; set; }
 
