@@ -28,6 +28,8 @@ public partial class Customer : BaseEntityNew<Guid>
     public bool IsApprovalRequired { get; set; }
     public int? PaymentClearanceDays { get; set; }
     public decimal? VAT { get; set; }
+    public decimal? PartnerVAT { get; set; }
+
     public string VATNumber { get; set; }
     [MaxLength(200)]
     public string ManagerName { get; set; }

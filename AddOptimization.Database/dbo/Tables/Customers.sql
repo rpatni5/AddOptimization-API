@@ -40,6 +40,7 @@
 	[PartnerPhone] [varchar](400) NULL,
 	[PartnerBankAddress] [varchar](400) NULL,
 	[CountryCodeId] [uniqueidentifier] NULL,
+	[PartnerVAT] [decimal](5, 2) NULL,
  CONSTRAINT [PK_Customers] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
