@@ -36,15 +36,23 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             //#if DEBUG
             //            return;
             //#endif
-            _logger.LogInformation("ExecuteAsync Started.");
-            using var timer = new CronTimer("0 4 * * *", TimeZoneInfo.Utc);
-            while (!stoppingToken.IsCancellationRequested && await timer.WaitForNextTickAsync(stoppingToken))
+            try
             {
-                _logger.LogInformation("Send Fill Timesheet Reminder Email Background Service Started.");
-                await GetNotFilledTimesheetData();
-                _logger.LogInformation("Send Fill Timesheet Reminder Email Background Service Completed.");
+                _logger.LogInformation("ExecuteAsync Started.");
+                using var timer = new CronTimer("0 4 * * *", TimeZoneInfo.Utc);
+                while (!stoppingToken.IsCancellationRequested && await timer.WaitForNextTickAsync(stoppingToken))
+                {
+                    _logger.LogInformation("Send Fill Timesheet Reminder Email Background Service Started.");
+                    await GetNotFilledTimesheetData();
+                    _logger.LogInformation("Send Fill Timesheet Reminder Email Background Service Completed.");
+                }
+                _logger.LogInformation("ExecuteAsync Completed.");
             }
-            _logger.LogInformation("ExecuteAsync Completed.");
+            catch (Exception ex)
+            {
+                _logger.LogInformation("An exception occurred while executing FillTimesheetReminderEmailBackgroundService.");
+                _logger.LogException(ex);
+            }
         }
         #endregion
 
@@ -68,7 +76,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                         if (schedulerEvents?.Result == null) continue;
 
                         //Filter scheduler events which happened before current month of the client employee association.
-                      
+
                         var events = schedulerEvents.Result
                             .Where(s => (association.CreatedAt.Value.Month <= s.StartDate.Month && association.CreatedAt.Value.Year == s.StartDate.Year) || association.CreatedAt.Value.Date < s.StartDate.Date).ToList();
                         foreach (var item in events)
