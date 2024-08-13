@@ -45,16 +45,24 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             //#if DEBUG
             //            return;
             //#endif
-            _logger.LogInformation("ExecuteAsync Started.");
-            using var timer = new CronTimer("0 10 */2 * *", TimeZoneInfo.Utc);
-            while (!stoppingToken.IsCancellationRequested &&
-                   await timer.WaitForNextTickAsync(stoppingToken))
+            try
             {
-                _logger.LogInformation("Send Approve Pending Timesheet Reminder Email Background Service Started.");
-                await GetNotApprovedTimesheetData();
-                _logger.LogInformation("Send Approve Pending Timesheet Reminder Email Background Service Completed.");
+                _logger.LogInformation("ExecuteAsync Started.");
+                using var timer = new CronTimer("0 10 */2 * *", TimeZoneInfo.Utc);
+                while (!stoppingToken.IsCancellationRequested &&
+                       await timer.WaitForNextTickAsync(stoppingToken))
+                {
+                    _logger.LogInformation("Send Approve Pending Timesheet Reminder Email Background Service Started.");
+                    await GetNotApprovedTimesheetData();
+                    _logger.LogInformation("Send Approve Pending Timesheet Reminder Email Background Service Completed.");
+                }
+                _logger.LogInformation("ExecuteAsync Completed.");
             }
-            _logger.LogInformation("ExecuteAsync Completed.");
+            catch (Exception ex)
+            {
+                _logger.LogInformation("An exception occurred while executing PendingTimesheetReminderToCustomerBackgroundService.");
+                _logger.LogException(ex);
+            }
         }
         #endregion
 

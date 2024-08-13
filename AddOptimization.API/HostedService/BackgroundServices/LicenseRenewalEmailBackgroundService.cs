@@ -36,16 +36,24 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             //#if DEBUG
             //            return;
             //#endif
-            _logger.LogInformation("ExecuteAsync Started.");
-            using var timer = new CronTimer("0 8 * * *", TimeZoneInfo.Utc);
-            while (!stoppingToken.IsCancellationRequested &&
-                   await timer.WaitForNextTickAsync(stoppingToken))
+            try
             {
-                _logger.LogInformation("Send License Renewal Email BackgroundTask Started.");
-                await GetCustomersWithLicensesExpiringSoon();
-                _logger.LogInformation("Send License Renewal Email BackgroundTask Completed.");
+                _logger.LogInformation("ExecuteAsync Started.");
+                using var timer = new CronTimer("0 8 * * *", TimeZoneInfo.Utc);
+                while (!stoppingToken.IsCancellationRequested &&
+                       await timer.WaitForNextTickAsync(stoppingToken))
+                {
+                    _logger.LogInformation("Send License Renewal Email BackgroundTask Started.");
+                    await GetCustomersWithLicensesExpiringSoon();
+                    _logger.LogInformation("Send License Renewal Email BackgroundTask Completed.");
+                }
+                _logger.LogInformation("ExecuteAsync Completed.");
             }
-            _logger.LogInformation("ExecuteAsync Completed.");
+            catch (Exception ex)
+            {
+                _logger.LogInformation("An exception occurred while executing LicenseRenewalEmailBackgroundService.");
+                _logger.LogException(ex);
+            }
         }
         #endregion
 

@@ -38,16 +38,24 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             //#if DEBUG
             //            return;
             //#endif
-            _logger.LogInformation("ExecuteAsync Started.");
-            using var timer = new CronTimer("0 6 * * *", TimeZoneInfo.Utc);
-            while (!stoppingToken.IsCancellationRequested &&
-                   await timer.WaitForNextTickAsync(stoppingToken))
+            try
             {
-                _logger.LogInformation("Generate Invoice Background Service Started.");
-                await GenerateInvoice();
-                _logger.LogInformation("Generate Invoice Background Service Completed.");
+                _logger.LogInformation("ExecuteAsync Started.");
+                using var timer = new CronTimer("0 6 * * *", TimeZoneInfo.Utc);
+                while (!stoppingToken.IsCancellationRequested &&
+                       await timer.WaitForNextTickAsync(stoppingToken))
+                {
+                    _logger.LogInformation("Generate Invoice Background Service Started.");
+                    await GenerateInvoice();
+                    _logger.LogInformation("Generate Invoice Background Service Completed.");
+                }
+                _logger.LogInformation("ExecuteAsync Completed.");
             }
-            _logger.LogInformation("ExecuteAsync Completed.");
+            catch (Exception ex)
+            {
+                _logger.LogInformation("An exception occurred while executing GenerateInvoiceBackgroundService.");
+                _logger.LogException(ex);
+            }
         }
         #endregion
 
@@ -70,7 +78,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 var customerEmployeeAssociation = (await customerEmployeeAssociationService.Search()).Result;
                 var customers = customerEmployeeAssociation.Select(c => c.CustomerId).Distinct().ToList();
                 foreach (var id in customers)
-                
+
                 {
 
                     var associatedEmployees = customerEmployeeAssociation.Where(c => c.CustomerId == id && !c.IsDeleted).ToList();
