@@ -23,7 +23,7 @@ namespace AddOptimization.Contracts.Dto
 
         public Guid? DialCodeId { get; set; }
         public string? CountryName { get; set; }
-        public int? ZipCode { get; set; }
+        public string? ZipCode { get; set; }
         public string? SwiftCode { get; set; }
         public string? State { get; set; }
         public string? TaxNumber { get; set; }

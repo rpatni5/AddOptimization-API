@@ -28,6 +28,8 @@ public partial class Customer : BaseEntityNew<Guid>
     public bool IsApprovalRequired { get; set; }
     public int? PaymentClearanceDays { get; set; }
     public decimal? VAT { get; set; }
+    public decimal? PartnerVAT { get; set; }
+
     public string VATNumber { get; set; }
     [MaxLength(200)]
     public string ManagerName { get; set; }
@@ -61,9 +63,9 @@ public partial class Customer : BaseEntityNew<Guid>
     public string Address { get; set; }
     public string Address2 { get; set; }
     public string City { get; set; }
-    public int? ZipCode { get; set; }
+    public string? ZipCode { get; set; }
     public string PartnerCity { get; set; }
-    public int? PartnerZipCode { get; set; }
+    public string? PartnerZipCode { get; set; }
     public string PartnerCompany { get; set; }
     public string PartnerBankAddress { get; set; }
 
