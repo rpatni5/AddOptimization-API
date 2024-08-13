@@ -17,6 +17,7 @@ public class CustomerCreateDto:BaseDto<Guid?>
     public string ManagerEmail { get; set; }
     public int? PaymentClearanceDays { get; set; }
     public decimal VAT { get; set; }
+    public decimal PartnerVAT { get; set; }
     public string VATNumber { get; set; }
     public string PartnerVATNumber { get; set; }
     public Guid? CountryId { get; set; }
