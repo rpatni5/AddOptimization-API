@@ -12,12 +12,12 @@ namespace AddOptimization.Data.Entities
         public bool IsNDASigned { get; set; }
         public decimal? Salary { get; set; }
         public string VATNumber { get; set; }
-        public int? ZipCode { get; set; }
+        public string? ZipCode { get; set; }
         public string State { get; set; }
         public string JobTitle { get; set; }
         public string City { get; set; }
         public string CompanyName { get; set; }
-        public int? ExternalZipCode { get; set; }
+        public string? ExternalZipCode { get; set; }
         public string ExternalCity { get; set; }
         public string ExternalState { get; set; }
         public string Address { get; set; }
@@ -35,7 +35,7 @@ namespace AddOptimization.Data.Entities
         public string? SwiftCode { get; set; }
         [MaxLength(200)]
         public string?BankAddress { get; set; }
-        public int? BankPostalCode { get; set; }
+        public string? BankPostalCode { get; set; }
         public string? BankCity { get; set; }
         public string? BankState { get; set; }
         public string? BankCountry { get; set; }
