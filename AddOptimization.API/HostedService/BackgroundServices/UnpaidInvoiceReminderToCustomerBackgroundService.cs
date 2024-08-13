@@ -47,16 +47,24 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             //#if DEBUG
             //            return;
             //#endif
-            _logger.LogInformation("ExecuteAsync Started.");
-            using var timer = new CronTimer("0 12 */2 * *", TimeZoneInfo.Utc);
-            while (!stoppingToken.IsCancellationRequested &&
-                   await timer.WaitForNextTickAsync(stoppingToken))
+            try
             {
-                _logger.LogInformation("Send Unpaid Invoice Reminder Email Background Service Started.");
-                await GetUnpaidInvoiceData();
-                _logger.LogInformation("Send Unpaid Invoice Reminder Email Background Service Completed.");
+                _logger.LogInformation("ExecuteAsync Started.");
+                using var timer = new CronTimer("0 12 */2 * *", TimeZoneInfo.Utc);
+                while (!stoppingToken.IsCancellationRequested &&
+                       await timer.WaitForNextTickAsync(stoppingToken))
+                {
+                    _logger.LogInformation("Send Unpaid Invoice Reminder Email Background Service Started.");
+                    await GetUnpaidInvoiceData();
+                    _logger.LogInformation("Send Unpaid Invoice Reminder Email Background Service Completed.");
+                }
+                _logger.LogInformation("ExecuteAsync Completed.");
             }
-            _logger.LogInformation("ExecuteAsync Completed.");
+            catch (Exception ex)
+            {
+                _logger.LogInformation("An exception occurred while executing UnpaidInvoiceReminderToCustomerBackgroundService.");
+                _logger.LogException(ex);
+            }
         }
         #endregion
 
@@ -69,7 +77,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 var invoiceService = scope.ServiceProvider.GetRequiredService<IInvoiceService>();
                 var customerEmployeeAssociationService = scope.ServiceProvider.GetRequiredService<ICustomerEmployeeAssociationService>();
                 var appUserService = scope.ServiceProvider.GetRequiredService<IApplicationUserService>();
-                var invoiceStatusService= scope.ServiceProvider.GetRequiredService<IInvoiceStatusService>();
+                var invoiceStatusService = scope.ServiceProvider.GetRequiredService<IInvoiceStatusService>();
 
                 var invoices = await invoiceService.GetUnpaidInvoicesForEmailReminder();
                 if (invoices?.Result == null) return false;
@@ -140,7 +148,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 emailTemplate = emailTemplate
                                 .Replace("[AccountAdminName]", accountAdmin.FullName)
                                 .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
-                                .Replace("[CompanyName]",invoice?.Customer?.Company)
+                                .Replace("[CompanyName]", invoice?.Customer?.Company)
                                 .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
                                 .Replace("[InvoiceDate]", invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy"))
                                 .Replace("[TotalAmountDue]", invoice?.DueAmount.ToString("N2", CultureInfo.InvariantCulture))
