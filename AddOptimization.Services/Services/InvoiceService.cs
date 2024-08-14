@@ -284,12 +284,14 @@ namespace AddOptimization.Services.Services
                 sb+=JoinNonNull(customer.PartnerAddress, customer.PartnerAddress2);
                 sb+=JoinNonNull(customer.PartnerCity, customer.PartnerState);
                 sb+=JoinNonNull(customer.PartnerZipCode?.ToString(), country.CountryName);
+                sb += JoinNonNull(customer.PartnerVATNumber);
             }
             else
             {
                 sb += JoinNonNull(customer.Address, customer.Address2);
                 sb += JoinNonNull(customer.City, customer.State);
                 sb += JoinNonNull(country.CountryName, customer.ZipCode.ToString());
+                sb += JoinNonNull(customer.VATNumber);
             }
             customerAddress = sb.ToString();
 
