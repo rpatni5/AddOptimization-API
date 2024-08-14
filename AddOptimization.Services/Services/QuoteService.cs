@@ -124,7 +124,7 @@ namespace AddOptimization.Services.Services
                     postalCityState += $" ({company.State ?? string.Empty})";
                 }
                 sb.AppendLine(postalCityState);
-                sb.AppendLine($"IGIC/VAT : {company.TaxNumber ?? string.Empty}");
+                sb.AppendLine($"{company.TaxNumber ?? string.Empty}");
                 companyAddress = sb.ToString();
 
                 var companyBankDetails = string.Empty;
