@@ -26,9 +26,9 @@ namespace AddOptimization.Services.Services
     {
         private readonly IGenericRepository<Invoice> _invoiceRepository;
         private readonly IGenericRepository<InvoiceDetail> _invoiceDetailRepository;
+        private readonly IGenericRepository<Customer> _customer;
         private readonly IGenericRepository<InvoicePaymentHistory> _invoicePaymentRepository;
         private readonly IGenericRepository<InvoiceCreditNotes> _invoiceCreditNoteRepository;
-        private readonly IGenericRepository<Customer> _customer;
         private readonly IGenericRepository<Country> _countryRepository;
         private readonly IGenericRepository<SchedulerEvent> _schedulersRepository;
         private readonly IGenericRepository<SchedulerEventDetails> _schedulersDetailsRepository;
@@ -180,31 +180,31 @@ namespace AddOptimization.Services.Services
                     //Normal day timesheet Mon-Fri
                     var monFriTimesheetList = employeeEventDetails.Where(c => MonthDateRangeHelper.IsWeekday(c.Date.Value) && !publicHolidays.Contains(c.Date.Value.Date) && c.EventTypeId == timesheetEventId).ToList();
                     description = empl?.ApplicationUser?.FullName + '-' + empl.JobTitle;
-                    await CalculateAndSaveInvoiceDetails(invoiceResult, monFriTimesheetList, daily, customer.VAT ?? 0, description);
+                    await CalculateAndSaveInvoiceDetails(invoiceResult, monFriTimesheetList, daily, customer.PartnerVAT ??customer.VAT ?? 0, description);
 
                     //Sat timesheet including overtime
                     var saturdayTimesheetList = employeeEventDetails.Where(c => MonthDateRangeHelper.IsSaturday(c.Date.Value)).ToList();
                     unitPrice = daily / 8 * saturday / 100;
                     description = $"{empl?.ApplicationUser?.FullName}-{empl.JobTitle}-WE (Saturday) {saturday}% ({daily / 8} eur/h)";   // WE (Sunday) 210% (71,88 eur/h)
-                    await CalculateInvoiceDetailsForWeekend(invoiceResult, saturdayTimesheetList, unitPrice, customer.VAT ?? 0, description, timesheetEventId, overtimeEventId);
+                    await CalculateInvoiceDetailsForWeekend(invoiceResult, saturdayTimesheetList, unitPrice, customer.PartnerVAT ?? customer.VAT ?? 0, description, timesheetEventId, overtimeEventId);
 
                     //Sun timesheet including overtime
                     unitPrice = daily / 8 * sunday / 100;
                     description = $"{empl?.ApplicationUser?.FullName}-{empl.JobTitle}-WE (Sunday) {sunday}% ({daily / 8} eur/h)";   // WE (Sunday) 210% (71,88 eur/h)
                     var sundayTimesheetList = employeeEventDetails.Where(c => MonthDateRangeHelper.IsSunday(c.Date.Value)).ToList();
-                    await CalculateInvoiceDetailsForWeekend(invoiceResult, sundayTimesheetList, unitPrice, customer.VAT ?? 0, description, timesheetEventId, overtimeEventId);
+                    await CalculateInvoiceDetailsForWeekend(invoiceResult, sundayTimesheetList, unitPrice, customer.PartnerVAT ?? customer.VAT ?? 0, description, timesheetEventId, overtimeEventId);
 
                     //Overtime Mon-Fri
                     unitPrice = daily / 8 * overTime / 100;
                     description = $"{empl?.ApplicationUser?.FullName}-{empl.JobTitle}-Overtime {overTime}% ({daily / 8} eur/h)";
                     var overtimeList = employeeEventDetails.Where(c => c.EventTypeId == overtimeEventId && MonthDateRangeHelper.IsWeekday(c.Date.Value)).ToList();
-                    await CalculateAndSaveInvoiceDetails(invoiceResult, overtimeList, unitPrice, customer.VAT ?? 0, description);
+                    await CalculateAndSaveInvoiceDetails(invoiceResult, overtimeList, unitPrice, customer.PartnerVAT ?? customer.VAT ?? 0, description);
 
                     //Timesheet Mon-Fri on public holiday
                     unitPrice = daily * publicHoliday / 100;
                     description = $"{empl?.ApplicationUser?.FullName}-{empl.JobTitle}-Holiday {publicHoliday}% ({daily} eur/d)";
                     var publicHolidaysList = employeeEventDetails.Where(c => MonthDateRangeHelper.IsWeekday(c.Date.Value) && publicHolidays.Contains(c.Date.Value.Date) && c.EventTypeId == timesheetEventId).ToList();
-                    await CalculateAndSaveInvoiceDetails(invoiceResult, publicHolidaysList, unitPrice, customer.VAT ?? 0, description);
+                    await CalculateAndSaveInvoiceDetails(invoiceResult, publicHolidaysList, unitPrice, customer.PartnerVAT ?? customer.VAT ?? 0, description);
 
                 }
 
