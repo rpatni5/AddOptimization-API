@@ -111,7 +111,7 @@ namespace AddOptimization.Services.Services
                 var eventStatus = (await _quoteStatusService.Search()).Result;
                 var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == QuoteStatusesEnum.DRAFT.ToString()).Id;
                 var quoteNo = await GenerateQuoteNoAsync();
-                var company = await _companyRepository.FirstOrDefaultAsync(ignoreGlobalFilter: true);
+                var company = await (await _companyRepository.QueryAsync(include: entities => entities.Include(e => e.CountryName))).FirstOrDefaultAsync();
                 var id = await _quoteRepository.MaxAsync(e => (int)e.Id, ignoreGlobalFilter: true);
 
                 var companyAddress = string.Empty;
@@ -121,9 +121,10 @@ namespace AddOptimization.Services.Services
                 string postalCityState = $"{company.ZipCode.ToString() ?? string.Empty} {company.City ?? string.Empty}";
                 if (!string.IsNullOrWhiteSpace(company.State))
                 {
-                    postalCityState += $" ({company.State ?? string.Empty})";
+                    postalCityState += $", {company.State ?? string.Empty}";
                 }
                 sb.AppendLine(postalCityState);
+                sb.AppendLine(company.CountryName.CountryName);
                 sb.AppendLine($"{company.TaxNumber ?? string.Empty}");
                 companyAddress = sb.ToString();
 
