@@ -27,6 +27,7 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<Invoice> _invoiceRepository;
         private readonly IGenericRepository<InvoiceDetail> _invoiceDetailRepository;
         private readonly IGenericRepository<Customer> _customer;
+        private readonly IGenericRepository<CustomerEmployeeAssociation> _associationRepository;
         private readonly IGenericRepository<InvoicePaymentHistory> _invoicePaymentRepository;
         private readonly IGenericRepository<InvoiceCreditNotes> _invoiceCreditNoteRepository;
         private readonly IGenericRepository<Country> _countryRepository;
@@ -79,6 +80,7 @@ namespace AddOptimization.Services.Services
             IApplicationUserService applicationService,
             IGenericRepository<InvoiceCreditNotes> invoiceCreditNoteRepository,
             IGenericRepository<InvoicePaymentHistory> invoicePaymentRepository,
+            IGenericRepository<CustomerEmployeeAssociation> associationRepository,
 
         ILogger<InvoiceService> logger)
         {
@@ -110,6 +112,7 @@ namespace AddOptimization.Services.Services
             _applicationService = applicationService;
             _invoiceCreditNoteRepository = invoiceCreditNoteRepository;
             _invoicePaymentRepository = invoicePaymentRepository;
+            _associationRepository = associationRepository;
         }
 
         public async Task<ApiResult<bool>> GenerateInvoice(Guid customerId, MonthDateRange month,
@@ -126,10 +129,8 @@ namespace AddOptimization.Services.Services
                 var timesheetEventId = eventTypes.FirstOrDefault(x => x.Name.Equals("timesheet", StringComparison.InvariantCultureIgnoreCase)).Id;
                 var overtimeEventId = eventTypes.FirstOrDefault(x => x.Name.Equals("overtime", StringComparison.InvariantCultureIgnoreCase)).Id;
                 var customer = await _customer.FirstOrDefaultAsync(t => t.Id == customerId, ignoreGlobalFilter: true);
-                var publicHolidays = (await _publicHolidayRepository.QueryAsync(o => o.CountryId == customer.CountryId
-                    && o.Date.Month == month.StartDate.Month
-                    && o.Date.Year == month.StartDate.Year)).Select(x => x.Date.Date);
 
+                
                 string customerAddress = await GetCustomerAddress(customer);
                 var company = await _companyRepository.FirstOrDefaultAsync(ignoreGlobalFilter: true);
                 string companyAddress = await GenerateCompanyAddress(company);
@@ -161,6 +162,12 @@ namespace AddOptimization.Services.Services
 
                 foreach (var employee in associatedEmployees)
                 {
+                    var associatedCustomer = await _associationRepository.FirstOrDefaultAsync(t => t.CustomerId == customerId && t.EmployeeId == employee.EmployeeId, ignoreGlobalFilter: true);
+
+                    var publicHolidays = (await _publicHolidayRepository.QueryAsync(o => o.CountryId == associatedCustomer.PublicHolidayCountryId
+                        && o.Date.Month == month.StartDate.Month
+                        && o.Date.Year == month.StartDate.Year)).Select(x => x.Date.Date);
+
                     var daily = employee.DailyWeightage;
                     var overTime = employee.Overtime;
                     var publicHoliday = employee.PublicHoliday;

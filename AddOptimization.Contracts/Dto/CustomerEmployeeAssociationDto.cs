@@ -15,6 +15,8 @@ namespace AddOptimization.Contracts.Dto
         public string EmployeeName { get; set; }
         public int ApproverId { get; set; }
         public string ApproverName { get; set; }
+        public Guid? PublicHolidayCountryId { get; set; }
+        public string PublicHolidayCountry { get; set; }
         public decimal DailyWeightage { get; set; }
         public decimal Overtime { get; set; }
         public decimal PublicHoliday { get; set; }

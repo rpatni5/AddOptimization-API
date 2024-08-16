@@ -114,6 +114,22 @@ namespace AddOptimization.API.Controllers
             }
         }
 
+        [AllowAnonymous]
+        [HttpPost("quote-action")]
+        public async Task<IActionResult> QuoteAction(QuoteActionDto model)
+        {
+            try
+            {
+                var retVal = await _quoteService.QuoteAction(model);
+                return HandleResponse(retVal);
+
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
 
         [HttpPost("convertQuoteToInvoice/{quoteId}")]
         public async Task<IActionResult> ConvertQuoteToInvoice(long quoteId)

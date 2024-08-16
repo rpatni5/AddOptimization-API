@@ -23,6 +23,7 @@ namespace AddOptimization.Contracts.Dto
         public int UserId { get; set; }
         public bool IsDeleted { get; set; }
         public bool IsActive { get; set; }
+        public bool IsCustomerApprovalPending { get; set; }
         public List<QuoteSummaryDto> QuoteSummaries { get; set; }
     }
 }

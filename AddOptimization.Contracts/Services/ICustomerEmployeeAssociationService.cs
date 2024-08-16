@@ -17,5 +17,6 @@ namespace AddOptimization.Contracts.Services
         Task<ApiResult<bool>> Delete(Guid id);
         Task<ApiResult<List<CustomerEmployeeAssociationDto>>> GetAssociatedCustomers(int employeeId);
         Task<ApiResult<CustomerEmployeeAssociationDto>> Get(Guid id);
+        Task<ApiResult<CustomerEmployeeAssociationDto>> GetCustomerById(Guid id, int empId);
     }
 }
