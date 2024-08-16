@@ -70,6 +70,7 @@ namespace AddOptimization.Services.Services
 
                     CustomerEmployeeAssociation entity = new CustomerEmployeeAssociation();
                     _mapper.Map(model, entity);
+                    entity.IsActive = true;
                     await _customerEmployeeAssociationRepository.InsertAsync(entity);
                     mappedEntity = _mapper.Map<CustomerEmployeeAssociationDto>(entity);
                 }
@@ -156,6 +157,7 @@ namespace AddOptimization.Services.Services
                     return ApiResult<bool>.NotFound("Association");
                 }
                 entity.IsDeleted = true;
+                entity.IsActive = false;
                 await _customerEmployeeAssociationRepository.UpdateAsync(entity);
                 if (contractData != null)
                 {
@@ -208,7 +210,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entity = await _customerEmployeeAssociationRepository.FirstOrDefaultAsync((t => t.CustomerId == id && t.EmployeeId == empId && !t.IsActive), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.Approver).Include(e => e.Customer).Include(e => e.ApplicationUser).Include(e => e.Country), ignoreGlobalFilter: true);
+                var entity = await _customerEmployeeAssociationRepository.FirstOrDefaultAsync((t => t.CustomerId == id && t.EmployeeId == empId && t.IsActive && !t.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.Approver).Include(e => e.Customer).Include(e => e.ApplicationUser).Include(e => e.Country), ignoreGlobalFilter: true);
                 if (entity == null)
                 {
                     return ApiResult<CustomerEmployeeAssociationDto>.NotFound("association");
