@@ -51,6 +51,7 @@ namespace AddOptimization.Services.Services
                         existingAssociation.Saturday = model.Saturday;
                         existingAssociation.Sunday = model.Sunday;
                         existingAssociation.Overtime = model.Overtime;
+                        existingAssociation.PublicHolidayCountryId = model.PublicHolidayCountryId;
                         await _customerEmployeeAssociationRepository.UpdateAsync(existingAssociation);
                     }
                     else
@@ -85,7 +86,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _customerEmployeeAssociationRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.Approver).Include(e => e.Customer).Include(e => e.ApplicationUser).Include(e => e.Contracts));
+                var entities = await _customerEmployeeAssociationRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.Approver).Include(e => e.Customer).Include(e => e.ApplicationUser).Include(e => e.Contracts).Include(e => e.Country));
 
                 var mappedEntities = _mapper.Map<List<CustomerEmployeeAssociationDto>>(entities.ToList());
                 foreach (var entity in mappedEntities)
@@ -105,7 +106,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _customerEmployeeAssociationRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.Approver).Include(e => e.Customer).Include(e => e.ApplicationUser).Include(e => e.Contracts));
+                var entities = await _customerEmployeeAssociationRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.Approver).Include(e => e.Customer).Include(e => e.ApplicationUser).Include(e => e.Contracts).Include(e => e.Country));
 
                 entities = ApplySorting(entities, filter?.Sorted?.FirstOrDefault());
                 entities = ApplyFilters(entities, filter);
@@ -117,6 +118,7 @@ namespace AddOptimization.Services.Services
                     CustomerId = e.CustomerId,
                     EmployeeId = e.EmployeeId,
                     ApproverId =    e.ApproverId,
+                    PublicHolidayCountryId = e.PublicHolidayCountryId,
                     DailyWeightage = e.DailyWeightage,
                     Overtime = e.Overtime,
                     PublicHoliday = e.PublicHoliday,
@@ -125,6 +127,7 @@ namespace AddOptimization.Services.Services
                     CustomerName = e.Customer.Organizations,
                     EmployeeName = e.ApplicationUser.FullName,
                     ApproverName = e.Approver.FullName,
+                    PublicHolidayCountry = e.Country.CountryName,
                     HasContract = e.Contracts.Count() > 0,
 
                 }).ToList());
@@ -172,7 +175,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var associations = await _customerEmployeeAssociationRepository.QueryAsync(e => e.EmployeeId == employeeId && !e.IsDeleted, include: entities => entities.Include(e => e.Customer).Include(e => e.Approver).Include(e => e.ApplicationUser));
+                var associations = await _customerEmployeeAssociationRepository.QueryAsync(e => e.EmployeeId == employeeId && !e.IsDeleted, include: entities => entities.Include(e => e.Customer).Include(e => e.Approver).Include(e => e.ApplicationUser).Include(e=>e.Country));
                 var mappedEntities = _mapper.Map<List<CustomerEmployeeAssociationDto>>(associations);
                 return ApiResult<List<CustomerEmployeeAssociationDto>>.Success(mappedEntities);
             }
@@ -201,7 +204,24 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-
+        public async Task<ApiResult<CustomerEmployeeAssociationDto>> GetCustomerById(Guid id,int empId)
+        {
+            try
+            {
+                var entity = await _customerEmployeeAssociationRepository.FirstOrDefaultAsync((t => t.CustomerId == id && t.EmployeeId == empId && !t.IsActive), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.Approver).Include(e => e.Customer).Include(e => e.ApplicationUser).Include(e => e.Country), ignoreGlobalFilter: true);
+                if (entity == null)
+                {
+                    return ApiResult<CustomerEmployeeAssociationDto>.NotFound("association");
+                }
+                var mappedEntity = _mapper.Map<CustomerEmployeeAssociationDto>(entity);
+                return ApiResult<CustomerEmployeeAssociationDto>.Success(mappedEntity);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
 
         private IQueryable<CustomerEmployeeAssociation> ApplyFilters(IQueryable<CustomerEmployeeAssociation> entities, PageQueryFiterBase filter)
         {
@@ -292,6 +312,7 @@ namespace AddOptimization.Services.Services
         }
 
 
+      
     }
 }
 
