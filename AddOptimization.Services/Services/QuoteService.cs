@@ -363,7 +363,10 @@ namespace AddOptimization.Services.Services
                     MetaData = Convert.ToString(quoteId),
                     VatValue = quote.QuoteSummaries.Sum(x => (x.UnitPrice * x.Quantity * x.Vat) / 100),
                     TotalPriceIncludingVat = quote.QuoteSummaries.Sum(x => x.TotalPriceIncVat),
+                    DueAmount = quote.QuoteSummaries.Sum(x => x.TotalPriceIncVat),
                     TotalPriceExcludingVat = quote.QuoteSummaries.Sum(x => x.TotalPriceExcVat),
+                    ExpiryDate = quote.ExpiryDate,
+                    PaymentClearanceDays = (quote.ExpiryDate - DateTime.UtcNow).Days,
                     InvoiceDetails = new List<InvoiceDetail>()
                 };
 
@@ -376,7 +379,6 @@ namespace AddOptimization.Services.Services
                         Quantity = quoteSummary.Quantity,
                         UnitPrice = quoteSummary.UnitPrice,
                         VatPercent = quoteSummary.Vat,
-
                         TotalPriceExcludingVat = quoteSummary.TotalPriceExcVat,
                         TotalPriceIncludingVat = quoteSummary.TotalPriceIncVat,
 

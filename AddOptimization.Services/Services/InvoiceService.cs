@@ -495,7 +495,7 @@ namespace AddOptimization.Services.Services
             {
                 if (sort?.Name == null)
                 {
-                    entities = entities.OrderByDescending(o => o.CreatedAt);
+                    entities = entities.OrderByDescending(o => o.Id);
                     return entities;
                 }
                 var columnName = sort.Name.ToUpper();
