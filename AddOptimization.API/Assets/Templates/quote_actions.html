@@ -215,7 +215,7 @@
             text-align: center;
             font-weight: bold;
             background-color: #202A44;
-            color:white;
+            color: white;
         }
     </style>
 </head>
@@ -225,15 +225,21 @@
         <tr>
             <td class="content-cell">
                 <div class="f-fallback">
-                    <p>Dear [AccountAdmin],</p>
-                    <p>The timesheet for the employee [EmployeeName] for the month [Month] [Year], with a total working days of [WorkDuration] days and total working overtime of [Overtime] hours has been [TimesheetAction] by [CustomerName].</p>
+                    <p>Dear [AccountAdminName],</p>
+                    <p>The following Quote has been  [TimesheetAction]   by [CustomerName].  </p>
+                    <p>
+                        <strong>Quote Number:</strong> [QuoteNumber]<br />
+                        <strong>Quote Date:</strong> [QuoteDate]<br />
+                        <strong>Expiry Date:</strong> [ExpiryDate]
+                    </p>
                     <!-- Action -->
-                    <p>Comment:[Comment]<br /></p>
+                    <p><strong>Reason :</strong> [Comment]</p>
                     Best Regards,
                     <br />The AddOptimization team
                 </div>
             </td>
         </tr>
     </table>
+
 </body>
 </html>

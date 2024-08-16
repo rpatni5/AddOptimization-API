@@ -102,5 +102,19 @@ namespace AddOptimization.API.Controllers
                 return HandleException(ex);
             }
         }
+
+        [HttpGet("get-customer/{id}/{empId}")]
+        public async Task<IActionResult> GetCustomerById(Guid id ,int empId)
+        {
+            try
+            {
+                var retVal = await _customerEmployeeAssociationService.GetCustomerById(id ,empId);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
     }
 }

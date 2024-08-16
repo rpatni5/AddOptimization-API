@@ -12,5 +12,7 @@ namespace AddOptimization.Services.Constants
         FINALIZED,
         SEND_TO_CUSTOMER,
         DRAFT,
+        DECLINED,
+        ACCEPTED,
     }
 }
