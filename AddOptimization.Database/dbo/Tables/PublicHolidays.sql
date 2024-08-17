@@ -1,7 +1,7 @@
 ﻿CREATE TABLE [dbo].[PublicHolidays]
 (
 	[Id] [uniqueidentifier] NOT NULL,
-	[Title] [nvarchar](20) NULL,
+	[Title] [nvarchar](200) NULL,
 	[Description] [nvarchar](500) NULL,
 	[CreatedAt] [datetime2](7) NOT NULL,
 	[CreatedByUserId] [int] NOT NULL,
