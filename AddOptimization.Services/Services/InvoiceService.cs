@@ -51,6 +51,7 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<ApplicationUser> _appUserRepository;
         private readonly IGenericRepository<Role> _roleRepository;
         private readonly IApplicationUserService _applicationService;
+        private readonly ICompanyService _companyService;
 
 
         private readonly ILogger<InvoiceService> _logger;
@@ -67,6 +68,7 @@ namespace AddOptimization.Services.Services
             IGenericRepository<InvoiceDetail> invoiceDetailRepository,
             IGenericRepository<Employee> employeeRepository,
             IGenericRepository<Company> companyRepository,
+            ICompanyService companyService,
             IUnitOfWork unitOfWork,
             IMapper mapper,
              IConfiguration configuration,
@@ -103,6 +105,7 @@ namespace AddOptimization.Services.Services
             _mapper = mapper;
             _configuration = configuration;
             _protectionService = protectionService;
+            _companyService = companyService;
             _templateService = templateService;
             _emailService = emailService;
             _currentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
@@ -381,7 +384,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private async Task<bool> SendRequestInvoiceEmailToCustomer(string email, Invoice invoice)
+        private async Task<bool> SendRequestInvoiceEmailToCustomer(string email, Invoice invoice ,CompanyDto companyInfo)
         {
             try
             {
@@ -393,11 +396,18 @@ namespace AddOptimization.Services.Services
                 emailTemplate = emailTemplate
                                 .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
                                 .Replace("[CompanyName]", invoice?.Customer?.Organizations)
+                                .Replace("[CustomerAccountantContactName]", invoice?.Customer?.AccountContactName)
                                 .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
                                 .Replace("[InvoiceDate]", invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy"))
                                 .Replace("[TotalAmountDue]", invoice?.DueAmount.ToString("N2", CultureInfo.InvariantCulture))
                                 .Replace("[DueDate]", invoice?.ExpiryDate.Date.ToString("dd/MM/yyyy"))
-                                .Replace("[LinkToInvoice]", link);
+                                .Replace("[LinkToInvoice]", link)
+                                .Replace("[CompanyAccountingEmail]", companyInfo.AccountingEmail)
+                                .Replace("[company]",companyInfo.CompanyName)
+                                .Replace("[BankName]", companyInfo.BankName)
+                                .Replace("[IbanNumber]",companyInfo.BankAccountNumber)
+                                .Replace("[SwiftCode]",companyInfo.SwiftCode);
+                              
                 return await _emailService.SendEmail(email, subject, emailTemplate);
             }
             catch (Exception ex)
@@ -821,9 +831,10 @@ namespace AddOptimization.Services.Services
             var entity = (await _invoiceRepository.QueryAsync(x => x.Id == invoiceId, include: entities => entities.Include(e => e.Customer))).FirstOrDefault();
             entity.InvoiceStatusId = sentToCustomerStatusId;
             await _invoiceRepository.UpdateAsync(entity);
-
             var details = (await _invoiceDetailRepository.QueryAsync(x => x.InvoiceId == invoiceId)).ToList();
-            return await SendRequestInvoiceEmailToCustomer(entity.Customer.ManagerEmail, entity);
+            var companyInfoResult = await _companyService.GetCompanyInformation();
+            var companyInfo = companyInfoResult.Result;
+            return await SendRequestInvoiceEmailToCustomer(entity.Customer.ManagerEmail, entity ,companyInfo);
         }
 
         public async Task<ApiResult<bool>> DeclineRequest(InvoiceActionRequestDto model)

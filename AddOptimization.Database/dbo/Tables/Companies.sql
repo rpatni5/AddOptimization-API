@@ -20,6 +20,14 @@
 	[State] [varchar](100) NULL,
 	[TaxNumber] [varchar](100) NULL,
 	[DialCodeId] [uniqueidentifier] NULL,
+	[AccountingName] [nvarchar](200) NULL,
+	[AccountingEmail] [nvarchar](200) NULL,
+	[SalesContactName] [nvarchar](200) NULL,
+	[SalesContactEmail] [nvarchar](200) NULL,
+	[TechnicalContactName] [nvarchar](200) NULL,
+	[TechnicalContactEmail] [nvarchar](200) NULL,
+	[AdministrationContactName] [nvarchar](200) NULL,
+	[AdministrationContactEmail] [nvarchar](200) NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
