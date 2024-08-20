@@ -589,7 +589,7 @@ namespace AddOptimization.Services.Services
                 var duration = await CalculateTimesheetsDaysAndOvertimeHours(result, details);
                 if (customerDetails.IsApprovalRequired)
                 {
-                    await SendRequestTimesheetApprovalEmailToCustomer(customerDetails.ManagerEmail, result, customerDetails.ManagerName, user.FullName, duration.Item1, duration.Item2);
+                    await SendRequestTimesheetApprovalEmailToCustomer(customerDetails.AdministrationContactEmail, result, customerDetails.AdministrationContactName, user.FullName, duration.Item1, duration.Item2);
                 }
                 else
                 {
@@ -785,7 +785,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private async Task<bool> SendRequestTimesheetApprovalEmailToCustomer(string email, SchedulerEvent schedulerEvent, string customerName,
+        private async Task<bool> SendRequestTimesheetApprovalEmailToCustomer(string email, SchedulerEvent schedulerEvent, string administrationContactName,
              string employeeName, decimal totalWorkingDays, decimal overtimeHours)
         {
             try
@@ -793,7 +793,7 @@ namespace AddOptimization.Services.Services
                 var subject = "Timesheet Approval Request";
                 var link = GetTimesheetLinkForCustomer(schedulerEvent.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.RequestTimesheetApproval);
-                emailTemplate = emailTemplate.Replace("[CustomerName]", customerName)
+                emailTemplate = emailTemplate.Replace("[AdministrationContactName]", administrationContactName)
                                              .Replace("[EmployeeName]", employeeName)
                                              .Replace("[LinkToTimesheet]", link)
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
@@ -816,7 +816,7 @@ namespace AddOptimization.Services.Services
                 var subject = "Timesheet Approval Request";
                 var link = GetTimesheetLinkForAccountAdmin(schedulerEvent.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.RequestTimesheetApproval);
-                emailTemplate = emailTemplate.Replace("[CustomerName]", approverName)
+                emailTemplate = emailTemplate.Replace("[AdministrationContactName]", approverName)
                                              .Replace("[EmployeeName]", employeeName)
                                              .Replace("[LinkToTimesheet]", link)
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
@@ -847,7 +847,7 @@ namespace AddOptimization.Services.Services
             var entity = (await _schedulersRepository.QueryAsync(x => x.Id == schedulerEventId, include: entities => entities.Include(e => e.ApplicationUser).Include(e => e.Customer))).FirstOrDefault();
             var details = (await _schedulersDetailsRepository.QueryAsync(x => x.SchedulerEventId == schedulerEventId)).ToList();
             var duration = await CalculateTimesheetsDaysAndOvertimeHours(entity, details);
-            return await SendRequestTimesheetApprovalEmailToCustomer(entity.Customer.ManagerEmail, entity, entity.Customer.ManagerName, entity.ApplicationUser.FullName, duration.Item1
+            return await SendRequestTimesheetApprovalEmailToCustomer(entity.Customer.AdministrationContactEmail, entity, entity.Customer.AdministrationContactName, entity.ApplicationUser.FullName, duration.Item1
                 , duration.Item2);
         }
 

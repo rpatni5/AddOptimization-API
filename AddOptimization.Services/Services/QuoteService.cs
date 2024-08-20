@@ -303,10 +303,10 @@ namespace AddOptimization.Services.Services
             var entity = (await _quoteRepository.QueryAsync(x => x.Id == quoteId, include: entities => entities.Include(e => e.Customer))).FirstOrDefault();
             entity.QuoteStatusId = statusId;
             await _quoteRepository.UpdateAsync(entity);
-            return await SendQuoteToCustomer(entity.Customer.ManagerEmail, entity, entity.Customer.ManagerName, entity.Customer.Organizations);
+            return await SendQuoteToCustomer(entity.Customer.TechnicalContactEmail, entity, entity.Customer.TechnicalContactName, entity.Customer.Organizations);
         }
 
-        private async Task<bool> SendQuoteToCustomer(string email, Quote quote, string managerName,
+        private async Task<bool> SendQuoteToCustomer(string email, Quote quote, string technicalContactName,
                                     string customer)
         {
             try
@@ -314,9 +314,10 @@ namespace AddOptimization.Services.Services
                 var subject = "Quote";
                 var link = GetQuoteLinkForCustomer(quote.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.CustomerQuote);
-                emailTemplate = emailTemplate.Replace("[CustomerName]", customer)
-                                             .Replace("[MangerName]", managerName)
+                emailTemplate = emailTemplate.Replace("[TechnicalContactName]", technicalContactName)
+                                             .Replace("[QuoteNumber]",quote.QuoteNo.ToString())
                                              .Replace("[LinkToQuote]", link)
+                                             .Replace("[CustomerName]", customer)
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(quote.QuoteDate.Month))
                                              .Replace("[Year]", quote.QuoteDate.Year.ToString());
                 return await _emailService.SendEmail(email, subject, emailTemplate);
