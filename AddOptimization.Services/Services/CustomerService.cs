@@ -128,6 +128,18 @@ public class CustomerService : ICustomerService
                 PartnerCountryNames = e.PartnerCountry.CountryName,
                 PartnerEmail = e.PartnerEmail,
                 PartnerPhone = e.PartnerPhone,
+                AccountContactName = e.AccountContactName,
+                AccountContactEmail = e.AccountContactEmail,
+                Name = e.Name,
+                Email = e.Email,
+                AdministrationContactName = e.AdministrationContactName,
+                AdministrationContactEmail = e.AdministrationContactEmail,
+                TechnicalContactEmail = e.TechnicalContactEmail,
+                TechnicalContactName = e.TechnicalContactName,
+                IsAccountSAM = e.IsAccountSAM,
+                IsAdministrationSAM = e.IsAdministrationSAM,
+                IsTechnicalSAM = e.IsTechnicalSAM,
+
             }).ToList());
             var retVal = pagedResult;
             return PagedApiResult<CustomerDto>.Success(retVal);
@@ -471,7 +483,7 @@ public class CustomerService : ICustomerService
                 include: entities => entities
                     .Include(e => e.CreatedByUser)
                     .Include(e => e.UpdatedByUser)
-                    .Include(e => e.Country), 
+                    .Include(e => e.Country),
                 orderBy: x => x.OrderBy(x => x.Id)
             );
 
@@ -513,11 +525,23 @@ public class CustomerService : ICustomerService
                 ZipCode = e.ZipCode,
                 PartnerCity = e.PartnerCity,
                 PartnerZipCode = e.PartnerZipCode,
-                CountryNames = e.Country.CountryName, 
+                CountryNames = e.Country.CountryName,
                 PartnerCompany = e.PartnerCompany,
                 PartnerCountryNames = e.PartnerCountry.CountryName,
                 PartnerEmail = e.PartnerEmail,
                 PartnerPhone = e.PartnerPhone,
+                AccountContactName = e.AccountContactName,
+                AccountContactEmail = e.AccountContactEmail,
+                Name = e.Name,
+                Email = e.Email,
+                AdministrationContactName = e.AdministrationContactName,
+                AdministrationContactEmail = e.AdministrationContactEmail,
+                TechnicalContactEmail = e.TechnicalContactEmail,
+                TechnicalContactName = e.TechnicalContactName,
+                IsAccountSAM = e.IsAccountSAM,
+                IsAdministrationSAM = e.IsAdministrationSAM,
+                IsTechnicalSAM = e.IsTechnicalSAM,
+
             }).ToList();
 
             return ApiResult<List<CustomerDto>>.Success(mappedEntities);
