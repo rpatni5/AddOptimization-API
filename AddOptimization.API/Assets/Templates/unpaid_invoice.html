@@ -225,30 +225,33 @@
         <tr>
             <td class="content-cell">
                 <div class="f-fallback">
-                    <p>Dear Valued Customer,</p>
-                    <p>Our system detected an unpaid invoice for [CompanyName], with Invoice number #[InvoiceNumber], dated [InvoiceDate]. The total amount is &euro;[TotalAmountDue] and the payment due date is on [DueDate].</p>
+                    <p>Dear [AccountantContactName]</p>
+                    <p>Your invoice #[InvoiceNumber] for [CustomerName] is now available.</p>
                     <p>
                         Invoice Number: #[InvoiceNumber]<br />
                         Invoice Date: [InvoiceDate]<br />
-                        Total Amount Due: &euro;[TotalAmountDue]<br />
-                        Due Date: [DueDate]
+                        Invoice Amount: &euro;[TotalAmountDue]<br />
+                        Invoice Due Date: [DueDate]
                     </p>
                     <!-- Action -->
                     <p>
-                        Please click on the link below to view this Invoice.<br />
+                        Please click on the link below to view the invoice in detail.<br />
                     </p>
+                    <p>Below the invoice you can Decline or Download the invoice.</p>
                     <p>
                         <a href="[LinkToInvoice]" target="_blank" style="background-color: #202A44; color: white; padding: 5px;">View</a>
                     </p>
                     <p>
-                        If payment have already being made, please disregard this email and accept our thanks.<br />
+                       Payment information<br />
+                       [company]<br/>
+                        [BankName]<br/>
+                        [IbanNumber]<br/>
+                        [SwiftCode]
                     </p>
                     <p>
-                        Should you have any questions or need further assistance, please do not hesitate to contact us.<br />
+                        Should you have any questions or need further assistance, please don't hesitate to contact us on [AccountingEmail]<br />
                     </p>
-                    <p>
-                        Thank you for following up this unpaid invoice.<br />
-                    </p>
+
                     Best Regards,
                     <br />The AddOptimization team
                 </div>
