@@ -8,6 +8,7 @@ using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
 using AddOptimization.Utilities.Services;
+using NPOI.SS.Formula.Eval;
 using NPOI.SS.Formula.Functions;
 using Sgbj.Cron;
 using System.Globalization;
@@ -110,6 +111,12 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(invoice?.Customer?.AccountContactEmail))
+                {
+                    _logger.LogError("Recipient Email is missing.");
+                    return false;
+                }
+
                 var scope = _serviceProvider.CreateScope();
                 var _emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
                 var amount = String.Format(new CultureInfo("en-US"), "€{0:N2}", invoice?.DueAmount);

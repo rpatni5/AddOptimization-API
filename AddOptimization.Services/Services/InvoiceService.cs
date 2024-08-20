@@ -362,6 +362,11 @@ namespace AddOptimization.Services.Services
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(email))
+                {
+                    _logger.LogError(" Sender Email is missing.");
+                    return false;
+                }
                 var amount = String.Format(new CultureInfo("en-US"), "€{0:N2}", invoice?.DueAmount);
                 var subject = $"AddOptimization invoice pending for {invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy")} of {amount}";
                 var link = GetInvoiceLinkForCustomer(invoice.Id);
