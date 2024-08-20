@@ -311,6 +311,11 @@ namespace AddOptimization.Services.Services
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(email))
+                {
+                    _logger.LogError(" Sender Email is missing.");
+                    return false;
+                }
                 var subject = "Quote";
                 var link = GetQuoteLinkForCustomer(quote.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.CustomerQuote);
@@ -324,7 +329,7 @@ namespace AddOptimization.Services.Services
             }
             catch (Exception ex)
             {
-                _logger.LogException(ex);
+                _logger.LogError($"Error sending email: {ex.Message}");
                 return false;
             }
         }
