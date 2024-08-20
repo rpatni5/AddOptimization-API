@@ -41,6 +41,17 @@
 	[PartnerBankAddress] [varchar](400) NULL,
 	[CountryCodeId] [uniqueidentifier] NULL,
 	[PartnerVAT] [decimal](5, 2) NULL,
+	[AccountContactName] [varchar](200) NULL,
+	[AccountContactEmail] [varchar](200) NULL,
+	[Name] [varchar](200) NULL,
+	[Email] [varchar](200) NULL,
+	[AdministrationContactName] [varchar](200) NULL,
+	[AdministrationContactEmail] [varchar](200) NULL,
+	[TechnicalContactName] [varchar](200) NULL,
+	[TechnicalContactEmail] [varchar](200) NULL,
+	[IsAccountSAM] [bit] NULL,
+	[IsAdministrationSAM] [bit] NULL,
+	[IsTechnicalSAM] [bit] NULL,
  CONSTRAINT [PK_Customers] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC

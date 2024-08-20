@@ -119,13 +119,14 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 _ = int.TryParse(invoice?.PaymentClearanceDays.ToString(), out int clearanceDays);
                 emailTemplate = emailTemplate
                                 .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
+                                     .Replace("[AccountContactName]", invoice?.Customer?.AccountContactName)
                                 .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
                                 .Replace("[CompanyName]", invoice?.Customer?.Company)
                                 .Replace("[InvoiceDate]", invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy"))
                                 .Replace("[TotalAmountDue]", invoice?.DueAmount.ToString("N2", CultureInfo.InvariantCulture))
                                 .Replace("[DueDate]", invoice?.CreatedAt?.AddDays(clearanceDays).Date.ToString("dd/MM/yyyy"))
                                 .Replace("[LinkToInvoice]", link);
-                return await _emailService.SendEmail(invoice?.Customer?.ManagerEmail, subject, emailTemplate);
+                return await _emailService.SendEmail(invoice?.Customer?.AccountContactEmail, subject, emailTemplate);
             }
             catch (Exception ex)
             {

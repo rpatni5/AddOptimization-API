@@ -369,6 +369,7 @@ namespace AddOptimization.Services.Services
                 _ = int.TryParse(invoice?.Customer?.PaymentClearanceDays.ToString(), out int clearanceDays);
                 emailTemplate = emailTemplate
                                 .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
+                                 .Replace("[AccountContactName]", invoice?.Customer?.AccountContactName)
                                 .Replace("[CompanyName]", invoice?.Customer?.Organizations)
                                 .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
                                 .Replace("[InvoiceDate]", invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy"))
@@ -819,7 +820,7 @@ namespace AddOptimization.Services.Services
         {
             var entity = (await _invoiceRepository.QueryAsync(x => x.Id == invoiceId, include: entities => entities.Include(e => e.Customer))).FirstOrDefault();
             var details = (await _invoiceDetailRepository.QueryAsync(x => x.InvoiceId == invoiceId)).ToList();
-            return await SendRequestInvoiceEmailReminderToCustomer(entity.Customer.ManagerEmail, entity);
+            return await SendRequestInvoiceEmailReminderToCustomer(entity.Customer.AdministrationContactEmail, entity);
         }
 
 
