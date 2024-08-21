@@ -61,6 +61,7 @@ public class EmployeeContractService : IEmployeeContractService
             entity.IsContractSigned = false;
             entity.ContractName = contractName;
             entity.IsExternal = true;
+            entity.ContractNumber = contractNumber;
            
             await _contractRepository.InsertAsync(entity);
             var mappedEntity = _mapper.Map<EmployeeContractResponseDto>(entity);
@@ -178,6 +179,8 @@ public class EmployeeContractService : IEmployeeContractService
                 Address = e.Address,
                 CreatedAt = e.CreatedAt,
                 IsExternal = e.IsExternal,
+                ContractNumber = e.ContractNumber,
+                
 
             }).ToList());
 
@@ -243,7 +246,10 @@ public class EmployeeContractService : IEmployeeContractService
             {
                 entities = entities.Where(e => e.ContractName != null && (e.ContractName.ToLower().Contains(v.ToLower())));
             });
-
+            filters.GetValue<long>("contractNumber", (v) =>
+            {
+                entities = entities.Where(e => e.ContractNumber == v);
+            });
 
             filters.GetValue<DateTime>("createdAt", (v) =>
             {
@@ -275,6 +281,7 @@ public class EmployeeContractService : IEmployeeContractService
                 Salary = e.Salary,
                 Hours = e.Hours,
                 NIENumber = e.NIENumber,
+                ContractNumber = e.ContractNumber,
 
 
             }).ToList());
@@ -306,7 +313,11 @@ public class EmployeeContractService : IEmployeeContractService
         {
             entities = entities.Where(e => e.Customer != null && (e.Customer.Organizations.ToLower().Contains(v.ToLower())));
         });
-       
+        filter.GetValue<long>("contractNumber", (v) =>
+        {
+            entities = entities.Where(e => e.ContractNumber == v);
+        });
+
         filter.GetValue<DateTime>("signedDate", (v) =>
         {
             entities = entities.Where(e => e.SignedDate != null && e.SignedDate < v);
@@ -422,6 +433,7 @@ public class EmployeeContractService : IEmployeeContractService
             entity.IsContractSigned = false;
             entity.ContractName = contractName;
             entity.IsExternal = false;
+            entity.ContractNumber = contractNumber;
 
             await _contractRepository.InsertAsync(entity);
             var mappedEntity = _mapper.Map<EmployeeContractResponseDto>(entity);

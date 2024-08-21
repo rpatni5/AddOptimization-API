@@ -30,6 +30,7 @@ namespace AddOptimization.Data.Entities
         public decimal? Salary {  get; set; }
         public int? PublicHoliday {  get; set; }
 
+        public long ContractNumber { get; set; }
         public string? NIENumber { get; set; }
 
         [ForeignKey(nameof(ProjectFeePaymentModeId))]
