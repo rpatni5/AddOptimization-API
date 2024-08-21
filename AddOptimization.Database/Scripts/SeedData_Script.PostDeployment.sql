@@ -619,6 +619,24 @@ BEGIN
         ('44B14DD6-62DB-4001-A11B-8355F683D758','Send To Customer','SEND_TO_CUSTOMER')
 END
 
+/* Adding Declined Quote Status data in Quote Status */
+
+IF NOT EXISTS (SELECT 1 FROM QuoteStatuses Where StatusKey= 'DECLINED')
+BEGIN 
+    INSERT INTO QuoteStatuses(Id,Name,StatusKey)
+    VALUES
+        ('1AC52EF1-F81A-4DF3-B672-8C3DFE205DA6','Declined','DECLINED')
+END
+
+/* Adding Accepted Quote Status data in Quote Status */
+
+IF NOT EXISTS (SELECT 1 FROM QuoteStatuses Where StatusKey= 'ACCEPTED')
+BEGIN 
+    INSERT INTO QuoteStatuses(Id,Name,StatusKey)
+    VALUES
+        ('9C24DA99-1E92-480C-9DD7-DF33C0F02CE4','Accepted','ACCEPTED')
+END
+
 /* Adding send email notifications setting in Settings */
 
 IF NOT EXISTS (SELECT 1 FROM Settings Where Code= 'EMAIL_NOTIFICATIONS')

@@ -51,6 +51,7 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<ApplicationUser> _appUserRepository;
         private readonly IGenericRepository<Role> _roleRepository;
         private readonly IApplicationUserService _applicationService;
+        private readonly ICompanyService _companyService;
 
 
         private readonly ILogger<InvoiceService> _logger;
@@ -67,6 +68,7 @@ namespace AddOptimization.Services.Services
             IGenericRepository<InvoiceDetail> invoiceDetailRepository,
             IGenericRepository<Employee> employeeRepository,
             IGenericRepository<Company> companyRepository,
+            ICompanyService companyService,
             IUnitOfWork unitOfWork,
             IMapper mapper,
              IConfiguration configuration,
@@ -103,6 +105,7 @@ namespace AddOptimization.Services.Services
             _mapper = mapper;
             _configuration = configuration;
             _protectionService = protectionService;
+            _companyService = companyService;
             _templateService = templateService;
             _emailService = emailService;
             _currentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
@@ -355,10 +358,15 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private async Task<bool> SendRequestInvoiceEmailReminderToCustomer(string email, Invoice invoice)
+        private async Task<ApiResult<bool>> SendRequestInvoiceEmailReminderToCustomer(string email, Invoice invoice)
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(email))
+                {
+                    _logger.LogError(" Sender Email is missing.");
+                    return ApiResult<bool>.Success(false);
+                }
                 var amount = String.Format(new CultureInfo("en-US"), "€{0:N2}", invoice?.DueAmount);
                 var subject = $"AddOptimization invoice pending for {invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy")} of {amount}";
                 var link = GetInvoiceLinkForCustomer(invoice.Id);
@@ -366,25 +374,32 @@ namespace AddOptimization.Services.Services
                 _ = int.TryParse(invoice?.Customer?.PaymentClearanceDays.ToString(), out int clearanceDays);
                 emailTemplate = emailTemplate
                                 .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
+                                 .Replace("[AccountContactName]", invoice?.Customer?.AccountContactName)
                                 .Replace("[CompanyName]", invoice?.Customer?.Organizations)
                                 .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
                                 .Replace("[InvoiceDate]", invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy"))
                                 .Replace("[TotalAmountDue]", invoice?.DueAmount.ToString("N2", CultureInfo.InvariantCulture))
                                 .Replace("[DueDate]", invoice?.ExpiryDate.Date.ToString("dd/MM/yyyy"))
                                 .Replace("[LinkToInvoice]", link);
-                return await _emailService.SendEmail(email, subject, emailTemplate);
+                var emailResult =  await _emailService.SendEmail(email, subject, emailTemplate);
+                return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
             {
                 _logger.LogException(ex);
-                return false;
+                throw;
             }
         }
 
-        private async Task<bool> SendRequestInvoiceEmailToCustomer(string email, Invoice invoice)
+        private async Task<ApiResult<bool>> SendRequestInvoiceEmailToCustomer(string email, Invoice invoice ,CompanyDto companyInfo)
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(email))
+                {
+                    _logger.LogError(" Sender Email is missing.");
+                    return ApiResult<bool>.Success(false);
+                }
                 var amount = String.Format(new CultureInfo("en-US"), "€{0:N2}", invoice?.DueAmount);
                 var subject = $"AddOptimization invoice pending for {invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy")} of {amount}";
                 var link = GetInvoiceLinkForCustomer(invoice.Id);
@@ -393,17 +408,25 @@ namespace AddOptimization.Services.Services
                 emailTemplate = emailTemplate
                                 .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
                                 .Replace("[CompanyName]", invoice?.Customer?.Organizations)
+                                .Replace("[CustomerAccountantContactName]", invoice?.Customer?.AccountContactName)
                                 .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
                                 .Replace("[InvoiceDate]", invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy"))
                                 .Replace("[TotalAmountDue]", invoice?.DueAmount.ToString("N2", CultureInfo.InvariantCulture))
                                 .Replace("[DueDate]", invoice?.ExpiryDate.Date.ToString("dd/MM/yyyy"))
-                                .Replace("[LinkToInvoice]", link);
-                return await _emailService.SendEmail(email, subject, emailTemplate);
+                                .Replace("[LinkToInvoice]", link)
+                                .Replace("[CompanyAccountingEmail]", companyInfo.AccountingEmail)
+                                .Replace("[company]",companyInfo.CompanyName)
+                                .Replace("[BankName]", companyInfo.BankName)
+                                .Replace("[IbanNumber]",companyInfo.BankAccountNumber)
+                                .Replace("[SwiftCode]",companyInfo.SwiftCode);
+
+                var emailResult = await _emailService.SendEmail(email, subject, emailTemplate);
+                return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
             {
                 _logger.LogException(ex);
-                return false;
+                throw;
             }
         }
 
@@ -805,15 +828,14 @@ namespace AddOptimization.Services.Services
             return $"{baseUrl}invoice/approval/{encryptedId}";
         }
 
-        public async Task<bool> SendInvoiceEmailReminderToCustomer(int invoiceId)
+        public async Task<ApiResult<bool>> SendInvoiceEmailReminderToCustomer(int invoiceId)
         {
             var entity = (await _invoiceRepository.QueryAsync(x => x.Id == invoiceId, include: entities => entities.Include(e => e.Customer))).FirstOrDefault();
             var details = (await _invoiceDetailRepository.QueryAsync(x => x.InvoiceId == invoiceId)).ToList();
-            return await SendRequestInvoiceEmailReminderToCustomer(entity.Customer.ManagerEmail, entity);
+            return await SendRequestInvoiceEmailReminderToCustomer(entity.Customer.AccountContactEmail, entity);
         }
 
-
-        public async Task<bool> SendInvoiceToCustomer(int invoiceId)
+        public async Task<ApiResult<bool>> SendInvoiceToCustomer(int invoiceId)
         {
             var eventStatus = (await _invoiceStatusService.Search()).Result;
             var sentToCustomerStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.SEND_TO_CUSTOMER.ToString()).Id;
@@ -821,9 +843,10 @@ namespace AddOptimization.Services.Services
             var entity = (await _invoiceRepository.QueryAsync(x => x.Id == invoiceId, include: entities => entities.Include(e => e.Customer))).FirstOrDefault();
             entity.InvoiceStatusId = sentToCustomerStatusId;
             await _invoiceRepository.UpdateAsync(entity);
-
             var details = (await _invoiceDetailRepository.QueryAsync(x => x.InvoiceId == invoiceId)).ToList();
-            return await SendRequestInvoiceEmailToCustomer(entity.Customer.ManagerEmail, entity);
+            var companyInfoResult = await _companyService.GetCompanyInformation();
+            var companyInfo = companyInfoResult.Result;
+            return await SendRequestInvoiceEmailToCustomer(entity.Customer.AccountContactEmail, entity ,companyInfo);
         }
 
         public async Task<ApiResult<bool>> DeclineRequest(InvoiceActionRequestDto model)

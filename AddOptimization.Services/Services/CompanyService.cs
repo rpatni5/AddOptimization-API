@@ -51,7 +51,14 @@ public class CompanyService : ICompanyService
                 entity.State = model.State;
                 entity.TaxNumber = model.TaxNumber;
                 entity.DialCodeId = model.DialCodeId;
-
+                entity.AccountingName = model.AccountingName;
+                entity.AccountingEmail = model.AccountingEmail;
+                entity.AdministrationContactName = model.AdministrationContactName;
+                entity.AdministrationContactEmail = model.AdministrationContactEmail;
+                entity.SalesContactName = model.SalesContactName;
+                entity.SalesContactEmail = model.SalesContactEmail;
+                entity.TechnicalContactName = model.TechnicalContactName;
+                entity.TechnicalContactEmail = model.TechnicalContactEmail;
                 await _companyRepository.UpdateAsync(entity);
             }
             else

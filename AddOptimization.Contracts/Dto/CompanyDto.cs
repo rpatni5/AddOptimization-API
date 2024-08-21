@@ -27,6 +27,13 @@ namespace AddOptimization.Contracts.Dto
         public string? SwiftCode { get; set; }
         public string? State { get; set; }
         public string? TaxNumber { get; set; }
-
+        public string? AccountingName {  get; set; }
+        public string? AccountingEmail { get; set; }
+        public string? SalesContactName{ get; set; }
+        public string? SalesContactEmail { get; set; }
+        public string? TechnicalContactName { get; set; }
+        public string? TechnicalContactEmail { get; set; }
+        public string? AdministrationContactName { get; set; }
+        public string? AdministrationContactEmail { get; set; }
     }
 }

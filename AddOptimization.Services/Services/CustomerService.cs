@@ -81,7 +81,7 @@ public class CustomerService : ICustomerService
         {
             var superAdminRole = _currentUserRoles.Where(c => c.Contains("Super Admin", StringComparison.InvariantCultureIgnoreCase) || c.Contains("Account Admin", StringComparison.InvariantCultureIgnoreCase)).ToList();
             var entities = await _customerRepository.QueryAsync(include: entities => entities
-            .Include(e => e.CustomerStatus).Include(e => e.Licenses).Include(e => e.BillingAddress).Include(e => e.Country).Include(e => e.PartnerCountry), ignoreGlobalFilter: superAdminRole.Count != 0);
+            .Include(e => e.CustomerStatus).Include(e => e.Licenses).Include(e => e.BillingAddress).Include(e => e.Country).Include(e => e.PartnerCountry),orderBy: x => x.OrderBy(x => x.Organizations), ignoreGlobalFilter: superAdminRole.Count != 0);
 
             entities = ApplySorting(entities, filter?.Sorted?.FirstOrDefault());
             entities = ApplyFilters(entities, filter);
@@ -128,6 +128,18 @@ public class CustomerService : ICustomerService
                 PartnerCountryNames = e.PartnerCountry.CountryName,
                 PartnerEmail = e.PartnerEmail,
                 PartnerPhone = e.PartnerPhone,
+                AccountContactName = e.AccountContactName,
+                AccountContactEmail = e.AccountContactEmail,
+                Name = e.Name,
+                Email = e.Email,
+                AdministrationContactName = e.AdministrationContactName,
+                AdministrationContactEmail = e.AdministrationContactEmail,
+                TechnicalContactEmail = e.TechnicalContactEmail,
+                TechnicalContactName = e.TechnicalContactName,
+                IsAccountSAM = e.IsAccountSAM,
+                IsAdministrationSAM = e.IsAdministrationSAM,
+                IsTechnicalSAM = e.IsTechnicalSAM,
+
             }).ToList());
             var retVal = pagedResult;
             return PagedApiResult<CustomerDto>.Success(retVal);
@@ -362,7 +374,7 @@ public class CustomerService : ICustomerService
         {
             if (sort?.Name == null)
             {
-                orders = orders.OrderByDescending(o => o.CreatedAt);
+                orders = orders.OrderBy(o => o.Organizations);
                 return orders;
             }
             var columnName = sort.Name.ToUpper();
@@ -471,7 +483,7 @@ public class CustomerService : ICustomerService
                 include: entities => entities
                     .Include(e => e.CreatedByUser)
                     .Include(e => e.UpdatedByUser)
-                    .Include(e => e.Country), 
+                    .Include(e => e.Country),
                 orderBy: x => x.OrderBy(x => x.Id)
             );
 
@@ -513,11 +525,23 @@ public class CustomerService : ICustomerService
                 ZipCode = e.ZipCode,
                 PartnerCity = e.PartnerCity,
                 PartnerZipCode = e.PartnerZipCode,
-                CountryNames = e.Country.CountryName, 
+                CountryNames = e.Country.CountryName,
                 PartnerCompany = e.PartnerCompany,
                 PartnerCountryNames = e.PartnerCountry.CountryName,
                 PartnerEmail = e.PartnerEmail,
                 PartnerPhone = e.PartnerPhone,
+                AccountContactName = e.AccountContactName,
+                AccountContactEmail = e.AccountContactEmail,
+                Name = e.Name,
+                Email = e.Email,
+                AdministrationContactName = e.AdministrationContactName,
+                AdministrationContactEmail = e.AdministrationContactEmail,
+                TechnicalContactEmail = e.TechnicalContactEmail,
+                TechnicalContactName = e.TechnicalContactName,
+                IsAccountSAM = e.IsAccountSAM,
+                IsAdministrationSAM = e.IsAdministrationSAM,
+                IsTechnicalSAM = e.IsTechnicalSAM,
+
             }).ToList();
 
             return ApiResult<List<CustomerDto>>.Success(mappedEntities);

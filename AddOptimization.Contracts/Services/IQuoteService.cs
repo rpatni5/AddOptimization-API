@@ -15,7 +15,7 @@ namespace AddOptimization.Contracts.Services
         Task<ApiResult<QuoteResponseDto>> Update(long id, QuoteRequestDto model);
         Task<PagedApiResult<QuoteResponseDto>> Search(PageQueryFiterBase filters);
         Task<ApiResult<QuoteResponseDto>> FetchQuoteDetails(long id);
-        Task<bool> SendQuoteEmailToCustomer(long quoteId);
+        Task<ApiResult<bool>> SendQuoteEmailToCustomer(long quoteId);
         Task<ApiResult<InvoiceResponseDto>> ConvertInvoice(long quoteId);
         Task<ApiResult<bool>> QuoteAction(QuoteActionDto model);
     }

@@ -69,6 +69,19 @@ public partial class Customer : BaseEntityNew<Guid>
     public string PartnerCompany { get; set; }
     public string PartnerBankAddress { get; set; }
 
+    public string AccountContactName { get; set; }
+    public string AccountContactEmail { get; set; }
+    public string Name { get; set; }
+    public string Email { get; set; }
+    public string AdministrationContactName { get; set; }
+    public string AdministrationContactEmail { get; set; }
+    public string TechnicalContactName { get; set; }
+    public string TechnicalContactEmail { get; set; }
+    public bool? IsAccountSAM { get; set; }
+    public bool? IsAdministrationSAM { get; set; }
+    public bool? IsTechnicalSAM { get; set; }
+
+
 
     [ForeignKey(nameof(CountryId))]
     public virtual Country Country { get; set; }
