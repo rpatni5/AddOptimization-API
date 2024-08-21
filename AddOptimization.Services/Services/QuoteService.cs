@@ -296,17 +296,17 @@ namespace AddOptimization.Services.Services
             return $"{baseUrl}quote/approval/{encryptedId}";
         }
 
-        public async Task<bool> SendQuoteEmailToCustomer(long quoteId)
+        public async Task<ApiResult<bool>> SendQuoteEmailToCustomer(long quoteId)
         {
             var eventStatus = (await _quoteStatusService.Search()).Result;
             var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == QuoteStatusesEnum.SEND_TO_CUSTOMER.ToString()).Id;
             var entity = (await _quoteRepository.QueryAsync(x => x.Id == quoteId, include: entities => entities.Include(e => e.Customer))).FirstOrDefault();
             entity.QuoteStatusId = statusId;
             await _quoteRepository.UpdateAsync(entity);
-            return await SendQuoteToCustomer(entity.Customer.TechnicalContactEmail, entity, entity.Customer.TechnicalContactName, entity.Customer.Organizations);
+           return await SendQuoteToCustomer(entity.Customer.TechnicalContactEmail, entity, entity.Customer.TechnicalContactName, entity.Customer.Organizations);
         }
 
-        private async Task<bool> SendQuoteToCustomer(string email, Quote quote, string technicalContactName,
+        private async Task<ApiResult<bool>> SendQuoteToCustomer(string email, Quote quote, string technicalContactName,
                                     string customer)
         {
             try
@@ -314,23 +314,24 @@ namespace AddOptimization.Services.Services
                 if (string.IsNullOrWhiteSpace(email))
                 {
                     _logger.LogError(" Sender Email is missing.");
-                    return false;
+                    return ApiResult<bool>.Success(false);
                 }
                 var subject = "Quote";
                 var link = GetQuoteLinkForCustomer(quote.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.CustomerQuote);
                 emailTemplate = emailTemplate.Replace("[TechnicalContactName]", technicalContactName)
-                                             .Replace("[QuoteNumber]",quote.QuoteNo.ToString())
+                                             .Replace("[QuoteNumber]", quote.QuoteNo.ToString())
                                              .Replace("[LinkToQuote]", link)
                                              .Replace("[CustomerName]", customer)
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(quote.QuoteDate.Month))
                                              .Replace("[Year]", quote.QuoteDate.Year.ToString());
-                return await _emailService.SendEmail(email, subject, emailTemplate);
+                var emailResult = await _emailService.SendEmail(email, subject, emailTemplate);
+                return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error sending email: {ex.Message}");
-                return false;
+                throw;
             }
         }
 
@@ -552,7 +553,7 @@ namespace AddOptimization.Services.Services
                 var sendSuccess = true;
                 foreach (var accountAdmin in accountAdminResult.Result)
                 {
-                    var success = await SendTimesheetActionEmailToAccountAdmin(accountAdmin,customer, model.IsApproved, model.Comment ,entities.QuoteNo ,entities.QuoteDate , entities.ExpiryDate);
+                    var success = await SendTimesheetActionEmailToAccountAdmin(accountAdmin,customer, model.IsApproved, model.Comment,entities.QuoteNo,entities.QuoteDate, entities.ExpiryDate);
                     if (!success)
                     {
                         sendSuccess = false;
@@ -568,7 +569,7 @@ namespace AddOptimization.Services.Services
         }
 
 
-        private async Task<bool> SendTimesheetActionEmailToAccountAdmin(ApplicationUserDto accountAdmin, Customer customer, bool isApprovedEmail, string comment ,long quoteNo ,DateTime quoteDate ,DateTime expiryDate)
+        private async Task<bool> SendTimesheetActionEmailToAccountAdmin(ApplicationUserDto accountAdmin, Customer customer, bool isApprovedEmail, string comment, long quoteNo, DateTime quoteDate, DateTime expiryDate)
         {
             try
             {

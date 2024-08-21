@@ -785,7 +785,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private async Task<bool> SendRequestTimesheetApprovalEmailToCustomer(string email, SchedulerEvent schedulerEvent, string administrationContactName,
+        private async Task<ApiResult<bool>> SendRequestTimesheetApprovalEmailToCustomer(string email, SchedulerEvent schedulerEvent, string administrationContactName,
              string employeeName, decimal totalWorkingDays, decimal overtimeHours)
         {
             try
@@ -793,7 +793,7 @@ namespace AddOptimization.Services.Services
                 if (string.IsNullOrWhiteSpace(email))
                 {
                     _logger.LogError(" Sender Email is missing.");
-                    return false;
+                    return ApiResult<bool>.Success(false);
                 }
                 var subject = "Timesheet Approval Request";
                 var link = GetTimesheetLinkForCustomer(schedulerEvent.Id);
@@ -805,12 +805,13 @@ namespace AddOptimization.Services.Services
                                              .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
                                              .Replace("[WorkDuration]", totalWorkingDays.ToString())
                                              .Replace("[Overtime]", overtimeHours.ToString());
-                return await _emailService.SendEmail(email, subject, emailTemplate);
+                var emailResult = await _emailService.SendEmail(email, subject, emailTemplate);
+                return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
             {
                 _logger.LogException(ex);
-                return false;
+                throw;
             }
         }
         private async Task<bool> SendRequestTimesheetApprovalEmailToAccountAdmin(string email, SchedulerEvent schedulerEvent, string approverName,
@@ -847,7 +848,7 @@ namespace AddOptimization.Services.Services
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
             return $"{baseUrl}admin/timesheets/time-sheets-review-calendar/{schedulerEventId}";
         }
-        public async Task<bool> SendTimesheetApprovalEmailToCustomer(Guid schedulerEventId)
+        public async Task<ApiResult<bool>> SendTimesheetApprovalEmailToCustomer(Guid schedulerEventId)
         {
             var entity = (await _schedulersRepository.QueryAsync(x => x.Id == schedulerEventId, include: entities => entities.Include(e => e.ApplicationUser).Include(e => e.Customer))).FirstOrDefault();
             var details = (await _schedulersDetailsRepository.QueryAsync(x => x.SchedulerEventId == schedulerEventId)).ToList();

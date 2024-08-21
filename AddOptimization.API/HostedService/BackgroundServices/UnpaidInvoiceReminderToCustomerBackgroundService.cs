@@ -3,6 +3,7 @@ using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Data.Entities;
 using AddOptimization.Services.Constants;
+using AddOptimization.Utilities.Common;
 using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Interface;
@@ -107,14 +108,14 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             }
         }
 
-        private async Task<bool> SendUnpaidInvoiceReminderEmailCustomer(InvoiceResponseDto invoice)
+        private async Task<ApiResult<bool>> SendUnpaidInvoiceReminderEmailCustomer(InvoiceResponseDto invoice)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(invoice?.Customer?.AccountContactEmail))
                 {
                     _logger.LogError("Recipient Email is missing.");
-                    return false;
+                    return ApiResult<bool>.Success(false);
                 }
 
                 var scope = _serviceProvider.CreateScope();
@@ -133,13 +134,14 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                                 .Replace("[TotalAmountDue]", invoice?.DueAmount.ToString("N2", CultureInfo.InvariantCulture))
                                 .Replace("[DueDate]", invoice?.CreatedAt?.AddDays(clearanceDays).Date.ToString("dd/MM/yyyy"))
                                 .Replace("[LinkToInvoice]", link);
-                return await _emailService.SendEmail(invoice?.Customer?.AccountContactEmail, subject, emailTemplate);
+                var emailResult = await _emailService.SendEmail(invoice?.Customer?.AccountContactEmail, subject, emailTemplate);
+                return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
             {
                 _logger.LogInformation("An exception occurred while sending unpaid invoice reminder email to customer.");
                 _logger.LogException(ex);
-                return false;
+                throw;
             }
         }
         private async Task<bool> SendUnpaidInvoiceReminderEmailAccountAdmin(InvoiceResponseDto invoice, ApplicationUserDto accountAdmin)
