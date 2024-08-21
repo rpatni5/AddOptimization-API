@@ -29,7 +29,7 @@ namespace AddOptimization.Contracts.Dto
         public int? EmployeeId { get; set; }
         public string InvoicingAndPaymentMode { get; set; }
         public string ProjectFeePaymentMode { get; set; }
-
+        public long ContractNumber { get; set; }
         public DateTime? ProjectStartDate { get; set; }
         public DateTime? ProjectEndDate { get; set; }
         public Guid? ProjectFeePaymentModeId { get; set; }

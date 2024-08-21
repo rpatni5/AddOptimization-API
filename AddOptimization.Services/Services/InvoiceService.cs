@@ -430,16 +430,16 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private async Task<bool> SendInvoiceDeclinedEmailToAccountAdmins(IEnumerable<dynamic> accountAdmins, string customerName, long invoiceNumber, int? dueDate, decimal totalAmountDue, string comment)
+        private async Task<bool> SendInvoiceDeclinedEmailToAccountAdmins(IEnumerable<dynamic> accountAdmins, string accountContactName, long invoiceNumber, DateTime expiryDate, decimal totalAmountDue, string comment)
         {
             try
             {
                 var subject = "Invoice Declined";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.DeclinedInvoice);
-                emailTemplate = emailTemplate.Replace("[CustomerName]", customerName)
+                emailTemplate = emailTemplate.Replace("[AccountContactName]", accountContactName)
                                              .Replace("[InvoiceNumber]", invoiceNumber.ToString())
                                              .Replace("[TotalAmountDue]", totalAmountDue.ToString("N2", CultureInfo.InvariantCulture))
-                                             .Replace("[DueDate]", dueDate.ToString())
+                                             .Replace("[ExpiryDate]", expiryDate.ToString("dd/MM/yyyy"))
                                              .Replace("[Comment]", !string.IsNullOrEmpty(comment) ? comment : "No comment added.");
                 foreach (var admin in accountAdmins)
                 {
@@ -867,9 +867,9 @@ namespace AddOptimization.Services.Services
                 await _invoiceHistoryRepository.InsertAsync(entity);
                 var entities = (await _invoiceRepository.QueryAsync(x => x.Id == result.Id, include: entities => entities.Include(e => e.Customer))).FirstOrDefault();
                 var accountAdmins = (await _applicationService.GetAccountAdmins()).Result;
-                var adminEmails = accountAdmins.Select(admin => new { Name = admin.UserName, Email = admin.Email });
+                var adminEmails = accountAdmins.Select(admin => new { Name = admin.FullName, Email = admin.Email });
 
-                await SendInvoiceDeclinedEmailToAccountAdmins(adminEmails, entities.Customer.ManagerEmail, entities.InvoiceNumber, entities.PaymentClearanceDays, entities.TotalPriceIncludingVat, entity.Comment);
+                await SendInvoiceDeclinedEmailToAccountAdmins(adminEmails, entities.Customer.AccountContactName, entities.InvoiceNumber, entities.ExpiryDate, entities.TotalPriceIncludingVat, entity.Comment);
 
                 return ApiResult<bool>.Success(true);
             }

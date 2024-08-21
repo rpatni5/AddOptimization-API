@@ -157,7 +157,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 _ = int.TryParse(invoice?.PaymentClearanceDays.ToString(), out int clearanceDays);
                 emailTemplate = emailTemplate
                                 .Replace("[AccountAdminName]", accountAdmin.FullName)
-                                .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
+                                .Replace("[AccountContactName]", invoice?.Customer?.AccountContactName)
                                 .Replace("[CompanyName]", invoice?.Customer?.Company)
                                 .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
                                 .Replace("[InvoiceDate]", invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy"))
