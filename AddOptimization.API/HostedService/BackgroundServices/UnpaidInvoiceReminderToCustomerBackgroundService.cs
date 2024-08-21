@@ -6,6 +6,7 @@ using AddOptimization.Services.Constants;
 using AddOptimization.Utilities.Common;
 using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
+using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
 using AddOptimization.Utilities.Services;
@@ -120,19 +121,19 @@ namespace AddOptimization.API.HostedService.BackgroundServices
 
                 var scope = _serviceProvider.CreateScope();
                 var _emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
-                var amount = String.Format(new CultureInfo("en-US"), "€{0:N2}", invoice?.DueAmount);
-                var subject = $"AddOptimization invoice pending for {invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy")} of {amount}";
+                var amount = LocaleHelper.FormatCurrency(invoice.DueAmount);
+                var subject = $"AddOptimization invoice pending for {LocaleHelper.FormatDate(invoice.InvoiceDate.Date)} of {amount}";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoiceReminder);
                 var link = GetInvoiceLinkForCustomer(invoice.Id);
                 _ = int.TryParse(invoice?.PaymentClearanceDays.ToString(), out int clearanceDays);
                 emailTemplate = emailTemplate
                                 .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
-                                     .Replace("[AccountContactName]", invoice?.Customer?.AccountContactName)
+                                 .Replace("[AccountContactName]", invoice?.Customer?.AccountContactName)
                                 .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
                                 .Replace("[CompanyName]", invoice?.Customer?.Company)
-                                .Replace("[InvoiceDate]", invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy"))
-                                .Replace("[TotalAmountDue]", invoice?.DueAmount.ToString("N2", CultureInfo.InvariantCulture))
-                                .Replace("[DueDate]", invoice?.CreatedAt?.AddDays(clearanceDays).Date.ToString("dd/MM/yyyy"))
+                                .Replace("[InvoiceDate]", LocaleHelper.FormatDate(invoice.InvoiceDate.Date))
+                                .Replace("[TotalAmountDue]", LocaleHelper.FormatCurrency(invoice.DueAmount))
+                                .Replace("[DueDate]",LocaleHelper.FormatDate(invoice.ExpiryDate.Date))
                                 .Replace("[LinkToInvoice]", link);
                 var emailResult = await _emailService.SendEmail(invoice?.Customer?.AccountContactEmail, subject, emailTemplate);
                 return ApiResult<bool>.Success(true);
@@ -150,8 +151,8 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             {
                 var scope = _serviceProvider.CreateScope();
                 var _emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
-                var amount = String.Format(new CultureInfo("en-US"), "€{0:N2}", invoice?.DueAmount);
-                var subject = $"AddOptimization invoice pending for {invoice?.Customer?.ManagerName} dated {invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy")} of {amount}";
+                var amount =LocaleHelper.FormatCurrency(invoice.DueAmount);
+                var subject = $"AddOptimization invoice pending for {invoice?.Customer?.ManagerName} dated {LocaleHelper.FormatDate(invoice.InvoiceDate.Date)} of {amount}";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoiceReminderAccountAdmin);
                 var link = GetInvoiceLinkForAccountAdmin(invoice.Id);
                 _ = int.TryParse(invoice?.PaymentClearanceDays.ToString(), out int clearanceDays);
@@ -160,9 +161,9 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                                 .Replace("[AccountContactName]", invoice?.Customer?.AccountContactName)
                                 .Replace("[CompanyName]", invoice?.Customer?.Company)
                                 .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
-                                .Replace("[InvoiceDate]", invoice?.InvoiceDate.Date.ToString("dd/MM/yyyy"))
-                                .Replace("[TotalAmountDue]", invoice?.DueAmount.ToString("N2", CultureInfo.InvariantCulture))
-                                .Replace("[DueDate]", invoice?.CreatedAt?.AddDays(clearanceDays).Date.ToString("dd/MM/yyyy"))
+                                .Replace("[InvoiceDate]", LocaleHelper.FormatDate(invoice.InvoiceDate.Date))
+                                .Replace("[TotalAmountDue]",LocaleHelper.FormatCurrency(invoice.DueAmount))
+                                .Replace("[DueDate]", LocaleHelper.FormatDate(invoice.ExpiryDate.Date))
                                 .Replace("[LinkToInvoice]", link);
                 return await _emailService.SendEmail(accountAdmin.Email, subject, emailTemplate);
             }
