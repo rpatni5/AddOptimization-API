@@ -576,7 +576,7 @@ namespace AddOptimization.Services.Services
                 var subject = isApprovedEmail ? "Quote Approved" : "Quote Declined";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.QuoteActions);
                 emailTemplate = emailTemplate.Replace("[AccountAdminName]", accountAdmin.FullName)
-                                             .Replace("[CustomerName]", customer.Organizations)
+                                             .Replace("[TechnicalContactName]", customer.TechnicalContactName)
                                              .Replace("[QuoteNumber]", quoteNo.ToString())
                                              .Replace("[QuoteDate]", quoteDate.ToString("dd/MM/yyyy"))
                                              .Replace("[ExpiryDate]", expiryDate.ToString("dd/MM/yyyy"))

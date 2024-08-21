@@ -698,7 +698,7 @@ namespace AddOptimization.Services.Services
                 var subject = isApprovedEmail ? "Timesheet Approved" : "Timesheet Declined";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetActionsEmployee);
                 emailTemplate = emailTemplate.Replace("[EmployeeName]", user.FullName)
-                                             .Replace("[CustomerName]", customer.ManagerName)
+                                             .Replace("[AdministrationContactName]", customer.AdministrationContactName)
                                              .Replace("[TimesheetAction]", isApprovedEmail ? "approved" : "declined")
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
                                              .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
@@ -724,7 +724,7 @@ namespace AddOptimization.Services.Services
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetActions);
                 emailTemplate = emailTemplate.Replace("[AccountAdmin]", approver.FullName)
                                              .Replace("[EmployeeName]", user.FullName)
-                                             .Replace("[CustomerName]", customer.ManagerName)
+                                             .Replace("[AdministrationContactName]", customer.AdministrationContactName)
                                              .Replace("[TimesheetAction]", isApprovedEmail ? "approved" : "declined")
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
                                              .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())

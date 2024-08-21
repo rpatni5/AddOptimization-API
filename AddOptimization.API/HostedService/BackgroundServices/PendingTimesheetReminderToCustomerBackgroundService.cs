@@ -100,12 +100,12 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.ApproveTimesheetReminder);
                 var link = GetMyTimesheetLinkForCustomer(schedulerEvent.Id);
                 emailTemplate = emailTemplate
-                                .Replace("[CustomerName]", schedulerEvent?.Customer.Name)
+                                .Replace("[AdministrationContactName]", schedulerEvent?.Customer.AdministrationContactName)
                                 .Replace("[EmployeeName]", schedulerEvent?.ApplicationUser.FullName)
                                 .Replace("[StartDate]", schedulerEvent?.StartDate.Date.ToString("d"))
                                 .Replace("[EndDate]", schedulerEvent?.EndDate.Date.ToString("d"))
                                 .Replace("[LinkToApproveTimesheet]", link);
-                return await _emailService.SendEmail(schedulerEvent?.Customer?.ManagerEmail, subject, emailTemplate);
+                return await _emailService.SendEmail(schedulerEvent?.Customer?.AdministrationContactEmail, subject, emailTemplate);
             }
             catch (Exception ex)
             {
