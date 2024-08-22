@@ -13,8 +13,7 @@ namespace AddOptimization.Contracts.Services
         Task<PagedApiResult<InvoiceResponseDto>> Search(PageQueryFiterBase filters);
         Task<ApiResult<InvoiceResponseDto>> FetchInvoiceDetails(int id, bool getRoleBasedData = true);
         Task<ApiResult<InvoiceResponseDto>> Update(int id, InvoiceRequestDto model);
-        Task<ApiResult<bool>> SendInvoiceEmailReminderToCustomer(int invoiceId);
-        Task<ApiResult<bool>> SendInvoiceToCustomer(int invoiceId); 
+        Task<ApiResult<bool>> SendInvoiceToCustomer(int invoiceId, bool onlyEmail = false);
         Task<ApiResult<bool>> DeclineRequest(InvoiceActionRequestDto model);
         Task<ApiResult<List<InvoiceResponseDto>>> GetUnpaidInvoicesForEmailReminder();
     }
