@@ -19,6 +19,7 @@ using AddOptimization.Utilities.Interface;
 using Microsoft.Extensions.Configuration;
 using AddOptimization.Data.Repositories;
 using System.Reflection.Metadata.Ecma335;
+using AddOptimization.Utilities.Helpers;
 
 
 namespace AddOptimization.Services.Services
@@ -237,7 +238,7 @@ namespace AddOptimization.Services.Services
                                              .Replace("[EmployeeName]", user.FullName)
                                              .Replace("[Action]", action)
                                              .Replace("[LinkToAbsenceRequests]", link)
-                                             .Replace("[Date]", absenceRequest.Date.ToString("dd/MM/yyyy"))
+                                             .Replace("[Date]", LocaleHelper.FormatDate(absenceRequest.Date))
                                              .Replace("[Duration]", duration)
                                              .Replace("[Comment]", comment);
                 return await _emailService.SendEmail(accountAdmin.Email, subject, emailTemplate);

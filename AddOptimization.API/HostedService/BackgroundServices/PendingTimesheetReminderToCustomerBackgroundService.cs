@@ -4,6 +4,7 @@ using AddOptimization.Contracts.Services;
 using AddOptimization.Data.Entities;
 using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
+using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
 using AddOptimization.Utilities.Services;
@@ -100,12 +101,12 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.ApproveTimesheetReminder);
                 var link = GetMyTimesheetLinkForCustomer(schedulerEvent.Id);
                 emailTemplate = emailTemplate
-                                .Replace("[CustomerName]", schedulerEvent?.Customer.Name)
+                                .Replace("[AdministrationContactName]", schedulerEvent?.Customer.AdministrationContactName)
                                 .Replace("[EmployeeName]", schedulerEvent?.ApplicationUser.FullName)
-                                .Replace("[StartDate]", schedulerEvent?.StartDate.Date.ToString("d"))
-                                .Replace("[EndDate]", schedulerEvent?.EndDate.Date.ToString("d"))
+                                .Replace("[StartDate]", LocaleHelper.FormatDate(schedulerEvent.StartDate.Date))
+                                .Replace("[EndDate]", LocaleHelper.FormatDate(schedulerEvent.EndDate.Date))
                                 .Replace("[LinkToApproveTimesheet]", link);
-                return await _emailService.SendEmail(schedulerEvent?.Customer?.ManagerEmail, subject, emailTemplate);
+                return await _emailService.SendEmail(schedulerEvent?.Customer?.AdministrationContactEmail, subject, emailTemplate);
             }
             catch (Exception ex)
             {

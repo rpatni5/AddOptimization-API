@@ -497,7 +497,7 @@ namespace AddOptimization.Services.Services
                                              .Replace("[EmployeeName]", employeeName)
                                              .Replace("[LinkToOrder]", link)
                                              .Replace("[InvoiceNumber]", invoiceNumber.ToString())
-                                             .Replace("[TotalAmountDue]", totalAmountDue.ToString("N2", CultureInfo.InvariantCulture));
+                                             .Replace("[TotalAmountDue]", LocaleHelper.FormatCurrency(totalAmountDue));
 
                 foreach (var admin in accountAdmins)
                 {
@@ -524,7 +524,7 @@ namespace AddOptimization.Services.Services
                     .Replace("[CompanyName]", companyName)
                                              .Replace("[EmployeeName]", employee.FullName)
                                              .Replace("[InvoiceNumber]", invoiceNumber.ToString())
-                                             .Replace("[TotalAmountDue]", totalAmountDue.ToString("N2", CultureInfo.InvariantCulture))
+                                             .Replace("[TotalAmountDue]", LocaleHelper.FormatCurrency(totalAmountDue))
                                              .Replace("[Comment]", !string.IsNullOrEmpty(comment) ? comment : "No comment added.");
 
                 await _emailService.SendEmail(employee.Email, subject, emailTemplate);
@@ -592,7 +592,7 @@ namespace AddOptimization.Services.Services
                                              .Replace("[EmployeeName]", employeeName)
                                              .Replace("[LinkToOrder]", link)
                                              .Replace("[InvoiceNumber]", invoiceNumber.ToString())
-                                             .Replace("[TotalAmountDue]", totalAmountDue.ToString("N2", CultureInfo.InvariantCulture))
+                                             .Replace("[TotalAmountDue]", LocaleHelper.FormatCurrency(totalAmountDue));
                 ;
 
                 return await _emailService.SendEmail(email, subject, emailTemplate);
