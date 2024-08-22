@@ -270,7 +270,7 @@ namespace AddOptimization.Services.Services
                 emailTemplate = emailTemplate.Replace("[AccountAdminName]", accountAdmin.FullName)
                                              .Replace("[EmployeeName]", user.FullName)
                                              .Replace("[Action]", action)
-                                             .Replace("[Date]", absenceRequest.Date.ToString("dd/MM/yyyy"))
+                                             .Replace("[Date]", LocaleHelper.FormatDate(absenceRequest.Date))
                                              .Replace("[Duration]", absenceRequest.Duration.ToString())
                                              .Replace("[Comment]", absenceRequest.Comment);
                 return await _emailService.SendEmail(user.Email, subject, emailTemplate);

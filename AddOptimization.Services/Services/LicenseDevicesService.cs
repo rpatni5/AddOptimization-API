@@ -14,6 +14,7 @@ using AddOptimization.Utilities.Enums;
 using AddOptimization.Contracts.Constants;
 using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Services;
+using AddOptimization.Utilities.Helpers;
 
 namespace AddOptimization.Services.Services;
 public class LicenseDeviceService : ILicenseDeviceService
@@ -220,7 +221,7 @@ public class LicenseDeviceService : ILicenseDeviceService
                             .Replace("[Activated]", activated.ToString())
                             .Replace("[Remaining]", remaining.ToString())
                             .Replace("[Total]", license.NoOfDevices.ToString())
-                            .Replace("[ExpirationDate]", license.ExpirationDate.ToString());
+                            .Replace("[ExpirationDate]", LocaleHelper.FormatDate(license.ExpirationDate));
             return await _emailService.SendEmail(email, subject, emailTemplate);
         }
         catch (Exception ex)
