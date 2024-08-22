@@ -76,12 +76,12 @@ namespace AddOptimization.API.Controllers
             }
         }
 
-        [HttpPost("send-email-to-customer/{invoiceId}")]
-        public async Task<IActionResult> SendInvoiceEmailReminderToCustomer(int invoiceId)
+        [HttpPost("send-invoice-customer-manually/{invoiceId}")]
+        public async Task<IActionResult> SendInvoiceEmailToCustomer(int invoiceId)
         {
             try
             {
-                var retVal = await _invoiceService.SendInvoiceEmailReminderToCustomer(invoiceId);
+                var retVal = await _invoiceService.SendInvoiceToCustomer(invoiceId, true);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
