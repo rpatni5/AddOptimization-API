@@ -406,7 +406,7 @@ public class LicenseService : ILicenseService
                             .Replace("[Message]", message)
                             .Replace("[LicenseKey]", license.LicenseKey)
                             .Replace("[NoOfDevices]", license.NoOfDevices.ToString())
-                            .Replace("[ExpirationDate]", license.ExpirationDate.ToString());
+                            .Replace("[ExpirationDate]", LocaleHelper.FormatDate(license.ExpirationDate));
             return await _emailService.SendEmail(email, subject, emailTemplate);
         }
         catch (Exception ex)

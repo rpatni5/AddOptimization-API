@@ -578,8 +578,8 @@ namespace AddOptimization.Services.Services
                 emailTemplate = emailTemplate.Replace("[AccountAdminName]", accountAdmin.FullName)
                                              .Replace("[TechnicalContactName]", customer.TechnicalContactName)
                                              .Replace("[QuoteNumber]", quoteNo.ToString())
-                                             .Replace("[QuoteDate]", quoteDate.ToString("dd/MM/yyyy"))
-                                             .Replace("[ExpiryDate]", expiryDate.ToString("dd/MM/yyyy"))
+                                             .Replace("[QuoteDate]", LocaleHelper.FormatDate(quoteDate))
+                                             .Replace("[ExpiryDate]", LocaleHelper.FormatDate(expiryDate))
                                              .Replace("[TimesheetAction]", isApprovedEmail ? "approved" : "declined")
                                              .Replace("[Comment]", !string.IsNullOrEmpty(comment) ? comment : "No comment added.");
                 return await _emailService.SendEmail(accountAdmin.Email, subject, emailTemplate);

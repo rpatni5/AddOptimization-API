@@ -439,7 +439,7 @@ namespace AddOptimization.Services.Services
                 emailTemplate = emailTemplate.Replace("[AccountContactName]", accountContactName)
                                              .Replace("[InvoiceNumber]", invoiceNumber.ToString())
                                              .Replace("[TotalAmountDue]",LocaleHelper.FormatCurrency(totalAmountDue))
-                                             .Replace("[ExpiryDate]", expiryDate.ToString("dd/MM/yyyy"))
+                                             .Replace("[ExpiryDate]", LocaleHelper.FormatDate(expiryDate))
                                              .Replace("[Comment]", !string.IsNullOrEmpty(comment) ? comment : "No comment added.");
                 foreach (var admin in accountAdmins)
                 {
