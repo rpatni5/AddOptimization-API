@@ -702,8 +702,8 @@ namespace AddOptimization.Services.Services
                                              .Replace("[TimesheetAction]", isApprovedEmail ? "approved" : "declined")
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
                                              .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
-                                             .Replace("[WorkDuration]", totalWorkingDays.ToString())
-                                             .Replace("[Overtime]", overtimeHours.ToString())
+                                             .Replace("[WorkDuration]", LocaleHelper.FormatNumber(totalWorkingDays))
+                                             .Replace("[Overtime]", LocaleHelper.FormatNumber(overtimeHours))
                                              .Replace("[Comment]", !string.IsNullOrEmpty(comment) ? comment : "No comment added.");
                 return await _emailService.SendEmail(user.Email, subject, emailTemplate);
             }
@@ -728,8 +728,8 @@ namespace AddOptimization.Services.Services
                                              .Replace("[TimesheetAction]", isApprovedEmail ? "approved" : "declined")
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
                                              .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
-                                             .Replace("[WorkDuration]", totalWorkingDays.ToString())
-                                             .Replace("[Overtime]", overtimeHours.ToString())
+                                             .Replace("[WorkDuration]", LocaleHelper.FormatNumber(totalWorkingDays))
+                                             .Replace("[Overtime]", LocaleHelper.FormatNumber(overtimeHours))
                                              .Replace("[Comment]", !string.IsNullOrEmpty(comment) ? comment : "No comment added.");
                 return await _emailService.SendEmail(approver.Email, subject, emailTemplate);
             }
@@ -751,8 +751,8 @@ namespace AddOptimization.Services.Services
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
                                              .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
                                              .Replace("[Approver]", approverName)
-                                             .Replace("[WorkDuration]", totalWorkingDays.ToString())
-                                             .Replace("[Overtime]", overtimeHours.ToString());
+                                             .Replace("[WorkDuration]", LocaleHelper.FormatNumber(totalWorkingDays))
+                                             .Replace("[Overtime]", LocaleHelper.FormatNumber(overtimeHours));
                 return await _emailService.SendEmail(email, subject, emailTemplate);
             }
             catch (Exception ex)
@@ -773,8 +773,8 @@ namespace AddOptimization.Services.Services
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
                                              .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
                                              .Replace("[Approver]", approverName)
-                                             .Replace("[WorkDuration]", totalWorkingDays.ToString())
-                                             .Replace("[Overtime]", overtimeHours.ToString())
+                                             .Replace("[WorkDuration]", LocaleHelper.FormatNumber(totalWorkingDays))
+                                             .Replace("[Overtime]", LocaleHelper.FormatNumber(overtimeHours))
                                              .Replace("[Comment]", declinedReason);
                 return await _emailService.SendEmail(email, subject, emailTemplate);
             }
@@ -803,8 +803,8 @@ namespace AddOptimization.Services.Services
                                              .Replace("[LinkToTimesheet]", link)
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
                                              .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
-                                             .Replace("[WorkDuration]", totalWorkingDays.ToString())
-                                             .Replace("[Overtime]", overtimeHours.ToString());
+                                             .Replace("[WorkDuration]", LocaleHelper.FormatNumber(totalWorkingDays))
+                                             .Replace("[Overtime]", LocaleHelper.FormatNumber(overtimeHours));
                 var emailResult = await _emailService.SendEmail(email, subject, emailTemplate);
                 return ApiResult<bool>.Success(true);
             }
@@ -827,8 +827,8 @@ namespace AddOptimization.Services.Services
                                              .Replace("[LinkToTimesheet]", link)
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
                                              .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
-                                             .Replace("[WorkDuration]", totalWorkingDays.ToString())
-                                             .Replace("[Overtime]", overtimeHours.ToString());
+                                             .Replace("[WorkDuration]", LocaleHelper.FormatNumber(totalWorkingDays))
+                                             .Replace("[Overtime]", LocaleHelper.FormatNumber(overtimeHours));
                 return await _emailService.SendEmail(email, subject, emailTemplate);
             }
             catch (Exception ex)

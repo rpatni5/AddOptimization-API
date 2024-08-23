@@ -271,7 +271,7 @@ namespace AddOptimization.Services.Services
                                              .Replace("[EmployeeName]", user.FullName)
                                              .Replace("[Action]", action)
                                              .Replace("[Date]", LocaleHelper.FormatDate(absenceRequest.Date))
-                                             .Replace("[Duration]", absenceRequest.Duration.ToString())
+                                             .Replace("[Duration]", LocaleHelper.FormatNumber(absenceRequest.Duration))
                                              .Replace("[Comment]", absenceRequest.Comment);
                 return await _emailService.SendEmail(user.Email, subject, emailTemplate);
             }
