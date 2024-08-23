@@ -3,6 +3,7 @@ using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Data.Entities;
 using AddOptimization.Services.Constants;
+using AddOptimization.Services.Services;
 using AddOptimization.Utilities.Common;
 using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
@@ -26,13 +27,12 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         private readonly ITemplateService _templateService;
         private readonly IConfiguration _configuration;
         private readonly CustomDataProtectionService _protectionService;
-
         #endregion
 
         #region Constructor
         public UnpaidInvoiceReminderToCustomerBackgroundService(IConfiguration configuration,
             ITemplateService templateService,
-            IServiceProvider serviceProvider,
+            IServiceProvider serviceProvider, 
             CustomDataProtectionService protectionService,
             ILogger<LicenseRenewalEmailBackgroundService> logger)
         {
@@ -81,10 +81,12 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 var customerEmployeeAssociationService = scope.ServiceProvider.GetRequiredService<ICustomerEmployeeAssociationService>();
                 var appUserService = scope.ServiceProvider.GetRequiredService<IApplicationUserService>();
                 var invoiceStatusService = scope.ServiceProvider.GetRequiredService<IInvoiceStatusService>();
+                var companyService = scope.ServiceProvider.GetRequiredService<ICompanyService>();
 
                 var invoices = await invoiceService.GetUnpaidInvoicesForEmailReminder();
                 if (invoices?.Result == null) return false;
 
+                var companyInfoResult = (await companyService.GetCompanyInformation()).Result;
                 var customerEmployeeAssociation = (await customerEmployeeAssociationService.Search()).Result;
                 var approver = await appUserService.GetAccountAdmins();
                 var eventStatus = (await invoiceStatusService.Search()).Result;
@@ -95,8 +97,8 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                     if (invoice.CreatedAt?.AddDays(paymentClearanceDays.Value) < DateTime.Today
                         && invoice?.DueAmount > 0 && invoice.InvoiceStatusId == invoiceStatusId)
                     {
-                        await SendUnpaidInvoiceReminderEmailCustomer(invoice);
-                        await SendUnpaidInvoiceReminderEmailAccountAdmin(invoice, approver.Result.FirstOrDefault());
+                        await SendUnpaidInvoiceReminderEmailCustomer(invoice, companyInfoResult);
+                        await SendUnpaidInvoiceReminderEmailAccountAdmin(invoice, approver.Result.FirstOrDefault(), companyInfoResult);
                     }
                 };
                 return true;
@@ -109,7 +111,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
             }
         }
 
-        private async Task<ApiResult<bool>> SendUnpaidInvoiceReminderEmailCustomer(InvoiceResponseDto invoice)
+        private async Task<ApiResult<bool>> SendUnpaidInvoiceReminderEmailCustomer(InvoiceResponseDto invoice,  CompanyDto companyInfo)
         {
             try
             {
@@ -129,6 +131,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 emailTemplate = emailTemplate
                                 .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
                                  .Replace("[AccountContactName]", invoice?.Customer?.AccountContactName)
+                                 .Replace("[CompanyAccountingEmail]", companyInfo.AccountingEmail)
                                 .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
                                 .Replace("[CompanyName]", invoice?.Customer?.Company)
                                 .Replace("[InvoiceDate]", LocaleHelper.FormatDate(invoice.InvoiceDate.Date))
@@ -145,7 +148,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 throw;
             }
         }
-        private async Task<bool> SendUnpaidInvoiceReminderEmailAccountAdmin(InvoiceResponseDto invoice, ApplicationUserDto accountAdmin)
+        private async Task<bool> SendUnpaidInvoiceReminderEmailAccountAdmin(InvoiceResponseDto invoice, ApplicationUserDto accountAdmin, CompanyDto companyInfo)
         {
             try
             {
@@ -160,6 +163,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                                 .Replace("[AccountAdminName]", accountAdmin.FullName)
                                 .Replace("[AccountContactName]", invoice?.Customer?.AccountContactName)
                                 .Replace("[CompanyName]", invoice?.Customer?.Company)
+                                 .Replace("[CompanyAccountingEmail]", companyInfo.AccountingEmail)
                                 .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
                                 .Replace("[InvoiceDate]", LocaleHelper.FormatDate(invoice.InvoiceDate.Date))
                                 .Replace("[TotalAmountDue]",LocaleHelper.FormatCurrency(invoice.DueAmount))
