@@ -271,16 +271,11 @@ namespace AddOptimization.Services.Services
 
         private async Task<string> GenerateInvoiceNumber(MonthDateRange month)
         {
-            var invoice = (await _invoiceRepository.QueryAsync(ignoreGlobalFilter: true)).ToList();
-            var maxInvoiceNo = invoice.Count == 0 ? 0 : invoice.Max(c => c.Id);
-            if (maxInvoiceNo != 0)
-            {
-                return $"{month.StartDate.Year}{month.StartDate.Month}{maxInvoiceNo + 1}";
-            }
-            else
-            {
-                return $"{month.StartDate.Year}{month.StartDate.Month}{maxInvoiceNo + 1}";
-            }
+            var dateFormat = $"{month.StartDate.Year}{month.StartDate.Month:D2}";
+
+            var maxInvoiceNo = (await _invoiceRepository.QueryAsync(x => x.InvoiceNumber.ToString().StartsWith(dateFormat), ignoreGlobalFilter: true)).Count();
+
+            return $"{month.StartDate.Year}{month.StartDate.Month}{maxInvoiceNo + 1}";
         }
 
         private async Task<string> GetCustomerAddress(Customer customer)
@@ -580,7 +575,12 @@ namespace AddOptimization.Services.Services
                 var paymentStatus = (await _paymentStatusService.Search()).Result;
                 var paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.UNPAID.ToString()).Id;
 
-                var maxId = await _invoiceRepository.MaxAsync<Int64>(e => e.Id, ignoreGlobalFilter: true);
+                var now = DateTime.UtcNow;
+                var currentYear = now.Year;
+                var currentMonth = now.Month;
+                var dateFormat = $"{currentYear}{currentMonth:D2}";
+
+                var maxId = (await _invoiceRepository.QueryAsync(x => x.InvoiceNumber.ToString().StartsWith(dateFormat), ignoreGlobalFilter: true)).Count();
                 var newId = maxId + 1;
                 var invoiceNumber = long.Parse($"{DateTime.UtcNow:yyyyMM}{newId}");
 

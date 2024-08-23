@@ -262,7 +262,14 @@ namespace AddOptimization.Services.Services
                 var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.DRAFT.ToString()).Id;
                 var paymentStatus = (await _paymentStatusService.Search()).Result;
                 var paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.UNPAID.ToString()).Id;
-                var maxId = await _externalInvoiceRepository.MaxAsync<Int64>(e => e.Id, ignoreGlobalFilter: true);
+
+
+                var now = DateTime.UtcNow;
+                var currentYear = now.Year;
+                var currentMonth = now.Month;
+                var dateFormat = $"{currentYear}{currentMonth:D2}";
+
+                var maxId = (await _externalInvoiceRepository.QueryAsync(x => x.InvoiceNumber.ToString().StartsWith(dateFormat), ignoreGlobalFilter: true)).Count();
                 var newId = maxId + 1;
                 var invoiceNumber = $"{DateTime.UtcNow:yyyyMM}{newId}";
 

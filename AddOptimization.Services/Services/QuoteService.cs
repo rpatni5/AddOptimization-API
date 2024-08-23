@@ -273,10 +273,13 @@ namespace AddOptimization.Services.Services
 
         private async Task<long> GenerateQuoteNoAsync()
         {
-            var id = await _quoteRepository.MaxAsync<Int64>(e => e.Id, ignoreGlobalFilter: true);
             var now = DateTime.UtcNow;
             var currentYear = now.Year;
             var currentMonth = now.Month;
+            var dateFormat = $"{currentYear}{currentMonth:D2}";
+
+            var id = (await _quoteRepository.QueryAsync(x=>x.QuoteNo.ToString().StartsWith(dateFormat), ignoreGlobalFilter: true)).Count();
+            
 
             long maxIncrement = 0;
 

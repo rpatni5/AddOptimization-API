@@ -110,7 +110,9 @@ namespace AddOptimization.Services.Services
 
                 if (invoice.CreditNoteNumber == null && entities.Any())
                 {
-                    long maxInvoiceCreditNoteNumber = (await _invoiceRepository.QueryAsync(x => x.CreditNoteNumber != null)).Count();
+                    string dateFormat = $"{DateTime.UtcNow:yyyyMM}";
+
+                    var maxInvoiceCreditNoteNumber = (await _invoiceRepository.QueryAsync(x => x.CreditNoteNumber != null && x.CreditNoteNumber.ToString().StartsWith(dateFormat), ignoreGlobalFilter: true)).Count();
 
                     long newInvoiceCreditNoteNumber = long.Parse($"{DateTime.UtcNow:yyyyMM}{(maxInvoiceCreditNoteNumber + 1)}");
 
