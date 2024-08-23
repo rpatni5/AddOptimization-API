@@ -351,9 +351,17 @@ namespace AddOptimization.Services.Services
                 var paymentStatus = (await _paymentStatusService.Search()).Result;
                 var paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.UNPAID.ToString()).Id;
                 var quote = await _quoteRepository.FirstOrDefaultAsync(e => e.Id == quoteId, include: source => source.Include(x => x.QuoteSummaries));
-                var maxId = await _invoiceRepository.MaxAsync(e => (int)e.Id, ignoreGlobalFilter: true) + 1;
+              
+               
+                var now = DateTime.UtcNow;
+                var currentYear = now.Year;
+                var currentMonth = now.Month;
+                var dateFormat = $"{currentYear}{currentMonth:D2}";
+
+                var maxId = (await _invoiceRepository.QueryAsync(x => x.InvoiceNumber.ToString().StartsWith(dateFormat), ignoreGlobalFilter: true)).Count();
                 var newId = maxId + 1;
                 var invoiceNumber = long.Parse($"{DateTime.UtcNow:yyyyMM}{newId}");
+                var id = await _invoiceRepository.MaxAsync(e => (int)e.Id, ignoreGlobalFilter: true);
 
                 if (quote == null)
                 {
@@ -363,7 +371,7 @@ namespace AddOptimization.Services.Services
 
                 var invoice = new Invoice
                 {
-                    Id = newId,
+                    Id = id+1,
                     InvoiceNumber = Convert.ToInt64(invoiceNumber),
                     CustomerId = quote.CustomerId,
                     InvoiceDate = DateTime.UtcNow,
