@@ -18,5 +18,19 @@ namespace AddOptimization.Utilities.Helpers
         {
             return date.ToString("dd/MM/yyyy");
         }
+        public static string FormatNumber(decimal number)
+        {
+            CultureInfo culture = new CultureInfo("de-DE");
+            if (number % 1 == 0)
+            {
+                return number.ToString("N0", culture);
+            }
+            else
+            {
+                return number.ToString("N2", culture);
+            }
+        }
+
+
     }
 }
