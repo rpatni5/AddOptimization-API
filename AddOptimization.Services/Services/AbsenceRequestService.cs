@@ -231,7 +231,7 @@ namespace AddOptimization.Services.Services
                 var subject = !isUpdated ? "Absence Request" : "Absence Request Updated";
                 var link = GetAbsenceApprovalLinkForAccountAdmin(absenceRequest.Id);
                 var action = !isUpdated ? "submitted" : "updated";
-                var duration = !isUpdated ? absenceRequest.Duration.ToString() : $"{oldDuration} is updated to {absenceRequest.Duration}";
+                var duration = !isUpdated ? LocaleHelper.FormatNumber(absenceRequest.Duration) : $"{oldDuration} is updated to {LocaleHelper.FormatNumber(absenceRequest.Duration)}";
                 var comment = !isUpdated ? absenceRequest.Comment : $"{oldComment} is updated to {absenceRequest.Comment}";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.AbsenceRequestApproval);
                 emailTemplate = emailTemplate.Replace("[AccountAdminName]", accountAdmin.FullName)
