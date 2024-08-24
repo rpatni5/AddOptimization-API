@@ -5,11 +5,13 @@ using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
 using AddOptimization.Utilities.Common;
 using AddOptimization.Utilities.Constants;
+using AddOptimization.Utilities.Enums;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Models;
 using AutoMapper;
 using iText.StyledXmlParser.Jsoup.Nodes;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -29,31 +31,45 @@ namespace AddOptimization.Services.Services
     {
         private readonly IGenericRepository<PublicHoliday> _publicholidayRepository;
         private readonly IGenericRepository<Country> _countryRepository;
-
+        private readonly ICustomerEmployeeAssociationService _customerEmployeeAssociationService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<PublicHolidayService> _logger;
         private readonly IMapper _mapper;
 
-        public PublicHolidayService(IGenericRepository<PublicHoliday> publicholidayRepository, IGenericRepository<Country> countryRepository, ILogger<PublicHolidayService> logger, IMapper mapper)
+        public PublicHolidayService(IGenericRepository<PublicHoliday> publicholidayRepository, IGenericRepository<Country> countryRepository, ILogger<PublicHolidayService> logger, IMapper mapper, ICustomerEmployeeAssociationService customerEmployeeAssociationService, IHttpContextAccessor httpContextAccessor)
         {
             _publicholidayRepository = publicholidayRepository;
             _countryRepository = countryRepository;
             _logger = logger;
             _mapper = mapper;
+            _customerEmployeeAssociationService = customerEmployeeAssociationService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<ApiResult<List<PublicHolidayResponseDto>>> Search(PageQueryFiterBase filters)
+        public async Task<PagedApiResult<PublicHolidayResponseDto>> Search(PageQueryFiterBase filters)
         {
             try
             {
                 var entities = await _publicholidayRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.Country).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Date));
+                var association = (await _customerEmployeeAssociationService.SearchAllAssociations(filters)).Result.ToList();
+                entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
+                entities = ApplyFilters(entities, filters, association);
 
-                filters.GetValue<string>("countryId", (v) =>
+                var pagedResult = PageHelper<PublicHoliday, PublicHolidayResponseDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new PublicHolidayResponseDto
                 {
-                    entities = entities.Where(e => e.CountryId.ToString() == v);
-                });
+                    Id = e.Id,
+                    Title = e.Title,
+                    Description = e.Description,
+                    CountryId   = e.CountryId,
+                    CountryName = e.Country.CountryName ?? string.Empty,
+                    Date = e.Date,
 
-                var mappedEntities = _mapper.Map<List<PublicHolidayResponseDto>>(entities);
-                return ApiResult<List<PublicHolidayResponseDto>>.Success(mappedEntities);
+
+                }).ToList());
+
+               
+                var result = pagedResult;
+                return PagedApiResult<PublicHolidayResponseDto>.Success(result);
             }
             catch (Exception ex)
             {
@@ -61,6 +77,7 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
+
         public async Task<ApiResult<PublicHolidayResponseDto>> Create(PublicHolidayRequestDto model)
         {
             try
@@ -133,6 +150,99 @@ namespace AddOptimization.Services.Services
             }
         }
 
+        private IQueryable<PublicHoliday> ApplyFilters(IQueryable<PublicHoliday> entities, PageQueryFiterBase filter, List<CustomerEmployeeAssociationDto> association)
+        {
+            filter.GetValue<string>("countryId", (v) =>
+            {
+                var countryIds = association.Select(x => x.PublicHolidayCountryId).Distinct().ToList();
+                entities = entities.Where(e => countryIds.Contains(e.CountryId));
+            });
+            filter.GetValue<int>("employeeId", employeeId =>
+            {
+                var associatedCountries = association
+                    .Where(a => a.EmployeeId == employeeId)
+                    .Select(a => a.PublicHolidayCountryId)
+                    .Distinct()
+                    .ToList();
 
+                entities = entities.Where(e => associatedCountries.Contains(e.CountryId));
+            });
+
+            filter.GetValue<string>("countryName", (v) =>
+            {
+                entities = entities.Where(e => e.Country != null && (e.Country.CountryName.ToLower().Contains(v.ToLower())));
+            });
+            filter.GetValue<string>("title", (v) =>
+            {
+                entities = entities.Where(e => e.Title == v);
+            });
+
+            filter.GetValue<DateTime>("date", (v) =>
+            {
+                entities = entities.Where(e => e.Date != null && e.Date < v);
+            }, OperatorType.lessthan, true);
+
+            filter.GetValue<DateTime>("date", (v) =>
+            {
+                entities = entities.Where(e => e.Date != null && e.Date > v);
+            }, OperatorType.greaterthan, true);
+
+            return entities;
+        }
+
+
+        private IQueryable<PublicHoliday> ApplySorting(IQueryable<PublicHoliday> entities, SortModel sort)
+        {
+            try
+            {
+                if (sort?.Name == null)
+                {
+                    entities = entities.OrderByDescending(o => o.CreatedAt);
+                    return entities;
+                }
+                var columnName = sort.Name.ToUpper();
+                if (sort.Direction == SortDirection.ascending.ToString())
+                {
+                    if (columnName.ToUpper() == nameof(PublicHolidayResponseDto.CountryName).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.Country.CountryName);
+                    }
+                    if (columnName.ToUpper() == nameof(PublicHolidayResponseDto.Title).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.Title); ;
+                    }
+                    if (columnName.ToUpper() == nameof(PublicHolidayResponseDto.Date).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.Date);
+                    }
+
+                }
+
+                else
+                {
+                    if (columnName.ToUpper() == nameof(PublicHolidayResponseDto.CountryName).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.Country.CountryName);
+                    }
+                    if (columnName.ToUpper() == nameof(PublicHolidayResponseDto.Title).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.Title); ;
+                    }
+                    if (columnName.ToUpper() == nameof(PublicHolidayResponseDto.Date).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.Date);
+                    }
+
+                }
+                return entities;
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return entities;
+            }
+
+        }
     }
 }
