@@ -51,7 +51,14 @@ namespace AddOptimization.Services.Services
             try
             {
                 var entities = await _publicholidayRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.Country).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Date));
-                var association = (await _customerEmployeeAssociationService.SearchAllAssociations(filters)).Result.ToList();
+
+                PageQueryFiterBase associationFilter = new PageQueryFiterBase();
+                associationFilter.GetValue<int>("employeeId", employeeId =>
+                {
+                    associationFilter.AddFilter("employeeId", OperatorType.equal.ToString(), employeeId);
+                });
+
+                var association = (await _customerEmployeeAssociationService.SearchAllAssociations(associationFilter)).Result.ToList();
                 entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
                 entities = ApplyFilters(entities, filters, association);
 
@@ -60,14 +67,14 @@ namespace AddOptimization.Services.Services
                     Id = e.Id,
                     Title = e.Title,
                     Description = e.Description,
-                    CountryId   = e.CountryId,
+                    CountryId = e.CountryId,
                     CountryName = e.Country.CountryName ?? string.Empty,
                     Date = e.Date,
 
 
                 }).ToList());
 
-               
+
                 var result = pagedResult;
                 return PagedApiResult<PublicHolidayResponseDto>.Success(result);
             }
@@ -82,7 +89,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var isExisting = await _publicholidayRepository.IsExist(s => s.Title.ToLower() == model.Title.ToLower());
+                var isExisting = await _publicholidayRepository.IsExist(s => s.Title.ToLower() == model.Title.ToLower() && s.CountryId == model.CountryId);
                 if (isExisting)
                 {
                     return ApiResult<PublicHolidayResponseDto>.Failure(ValidationCodes.FieldNameAlreadyExists);
@@ -154,8 +161,7 @@ namespace AddOptimization.Services.Services
         {
             filter.GetValue<string>("countryId", (v) =>
             {
-                var countryIds = association.Select(x => x.PublicHolidayCountryId).Distinct().ToList();
-                entities = entities.Where(e => countryIds.Contains(e.CountryId));
+                entities = entities.Where(e => e.CountryId.ToString() == v);
             });
             filter.GetValue<int>("employeeId", employeeId =>
             {
@@ -174,7 +180,7 @@ namespace AddOptimization.Services.Services
             });
             filter.GetValue<string>("title", (v) =>
             {
-                entities = entities.Where(e => e.Title == v);
+                entities = entities.Where(e => e.Title != null && (e.Title.ToLower().Contains(v.ToLower())));
             });
 
             filter.GetValue<DateTime>("date", (v) =>
