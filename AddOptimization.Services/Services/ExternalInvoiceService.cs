@@ -21,6 +21,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic;
 using System.Globalization;
 using System.Text;
+using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 
 
 namespace AddOptimization.Services.Services
@@ -263,7 +264,6 @@ namespace AddOptimization.Services.Services
                 var paymentStatus = (await _paymentStatusService.Search()).Result;
                 var paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.UNPAID.ToString()).Id;
 
-
                 var now = DateTime.UtcNow;
                 var currentYear = now.Year;
                 var currentMonth = now.Month;
@@ -271,11 +271,12 @@ namespace AddOptimization.Services.Services
 
                 var maxId = (await _externalInvoiceRepository.QueryAsync(x => x.InvoiceNumber.ToString().StartsWith(dateFormat), ignoreGlobalFilter: true)).Count();
                 var newId = maxId + 1;
-                var invoiceNumber = $"{DateTime.UtcNow:yyyyMM}{newId}";
+                var invoiceNumber = long.Parse($"{DateTime.UtcNow:yyyyMM}{newId}");
+                var id = await _externalInvoiceRepository.MaxAsync(e => (int)e.Id, ignoreGlobalFilter: true);
 
                 ExternalInvoice entity = new ExternalInvoice
                 {
-                    Id = newId,
+                    Id = id + 1,
                     InvoiceNumber = Convert.ToInt64(invoiceNumber),
                     PaymentStatusId = paymentStatusId,
                     VatValue = model.ExternalInvoiceDetails.Sum(x => (x.UnitPrice * x.Quantity * x.VatPercent) / 100),
@@ -482,25 +483,27 @@ namespace AddOptimization.Services.Services
             var invoiceStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.SEND_TO_CUSTOMER.ToString()).Id;
             var paymentStatus = (await _paymentStatusService.Search()).Result;
             var paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.UNPAID.ToString()).Id;
-
+            var externalInvoiceDetailsResponse = await FetchExternalInvoiceDetails(Id);
             var entity = (await _externalInvoiceRepository.QueryAsync(x => x.Id == Id, include: entities => entities.Include(e => e.ApplicationUser).Include(e => e.Company))).FirstOrDefault();
             var details = (await _invoiceDetailRepository.QueryAsync(x => x.ExternalInvoiceId == Id)).ToList();
             entity.PaymentStatusId = paymentStatusId;
             entity.InvoiceStatusId = invoiceStatusId;
             await _externalInvoiceRepository.UpdateAsync(entity);
             var accountAdmins = (await _applicationService.GetAccountAdmins()).Result;
+            var externalInvoiceDetail = externalInvoiceDetailsResponse.Result;
 
-            return await SendInvoiceToAccountAdmin(accountAdmins, entity, entity.Company.CompanyName, entity.ApplicationUser.FullName, entity.InvoiceNumber, entity.TotalPriceIncludingVat);
+
+            return await SendInvoiceToAccountAdmin(accountAdmins, entity, entity.Company.CompanyName, entity.ApplicationUser.FullName, entity.InvoiceNumber, entity.TotalPriceIncludingVat , externalInvoiceDetail.ExternalCompanyName);
         }
-        private async Task<bool> SendInvoiceToAccountAdmin(List<ApplicationUserDto> accountAdmins, ExternalInvoice invoice, string companyName, string employeeName, long invoiceNumber, decimal totalAmountDue
+        private async Task<bool> SendInvoiceToAccountAdmin(List<ApplicationUserDto> accountAdmins, ExternalInvoice invoice, string companyName, string employeeName, long invoiceNumber, decimal totalAmountDue ,string externalCompany
          )
         {
             try
             {
-                var subject = "External Invoice Request";
+                var subject = $"External Invoice from {externalCompany} #{invoiceNumber}";
                 var link = GetInvoiceLinkForAccountAdmin((int)invoice.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.RequestExternalInvoice);
-                emailTemplate = emailTemplate.Replace("[CompanyName]", companyName)
+                emailTemplate = emailTemplate.Replace("[CompanyName]",externalCompany)
                                              .Replace("[EmployeeName]", employeeName)
                                              .Replace("[LinkToOrder]", link)
                                              .Replace("[InvoiceNumber]", invoiceNumber.ToString())
@@ -521,14 +524,14 @@ namespace AddOptimization.Services.Services
                 return false;
             }
         }
-        private async Task<bool> SendInvoiceDeclinedEmailToEmployee(ApplicationUser employee, string companyName, string accountAdmin, long invoiceNumber, decimal totalAmountDue, string comment)
+        private async Task<bool> SendInvoiceDeclinedEmailToEmployee(ApplicationUser employee, string companyName, string accountAdmin, long invoiceNumber, decimal totalAmountDue, string comment, string externalCompany)
         {
             try
             {
                 var subject = "External Invoice Declined";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.DeclinedExternalInvoice);
                 emailTemplate = emailTemplate.Replace("[AccountAdmin]", accountAdmin)
-                    .Replace("[CompanyName]", companyName)
+                    .Replace("[CompanyName]", externalCompany)
                                              .Replace("[EmployeeName]", employee.FullName)
                                              .Replace("[InvoiceNumber]", invoiceNumber.ToString())
                                              .Replace("[TotalAmountDue]", LocaleHelper.FormatCurrency(totalAmountDue))
@@ -551,6 +554,7 @@ namespace AddOptimization.Services.Services
                 var eventStatus = (await _invoiceStatusService.Search()).Result;
                 var declinedStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.DECLINED.ToString()).Id;
                 eventDetails.InvoiceStatusId = declinedStatusId;
+                var externalInvoiceDetailsResponse = await FetchExternalInvoiceDetails(model.Id);
                 var result = await _externalInvoiceRepository.UpdateAsync(eventDetails);
                 ExternalInvoiceHistory entity = new ExternalInvoiceHistory()
                 {
@@ -564,10 +568,12 @@ namespace AddOptimization.Services.Services
                 var accountAdminId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
                 var accountAdmins = (await _applicationService.GetAccountAdmins()).Result;
                 var accountAdmin = accountAdmins.Where(x => x.Id == accountAdminId).FirstOrDefault();
+                var externalInvoiceDetail = externalInvoiceDetailsResponse.Result;
+
 
                 if (accountAdmin != null)
                 {
-                    await SendInvoiceDeclinedEmailToEmployee(invoiceEntity.ApplicationUser, invoiceEntity.Company.CompanyName, accountAdmin.FullName, invoiceEntity.InvoiceNumber, invoiceEntity.TotalPriceIncludingVat, entity.Comment);
+                    await SendInvoiceDeclinedEmailToEmployee(invoiceEntity.ApplicationUser, invoiceEntity.Company.CompanyName, accountAdmin.FullName, invoiceEntity.InvoiceNumber, invoiceEntity.TotalPriceIncludingVat, entity.Comment, externalInvoiceDetail.ExternalCompanyName);
                 }
 
 
@@ -583,11 +589,13 @@ namespace AddOptimization.Services.Services
         {
             var entity = (await _externalInvoiceRepository.QueryAsync(x => x.Id == Id, include: entities => entities.Include(e => e.ApplicationUser).Include(e => e.Company))).FirstOrDefault();
             var details = (await _invoiceDetailRepository.QueryAsync(x => x.ExternalInvoiceId == Id)).ToList();
+            var externalInvoiceDetailsResponse = await FetchExternalInvoiceDetails(Id);
             await _externalInvoiceRepository.UpdateAsync(entity);
+            var externalInvoiceDetail = externalInvoiceDetailsResponse.Result;
 
-            return await SendInvoiceToCustomer(entity.Company.Email, entity, entity.Company.CompanyName, entity.ApplicationUser.FullName, entity.InvoiceNumber, entity.TotalPriceIncludingVat);
+            return await SendInvoiceToCustomer(entity.Company.Email, entity, entity.Company.CompanyName, entity.ApplicationUser.FullName, entity.InvoiceNumber, entity.TotalPriceIncludingVat ,externalInvoiceDetail.ExternalCompanyName);
         }
-        private async Task<bool> SendInvoiceToCustomer(string email, ExternalInvoice invoice, string companyName, string employeeName, long invoiceNumber, decimal totalAmountDue
+        private async Task<bool> SendInvoiceToCustomer(string email, ExternalInvoice invoice, string companyName, string employeeName, long invoiceNumber, decimal totalAmountDue,string externalCompany
          )
         {
             try
@@ -595,7 +603,7 @@ namespace AddOptimization.Services.Services
                 var subject = "External Invoice Request";
                 var link = GetInvoiceLinkForAccountAdmin((int)invoice.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.RequestExternalInvoice);
-                emailTemplate = emailTemplate.Replace("[CompanyName]", companyName)
+                emailTemplate = emailTemplate.Replace("[CompanyName]", externalCompany)
                                              .Replace("[EmployeeName]", employeeName)
                                              .Replace("[LinkToOrder]", link)
                                              .Replace("[InvoiceNumber]", invoiceNumber.ToString())
