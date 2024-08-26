@@ -227,6 +227,10 @@ namespace AddOptimization.Services.Services
 
         private IQueryable<CustomerEmployeeAssociation> ApplyFilters(IQueryable<CustomerEmployeeAssociation> entities, PageQueryFiterBase filter)
         {
+            filter.GetValue<int>("employeeId", (v) =>
+            {
+                entities = entities.Where(e => e.EmployeeId == v);
+            });
             filter.GetValue<string>("customerId", (v) =>
             {
                 entities = entities.Where(e => e.CustomerId.ToString() == v);
