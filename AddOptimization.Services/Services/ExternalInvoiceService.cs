@@ -21,6 +21,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic;
 using System.Globalization;
 using System.Text;
+using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 
 
 namespace AddOptimization.Services.Services
@@ -482,22 +483,24 @@ namespace AddOptimization.Services.Services
             var invoiceStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.SEND_TO_CUSTOMER.ToString()).Id;
             var paymentStatus = (await _paymentStatusService.Search()).Result;
             var paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.UNPAID.ToString()).Id;
-
+            var externalInvoiceDetailsResponse = await FetchExternalInvoiceDetails(Id);
             var entity = (await _externalInvoiceRepository.QueryAsync(x => x.Id == Id, include: entities => entities.Include(e => e.ApplicationUser).Include(e => e.Company))).FirstOrDefault();
             var details = (await _invoiceDetailRepository.QueryAsync(x => x.ExternalInvoiceId == Id)).ToList();
             entity.PaymentStatusId = paymentStatusId;
             entity.InvoiceStatusId = invoiceStatusId;
             await _externalInvoiceRepository.UpdateAsync(entity);
             var accountAdmins = (await _applicationService.GetAccountAdmins()).Result;
+            var externalInvoiceDetail = externalInvoiceDetailsResponse.Result;
 
-            return await SendInvoiceToAccountAdmin(accountAdmins, entity, entity.Company.CompanyName, entity.ApplicationUser.FullName, entity.InvoiceNumber, entity.TotalPriceIncludingVat);
+
+            return await SendInvoiceToAccountAdmin(accountAdmins, entity, entity.Company.CompanyName, entity.ApplicationUser.FullName, entity.InvoiceNumber, entity.TotalPriceIncludingVat , externalInvoiceDetail.ExternalCompanyName);
         }
-        private async Task<bool> SendInvoiceToAccountAdmin(List<ApplicationUserDto> accountAdmins, ExternalInvoice invoice, string companyName, string employeeName, long invoiceNumber, decimal totalAmountDue
+        private async Task<bool> SendInvoiceToAccountAdmin(List<ApplicationUserDto> accountAdmins, ExternalInvoice invoice, string companyName, string employeeName, long invoiceNumber, decimal totalAmountDue ,string externalCompany
          )
         {
             try
             {
-                var subject = "External Invoice Request";
+                var subject = $"External Invoice from {externalCompany} #{invoiceNumber}";
                 var link = GetInvoiceLinkForAccountAdmin((int)invoice.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.RequestExternalInvoice);
                 emailTemplate = emailTemplate.Replace("[CompanyName]", companyName)
