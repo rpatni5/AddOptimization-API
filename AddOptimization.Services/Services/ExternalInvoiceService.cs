@@ -263,7 +263,6 @@ namespace AddOptimization.Services.Services
                 var paymentStatus = (await _paymentStatusService.Search()).Result;
                 var paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.UNPAID.ToString()).Id;
 
-
                 var now = DateTime.UtcNow;
                 var currentYear = now.Year;
                 var currentMonth = now.Month;
@@ -271,11 +270,12 @@ namespace AddOptimization.Services.Services
 
                 var maxId = (await _externalInvoiceRepository.QueryAsync(x => x.InvoiceNumber.ToString().StartsWith(dateFormat), ignoreGlobalFilter: true)).Count();
                 var newId = maxId + 1;
-                var invoiceNumber = $"{DateTime.UtcNow:yyyyMM}{newId}";
+                var invoiceNumber = long.Parse($"{DateTime.UtcNow:yyyyMM}{newId}");
+                var id = await _externalInvoiceRepository.MaxAsync(e => (int)e.Id, ignoreGlobalFilter: true);
 
                 ExternalInvoice entity = new ExternalInvoice
                 {
-                    Id = newId,
+                    Id = id + 1,
                     InvoiceNumber = Convert.ToInt64(invoiceNumber),
                     PaymentStatusId = paymentStatusId,
                     VatValue = model.ExternalInvoiceDetails.Sum(x => (x.UnitPrice * x.Quantity * x.VatPercent) / 100),
