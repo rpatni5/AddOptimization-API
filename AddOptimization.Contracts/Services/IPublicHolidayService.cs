@@ -11,7 +11,7 @@ namespace AddOptimization.Contracts.Services;
 
 public interface IPublicHolidayService
 {
-    Task<ApiResult<List<PublicHolidayResponseDto>>> Search(PageQueryFiterBase filters);
+    Task<PagedApiResult<PublicHolidayResponseDto>> Search(PageQueryFiterBase filters);
     Task<ApiResult<PublicHolidayResponseDto>> Create(PublicHolidayRequestDto model);
     Task<ApiResult<PublicHolidayResponseDto>> Update(Guid id, PublicHolidayRequestDto model);
     Task<ApiResult<bool>> Delete(Guid id);
