@@ -9,10 +9,10 @@ namespace AddOptimization.Contracts.Dto
     public class ProductRequestDto : BaseDto<Guid>
     {
         public string Description { get; set; }
-        public decimal SalesPrice { get; set; }
-        public decimal PurchasePrice { get; set; }
+        public decimal? SalesPrice { get; set; }
+        public decimal? PurchasePrice { get; set; }
         public int Quantity { get; set; }
-        public decimal ProfitMargin { get; set; }
+        public decimal? ProfitMargin { get; set; }
         public bool IsDeleted { get; set; }
         public bool IsActive { get; set; }
     }
