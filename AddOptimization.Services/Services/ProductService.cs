@@ -127,24 +127,23 @@ namespace AddOptimization.Services.Services
             });
             filter.GetValue<string>("salesPrice", (v) =>
             {
-                int salesPrice = Convert.ToInt32(v);
-                entities = entities.Where(e => e.SalesPrice == salesPrice);
+                entities = entities.Where(e => e.SalesPrice.ToString().StartsWith(v));
             });
-           
+            filter.GetValue<string>("profitAmount", (v) =>
+            {
+                entities = entities.Where(e => ((e.SalesPrice ?? 0m)  - (e.PurchasePrice ?? 0m )).ToString().StartsWith(v));
+            });
             filter.GetValue<string>("purchasePrice", (v) =>
             {
-                int purchasePrice = Convert.ToInt32(v);
-                entities = entities.Where(e => e.PurchasePrice == purchasePrice);
+                entities = entities.Where(e => e.PurchasePrice.ToString().StartsWith(v));
             });
             filter.GetValue<string>("quantity", (v) =>
             {
-                int quantity = Convert.ToInt32(v);
-                entities = entities.Where(e => e.Quantity == quantity);
+                entities = entities.Where(e => e.Quantity.ToString().StartsWith(v));
             });
             filter.GetValue<string>("profitMargin", (v) =>
             {
-                int profitMargin = Convert.ToInt32(v);
-                entities = entities.Where(e => e.ProfitMargin == profitMargin);
+                entities = entities.Where(e => e.ProfitMargin.ToString().StartsWith(v));
             });
             filter.GetValue<DateTime>("createdAt", (v) =>
             {
