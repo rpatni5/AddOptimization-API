@@ -209,6 +209,10 @@ namespace AddOptimization.Services.Services
             {
                 entities = entities.Where(e => e.FrameworkVersionNo.ToLower().Contains(v.ToLower()));
             });
+            filter.GetValue<bool>("isActive", (v) =>
+            {
+                entities = entities.Where(e => e.IsActive == v);
+            });
 
             filter.GetValue<string>("createdBy", (v) =>
             {
