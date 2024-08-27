@@ -8,6 +8,7 @@ CREATE TABLE [dbo].[QuoteSummaries](
 	[TotalPriceExcVat] [decimal](10, 2) NULL,
 	[TotalPriceIncVat] [decimal](10, 2) NULL,
 	[QuoteId] [bigint] NOT NULL,
+    [Description] [varchar](500) NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
