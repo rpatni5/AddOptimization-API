@@ -14,6 +14,7 @@ namespace AddOptimization.Data.Entities
         public decimal UnitPrice { get; set; }
         public decimal TotalPriceExcVat { get; set; }
         public decimal TotalPriceIncVat { get; set; }
+        public string? Description { get; set; }
 
         [ForeignKey(nameof(QuoteId))]
         public virtual Quote Quote { get; set; }

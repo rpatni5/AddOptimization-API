@@ -168,7 +168,8 @@ namespace AddOptimization.Services.Services
                         Vat = summary.Vat,
                         UnitPrice = summary.UnitPrice,
                         TotalPriceExcVat = summary.TotalPriceExcVat,
-                        TotalPriceIncVat = summary.TotalPriceIncVat
+                        TotalPriceIncVat = summary.TotalPriceIncVat,
+                        Description = summary.Description,
                     };
 
                     await _quoteSummaryRepository.InsertAsync(quoteSummary);
@@ -216,7 +217,8 @@ namespace AddOptimization.Services.Services
                         Vat = summary.Vat,
                         UnitPrice = summary.UnitPrice,
                         TotalPriceExcVat = summary.TotalPriceExcVat,
-                        TotalPriceIncVat = summary.TotalPriceIncVat
+                        TotalPriceIncVat = summary.TotalPriceIncVat,
+                        Description = summary.Description,
                     };
                     await _quoteSummaryRepository.InsertAsync(quotesummaries);
                     newSummaries.Add(quotesummaries);
@@ -393,7 +395,8 @@ namespace AddOptimization.Services.Services
                     var invoiceDetail = new InvoiceDetail
                     {
                         InvoiceId = invoice.Id,
-                        Description = quoteSummary.Name,
+                        ReferenceName = quoteSummary.Name,
+                        Description = quoteSummary.Description,
                         Quantity = quoteSummary.Quantity,
                         UnitPrice = quoteSummary.UnitPrice,
                         VatPercent = quoteSummary.Vat,

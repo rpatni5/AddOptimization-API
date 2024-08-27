@@ -13,5 +13,6 @@ namespace AddOptimization.Contracts.Dto
         public decimal TotalPriceExcVat { get; set; }
         public decimal TotalPriceIncVat { get; set; }
         public long QuoteId { get; set; }
+        public string? Description { get; set; }
     }
 }
