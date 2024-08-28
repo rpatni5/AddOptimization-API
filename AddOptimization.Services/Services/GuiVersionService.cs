@@ -97,8 +97,8 @@ namespace AddOptimization.Services.Services
                     IsActive = e.IsActive,
                     IsLatest = e.IsLatest,
                     DownloadPath=e.DownloadPath,
-          
-    }).ToList());
+
+                }).ToList());
 
                 return PagedApiResult<GuiVersionResponseDto>.Success(pagedResult);
             }
@@ -239,7 +239,8 @@ namespace AddOptimization.Services.Services
             {
                 if (sort?.Name == null)
                 {
-                    entities = entities.OrderByDescending(o => o.CreatedAt);
+                    entities = entities.OrderByDescending(o => o.IsLatest)
+                    .ThenByDescending(o => o.CreatedAt);
                     return entities;
                 }
 
@@ -262,6 +263,10 @@ namespace AddOptimization.Services.Services
                     {
                         entities = entities.OrderBy(o => o.CreatedAt);
                     }
+                    if (columnName == nameof(GuiVersionResponseDto.IsLatest).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.IsLatest);
+                    }
                 }
                 else
                 {
@@ -280,6 +285,10 @@ namespace AddOptimization.Services.Services
                     if (columnName == nameof(GuiVersionResponseDto.CreatedAt).ToUpper())
                     {
                         entities = entities.OrderByDescending(o => o.CreatedAt);
+                    }
+                    if (columnName == nameof(GuiVersionResponseDto.IsLatest).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.IsLatest);
                     }
                 }
 
