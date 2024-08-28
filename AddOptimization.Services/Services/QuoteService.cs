@@ -587,7 +587,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var subject = $"Quote #{quoteNo} is {(isApprovedEmail ? "Approved" : "Declined")} by {customer.TechnicalContactName}";
+                var subject = $"Quote #{quoteNo} of {customer.Organizations} is {(isApprovedEmail ? "Approved" : "Declined")} by {customer.TechnicalContactName}";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.QuoteActions);
                 emailTemplate = emailTemplate.Replace("[AccountAdminName]", accountAdmin.FullName)
                                              .Replace("[TechnicalContactName]", customer.TechnicalContactName)
