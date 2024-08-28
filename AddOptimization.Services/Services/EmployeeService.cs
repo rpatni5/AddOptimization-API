@@ -270,10 +270,6 @@ public class EmployeeService : IEmployeeService
         try
         {
             var entity = await _employeeRepository.FirstOrDefaultAsync(t => t.UserId == id, include: entity => entity.Include(e => e.ApplicationUser).Include(e => e.Country), ignoreGlobalFilter: true);
-            if (entity == null)
-            {
-                return ApiResult<EmployeeDto>.NotFound("Employee");
-            }
             var mappedEntity = _mapper.Map<EmployeeDto>(entity);
 
             return ApiResult<EmployeeDto>.Success(mappedEntity);

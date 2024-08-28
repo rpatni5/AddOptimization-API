@@ -168,7 +168,8 @@ namespace AddOptimization.Services.Services
                         Vat = summary.Vat,
                         UnitPrice = summary.UnitPrice,
                         TotalPriceExcVat = summary.TotalPriceExcVat,
-                        TotalPriceIncVat = summary.TotalPriceIncVat
+                        TotalPriceIncVat = summary.TotalPriceIncVat,
+                        Description = summary.Description,
                     };
 
                     await _quoteSummaryRepository.InsertAsync(quoteSummary);
@@ -216,7 +217,8 @@ namespace AddOptimization.Services.Services
                         Vat = summary.Vat,
                         UnitPrice = summary.UnitPrice,
                         TotalPriceExcVat = summary.TotalPriceExcVat,
-                        TotalPriceIncVat = summary.TotalPriceIncVat
+                        TotalPriceIncVat = summary.TotalPriceIncVat,
+                        Description = summary.Description,
                     };
                     await _quoteSummaryRepository.InsertAsync(quotesummaries);
                     newSummaries.Add(quotesummaries);
@@ -393,7 +395,8 @@ namespace AddOptimization.Services.Services
                     var invoiceDetail = new InvoiceDetail
                     {
                         InvoiceId = invoice.Id,
-                        Description = quoteSummary.Name,
+                        ReferenceName = quoteSummary.Name,
+                        Description = quoteSummary.Description,
                         Quantity = quoteSummary.Quantity,
                         UnitPrice = quoteSummary.UnitPrice,
                         VatPercent = quoteSummary.Vat,
@@ -546,7 +549,7 @@ namespace AddOptimization.Services.Services
                 var eventStatus = (await _quoteStatusService.Search()).Result;
                 var customerApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == QuoteStatusesEnum.ACCEPTED.ToString()).Id;
                 var customerDeclinedId = eventStatus.FirstOrDefault(x => x.StatusKey == QuoteStatusesEnum.DECLINED.ToString()).Id;
-
+               
 
                 if (model.IsApproved)
                 {
@@ -557,11 +560,11 @@ namespace AddOptimization.Services.Services
                     eventDetails.QuoteStatusId = customerDeclinedId;
                 }
                 var result = await _quoteRepository.UpdateAsync(eventDetails);
-
+               
                 var entities = (await _quoteRepository.QueryAsync(x => x.Id == result.Id, include: entities => entities.Include(e => e.Customer))).FirstOrDefault();
-                var customer = (await _customersRepository.FirstOrDefaultAsync(x => x.Id == result.CustomerId));
+                var customer = (await _customersRepository.FirstOrDefaultAsync(x => x.Id == result.CustomerId));               
                 var accountAdminResult = await _applicationUserService.GetAccountAdmins();
-                var sendSuccess = true;
+                var sendSuccess = true;                
                 foreach (var accountAdmin in accountAdminResult.Result)
                 {
                     var success = await SendTimesheetActionEmailToAccountAdmin(accountAdmin,customer, model.IsApproved, model.Comment,entities.QuoteNo,entities.QuoteDate, entities.ExpiryDate);
@@ -584,7 +587,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var subject = isApprovedEmail ? "Quote Approved" : "Quote Declined";
+                var subject = $"Quote #{quoteNo} of {customer.Organizations} is {(isApprovedEmail ? "Approved" : "Declined")} by {customer.TechnicalContactName}";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.QuoteActions);
                 emailTemplate = emailTemplate.Replace("[AccountAdminName]", accountAdmin.FullName)
                                              .Replace("[TechnicalContactName]", customer.TechnicalContactName)

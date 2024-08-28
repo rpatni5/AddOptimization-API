@@ -33,11 +33,11 @@ namespace AddOptimization.API.Controllers
         }
 
         [HttpPost("search")]
-        public async Task<IActionResult> Get([FromBody] GuiVersionResponseDto filter)
+        public async Task<IActionResult> Get([FromBody] PageQueryFiterBase filter)
         {
             try
             {
-                var retVal = await _guiVersionService.Search();
+                var retVal = await _guiVersionService.Search(filter);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)

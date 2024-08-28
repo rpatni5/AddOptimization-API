@@ -18,6 +18,8 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using AddOptimization.Services.Constants;
 using Microsoft.IdentityModel.Tokens;
+using AddOptimization.Utilities.Helpers;
+using AddOptimization.Utilities.Enums;
 
 namespace AddOptimization.Services.Services
 {
@@ -71,13 +73,34 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        public async Task<ApiResult<List<GuiVersionResponseDto>>> Search()
+        public async Task<PagedApiResult<GuiVersionResponseDto>> Search(PageQueryFiterBase filter)
         {
             try
             {
-                var entities = await _versionRepository.QueryAsync((e => !e.IsDeleted),include: entities => entities.Include(e => e.CreatedByUser), orderBy: (entities) => entities.OrderByDescending(c => c.CreatedAt));
-                var mappedEntities = _mapper.Map<List<GuiVersionResponseDto>>(entities.ToList());
-                return ApiResult<List<GuiVersionResponseDto>>.Success(mappedEntities);
+                var entities = await _versionRepository.QueryAsync(
+                    e => !e.IsDeleted,
+                    include: entities => entities.Include(e => e.CreatedByUser),
+                    orderBy: entities => entities.OrderByDescending(c => c.CreatedAt)
+                );
+
+                entities = ApplySorting(entities, filter?.Sorted?.FirstOrDefault());
+
+                entities = ApplyFilters(entities, filter);
+
+                var pagedResult = PageHelper<GuiVersion, GuiVersionResponseDto>.ApplyPaging(entities, filter, entities => entities.Select(e => new GuiVersionResponseDto
+                {
+                    Id = e.Id,
+                    GuiVersionNo = e.GuiVersionNo,
+                    FrameworkVersionNo = e.FrameworkVersionNo,
+                    CreatedBy = e.CreatedByUser.FullName,
+                    CreatedAt = e.CreatedAt,
+                    IsActive = e.IsActive,
+                    IsLatest = e.IsLatest,
+                    DownloadPath=e.DownloadPath,
+
+                }).ToList());
+
+                return PagedApiResult<GuiVersionResponseDto>.Success(pagedResult);
             }
             catch (Exception ex)
             {
@@ -175,7 +198,100 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
+        private IQueryable<GuiVersion> ApplyFilters(IQueryable<GuiVersion> entities, PageQueryFiterBase filter)
+        {
+            filter.GetValue<string>("guiVersionNo", (v) =>
+            {
+                entities = entities.Where(e => e.GuiVersionNo.ToLower().Contains(v.ToLower()));
+            });
 
+            filter.GetValue<string>("frameworkVersionNo", (v) =>
+            {
+                entities = entities.Where(e => e.FrameworkVersionNo.ToLower().Contains(v.ToLower()));
+            });
+            filter.GetValue<bool>("isActive", (v) =>
+            {
+                entities = entities.Where(e => e.IsActive == v);
+            });
+
+            filter.GetValue<string>("createdBy", (v) =>
+            {
+                entities = entities.Where(e => e.CreatedByUser != null && e.CreatedByUser.FullName.ToLower().Contains(v.ToLower()));
+            });
+            filter.GetValue<DateTime>("createdAt", (v) =>
+            {
+                entities = entities.Where(e => e.CreatedAt != null && e.CreatedAt < v);
+            }, OperatorType.lessthan, true);
+            filter.GetValue<DateTime>("createdAt", (v) =>
+            {
+                entities = entities.Where(e => e.CreatedAt != null && e.CreatedAt > v);
+            }, OperatorType.greaterthan, true);
+
+
+
+            return entities;
+        }
+
+
+        private IQueryable<GuiVersion> ApplySorting(IQueryable<GuiVersion> entities, SortModel sort)
+        {
+            try
+            {
+                if (sort?.Name == null)
+                {
+                    entities = entities.OrderByDescending(o => o.IsLatest)
+                    .ThenByDescending(o => o.CreatedAt);
+                    return entities;
+                }
+
+                var columnName = sort.Name.ToUpper();
+                if (sort.Direction == SortDirection.ascending.ToString())
+                {
+                    if (columnName == nameof(GuiVersionResponseDto.GuiVersionNo).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.GuiVersionNo);
+                    }
+                    if (columnName == nameof(GuiVersionResponseDto.FrameworkVersionNo).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.FrameworkVersionNo);
+                    }
+                    if (columnName == nameof(GuiVersionResponseDto.CreatedBy).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.CreatedByUser.FullName);
+                    }
+                    if (columnName == nameof(GuiVersionResponseDto.CreatedAt).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.CreatedAt);
+                    }
+                }
+                else
+                {
+                    if (columnName == nameof(GuiVersionResponseDto.GuiVersionNo).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.GuiVersionNo);
+                    }
+                    if (columnName == nameof(GuiVersionResponseDto.FrameworkVersionNo).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.FrameworkVersionNo);
+                    }
+                    if (columnName == nameof(GuiVersionResponseDto.CreatedBy).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.CreatedByUser.FullName);
+                    }
+                    if (columnName == nameof(GuiVersionResponseDto.CreatedAt).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.CreatedAt);
+                    }
+                }
+
+                return entities;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return entities;
+            }
+        }
 
     }
 }
