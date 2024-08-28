@@ -299,6 +299,7 @@ public class EmployeeService : IEmployeeService
                 IsNDASigned = e.IsNDASigned,
                 FullName = e.ApplicationUser.FullName,
                 CreatedAt = e.CreatedAt,
+                IsExternal = e.IsExternal,
 
         }).ToList());
 
