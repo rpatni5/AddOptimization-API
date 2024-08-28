@@ -263,10 +263,6 @@ namespace AddOptimization.Services.Services
                     {
                         entities = entities.OrderBy(o => o.CreatedAt);
                     }
-                    if (columnName == nameof(GuiVersionResponseDto.IsLatest).ToUpper())
-                    {
-                        entities = entities.OrderBy(o => o.IsLatest);
-                    }
                 }
                 else
                 {
@@ -285,10 +281,6 @@ namespace AddOptimization.Services.Services
                     if (columnName == nameof(GuiVersionResponseDto.CreatedAt).ToUpper())
                     {
                         entities = entities.OrderByDescending(o => o.CreatedAt);
-                    }
-                    if (columnName == nameof(GuiVersionResponseDto.IsLatest).ToUpper())
-                    {
-                        entities = entities.OrderBy(o => o.IsLatest);
                     }
                 }
 
