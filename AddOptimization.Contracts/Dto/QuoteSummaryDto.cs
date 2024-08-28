@@ -7,7 +7,7 @@ namespace AddOptimization.Contracts.Dto
     {
         public Guid? Id { get; set; }
         public string Name { get; set; }
-        public int Quantity { get; set; }
+        public decimal Quantity { get; set; }
         public decimal Vat { get; set; }
         public decimal UnitPrice { get; set; }
         public decimal TotalPriceExcVat { get; set; }
