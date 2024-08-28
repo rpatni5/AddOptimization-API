@@ -97,8 +97,8 @@ namespace AddOptimization.Services.Services
                     IsActive = e.IsActive,
                     IsLatest = e.IsLatest,
                     DownloadPath=e.DownloadPath,
-          
-    }).ToList());
+
+                }).ToList());
 
                 return PagedApiResult<GuiVersionResponseDto>.Success(pagedResult);
             }
@@ -239,7 +239,8 @@ namespace AddOptimization.Services.Services
             {
                 if (sort?.Name == null)
                 {
-                    entities = entities.OrderByDescending(o => o.CreatedAt);
+                    entities = entities.OrderByDescending(o => o.IsLatest)
+                    .ThenByDescending(o => o.CreatedAt);
                     return entities;
                 }
 
