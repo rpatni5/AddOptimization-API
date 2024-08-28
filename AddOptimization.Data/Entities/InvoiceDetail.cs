@@ -7,6 +7,7 @@ namespace AddOptimization.Data.Entities
     {
         public long InvoiceId { get; set; }
         public string Description { get; set; }
+        public string? ReferenceName { get; set; }
         public decimal Quantity { get; set; }
         public decimal UnitPrice { get; set; }
         public decimal VatPercent { get; set; }

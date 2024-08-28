@@ -12,7 +12,7 @@ namespace AddOptimization.Contracts.Services
     public interface IGuiVersionService
     {
         Task<ApiResult<GuiVersionResponseDto>> Create(GuiVersionCreateDto model);
-        Task<ApiResult<List<GuiVersionResponseDto>>> Search();
+        Task<PagedApiResult<GuiVersionResponseDto>> Search(PageQueryFiterBase filter);
         Task<ApiResult<bool>> Delete(Guid id);
         Task<ApiResult<bool>> UpdateStatus(Guid id);
         Task<ApiResult<List<GuiVersionResponseDto>>>GetLatestversion();

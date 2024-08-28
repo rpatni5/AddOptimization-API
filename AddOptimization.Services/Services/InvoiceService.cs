@@ -319,6 +319,7 @@ namespace AddOptimization.Services.Services
                 {
                     InvoiceId = invoice.Id,
                     Description = description,
+                    ReferenceName = "Timesheet",
                     Quantity = quantity,
                     UnitPrice = daily,
                     TotalPriceExcludingVat = daily * quantity,
@@ -342,6 +343,7 @@ namespace AddOptimization.Services.Services
                 {
                     InvoiceId = invoice.Id,
                     Description = description,
+                    ReferenceName = "Timesheet",
                     Quantity = quantity,
                     UnitPrice = unitPrice,
                     TotalPriceExcludingVat = unitPrice * quantity,
@@ -609,13 +611,14 @@ namespace AddOptimization.Services.Services
                         var invoiceDetail = new InvoiceDetail
                         {
                             InvoiceId = entity.Id,
-                            Description = summary.Description,
+                            ReferenceName = summary.ReferenceName,
                             Quantity = summary.Quantity,
                             VatPercent = summary.VatPercent,
                             UnitPrice = summary.UnitPrice,
                             TotalPriceExcludingVat = summary.TotalPriceExcludingVat,
                             TotalPriceIncludingVat = summary.TotalPriceIncludingVat,
                             Metadata = "Manual",
+                            Description = summary.Description,
 
                         };
 
@@ -751,13 +754,14 @@ namespace AddOptimization.Services.Services
                     var invoiceDetail = new InvoiceDetail
                     {
                         InvoiceId = entity.Id,
-                        Description = summary.Description,
+                        ReferenceName = summary.ReferenceName,
                         Quantity = summary.Quantity,
                         VatPercent = summary.VatPercent,
                         UnitPrice = summary.UnitPrice,
                         TotalPriceExcludingVat = summary.TotalPriceExcludingVat,
                         TotalPriceIncludingVat = summary.TotalPriceIncludingVat,
                         Metadata = summary.Metadata,
+                        Description = summary.Description,
                     };
                     await _invoiceDetailRepository.InsertAsync(invoiceDetail);
                     newInvoiceDetails.Add(invoiceDetail);

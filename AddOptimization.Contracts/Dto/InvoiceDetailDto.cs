@@ -15,5 +15,6 @@ namespace AddOptimization.Contracts.Dto
         public decimal TotalPriceExcludingVat { get; set; }
         public string Metadata { get; set; }
         public bool IsDeleted { get; set; }
+        public string? ReferenceName { get; set; }
     }
 }
