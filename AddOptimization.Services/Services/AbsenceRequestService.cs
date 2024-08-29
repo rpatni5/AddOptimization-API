@@ -284,7 +284,7 @@ namespace AddOptimization.Services.Services
             {
                 if (!string.IsNullOrEmpty(v))
                 {
-                    entities = entities.Where(e => e.Duration == Convert.ToDecimal(v));
+                    entities = entities.Where(e => e.Duration.ToString().StartsWith(v));
                 }
             });
 
