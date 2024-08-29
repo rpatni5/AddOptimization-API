@@ -12,4 +12,5 @@ public interface IEmployeeService
     Task<ApiResult<List<EmployeeDto>>> Search(PageQueryFiterBase filters);
     Task<ApiResult<EmployeeDto>> GetEmployeeById(Guid id);
     Task<ApiResult<EmployeeDto>> GetEmployeeByUserId(int id);
+    Task<PagedApiResult<EmployeeDto>> SearchEmployeesNda(PageQueryFiterBase filters);
 }
