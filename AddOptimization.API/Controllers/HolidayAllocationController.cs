@@ -18,11 +18,11 @@ namespace AddOptimization.API.Controllers
             _holidayAllocationService = holidayAllocationService;
         }
         [HttpPost("search")]
-        public async Task<IActionResult> Search([FromBody] PageQueryFiterBase filters)
+        public async Task<IActionResult> Search([FromBody] PageQueryFiterBase filter)
         {
             try
             {
-                var retVal = await _holidayAllocationService.Search(filters);
+                var retVal = await _holidayAllocationService.Search(filter);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)

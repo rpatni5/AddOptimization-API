@@ -6,6 +6,7 @@ using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Utilities.Models;
 using AddOptimization.Services.Services;
+using Stripe;
 
 namespace AddOptimization.API.Controllers;
 [Authorize]
@@ -102,5 +103,17 @@ public class EmployeeController : CustomApiControllerBase
         }
     }
 
-
+    [HttpPost("searchEmployeeNda")]
+    public async Task<IActionResult> SearchEmployeesNda([FromBody] PageQueryFiterBase filters)
+    {
+        try
+        {
+            var retVal = await _employeeService.SearchEmployeesNda(filters);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
 }
