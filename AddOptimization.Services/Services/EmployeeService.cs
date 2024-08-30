@@ -15,6 +15,8 @@ using Microsoft.Extensions.Configuration;
 using System;
 using AddOptimization.Utilities.Constants;
 using iText.StyledXmlParser.Jsoup.Nodes;
+using AddOptimization.Utilities.Helpers;
+using AddOptimization.Utilities.Enums;
 
 namespace AddOptimization.Services.Services;
 public class EmployeeService : IEmployeeService
@@ -125,7 +127,7 @@ public class EmployeeService : IEmployeeService
             }
 
             await _unitOfWork.CommitTransactionAsync();
-            await  SendEmployeeCreatedEmail(savedEmployee.FullName, savedEmployee.Email);
+            await SendEmployeeCreatedEmail(savedEmployee.FullName, savedEmployee.Email);
             return ApiResult<bool>.Success(true);
         }
         catch (Exception ex)
@@ -214,8 +216,8 @@ public class EmployeeService : IEmployeeService
 
             var mappedEntities = _mapper.Map<List<EmployeeDto>>(entities);
             foreach (var entity in mappedEntities)
-            {  
-                entity.HasContract = (await _employeeContract.QueryAsync(x =>x.EmployeeId == entity.UserId )).Any();
+            {
+                entity.HasContract = (await _employeeContract.QueryAsync(x => x.EmployeeId == entity.UserId)).Any();
             }
 
             return ApiResult<List<EmployeeDto>>.Success(mappedEntities);
@@ -279,6 +281,127 @@ public class EmployeeService : IEmployeeService
             _logger.LogException(ex);
             throw;
         }
+    }
+
+    public async Task<PagedApiResult<EmployeeDto>> SearchEmployeesNda(PageQueryFiterBase filters)
+    {
+        try
+        {
+            var entities = await _employeeRepository.QueryAsync((e=>e.ApplicationUser.IsActive),include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
+            entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
+            entities = ApplyFilters(entities, filters);
+
+            var pagedResult = PageHelper<Employee, EmployeeDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new EmployeeDto
+            {
+                Id = e.Id,
+                UserId = e.ApplicationUser.Id,
+                NdaSignDate = e.NdaSignDate,
+                IsNDASigned = e.IsNDASigned,
+                FullName = e.ApplicationUser.FullName,
+                CreatedAt = e.CreatedAt,
+                IsExternal = e.IsExternal,
+
+        }).ToList());
+
+
+            var result = pagedResult;
+            return PagedApiResult<EmployeeDto>.Success(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            throw;
+        }
+    }
+
+    private IQueryable<Employee> ApplyFilters(IQueryable<Employee> entities, PageQueryFiterBase filter)
+    {
+
+        filter.GetValue<string>("fullName", (v) =>
+        {
+            entities = entities.Where(e => e.ApplicationUser.FullName != null && (e.ApplicationUser.FullName.ToLower().Contains(v.ToLower())));
+        });
+       
+        filter.GetValue<DateTime>("createdAt", (v) =>
+        {
+            entities = entities.Where(e => e.CreatedAt != null && e.CreatedAt < v);
+        }, OperatorType.lessthan, true);
+
+        filter.GetValue<DateTime>("createdAt", (v) =>
+        {
+            entities = entities.Where(e => e.CreatedAt != null && e.CreatedAt > v);
+        }, OperatorType.greaterthan, true);
+
+        filter.GetValue<DateTime>("ndaSignDate", (v) =>
+        {
+            entities = entities.Where(e => e.NdaSignDate != null && e.NdaSignDate < v);
+        }, OperatorType.lessthan, true);
+
+        filter.GetValue<DateTime>("ndaSignDate", (v) =>
+        {
+            entities = entities.Where(e => e.NdaSignDate != null && e.NdaSignDate > v);
+        }, OperatorType.greaterthan, true);
+
+
+        return entities;
+    }
+
+
+    private IQueryable<Employee> ApplySorting(IQueryable<Employee> entities, SortModel sort)
+    {
+        try
+        {
+            if (sort?.Name == null)
+            {
+                entities = entities.OrderByDescending(o => o.CreatedAt);
+                return entities;
+            }
+            var columnName = sort.Name.ToUpper();
+            if (sort.Direction == SortDirection.ascending.ToString())
+            {
+                if (columnName.ToUpper() == nameof(EmployeeDto.FullName).ToUpper())
+                {
+                    entities = entities.OrderBy(o => o.ApplicationUser.FullName);
+                }
+             
+                if (columnName.ToUpper() == nameof(EmployeeDto.CreatedAt).ToUpper())
+                {
+                    entities = entities.OrderBy(o => o.CreatedAt);
+                }
+                if (columnName.ToUpper() == nameof(EmployeeDto.NdaSignDate).ToUpper())
+                {
+                    entities = entities.OrderBy(o => o.NdaSignDate);
+                }
+
+            }
+
+            else
+            {
+                if (columnName.ToUpper() == nameof(EmployeeDto.FullName).ToUpper())
+                {
+                    entities = entities.OrderByDescending(o => o.ApplicationUser.FullName);
+                }
+
+                if (columnName.ToUpper() == nameof(EmployeeDto.CreatedAt).ToUpper())
+                {
+                    entities = entities.OrderByDescending(o => o.CreatedAt);
+                }
+
+                if (columnName.ToUpper() == nameof(EmployeeDto.NdaSignDate).ToUpper())
+                {
+                    entities = entities.OrderByDescending(o => o.NdaSignDate);
+                }
+
+            }
+            return entities;
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            return entities;
+        }
+
     }
 
 }

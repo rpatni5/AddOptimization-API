@@ -20,6 +20,7 @@ using Microsoft.Extensions.Configuration;
 using AddOptimization.Data.Repositories;
 using System.Reflection.Metadata.Ecma335;
 using AddOptimization.Utilities.Helpers;
+using AddOptimization.Utilities.Enums;
 
 
 namespace AddOptimization.Services.Services
@@ -125,34 +126,43 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        public async Task<ApiResult<List<AbsenceRequestResponseDto>>> Search(PageQueryFiterBase filters)
+
+        public async Task<PagedApiResult<AbsenceRequestResponseDto>> Search(PageQueryFiterBase filters)
         {
             try
             {
-                var entities = await _absenceRequestRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.LeaveStatuses).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
-                filters.GetValue<string>("userId", (v) =>
-                {
-                    var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
-                    entities = entities.Where(e => e.UserId == userId);
-                });
+                var entities = await _absenceRequestRepository.QueryAsync(
+                    e => !e.IsDeleted,
+                    include: entities => entities
+                        .Include(e => e.LeaveStatuses)
+                        .Include(e => e.CreatedByUser)
+                        .Include(e => e.UpdatedByUser)
+                        .Include(e => e.ApplicationUser),
+                    orderBy: x => x.OrderByDescending(x => x.CreatedAt)
+                );
 
-                filters.GetValue<int>("employeeId", (v) =>
-                {
-                    entities = entities.Where(e => e.UserId == v);
-                });
+                entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
+                entities = ApplyFilters(entities, filters);
 
-                filters.GetValue<DateTime>("startDate", (v) =>
-                {
-                    entities = entities.Where(e => e.Date >= v);
-                });
+                var pagedResult = PageHelper<AbsenceRequest, AbsenceRequestResponseDto>.ApplyPaging(
+                    entities,
+                    filters,
+                    entities => entities.Select(e => new AbsenceRequestResponseDto
+                    {
+                        Id = e.Id,
+                        UserId = e.UserId,
+                        Date = e.Date,
+                        LeaveStatusId = e.LeaveStatusId,
+                        LeaveStatusName=e.LeaveStatuses.Name,
+                        CreatedAt = e.CreatedAt,
+                        UpdatedAt = e.UpdatedAt,
+                        Comment=e.Comment,
+                        Duration=e.Duration,
+                        UserName=e.ApplicationUser.FullName,
+                    }).ToList()
+                );
 
-                filters.GetValue<DateTime>("endDate", (v) =>
-                {
-                    entities = entities.Where(e => e.Date <= v);
-                });
-
-                var mappedEntities = _mapper.Map<List<AbsenceRequestResponseDto>>(entities);
-                return ApiResult<List<AbsenceRequestResponseDto>>.Success(mappedEntities);
+                return PagedApiResult<AbsenceRequestResponseDto>.Success(pagedResult);
             }
             catch (Exception ex)
             {
@@ -255,5 +265,115 @@ namespace AddOptimization.Services.Services
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
             return $"{baseUrl}admin/timesheets/absence-approval";
         }
+
+
+        private IQueryable<AbsenceRequest> ApplyFilters(IQueryable<AbsenceRequest> entities, PageQueryFiterBase filter)
+        {
+
+            filter.GetValue<string>("UserId", (v) =>
+            {
+                var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
+                entities = entities.Where(e => e.UserId == userId);
+            });
+            filter.GetValue<string>("Comment", (v) =>
+            {
+                entities = entities.Where(e => e.Comment != null && e.Comment.ToLower().Contains(v.ToLower()));
+            });
+
+            filter.GetValue<string>("Duration", (v) =>
+            {
+                if (!string.IsNullOrEmpty(v))
+                {
+                    entities = entities.Where(e => e.Duration.ToString().StartsWith(v));
+                }
+            });
+
+            filter.GetValue<string>("leaveStatusName", (v) =>
+            {
+                entities = entities.Where(e => e.LeaveStatuses.Name != null && e.LeaveStatuses.Name.ToLower().Contains(v.ToLower()));
+            });
+            filter.GetValue<int>("leaveStatusId", (v) =>
+            {
+                entities = entities.Where(e => e.LeaveStatusId == v);
+            });
+
+            filter.GetValue<string>("UserName", (v) =>
+            {
+                entities = entities.Where(e => e.ApplicationUser.FullName != null && e.ApplicationUser.FullName.ToLower().Contains(v.ToLower()));
+            });
+
+            filter.GetValue<DateTime>("Date", (v) =>
+            {
+                entities = entities.Where(e => e.Date < v);
+            }, OperatorType.lessthan, true);
+
+            filter.GetValue<DateTime>("Date", (v) =>
+            {
+                entities = entities.Where(e => e.Date > v);
+            }, OperatorType.greaterthan, true);
+
+            return entities;
+        }
+
+        private IQueryable<AbsenceRequest> ApplySorting(IQueryable<AbsenceRequest> orders, SortModel sort)
+        {
+            try
+            {
+                if (sort?.Name == null)
+                {
+                    orders = orders.OrderByDescending(o => o.Date);
+                    return orders;
+                }
+                var columnName = sort.Name.ToUpper();
+                if (sort.Direction == SortDirection.ascending.ToString())
+                {
+                    if (columnName.ToUpper() == nameof(AbsenceRequestResponseDto.Comment).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.Comment);
+                    }
+                    if (columnName.ToUpper() == nameof(AbsenceRequestResponseDto.Date).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.Date);
+                    }
+                    if (columnName.ToUpper() == nameof(AbsenceRequestResponseDto.LeaveStatusName).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.LeaveStatuses.Name);
+                    }
+                    if (columnName.ToUpper() == nameof(AbsenceRequestResponseDto.UpdatedBy).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.CreatedByUser.FullName);
+                    }
+
+                }
+                else
+                {
+                    if (columnName.ToUpper() == nameof(AbsenceRequestResponseDto.Comment).ToUpper())
+                    {
+                        orders = orders.OrderByDescending(o => o.Comment);
+                    }
+                    if (columnName.ToUpper() == nameof(AbsenceRequestResponseDto.Date).ToUpper())
+                    {
+                        orders = orders.OrderByDescending(o => o.Date);
+                    }
+                    if (columnName.ToUpper() == nameof(AbsenceRequestResponseDto.LeaveStatusName).ToUpper())
+                    {
+                        orders = orders.OrderByDescending(o => o.LeaveStatuses.Name);
+                    }
+                    if (columnName.ToUpper() == nameof(AbsenceRequestResponseDto.UpdatedBy).ToUpper())
+                    {
+                        orders = orders.OrderByDescending(o => o.CreatedByUser.FullName);
+                    }
+                }
+                return orders;
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return orders;
+            }
+        }
+
+
     }
 }

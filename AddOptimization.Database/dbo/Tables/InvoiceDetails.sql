@@ -14,7 +14,7 @@ CREATE TABLE [dbo].[InvoiceDetails](
 	[UpdatedAt] [datetime2](7) NULL,
 	[UpdatedByUserId] [int] NULL,
 	[Metadata] [varchar](max) NULL,
-	[ReferenceName] [nvarchar](200) NULL,
+	[ReferenceName] [nvarchar](500) NULL,
  CONSTRAINT [PK__InvoiceD__3214EC0751A59BBB] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC

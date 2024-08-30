@@ -12,10 +12,8 @@ namespace AddOptimization.Contracts.Services
     public interface IHolidayAllocationService
     {
 
-        Task<ApiResult<List<HolidayAllocationResponseDto>>> Search(PageQueryFiterBase filters);
-
+        Task<PagedApiResult<HolidayAllocationResponseDto>> Search(PageQueryFiterBase filter);
         Task<ApiResult<HolidayAllocationResponseDto>> Create(HolidayAllocationRequestDto model);
-
         Task<ApiResult<bool>> Delete(Guid id);
         Task<ApiResult<HolidayAllocationResponseDto>> GetAllocatedHolidays(int employeeId);
         Task<ApiResult<LeaveBalanceDto>> GetEmployeeLeaveBalance(int employeeId);
