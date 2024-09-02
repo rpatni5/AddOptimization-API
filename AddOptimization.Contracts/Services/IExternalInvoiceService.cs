@@ -20,7 +20,8 @@ namespace AddOptimization.Contracts.Services
         Task<bool> SendInvoiceApprovalEmailToAccountAdmin(int Id);
         Task<ApiResult<bool>> DeclineRequest(ExternalInvoiceActionRequestDto model);
         Task<bool> SendInvoiceApprovalEmailToCustomer(int id);
-   
+        Task<ApiResult<List<ExternalInvoiceHistoryDto>>> GetExternalInvoiceHistoryById(int id);
+
 
     }
 }
