@@ -94,7 +94,11 @@ namespace AddOptimization.Services.Services
                 }
                 var association = (await _customerEmployeeAssociationService.Search()).Result.ToList();
                 var publicHoliday = (await _publicHolidayService.SearchAllPublicHoliday()).Result.ToList();
-                var durationExcludingWeekends = GetDurationExcludingWeekends(model.StartDate, model.EndDate, association, publicHoliday, userId);
+                var durationExcludingWeekends = GetDurationExcludingWeekends(model.StartDate, model.EndDate, association, publicHoliday, userId , model?.Duration);
+                if(durationExcludingWeekends == 0)
+                {
+                    return ApiResult<AbsenceRequestResponseDto>.Failure(ValidationCodes.AbsenceRequestedProhibited, "Cannot raise absence request as there is a public holiday.");
+                }
                  var currentYear = DateTime.UtcNow.Year;
                 var leaveBalanceResult = await _holidayAllocationService.GetEmployeeLeaveBalance(userId);
                 var leaveBalance = leaveBalanceResult.Result;
@@ -429,7 +433,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private int GetDurationExcludingWeekends(DateTime? startDate, DateTime? endDate, List<CustomerEmployeeAssociationDto> association, List<PublicHolidayResponseDto> publicHoliday, int userId)
+        private decimal? GetDurationExcludingWeekends(DateTime? startDate, DateTime? endDate, List<CustomerEmployeeAssociationDto> association, List<PublicHolidayResponseDto> publicHoliday, int userId , decimal? duration)
         {
             var associatedCountries = association.Where(a => a.EmployeeId == userId).Select(a => a.PublicHolidayCountryId).Distinct().ToList();
             if (!startDate.HasValue)
@@ -444,18 +448,26 @@ namespace AddOptimization.Services.Services
             {
                 if (currentDate.DayOfWeek != DayOfWeek.Saturday && currentDate.DayOfWeek != DayOfWeek.Sunday)
                 {
-                    //bool isCountable = associatedCountries.Any(countryId =>
-                    //    !publicHoliday.Any(ph => ph.CountryId == countryId && ph.Date.Date == currentDate.Date));
-
-                    //if (isCountable)
-                    //{
-                    //    totalDays++;
-                    //}
                     bool allCountriesHaveHoliday = associatedCountries.All(countryId => publicHoliday.Any(ph => ph.CountryId == countryId && ph.Date.Date == currentDate.Date));
 
-                    if (!allCountriesHaveHoliday)
+                    if (duration == null)
                     {
-                        totalDays++;
+                        if (!allCountriesHaveHoliday)
+                        {
+                            totalDays++;
+                        }
+                    }
+                    else
+                    {
+                        if (!allCountriesHaveHoliday)
+                        {
+                            return duration;
+                        }
+                        else
+                        {
+                            return 0;
+                        }
+                        
                     }
                 }
                 currentDate = currentDate.AddDays(1);
