@@ -9,7 +9,7 @@ namespace AddOptimization.Contracts.Dto
     public class AbsenceRequestRequestDto : BaseDto<Guid>
     {
         public string Comment { get; set; }
-        public DateTime Date { get; set; }
+        public DateTime? Date { get; set; }
         public bool IsDeleted { get; set; }
         public bool IsActive { get; set; }
 
@@ -17,6 +17,9 @@ namespace AddOptimization.Contracts.Dto
         public int LeaveStatusId { get; set; }
         public decimal Duration { get; set; }
         public string LeaveStatusName { get; set; }
+
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
 
     }
 }

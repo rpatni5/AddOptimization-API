@@ -1,6 +1,7 @@
 ﻿using AddOptimization.API.Common;
 using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
+using AddOptimization.Services.Services;
 using AddOptimization.Utilities.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,10 +12,10 @@ namespace AddOptimization.API.Controllers
     public class PublicHolidayController : CustomApiControllerBase
     {
 
-        private readonly IPublicHolidayService _timesheetService;
+        private readonly IPublicHolidayService _publicHolidayService;
         public PublicHolidayController(ILogger<PublicHolidayController> logger, IPublicHolidayService timesheetService) : base(logger)
         {
-            _timesheetService = timesheetService;
+            _publicHolidayService = timesheetService;
         }
 
         [HttpPost("search")]
@@ -22,7 +23,7 @@ namespace AddOptimization.API.Controllers
         {
             try
             {
-                var retVal = await _timesheetService.Search(filters);
+                var retVal = await _publicHolidayService.Search(filters);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -36,7 +37,7 @@ namespace AddOptimization.API.Controllers
         {
             try
             {
-                var retVal = await _timesheetService.Create(model);
+                var retVal = await _publicHolidayService.Create(model);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -50,7 +51,7 @@ namespace AddOptimization.API.Controllers
         {
             try
             {
-                var retVal = await _timesheetService.Get(id);
+                var retVal = await _publicHolidayService.Get(id);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -64,7 +65,7 @@ namespace AddOptimization.API.Controllers
         {
             try
             {
-                var retVal = await _timesheetService.Update(id, model);
+                var retVal = await _publicHolidayService.Update(id, model);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -79,7 +80,7 @@ namespace AddOptimization.API.Controllers
         {
             try
             {
-                var retVal = await _timesheetService.Delete(id);
+                var retVal = await _publicHolidayService.Delete(id);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
@@ -88,7 +89,19 @@ namespace AddOptimization.API.Controllers
             }
         }
 
+        [HttpPost("searchAll")]
+        public async Task<IActionResult> GetAll()
+        {
+            try
+            {
+                var retVal = await _publicHolidayService.SearchAllPublicHoliday();
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
 
-      
     }
 }

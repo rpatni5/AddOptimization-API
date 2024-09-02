@@ -250,5 +250,25 @@ namespace AddOptimization.Services.Services
             }
 
         }
+
+        public async Task<ApiResult<List<PublicHolidayResponseDto>>> SearchAllPublicHoliday()
+        {
+            try
+            {
+                var entities = await _publicholidayRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.Country).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Date));
+                var mappedEntities = _mapper.Map<List<PublicHolidayResponseDto>>(entities.ToList());
+                return ApiResult<List<PublicHolidayResponseDto>>.Success(mappedEntities);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+
     }
+
+   
+
 }
