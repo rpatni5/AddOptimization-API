@@ -359,10 +359,7 @@ namespace AddOptimization.Services.Services
                 entities = entities.Where(e => e.EndDate > v);
             }, OperatorType.greaterthan, true);
 
-            filter.GetValue<int>("employeeId", (v) =>
-            {
-                entities = entities.Where(e => e.UserId == v);
-            });
+           
             return entities;
         }
 
