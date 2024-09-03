@@ -7,6 +7,7 @@ using AddOptimization.Contracts.Services;
 using AddOptimization.Utilities.Models;
 using AddOptimization.Services.Services;
 using Stripe;
+using AddOptimization.Utilities.Common;
 
 namespace AddOptimization.API.Controllers;
 [Authorize]
@@ -62,11 +63,11 @@ public class EmployeeController : CustomApiControllerBase
     }
 
     [HttpPost("search")]
-    public async Task<IActionResult> Search([FromBody] PageQueryFiterBase filters)
+    public async Task<IActionResult> Search([FromBody] PageQueryFiterBase filter)
     {
         try
         {
-            var retVal = await _employeeService.Search(filters);
+            var retVal = await _employeeService.Search(filter);
             return HandleResponse(retVal);
         }
         catch (Exception ex)
