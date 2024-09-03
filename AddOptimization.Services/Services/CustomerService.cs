@@ -348,6 +348,10 @@ public class CustomerService : ICustomerService
         {
             entities = entities.Where(e => e.Organizations != null && e.Organizations.ToLower().Contains(v.ToLower()));
         });
+        filter.GetValue<string>("customerStatusName", (v) =>
+        {
+            entities = entities.Where(e => e.CustomerStatus.Name.ToLower().Contains(v.ToLower()) || e.CustomerStatus.Name.ToLower().Contains(v.ToLower()));
+        });
         filter.GetValue<string>("ManagerName", (v) =>
         {
             entities = entities.Where(e => e.ManagerName != null && e.ManagerName.ToLower().Contains(v.ToLower()));
@@ -403,15 +407,15 @@ public class CustomerService : ICustomerService
             {
                 if (columnName.ToUpper() == nameof(CustomerDto.Company).ToUpper())
                 {
-                    orders = orders.OrderBy(o => o.Organizations);
+                    orders = orders.OrderByDescending(o => o.Organizations);
                 }
                 if (columnName.ToUpper() == nameof(CustomerDto.ManagerName).ToUpper())
                 {
-                    orders = orders.OrderBy(o => o.ManagerName);
+                    orders = orders.OrderByDescending(o => o.ManagerName);
                 }
                 if (columnName.ToUpper() == nameof(CustomerDto.CountryNames).ToUpper())
                 {
-                    orders = orders.OrderBy(o => o.Country.CountryName);
+                    orders = orders.OrderByDescending(o => o.Country.CountryName);
                 }
                 if (columnName.ToUpper() == nameof(CustomerDto.CustomerStatus).ToUpper())
                 {

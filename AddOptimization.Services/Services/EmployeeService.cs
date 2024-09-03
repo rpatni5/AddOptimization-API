@@ -17,6 +17,7 @@ using AddOptimization.Utilities.Constants;
 using iText.StyledXmlParser.Jsoup.Nodes;
 using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Enums;
+using System.Linq;
 
 namespace AddOptimization.Services.Services;
 public class EmployeeService : IEmployeeService
@@ -206,21 +207,75 @@ public class EmployeeService : IEmployeeService
             throw;
         }
     }
-    public async Task<ApiResult<List<EmployeeDto>>> Search(PageQueryFiterBase filters)
+
+
+    public async Task<PagedApiResult<EmployeeDto>> Search(PageQueryFiterBase filter)
     {
         try
         {
+            var entities = await _employeeRepository.QueryAsync(
+                include: entities => entities
+                    .Include(e => e.CreatedByUser)
+                    .Include(e => e.UpdatedByUser)
+                    .Include(e => e.Country)
+                    .Include(e => e.ExternalCountry)
+                    .Include(e => e.ApplicationUser),
+                orderBy: entities => entities.OrderByDescending(x => x.CreatedAt)
+            );
 
-            var entities = await _employeeRepository.QueryAsync(include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Country).Include(e => e.ExternalCountry).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
+            entities = ApplySorting(entities, filter?.Sorted?.FirstOrDefault());
 
+            entities = ApplyFilters(entities, filter);
 
-            var mappedEntities = _mapper.Map<List<EmployeeDto>>(entities);
-            foreach (var entity in mappedEntities)
+            var employeeIds = entities
+                .Select(e => (int?)e.UserId) 
+                .Where(id => id.HasValue) 
+                .ToList();
+
+            var contracts = await _employeeContract.QueryAsync(
+                x => employeeIds.Contains(x.EmployeeId.GetValueOrDefault()) 
+            );
+
+            var contractEmployeeIds = new HashSet<int>(contracts.Select(c => c.EmployeeId.GetValueOrDefault()));
+
+            var mappedEntities = _mapper.Map<List<EmployeeDto>>(entities).Select(e =>
             {
-                entity.HasContract = (await _employeeContract.QueryAsync(x => x.EmployeeId == entity.UserId)).Any();
-            }
+                e.HasContract = contractEmployeeIds.Contains(e.UserId);
+                return e;
+            }).ToList();
 
-            return ApiResult<List<EmployeeDto>>.Success(mappedEntities);
+            var pagedResult= PageHelper<Employee, EmployeeDto>.ApplyPaging(
+                entities,
+                filter,
+                pagedEntities => pagedEntities.Select(e => new EmployeeDto
+                {
+                    Id = e.Id,
+                    UserId = e.UserId,
+                    FirstName = e.ApplicationUser.FirstName,
+                    LastName = e.ApplicationUser.LastName,
+                    Email = e.ApplicationUser.Email,
+                    UserName=e.ApplicationUser.FullName,
+                    JobTitle = e.JobTitle,
+                    Address = e.Address,
+                    City = e.City,
+                    Salary=e.Salary,
+                    CountryId = e.CountryId,
+                    CountryName = e.Country.CountryName,
+                    IsExternal = e.IsExternal,
+                    IsNDASigned = e.IsNDASigned,
+                    isActive = e.ApplicationUser.IsActive,
+                    CreatedAt = e.CreatedAt,
+                    UpdatedAt = e.UpdatedAt,
+                    CreatedBy = e.CreatedByUser.FullName,
+                    UpdatedBy = e.UpdatedByUser.FullName,
+                    NdaSignDate = e.NdaSignDate,
+                    ZipCode = e.ZipCode,
+
+                    HasContract = contractEmployeeIds.Contains(e.UserId)
+                }).ToList()
+            );
+
+            return PagedApiResult<EmployeeDto>.Success(pagedResult);
         }
         catch (Exception ex)
         {
@@ -316,6 +371,15 @@ public class EmployeeService : IEmployeeService
 
     private IQueryable<Employee> ApplyFilters(IQueryable<Employee> entities, PageQueryFiterBase filter)
     {
+       
+        filter.GetValue<string>("firstName", (v) =>
+        {
+            entities = entities.Where(e => e.ApplicationUser.FullName.ToLower().Contains(v.ToLower()));
+        });
+        filter.GetValue<string>("email", (v) =>
+        {
+            entities = entities.Where(e => e.ApplicationUser.Email.ToLower().Contains(v.ToLower()));
+        });
 
         filter.GetValue<string>("fullName", (v) =>
         {
@@ -363,7 +427,15 @@ public class EmployeeService : IEmployeeService
                 {
                     entities = entities.OrderBy(o => o.ApplicationUser.FullName);
                 }
-             
+                if (columnName.ToUpper() == nameof(EmployeeDto.FirstName).ToUpper())
+                {
+                    entities = entities.OrderBy(o => o.ApplicationUser.FullName);
+                }
+                if (columnName.ToUpper() == nameof(EmployeeDto.Email).ToUpper())
+                {
+                    entities = entities.OrderBy(o => o.ApplicationUser.Email);
+                }
+
                 if (columnName.ToUpper() == nameof(EmployeeDto.CreatedAt).ToUpper())
                 {
                     entities = entities.OrderBy(o => o.CreatedAt);
@@ -372,6 +444,7 @@ public class EmployeeService : IEmployeeService
                 {
                     entities = entities.OrderBy(o => o.NdaSignDate);
                 }
+                
 
             }
 
@@ -380,6 +453,14 @@ public class EmployeeService : IEmployeeService
                 if (columnName.ToUpper() == nameof(EmployeeDto.FullName).ToUpper())
                 {
                     entities = entities.OrderByDescending(o => o.ApplicationUser.FullName);
+                }
+                if (columnName.ToUpper() == nameof(EmployeeDto.FirstName).ToUpper())
+                {
+                    entities = entities.OrderByDescending(o => o.ApplicationUser.FullName);
+                }
+                if (columnName.ToUpper() == nameof(EmployeeDto.Email).ToUpper())
+                {
+                    entities = entities.OrderByDescending(o => o.ApplicationUser.Email);
                 }
 
                 if (columnName.ToUpper() == nameof(EmployeeDto.CreatedAt).ToUpper())
