@@ -286,9 +286,11 @@ namespace AddOptimization.Services.Services
 
             if (customer.PartnerName != null)
             {
+                var partnerCountry = await _countryRepository.FirstOrDefaultAsync(c => c.Id == customer.PartnerCountryId, ignoreGlobalFilter: true);
+
                 sb += JoinNonNull(customer.PartnerAddress, customer.PartnerAddress2);
                 sb += JoinNonNull(customer.PartnerCity, customer.PartnerState);
-                sb += JoinNonNull(customer.PartnerZipCode?.ToString(), country.CountryName);
+                sb += JoinNonNull(customer.PartnerZipCode?.ToString(), partnerCountry?.CountryName);
                 sb += JoinNonNull(customer.PartnerVATNumber);
             }
             else
