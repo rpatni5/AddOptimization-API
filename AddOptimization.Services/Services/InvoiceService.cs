@@ -627,7 +627,14 @@ namespace AddOptimization.Services.Services
                         await _invoiceDetailRepository.InsertAsync(invoiceDetail);
                         entity.InvoiceDetails.Add(invoiceDetail);
                     }
-                    await _unitOfWork.CommitTransactionAsync();
+                InvoiceHistory historyEntity = new InvoiceHistory
+                {
+                    InvoiceId = entity.Id,
+                    InvoiceStatusId = entity.InvoiceStatusId,
+                };
+                await _invoiceHistoryRepository.InsertAsync(historyEntity);
+
+                await _unitOfWork.CommitTransactionAsync();
                     var mappedEntity = _mapper.Map<InvoiceResponseDto>(entity);
                     return ApiResult<InvoiceResponseDto>.Success(mappedEntity);
                 }
@@ -768,6 +775,12 @@ namespace AddOptimization.Services.Services
                     await _invoiceDetailRepository.InsertAsync(invoiceDetail);
                     newInvoiceDetails.Add(invoiceDetail);
                 }
+                InvoiceHistory historyEntity = new InvoiceHistory
+                {
+                    InvoiceId = entity.Id,
+                    InvoiceStatusId = entity.InvoiceStatusId,
+                };
+                await _invoiceHistoryRepository.InsertAsync(historyEntity);
 
                 entity.VatValue = newInvoiceDetails.Sum(x => (x.UnitPrice * x.Quantity * x.VatPercent) / 100);
                 entity.TotalPriceIncludingVat = newInvoiceDetails.Sum(x => x.TotalPriceIncludingVat);
@@ -812,6 +825,12 @@ namespace AddOptimization.Services.Services
                 entity.InvoiceStatusId = sentToCustomerStatusId;
                 await _invoiceRepository.UpdateAsync(entity);
             }
+            InvoiceHistory historyEntity = new InvoiceHistory
+            {
+                InvoiceId = entity.Id,
+                InvoiceStatusId = entity.InvoiceStatusId,
+            };
+            await _invoiceHistoryRepository.InsertAsync(historyEntity);
             var details = (await _invoiceDetailRepository.QueryAsync(x => x.InvoiceId == invoiceId)).ToList();
             var companyInfoResult = await _companyService.GetCompanyInformation();
             var companyInfo = companyInfoResult.Result;
@@ -858,6 +877,32 @@ namespace AddOptimization.Services.Services
             }
             var response = _mapper.Map<List<InvoiceResponseDto>>(entity);
             return ApiResult<List<InvoiceResponseDto>>.Success(response);
+        }
+
+
+        public async Task<ApiResult<List<InvoiceHistoryDto>>> GetInvoiceHistoryById(int id)
+        {
+            try
+            {
+
+                var entities = await _invoiceHistoryRepository.QueryAsync(e => e.InvoiceId == id, disableTracking: true);
+                var mappedEntities = entities.Select(e => new InvoiceHistoryDto
+                {
+                    Id = e.Id,
+                    InvoiceId = e.InvoiceId,
+                    InvoiceStatusId = e.InvoiceStatusId,
+                    InvoiceStatusName = e.InvoiceStatus.Name,
+                    Comment = e.Comment,
+                    CreatedAt = e.CreatedAt,
+                }).ToList();
+
+                return ApiResult<List<InvoiceHistoryDto>>.Success(mappedEntities);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
         }
     }
 }

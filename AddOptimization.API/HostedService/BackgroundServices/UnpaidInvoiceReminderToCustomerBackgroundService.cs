@@ -1,6 +1,7 @@
 ﻿using AddOptimization.Contracts.Constants;
 using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
+using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
 using AddOptimization.Services.Constants;
 using AddOptimization.Services.Services;
@@ -14,6 +15,7 @@ using AddOptimization.Utilities.Services;
 using NPOI.SS.Formula.Eval;
 using NPOI.SS.Formula.Functions;
 using Sgbj.Cron;
+using Stripe;
 using System.Globalization;
 using System.Text;
 
@@ -32,7 +34,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         #region Constructor
         public UnpaidInvoiceReminderToCustomerBackgroundService(IConfiguration configuration,
             ITemplateService templateService,
-            IServiceProvider serviceProvider, 
+            IServiceProvider serviceProvider,
             CustomDataProtectionService protectionService,
             ILogger<LicenseRenewalEmailBackgroundService> logger)
         {
@@ -82,7 +84,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 var appUserService = scope.ServiceProvider.GetRequiredService<IApplicationUserService>();
                 var invoiceStatusService = scope.ServiceProvider.GetRequiredService<IInvoiceStatusService>();
                 var companyService = scope.ServiceProvider.GetRequiredService<ICompanyService>();
-
+                var invoiceHistoryService = scope.ServiceProvider.GetRequiredService<IGenericRepository<InvoiceHistory>>();
                 var invoices = await invoiceService.GetUnpaidInvoicesForEmailReminder();
                 if (invoices?.Result == null) return false;
 
@@ -99,6 +101,15 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                     {
                         await SendUnpaidInvoiceReminderEmailCustomer(invoice, companyInfoResult);
                         await SendUnpaidInvoiceReminderEmailAccountAdmin(invoice, approver.Result.FirstOrDefault(), companyInfoResult);
+
+                        var historyEntity = new InvoiceHistory
+                        {
+                            InvoiceId = invoice.Id,
+                            InvoiceStatusId = invoice.InvoiceStatusId,
+                            CreatedAt = DateTime.UtcNow,
+                            Comment = "Automatic Generated Unpaid Invoice",
+                        };
+                        await invoiceHistoryService.InsertAsync(historyEntity);
                     }
                 };
                 return true;
