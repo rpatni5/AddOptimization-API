@@ -648,13 +648,8 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-           
                 var entities = await _externalInvoiceHistoryRepository.QueryAsync(e => e.InvoiceId == id, disableTracking: true);
            
-
-          
-
-
                 var mappedEntities = entities.Select(e => new ExternalInvoiceHistoryDto
                 {
                     Id = e.Id,
@@ -673,12 +668,6 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-
-
-
-
-
-
 
 
         private IQueryable<ExternalInvoice> ApplyFilters(IQueryable<ExternalInvoice> entities, PageQueryFiterBase filter)
