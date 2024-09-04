@@ -30,8 +30,7 @@ namespace AddOptimization.Contracts.Dto
         public bool IsActive { get; set; }
         public bool? HasContract { get; set; }
         public bool? IsExternal { get; set; }
-
-
-
+        public bool IsAutoInvoicingEnabled { get; set; }
+        public string JobTitle { get; set; }
     }
 }

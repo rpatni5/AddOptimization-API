@@ -176,6 +176,7 @@ namespace AddOptimization.Services.Services
                     var publicHoliday = employee.PublicHoliday;
                     var saturday = employee.Saturday;
                     var sunday = employee.Sunday;
+                    var jobTitle = employee.JobTitle;
 
                     var empl = (await _employeeRepository.QueryAsync(e => e.UserId == employee.EmployeeId,
                         include: empl => empl.Include(x => x.ApplicationUser),
