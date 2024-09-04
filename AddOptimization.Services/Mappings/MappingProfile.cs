@@ -220,9 +220,11 @@ namespace AddOptimization.Services.Mappings
                 d.Password = s.ApplicationUser != null ? s.ApplicationUser.Password : string.Empty;
                 d.isActive = s.ApplicationUser != null ? s.ApplicationUser.IsActive : false;
                 d.CountryName = s.Country != null ? s.Country.CountryName : string.Empty;
+                d.IdentityName = s.EmployeeIdentity !=null? s.EmployeeIdentity.Name : string.Empty;
 
             });
             CreateMap<EmployeeDto, Employee>();
+            CreateMap<EmployeeIdentity, EmployeeIdentityDto>();
 
             CreateMap<Company, CompanyDto>().AfterMap((s, d) => 
             {
@@ -360,7 +362,7 @@ namespace AddOptimization.Services.Mappings
                 d.EmployeeName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
                 d.InvoicingAndPaymentMode = s.InvoicingPaymentMode != null ? s.InvoicingPaymentMode.Name : string.Empty;
                 d.ProjectFeePaymentMode = s.ProjectFeePaymentMode != null ? s.ProjectFeePaymentMode.Name : string.Empty;
-
+                d.IdentityName=s.EmployeeIdentity!=null ? s.EmployeeIdentity.Name : string.Empty;
 
             });
             CreateMap<EmployeeContractRequestDto, EmployeeContract>();

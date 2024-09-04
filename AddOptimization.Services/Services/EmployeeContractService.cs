@@ -79,7 +79,7 @@ public class EmployeeContractService : IEmployeeContractService
     {
         try
         {
-            var entity = await _contractRepository.FirstOrDefaultAsync(t => t.Id == id , include: entity => entity.Include(e => e.InvoicingPaymentMode).Include(e => e.Customer).Include(e => e.CustomerEmployeeAssociation).Include(e => e.ApplicationUser).Include(e => e.ProjectFeePaymentMode), ignoreGlobalFilter: true);
+            var entity = await _contractRepository.FirstOrDefaultAsync(t => t.Id == id , include: entity => entity.Include(e => e.InvoicingPaymentMode).Include(e => e.Customer).Include(e => e.CustomerEmployeeAssociation).Include(e => e.ApplicationUser).Include(e => e.ProjectFeePaymentMode).Include(e => e.EmployeeIdentity), ignoreGlobalFilter: true);
             if (entity == null)
             {
                 return null;
@@ -282,8 +282,9 @@ public class EmployeeContractService : IEmployeeContractService
                 Hours = e.Hours,
                 NIENumber = e.NIENumber,
                 ContractNumber = e.ContractNumber,
-
-
+                IdentityId = e.IdentityId,
+                IdentityNumber = e.IdentityNumber, 
+                IdentityName =e.EmployeeIdentity != null ? e.EmployeeIdentity.Name : string.Empty,
             }).ToList());
 
             var result = pagedResult;

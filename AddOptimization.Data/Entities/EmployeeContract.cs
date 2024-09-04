@@ -32,6 +32,11 @@ namespace AddOptimization.Data.Entities
 
         public long? ContractNumber { get; set; }
         public string? NIENumber { get; set; }
+        public Guid? IdentityId { get; set; }
+
+        public string IdentityNumber { get; set; }
+
+
 
         [ForeignKey(nameof(ProjectFeePaymentModeId))]
         public virtual InvoicingPaymentMode ProjectFeePaymentMode { get; set; }
@@ -47,6 +52,10 @@ namespace AddOptimization.Data.Entities
 
         [ForeignKey(nameof(CustomerId))]
         public virtual Customer Customer { get; set; }
+
+        [ForeignKey(nameof(IdentityId))]
+        public virtual EmployeeIdentity EmployeeIdentity { get; set; }
+
 
     }
 

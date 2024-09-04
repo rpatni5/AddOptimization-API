@@ -29,6 +29,8 @@ CREATE TABLE [dbo].[EmployeeContracts](
 	[PublicHoliday] [int] NULL,
 	[NIENumber] [varchar](50) NULL,
 	[ContractNumber] [bigint] NULL,
+	[IdentityId] [uniqueidentifier] NULL,
+	[IdentityNumber] [varchar](500) NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC

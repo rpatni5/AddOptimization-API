@@ -114,6 +114,8 @@ public class EmployeeService : IEmployeeService
                 ExternalState = model.ExternalState,
                 ExternalCountryId = model.ExternalCountryId,
                 ExternalAddress = model.ExternalAddress,
+                IdentityNumber=model.IdentityNumber,
+                IdentityId = model.IdentityId,
             };
 
             await _employeeRepository.InsertAsync(entity);
@@ -270,6 +272,8 @@ public class EmployeeService : IEmployeeService
                     UpdatedBy = e.UpdatedByUser.FullName,
                     NdaSignDate = e.NdaSignDate,
                     ZipCode = e.ZipCode,
+                    IdentityId = e.IdentityId,
+                    IdentityNumber = e.IdentityNumber,
 
                     HasContract = contractEmployeeIds.Contains(e.UserId)
                 }).ToList()
@@ -326,7 +330,7 @@ public class EmployeeService : IEmployeeService
     {
         try
         {
-            var entity = await _employeeRepository.FirstOrDefaultAsync(t => t.UserId == id, include: entity => entity.Include(e => e.ApplicationUser).Include(e => e.Country), ignoreGlobalFilter: true);
+            var entity = await _employeeRepository.FirstOrDefaultAsync(t => t.UserId == id, include: entity => entity.Include(e => e.ApplicationUser).Include(e => e.Country).Include(e => e.EmployeeIdentity), ignoreGlobalFilter: true);
             var mappedEntity = _mapper.Map<EmployeeDto>(entity);
 
             return ApiResult<EmployeeDto>.Success(mappedEntity);

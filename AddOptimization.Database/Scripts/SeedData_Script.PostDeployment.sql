@@ -713,3 +713,20 @@ BEGIN
         (NEWID(),'Daily','DAILY')
 END
 
+/*Adding NIE Number in Employee Identity */
+
+IF NOT EXISTS (SELECT 1 FROM EmployeeIdentity Where Name= 'NIE Number')
+BEGIN 
+    INSERT INTO EmployeeIdentity(Id,Name)
+    VALUES
+        ('4D779A9F-DAEC-4475-845A-2EDF8194776B','NIE Number')
+END
+
+/*Adding Passport Number in Employee Identity*/
+
+IF NOT EXISTS (SELECT 1 FROM EmployeeIdentity Where Name= 'Passport Number')
+BEGIN 
+    INSERT INTO EmployeeIdentity(Id,Name)
+    VALUES
+        ('F80D3037-CCAA-4B7B-B489-56FACB625B61','Passport Number')
+END
