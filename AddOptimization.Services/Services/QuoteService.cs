@@ -50,6 +50,7 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<Company> _companyRepository;
         private readonly IEmailService _emailService;
         private readonly ITemplateService _templateService;
+        private readonly IGenericRepository<InvoiceHistory> _invoiceHistoryRepository;
         private readonly IConfiguration _configuration;
         private readonly CustomDataProtectionService _protectionService;
         private readonly IApplicationUserService _applicationUserService;
@@ -57,7 +58,7 @@ namespace AddOptimization.Services.Services
 
         public QuoteService(IGenericRepository<Quote> quoteRepository, IGenericRepository<Invoice> invoiceRepository, IGenericRepository<InvoiceDetail> invoiceDetailRepository, IInvoiceStatusService invoiceStatusService, IGenericRepository<Customer> customersRepository,
             IPaymentStatusService paymentStatusService, IApplicationUserService applicationUserService,
-          ILogger<QuoteService> logger, IMapper mapper, IQuoteStatusService quoteStatusService, IGenericRepository<QuoteSummary> quoteSummaryRepository, IUnitOfWork unitOfWork, IGenericRepository<Company> companyRepository, IGenericRepository<QuoteHistory> quoteHistoryRepository, IConfiguration configuration, IEmailService emailService, ITemplateService templateService, CustomDataProtectionService protectionService)
+          ILogger<QuoteService> logger, IMapper mapper, IQuoteStatusService quoteStatusService, IGenericRepository<QuoteSummary> quoteSummaryRepository, IUnitOfWork unitOfWork, IGenericRepository<Company> companyRepository, IGenericRepository<InvoiceHistory> invoiceHistoryRepository, IGenericRepository<QuoteHistory> quoteHistoryRepository, IConfiguration configuration, IEmailService emailService, ITemplateService templateService, CustomDataProtectionService protectionService)
         {
             _paymentStatusService = paymentStatusService;
             _invoiceStatusService = invoiceStatusService;
@@ -78,6 +79,7 @@ namespace AddOptimization.Services.Services
             _applicationUserService = applicationUserService;
             _customersRepository = customersRepository;
             _quoteHistoryRepository = quoteHistoryRepository;
+            _invoiceHistoryRepository = invoiceHistoryRepository;
         }
 
         public async Task<PagedApiResult<QuoteResponseDto>> Search(PageQueryFiterBase filters)
@@ -432,6 +434,22 @@ namespace AddOptimization.Services.Services
                 }
                 await _quoteRepository.UpdateAsync(quote);
                 await _invoiceRepository.InsertAsync(invoice);
+                var quoteHistory = new QuoteHistory
+                {
+                    QuoteId = quote.Id,
+                    QuoteStatusId = quotestatusId,
+                    CreatedAt = DateTime.UtcNow,
+                    Comment = "Quote Converted to Invoice",
+                };
+                var historyEntity = new InvoiceHistory
+                {
+                    InvoiceId = invoice.Id,
+                    InvoiceStatusId = invoice.InvoiceStatusId,
+                    CreatedAt = DateTime.UtcNow,
+                    Comment = "Quote Converted to Invoice",
+                };
+                await _quoteHistoryRepository.InsertAsync(quoteHistory);
+                await _invoiceHistoryRepository.InsertAsync(historyEntity);
                 await _unitOfWork.CommitTransactionAsync();
 
                 var mappedInvoice = _mapper.Map<InvoiceResponseDto>(invoice);
