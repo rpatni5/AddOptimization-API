@@ -410,7 +410,7 @@ namespace AddOptimization.Services.Services
             return await GetSchedulerEventDetails(eventDetails.Id);
         }
 
-
+        
 
         private IQueryable<SchedulerEvent> ApplyFilters(IQueryable<SchedulerEvent> entities, PageQueryFiterBase filter)
         {
@@ -439,6 +439,10 @@ namespace AddOptimization.Services.Services
             filter.GetValue<string>("userStatusName", (v) =>
             {
                 entities = entities.Where(e => e.Customer != null && (e.UserStatus.Name.ToLower().Contains(v.ToLower()) || e.UserStatus.Name.ToLower().Contains(v.ToLower())));
+            });
+            filter.GetValue<string>("userStatusId", (v) =>
+            {
+                entities = entities.Where(e => e.UserStatusId.ToString() == v);
             });
             filter.GetValue<string>("adminStatusName", (v) =>
             {

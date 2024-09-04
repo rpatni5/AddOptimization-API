@@ -125,5 +125,18 @@ namespace AddOptimization.API.Controllers
                 return HandleException(ex);
             }
         }
+        [HttpGet("get-history/{id}")]
+        public async Task<IActionResult> GetHistoryId(int id)
+        {
+            try
+            {
+                var retVal = await _externalInvoiceService.GetExternalInvoiceHistoryById(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
     }
 }

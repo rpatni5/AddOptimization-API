@@ -110,6 +110,7 @@
     <Build Include="dbo\Tables\InvoicingPaymentModes.sql" />
     <Build Include="dbo\Tables\InvoiceCreditNotes.sql" />
     <Build Include="dbo\Tables\EmployeeIdentity.sql" />
+    <Build Include="dbo\Tables\QuoteHistory.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Scripts\SeedData_Script.PostDeployment.sql" />

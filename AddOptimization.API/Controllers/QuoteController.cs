@@ -7,6 +7,7 @@ using AddOptimization.Utilities.Models;
 using AddOptimization.Utilities.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Stripe;
 namespace AddOptimization.API.Controllers
 {
     [Authorize]
@@ -137,6 +138,20 @@ namespace AddOptimization.API.Controllers
             try
             {
                 var retVal = await _quoteService.ConvertInvoice(quoteId);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpGet("get-quote-history/{id}")]
+        public async Task<IActionResult> GetHistoryId(int id)
+        {
+            try
+            {
+                var retVal = await _quoteService.GetQuoteHistoryById(id);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)

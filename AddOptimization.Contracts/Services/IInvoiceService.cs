@@ -16,5 +16,6 @@ namespace AddOptimization.Contracts.Services
         Task<ApiResult<bool>> SendInvoiceToCustomer(int invoiceId, bool onlyEmail = false);
         Task<ApiResult<bool>> DeclineRequest(InvoiceActionRequestDto model);
         Task<ApiResult<List<InvoiceResponseDto>>> GetUnpaidInvoicesForEmailReminder();
+        Task<ApiResult<List<InvoiceHistoryDto>>> GetInvoiceHistoryById(int id);
     }
 }
