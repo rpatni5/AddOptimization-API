@@ -21,6 +21,7 @@ namespace AddOptimization.Data.Entities
         public string ExternalCity { get; set; }
         public string ExternalState { get; set; }
         public string Address { get; set; }
+        public string IdentityNumber { get; set; }
         public DateTime? NdaSignDate { get; set; }
         public string ExternalAddress { get; set; }
 
@@ -39,8 +40,7 @@ namespace AddOptimization.Data.Entities
         public string? BankCity { get; set; }
         public string? BankState { get; set; }
         public string? BankCountry { get; set; }
-
-
+        public Guid? IdentityId {  get; set; }
 
         [MaxLength(500)]
         public string BillingAddress { get; set; }
@@ -53,6 +53,8 @@ namespace AddOptimization.Data.Entities
 
         [ForeignKey(nameof(ExternalCountryId))]
         public virtual Country ExternalCountry { get; set; }
-    }
 
+        [ForeignKey(nameof(IdentityId))]
+        public EmployeeIdentity EmployeeIdentity { get; set; }
+    }
 }

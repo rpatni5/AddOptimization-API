@@ -48,6 +48,10 @@ namespace AddOptimization.Contracts.Dto
         public virtual CountryDto Country { get; set; }
         public bool? HasContract { get; set; }
         public bool IsNDASigned { get; set; }
+        public string IdentityNumber {  get; set; } 
+        public Guid? IdentityId { get; set; }
+        public string IdentityName { get; set; }
+
 
     }
 }

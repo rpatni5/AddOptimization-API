@@ -77,6 +77,7 @@ public partial class AddOptimizationContext : DbContext
     public virtual DbSet<InvoicingPaymentMode> InvoicingPaymentModes { get; set; }
     public virtual DbSet<EmployeeContract> EmployeeContracts { get; set; }
     public virtual DbSet<InvoiceCreditNotes> InvoiceCreditNotes { get; set; }
+    public virtual DbSet<EmployeeIdentity> EmployeeIdentity{ get; set; }
     public virtual DbSet<QuoteHistory> QuoteHistory { get; set; }
 
 
