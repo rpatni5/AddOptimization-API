@@ -77,23 +77,28 @@ public  class EmailService: IEmailService
             From = new MailAddress(senderEmail),
             IsBodyHtml = hasHtml
         };
-        foreach (var item in recipientEmails.Split(';'))
+        if(!string.IsNullOrEmpty(recipientEmails))
         {
-            if (EmailHelper.IsValidEmail(item))
-            {
-                mailMessage.To.Add(new MailAddress(item));
-            }
-        };
-        if (!string.IsNullOrEmpty(cc))
-        {
-            foreach (var item in cc.Split(';'))
+            foreach (var item in recipientEmails.Split(';'))
             {
                 if (EmailHelper.IsValidEmail(item))
                 {
-                    mailMessage.CC.Add(new MailAddress(item));
+                    mailMessage.To.Add(new MailAddress(item));
                 }
-            };
+            }
+            if (!string.IsNullOrEmpty(cc))
+            {
+                foreach (var item in cc.Split(';'))
+                {
+                    if (EmailHelper.IsValidEmail(item))
+                    {
+                        mailMessage.CC.Add(new MailAddress(item));
+                    }
+                }
+            }
+            smtpClient.Send(mailMessage);
         }
-        smtpClient.Send(mailMessage);
+        
+        
     }
 }
