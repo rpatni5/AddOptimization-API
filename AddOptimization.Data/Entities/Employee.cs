@@ -42,8 +42,6 @@ namespace AddOptimization.Data.Entities
         public string? BankCountry { get; set; }
         public Guid? IdentityId {  get; set; }
 
-
-
         [MaxLength(500)]
         public string BillingAddress { get; set; }
 
@@ -59,5 +57,4 @@ namespace AddOptimization.Data.Entities
         [ForeignKey(nameof(IdentityId))]
         public EmployeeIdentity EmployeeIdentity { get; set; }
     }
-
 }

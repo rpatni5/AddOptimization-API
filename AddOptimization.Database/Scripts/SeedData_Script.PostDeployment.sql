@@ -715,18 +715,18 @@ END
 
 /*Adding NIE Number in Employee Identity */
 
-IF NOT EXISTS (SELECT 1 FROM EmployeeIdentity Where Name= 'NIE Number')
+IF NOT EXISTS (SELECT 1 FROM EmployeeIdentity Where FieldKey= 'nie number')
 BEGIN 
-    INSERT INTO EmployeeIdentity(Id,Name)
+    INSERT INTO EmployeeIdentity(Id,Name,FieldKey)
     VALUES
-        ('4D779A9F-DAEC-4475-845A-2EDF8194776B','NIE Number')
+        (NEWID(),'NIE Number', 'nie number')
 END
 
 /*Adding Passport Number in Employee Identity*/
 
-IF NOT EXISTS (SELECT 1 FROM EmployeeIdentity Where Name= 'Passport Number')
+IF NOT EXISTS (SELECT 1 FROM EmployeeIdentity Where FieldKey= 'passport number')
 BEGIN 
-    INSERT INTO EmployeeIdentity(Id,Name)
+    INSERT INTO EmployeeIdentity(Id,Name,FieldKey)
     VALUES
-        ('F80D3037-CCAA-4B7B-B489-56FACB625B61','Passport Number')
+        (NEWID(),'Passport Number','passport number')
 END

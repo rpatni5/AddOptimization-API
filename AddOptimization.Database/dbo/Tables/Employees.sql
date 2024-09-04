@@ -32,7 +32,7 @@
 	[BankCountry] [nvarchar](100) NULL,
 	[SwiftCode] [nvarchar](100) NULL,
     [BankPostalCode] [varchar](200) NULL,
-	[IdentityNumber] [nvarchar](50) NULL,
+    [IdentityNumber] [varchar](200) NULL,
 	[IdentityId] [uniqueidentifier] NULL,
 PRIMARY KEY CLUSTERED 
 (

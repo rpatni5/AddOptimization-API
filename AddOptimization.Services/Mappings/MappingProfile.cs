@@ -164,7 +164,7 @@ namespace AddOptimization.Services.Mappings
                 d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
                 d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
                 d.LeaveStatusName = s.LeaveStatuses != null ? s.LeaveStatuses.Name : string.Empty;
-                d.UserName=s.ApplicationUser!=null ? s.ApplicationUser.FullName : string.Empty;
+                d.UserName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
 
             });
             CreateMap<AbsenceRequestRequestDto, AbsenceRequest>();
@@ -182,7 +182,7 @@ namespace AddOptimization.Services.Mappings
             CreateMap<CustomerEmployeeAssociation, CustomerEmployeeAssociationDto>().AfterMap((s, d) =>
             {
                 d.ApproverName = s.Approver != null ? s.Approver.FullName : string.Empty;
-                d.CustomerName = s.Customer != null ? s.Customer.Organizations: string.Empty;
+                d.CustomerName = s.Customer != null ? s.Customer.Organizations : string.Empty;
                 d.ManagerName = s.Customer != null ? s.Customer.ManagerName : string.Empty;
                 d.EmployeeName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
                 d.CreatedAt = s.CreatedAt?.Date;
@@ -214,19 +214,19 @@ namespace AddOptimization.Services.Mappings
                 d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
                 d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
                 d.UserName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
-                d.Email = s.ApplicationUser != null  ? s.ApplicationUser.Email : string.Empty;
+                d.Email = s.ApplicationUser != null ? s.ApplicationUser.Email : string.Empty;
                 d.FirstName = s.ApplicationUser != null ? s.ApplicationUser.FirstName : string.Empty;
                 d.LastName = s.ApplicationUser != null ? s.ApplicationUser.LastName : string.Empty;
                 d.Password = s.ApplicationUser != null ? s.ApplicationUser.Password : string.Empty;
                 d.isActive = s.ApplicationUser != null ? s.ApplicationUser.IsActive : false;
                 d.CountryName = s.Country != null ? s.Country.CountryName : string.Empty;
-                d.IdentityName = s.EmployeeIdentity !=null? s.EmployeeIdentity.Name : string.Empty;
+                d.IdentityName = s.EmployeeIdentity != null ? s.EmployeeIdentity.Name : string.Empty;
 
             });
             CreateMap<EmployeeDto, Employee>();
             CreateMap<EmployeeIdentity, EmployeeIdentityDto>();
 
-            CreateMap<Company, CompanyDto>().AfterMap((s, d) => 
+            CreateMap<Company, CompanyDto>().AfterMap((s, d) =>
             {
                 d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
                 d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
@@ -323,7 +323,7 @@ namespace AddOptimization.Services.Mappings
 
             CreateMap<InvoicePaymentHistory, InvoiceAmountPaymentDto>().AfterMap((s, d) =>
             {
-               
+
             });
             CreateMap<InvoiceAmountPaymentDto, InvoicePaymentHistory>();
 
@@ -362,7 +362,7 @@ namespace AddOptimization.Services.Mappings
                 d.EmployeeName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
                 d.InvoicingAndPaymentMode = s.InvoicingPaymentMode != null ? s.InvoicingPaymentMode.Name : string.Empty;
                 d.ProjectFeePaymentMode = s.ProjectFeePaymentMode != null ? s.ProjectFeePaymentMode.Name : string.Empty;
-                d.IdentityName=s.EmployeeIdentity!=null ? s.EmployeeIdentity.Name : string.Empty;
+                d.IdentityName = s.EmployeeIdentity != null ? s.EmployeeIdentity.Name : string.Empty;
 
             });
             CreateMap<EmployeeContractRequestDto, EmployeeContract>();
@@ -386,5 +386,3 @@ namespace AddOptimization.Services.Mappings
         }
     }
 }
-
-
