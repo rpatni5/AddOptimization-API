@@ -50,7 +50,6 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                List<CustomerEmployeeAssociationDto> association = null;
                 var entities = await _publicholidayRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.Country).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Date));
 
                 entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
