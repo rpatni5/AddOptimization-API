@@ -9,29 +9,28 @@ namespace AddOptimization.Data.Entities
         public Guid? EmployeeAssociationId { get; set; }
         public Guid? CustomerId { get; set; }
         public int? EmployeeId { get; set; }
-        public  int? Hours { get; set; }
-        public  decimal? ProjectFees { get; set; }
-        public  decimal? ExpensePaymentFees { get; set; }
-        public  int? NoticePeriod { get; set; }
+        public int? Hours { get; set; }
+        public decimal? ProjectFees { get; set; }
+        public decimal? ExpensePaymentFees { get; set; }
+        public int? NoticePeriod { get; set; }
         public string? JobTitle { get; set; }
         public string? Address { get; set; }
-        public bool IsContractSigned { get;set; }
+        public bool IsContractSigned { get; set; }
         public DateTime? SignedDate { get; set; }
         public DateTime? ProjectStartDate { get; set; }
         public DateTime? ProjectEndDate { get; set; }
-
         public bool IsDeleted { get; set; }
         public bool IsActive { get; set; }
-
         public Guid? ProjectFeePaymentModeId { get; set; }
         public string? WorkMode { get; set; }
-        public string ContractName {  get; set; }
+        public string ContractName { get; set; }
         public bool IsExternal { get; set; }
-        public decimal? Salary {  get; set; }
-        public int? PublicHoliday {  get; set; }
-
+        public decimal? Salary { get; set; }
+        public int? PublicHoliday { get; set; }
         public long? ContractNumber { get; set; }
         public string? NIENumber { get; set; }
+        public Guid? IdentityId { get; set; }
+        public string IdentityNumber { get; set; }
 
         [ForeignKey(nameof(ProjectFeePaymentModeId))]
         public virtual InvoicingPaymentMode ProjectFeePaymentMode { get; set; }
@@ -48,6 +47,8 @@ namespace AddOptimization.Data.Entities
         [ForeignKey(nameof(CustomerId))]
         public virtual Customer Customer { get; set; }
 
+        [ForeignKey(nameof(IdentityId))]
+        public virtual EmployeeIdentity EmployeeIdentity { get; set; }
     }
 
 }

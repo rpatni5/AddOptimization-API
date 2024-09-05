@@ -53,7 +53,8 @@ namespace AddOptimization.Services.Services
                 var entities = await _publicholidayRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.Country).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Date));
 
                 PageQueryFiterBase associationFilter = new PageQueryFiterBase();
-                associationFilter.GetValue<int>("employeeId", employeeId =>
+                associationFilter.Take = 100;
+                filters.GetValue<int>("employeeId", employeeId =>
                 {
                     associationFilter.AddFilter("employeeId", OperatorType.equal.ToString(), employeeId);
                 });

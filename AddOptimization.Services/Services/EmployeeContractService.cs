@@ -36,7 +36,7 @@ public class EmployeeContractService : IEmployeeContractService
         _httpContextAccessor = httpContextAccessor;
     }
 
-   
+
     public async Task<ApiResult<EmployeeContractResponseDto>> Create(EmployeeContractRequestDto model)
     {
         try
@@ -47,14 +47,14 @@ public class EmployeeContractService : IEmployeeContractService
                 foreach (var contract in activeContracts)
                 {
                     contract.IsDeleted = true;
-                    
+
                 }
                 await _contractRepository.BulkUpdateAsync(activeContracts);
             }
 
             var datepart = DateTime.UtcNow.ToString("yyyymmdd");
             var guidpart = Guid.NewGuid().ToString().Substring(0, 6).ToUpper();
-            var contractNumber = (await _contractRepository.QueryAsync()).Count()+1;
+            var contractNumber = (await _contractRepository.QueryAsync()).Count() + 1;
             var contractName = $"{model.CustomerName}_{model.EmployeeName}_{contractNumber}";
 
             var entity = _mapper.Map<EmployeeContract>(model);
@@ -62,7 +62,7 @@ public class EmployeeContractService : IEmployeeContractService
             entity.ContractName = contractName;
             entity.IsExternal = true;
             entity.ContractNumber = contractNumber;
-           
+
             await _contractRepository.InsertAsync(entity);
             var mappedEntity = _mapper.Map<EmployeeContractResponseDto>(entity);
             return ApiResult<EmployeeContractResponseDto>.Success(mappedEntity);
@@ -79,7 +79,7 @@ public class EmployeeContractService : IEmployeeContractService
     {
         try
         {
-            var entity = await _contractRepository.FirstOrDefaultAsync(t => t.Id == id , include: entity => entity.Include(e => e.InvoicingPaymentMode).Include(e => e.Customer).Include(e => e.CustomerEmployeeAssociation).Include(e => e.ApplicationUser).Include(e => e.ProjectFeePaymentMode), ignoreGlobalFilter: true);
+            var entity = await _contractRepository.FirstOrDefaultAsync(t => t.Id == id, include: entity => entity.Include(e => e.InvoicingPaymentMode).Include(e => e.Customer).Include(e => e.CustomerEmployeeAssociation).Include(e => e.ApplicationUser).Include(e => e.ProjectFeePaymentMode).Include(e => e.EmployeeIdentity), ignoreGlobalFilter: true);
             if (entity == null)
             {
                 return null;
@@ -180,7 +180,7 @@ public class EmployeeContractService : IEmployeeContractService
                 CreatedAt = e.CreatedAt,
                 IsExternal = e.IsExternal,
                 ContractNumber = e.ContractNumber,
-                
+
 
             }).ToList());
 
@@ -200,7 +200,7 @@ public class EmployeeContractService : IEmployeeContractService
         try
         {
             var entity = await _contractRepository.QueryAsync(o => o.EmployeeAssociationId == id && !o.IsDeleted, include: entities => entities
-            .Include(e => e.CreatedByUser),  ignoreGlobalFilter: true);
+            .Include(e => e.CreatedByUser), ignoreGlobalFilter: true);
 
             if (entity == null)
             {
@@ -221,7 +221,7 @@ public class EmployeeContractService : IEmployeeContractService
         try
         {
 
-            var entities = await _contractRepository.QueryAsync( include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.InvoicingPaymentMode).Include(e => e.Customer).Include(e => e.CustomerEmployeeAssociation).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
+            var entities = await _contractRepository.QueryAsync(include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.InvoicingPaymentMode).Include(e => e.Customer).Include(e => e.CustomerEmployeeAssociation).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
             filters.GetValue<Guid>("contractId", (v) =>
             {
                 entities = entities.Where(e => e.Id == v);
@@ -277,13 +277,13 @@ public class EmployeeContractService : IEmployeeContractService
                 IsDeleted = e.IsDeleted,
                 ContractName = e.ContractName,
                 IsExternal = e.IsExternal,
-                PublicHoliday =e.PublicHoliday,
+                PublicHoliday = e.PublicHoliday,
                 Salary = e.Salary,
                 Hours = e.Hours,
-                NIENumber = e.NIENumber,
                 ContractNumber = e.ContractNumber,
-
-
+                IdentityId = e.IdentityId,
+                IdentityNumber = e.IdentityNumber,
+                IdentityName = e.EmployeeIdentity != null ? e.EmployeeIdentity.Name : string.Empty,
             }).ToList());
 
             var result = pagedResult;
@@ -394,7 +394,7 @@ public class EmployeeContractService : IEmployeeContractService
             {
                 return ApiResult<bool>.NotFound("Contract");
             }
-          
+
             entity.IsDeleted = true;
             await _contractRepository.UpdateAsync(entity);
             return ApiResult<bool>.Success(true);
@@ -408,7 +408,7 @@ public class EmployeeContractService : IEmployeeContractService
 
 
 
- //------------------------Internal Contract----------------------------------
+    //------------------------Internal Contract----------------------------------
 
     public async Task<ApiResult<EmployeeContractResponseDto>> CreateInternalEmployeeContract(EmployeeContractRequestDto model)
     {
@@ -472,7 +472,7 @@ public class EmployeeContractService : IEmployeeContractService
     {
         try
         {
-            var entity = await _contractRepository.FirstOrDefaultAsync(t => t.EmployeeId == id , include: entity => entity.Include(e => e.InvoicingPaymentMode).Include(e => e.Customer).Include(e => e.CustomerEmployeeAssociation).Include(e => e.ApplicationUser).Include(e => e.ProjectFeePaymentMode), ignoreGlobalFilter: true);
+            var entity = await _contractRepository.FirstOrDefaultAsync(t => t.EmployeeId == id, include: entity => entity.Include(e => e.InvoicingPaymentMode).Include(e => e.Customer).Include(e => e.CustomerEmployeeAssociation).Include(e => e.ApplicationUser).Include(e => e.ProjectFeePaymentMode), ignoreGlobalFilter: true);
             if (entity == null)
             {
                 return null;

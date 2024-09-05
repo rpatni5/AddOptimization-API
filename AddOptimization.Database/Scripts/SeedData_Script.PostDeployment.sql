@@ -713,3 +713,20 @@ BEGIN
         (NEWID(),'Daily','DAILY')
 END
 
+/*Adding NIE Number in Employee Identity */
+
+IF NOT EXISTS (SELECT 1 FROM EmployeeIdentity Where FieldKey= 'nie_number')
+BEGIN 
+    INSERT INTO EmployeeIdentity(Id,Name,FieldKey)
+    VALUES
+        (NEWID(),'NIE Number', 'nie_number')
+END
+
+/*Adding Passport Number in Employee Identity*/
+
+IF NOT EXISTS (SELECT 1 FROM EmployeeIdentity Where FieldKey= 'passport_number')
+BEGIN 
+    INSERT INTO EmployeeIdentity(Id,Name,FieldKey)
+    VALUES
+        (NEWID(),'Passport Number','passport_number')
+END
