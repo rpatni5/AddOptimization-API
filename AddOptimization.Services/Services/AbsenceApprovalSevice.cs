@@ -172,18 +172,6 @@ namespace AddOptimization.Services.Services
                 entities = entities.Where(e => e.StartDate >= v.Min().Date);
             }, OperatorType.greaterthan, true);
 
-            filter.GetList<DateTime>("duedateRange", (v) =>
-            {
-                var date = new DateTime(v.Max().Year, v.Max().Month, 1);
-                entities = entities.Where(e => e.Date < date);
-            }, OperatorType.lessthan, true);
-
-            filter.GetList<DateTime>("duedateRange", (v) =>
-            {
-                var date = (new DateTime(v.Min().Year, v.Min().Month, 1)).AddMonths(1).AddDays(-1);
-                entities = entities.Where(e => e.Date > date);
-            }, OperatorType.greaterthan, true);
-
             filter.GetValue<DateTime>("startDate", (v) =>
             {
                 entities = entities.Where(e => e.StartDate < v);

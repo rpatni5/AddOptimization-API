@@ -1,9 +1,12 @@
 ﻿using AddOptimization.API.Common;
 using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
+using AddOptimization.Data.Entities;
 using AddOptimization.Utilities.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NPOI.SS.Formula.Functions;
+using System.Collections.Generic;
 
 namespace AddOptimization.API.Controllers
 {
@@ -77,6 +80,20 @@ namespace AddOptimization.API.Controllers
             try
             {
                 var retVal = await _absenceRequestService.Delete(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpGet("getAll/{startDate}/{endDate}")]
+        public async Task<IActionResult> GettotalDuration(DateTime? startDate, DateTime? endDate)
+        {
+            try
+            {
+                var retVal = await _absenceRequestService.GetDurations(startDate,endDate); 
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
