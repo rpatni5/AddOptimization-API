@@ -491,7 +491,9 @@ namespace AddOptimization.Services.Services
         {
             try
             {
+                bool hasAssociations = association.Any(a => a.EmployeeId == userId);
                 var associatedCountries = association.Where(a => a.EmployeeId == userId).Select(a => a.PublicHolidayCountryId).Distinct().ToList();
+
                 if (!startDate.HasValue)
                 {
                     return ApiResult<decimal>.Success(0);
@@ -505,6 +507,15 @@ namespace AddOptimization.Services.Services
                     if (currentDate.DayOfWeek != DayOfWeek.Saturday && currentDate.DayOfWeek != DayOfWeek.Sunday)
                     {
                         bool allCountriesHaveHoliday = associatedCountries.All(countryId => publicHoliday.Any(ph => ph.CountryId == countryId && ph.Date.Date == currentDate.Date));
+                        if (!hasAssociations && duration == null)
+                        {
+                            totalDays++;
+                        }
+                        else
+                        {
+                            return ApiResult<decimal>.Success((decimal)duration);
+                        }
+                       
 
                         if (duration == null)
                         {
