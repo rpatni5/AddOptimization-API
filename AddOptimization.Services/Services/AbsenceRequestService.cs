@@ -237,7 +237,7 @@ namespace AddOptimization.Services.Services
 
                 var leaveBalanceResult = (await _holidayAllocationService.GetEmployeeLeaveBalance(userId)).Result;
                 var currentYear = DateTime.UtcNow.Year;
-                var associations = await _absenceRequestRepository.QueryAsync(e => e.UserId == userId && !e.IsDeleted && id != model.Id, include: entities => entities.Include(e => e.ApplicationUser).Include(e => e.LeaveStatuses));
+                var associations = await _absenceRequestRepository.QueryAsync(e => e.UserId == userId && !e.IsDeleted && e.Id != model.Id, include: entities => entities.Include(e => e.ApplicationUser).Include(e => e.LeaveStatuses));
                 var requestedAssociation = associations.Where(e => e.LeaveStatuses.Name.ToLower() == LeaveStatusesEnum.Requested.ToString().ToLower() && e.StartDate.HasValue && e.StartDate.Value.Year == currentYear && !e.IsDeleted);
                 var totalRequestedDuration = requestedAssociation.Sum(e => e.Duration);
 
