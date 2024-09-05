@@ -10,6 +10,8 @@
 	[Sunday] [decimal](10, 2) NOT NULL,
 	[IsDeleted] [bit] NOT NULL,
 	[IsActive] [bit] NOT NULL,
+	[IsAutoInvoicingEnabled] [bit] NULL,
+	[JobTitle] [varchar](200) NULL,
 	[CreatedAt] [datetime2](7) NULL,
 	[CreatedByUserId] [int] NULL,
 	[UpdatedAt] [datetime2](7) NULL,
@@ -48,6 +50,8 @@ ALTER TABLE [dbo].[CustomerEmployeeAssociations]  WITH CHECK ADD FOREIGN KEY([Up
 REFERENCES [dbo].[ApplicationUsers] ([Id])
 GO
 
+ALTER TABLE [dbo].[CustomerEmployeeAssociations] ADD  DEFAULT ((1)) FOR [IsAutoInvoicingEnabled]
+GO
 ALTER TABLE [dbo].[CustomerEmployeeAssociations]  WITH CHECK ADD  CONSTRAINT [FK_CustomerEmployeeAssociations_Country] FOREIGN KEY([PublicHolidayCountryId])
 REFERENCES [dbo].[Countries] ([Id])
 GO
