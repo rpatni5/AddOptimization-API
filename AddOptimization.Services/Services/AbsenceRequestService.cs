@@ -120,7 +120,6 @@ namespace AddOptimization.Services.Services
                 model.Duration = durationExcludingWeekends;
                 model.LeaveStatusId = requestedStatusId;
                 model.IsActive = true;
-                model.Date = model.StartDate;
                 var entity = _mapper.Map<AbsenceRequest>(model);
                 await _absenceRequestRepository.InsertAsync(entity);
                 var mappedEntity = _mapper.Map<AbsenceRequestResponseDto>(entity);

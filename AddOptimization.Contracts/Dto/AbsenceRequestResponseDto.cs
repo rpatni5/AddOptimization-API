@@ -9,7 +9,6 @@ namespace AddOptimization.Contracts.Dto
     public class AbsenceRequestResponseDto : BaseDto<Guid>
     {
         public string Comment { get; set; }
-        public DateTime? Date { get; set; }
         public bool IsDeleted { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
