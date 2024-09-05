@@ -507,26 +507,17 @@ namespace AddOptimization.Services.Services
                     if (currentDate.DayOfWeek != DayOfWeek.Saturday && currentDate.DayOfWeek != DayOfWeek.Sunday)
                     {
                         bool allCountriesHaveHoliday = associatedCountries.All(countryId => publicHoliday.Any(ph => ph.CountryId == countryId && ph.Date.Date == currentDate.Date));
-                        if (!hasAssociations && duration == null)
-                        {
-                            totalDays++;
-                        }
-                        else
-                        {
-                            return ApiResult<decimal>.Success((decimal)duration);
-                        }
-                       
 
                         if (duration == null)
                         {
-                            if (!allCountriesHaveHoliday)
+                            if (!allCountriesHaveHoliday || !hasAssociations)
                             {
                                 totalDays++;
                             }
                         }
                         else
                         {
-                            if (!allCountriesHaveHoliday)
+                            if (!allCountriesHaveHoliday || !hasAssociations)
                             {
                                 return ApiResult<decimal>.Success((decimal)duration);
                             }
