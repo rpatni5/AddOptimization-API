@@ -204,11 +204,18 @@ namespace AddOptimization.Services.Services
         {
             try
             {
+                var eventStatus = (await _quoteStatusService.Search()).Result;
 
+                var draftId = eventStatus.FirstOrDefault(x => x.StatusKey == QuoteStatusesEnum.DRAFT.ToString()).Id;
+                var declinedId = eventStatus.FirstOrDefault(x => x.StatusKey == QuoteStatusesEnum.DECLINED.ToString()).Id;
                 var entity = await _quoteRepository.FirstOrDefaultAsync(e => e.Id == id);
                 if (entity == null)
                 {
                     return ApiResult<QuoteResponseDto>.NotFound("Quote not found");
+                }
+                if (entity.QuoteStatusId == declinedId)
+                {
+                    entity.QuoteStatusId = draftId;
                 }
 
                 var existingSummaries = await _quoteSummaryRepository.QueryAsync(e => e.QuoteId == id);
@@ -638,7 +645,7 @@ namespace AddOptimization.Services.Services
             {
 
                 var entities = await _quoteHistoryRepository.QueryAsync(e => e.QuoteId == id, disableTracking: true);
-                var mappedEntities = entities.Select(e => new QuoteHistoryDto
+                var mappedEntities = entities.OrderByDescending(e => e.CreatedAt).Select(e => new QuoteHistoryDto
                 {
                     Id = e.Id,
                     QuoteId = e.QuoteId,
@@ -646,6 +653,7 @@ namespace AddOptimization.Services.Services
                     QuoteStatusName = e.QuoteStatuses.Name,
                     Comment = e.Comment,
                     CreatedAt = e.CreatedAt,
+                    QuoteNumber=e.Quote.QuoteNo,
                 }).ToList();
 
                 return ApiResult<List<QuoteHistoryDto>>.Success(mappedEntities);

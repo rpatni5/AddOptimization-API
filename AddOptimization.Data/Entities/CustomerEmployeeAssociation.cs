@@ -10,6 +10,8 @@ namespace AddOptimization.Data.Entities
         public bool IsDeleted { get; set; }
         public bool IsActive { get; set; }
         public int ApproverId { get; set; }
+        public bool IsAutoInvoicingEnabled { get; set; }
+        public string JobTitle { get; set; }
         public Guid? PublicHolidayCountryId { get; set; }
         public decimal DailyWeightage { get; set; }
         public decimal Overtime { get; set; }

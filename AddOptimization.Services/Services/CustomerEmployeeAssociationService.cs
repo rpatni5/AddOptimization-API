@@ -52,6 +52,8 @@ namespace AddOptimization.Services.Services
                         existingAssociation.Sunday = model.Sunday;
                         existingAssociation.Overtime = model.Overtime;
                         existingAssociation.PublicHolidayCountryId = model.PublicHolidayCountryId;
+                        existingAssociation.IsAutoInvoicingEnabled = model.IsAutoInvoicingEnabled;
+                        existingAssociation.JobTitle = model.JobTitle;
                         await _customerEmployeeAssociationRepository.UpdateAsync(existingAssociation);
                     }
                     else
@@ -130,8 +132,10 @@ namespace AddOptimization.Services.Services
                     ApproverName = e.Approver.FullName,
                     PublicHolidayCountry = e.Country.CountryName,
                     HasContract = e.Contracts.Count() > 0,
+                    IsAutoInvoicingEnabled = e.IsAutoInvoicingEnabled,
+                    JobTitle = e.JobTitle
 
-                }).ToList());
+            }).ToList());
                 var result = pagedResult;
                 foreach (var entity in result.Result)
                 {

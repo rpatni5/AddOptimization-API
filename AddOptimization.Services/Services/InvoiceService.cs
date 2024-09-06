@@ -176,6 +176,7 @@ namespace AddOptimization.Services.Services
                     var publicHoliday = employee.PublicHoliday;
                     var saturday = employee.Saturday;
                     var sunday = employee.Sunday;
+                    var jobTitle = employee.JobTitle;
 
                     var empl = (await _employeeRepository.QueryAsync(e => e.UserId == employee.EmployeeId,
                         include: empl => empl.Include(x => x.ApplicationUser),
@@ -189,30 +190,30 @@ namespace AddOptimization.Services.Services
                     decimal unitPrice;
                     //Normal day timesheet Mon-Fri
                     var monFriTimesheetList = employeeEventDetails.Where(c => MonthDateRangeHelper.IsWeekday(c.Date.Value) && !publicHolidays.Contains(c.Date.Value.Date) && c.EventTypeId == timesheetEventId).ToList();
-                    description = empl?.ApplicationUser?.FullName + '-' + empl.JobTitle;
+                    description = jobTitle;
                     await CalculateAndSaveInvoiceDetails(invoiceResult, monFriTimesheetList, daily, customer.PartnerVAT ?? customer.VAT ?? 0, description);
 
                     //Sat timesheet including overtime
                     var saturdayTimesheetList = employeeEventDetails.Where(c => MonthDateRangeHelper.IsSaturday(c.Date.Value)).ToList();
                     unitPrice = daily / 8 * saturday / 100;
-                    description = $"{empl?.ApplicationUser?.FullName}-{empl.JobTitle}-WE (Saturday) {saturday}% ({daily / 8} eur/h)";   // WE (Sunday) 210% (71,88 eur/h)
+                    description = $"{jobTitle}-WE (Saturday) {saturday}% ({daily / 8} eur/h)";   // WE (Sunday) 210% (71,88 eur/h)
                     await CalculateInvoiceDetailsForWeekend(invoiceResult, saturdayTimesheetList, unitPrice, customer.PartnerVAT ?? customer.VAT ?? 0, description, timesheetEventId, overtimeEventId);
 
                     //Sun timesheet including overtime
                     unitPrice = daily / 8 * sunday / 100;
-                    description = $"{empl?.ApplicationUser?.FullName}-{empl.JobTitle}-WE (Sunday) {sunday}% ({daily / 8} eur/h)";   // WE (Sunday) 210% (71,88 eur/h)
+                    description = $"{jobTitle}-WE (Sunday) {sunday}% ({daily / 8} eur/h)";   // WE (Sunday) 210% (71,88 eur/h)
                     var sundayTimesheetList = employeeEventDetails.Where(c => MonthDateRangeHelper.IsSunday(c.Date.Value)).ToList();
                     await CalculateInvoiceDetailsForWeekend(invoiceResult, sundayTimesheetList, unitPrice, customer.PartnerVAT ?? customer.VAT ?? 0, description, timesheetEventId, overtimeEventId);
 
                     //Overtime Mon-Fri
                     unitPrice = daily / 8 * overTime / 100;
-                    description = $"{empl?.ApplicationUser?.FullName}-{empl.JobTitle}-Overtime {overTime}% ({daily / 8} eur/h)";
+                    description = $"{jobTitle}-Overtime {overTime}% ({daily / 8} eur/h)";
                     var overtimeList = employeeEventDetails.Where(c => c.EventTypeId == overtimeEventId && MonthDateRangeHelper.IsWeekday(c.Date.Value)).ToList();
                     await CalculateAndSaveInvoiceDetails(invoiceResult, overtimeList, unitPrice, customer.PartnerVAT ?? customer.VAT ?? 0, description);
 
                     //Timesheet Mon-Fri on public holiday
                     unitPrice = daily * publicHoliday / 100;
-                    description = $"{empl?.ApplicationUser?.FullName}-{empl.JobTitle}-Holiday {publicHoliday}% ({daily} eur/d)";
+                    description = $"{jobTitle}-Holiday {publicHoliday}% ({daily} eur/d)";
                     var publicHolidaysList = employeeEventDetails.Where(c => MonthDateRangeHelper.IsWeekday(c.Date.Value) && publicHolidays.Contains(c.Date.Value.Date) && c.EventTypeId == timesheetEventId).ToList();
                     await CalculateAndSaveInvoiceDetails(invoiceResult, publicHolidaysList, unitPrice, customer.PartnerVAT ?? customer.VAT ?? 0, description);
 
@@ -745,10 +746,20 @@ namespace AddOptimization.Services.Services
         {
             try
             {
+                var eventStatus = (await _invoiceStatusService.Search()).Result;
+
+                var draftId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.DRAFT.ToString()).Id;
+                var declinedId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.DECLINED.ToString()).Id;
+
+                
                 var entity = await _invoiceRepository.FirstOrDefaultAsync(e => e.Id == id);
                 if (entity == null)
                 {
                     return ApiResult<InvoiceResponseDto>.NotFound("Invoice");
+                }
+                if (entity.InvoiceStatusId == declinedId) 
+                {
+                    entity.InvoiceStatusId = draftId; 
                 }
 
                 var existingDetails = await _invoiceDetailRepository.QueryAsync(e => e.InvoiceId == id);
@@ -886,12 +897,14 @@ namespace AddOptimization.Services.Services
             {
 
                 var entities = await _invoiceHistoryRepository.QueryAsync(e => e.InvoiceId == id, disableTracking: true);
-                var mappedEntities = entities.Select(e => new InvoiceHistoryDto
+                var mappedEntities = entities
+            .OrderByDescending(e => e.CreatedAt).Select(e => new InvoiceHistoryDto
                 {
                     Id = e.Id,
                     InvoiceId = e.InvoiceId,
                     InvoiceStatusId = e.InvoiceStatusId,
                     InvoiceStatusName = e.InvoiceStatus.Name,
+                    InvoiceNumber=e.Invoice.InvoiceNumber,
                     Comment = e.Comment,
                     CreatedAt = e.CreatedAt,
                 }).ToList();

@@ -87,8 +87,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
 
                     foreach (var month in months)
                     {
-                        var filteredAssociations = associatedEmployees.Where(s => (s.CreatedAt.Value.Month <= month.StartDate.Month && s.CreatedAt.Value.Year == month.StartDate.Year) || s.CreatedAt.Value.Date < month.StartDate.Date).ToList();
-
+                        var filteredAssociations = associatedEmployees.Where(s => s.IsAutoInvoicingEnabled && ((s.CreatedAt.Value.Month <= month.StartDate.Month && s.CreatedAt.Value.Year == month.StartDate.Year) || s.CreatedAt.Value.Date < month.StartDate.Date)).ToList();
                         bool allTimesheetApprovedForMonth = await schedulerEventService.IsTimesheetApproved(id, filteredAssociations.Select(x => x.EmployeeId).ToList(), month);
                         if (allTimesheetApprovedForMonth && filteredAssociations.Any())
                         {
