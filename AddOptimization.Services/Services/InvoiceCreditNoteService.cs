@@ -15,6 +15,7 @@ namespace AddOptimization.Services.Services
     {
         private readonly IGenericRepository<InvoicePaymentHistory> _invoicePaymentRepository;
         private readonly IGenericRepository<InvoiceCreditNotes> _invoiceCreditNoteRepository;
+        private readonly IGenericRepository<InvoiceHistory> _invoiceHistoryRepository;
         private readonly IInvoiceStatusService _invoiceStatusService;
         private readonly ILogger<InvoiceCreditNoteService> _logger;
         private readonly IPaymentStatusService _paymentStatusService;
@@ -22,7 +23,7 @@ namespace AddOptimization.Services.Services
         private readonly IInvoiceService _invoiceService;
         private readonly IGenericRepository<Invoice> _invoiceRepository;
 
-        public InvoiceCreditNoteService(IGenericRepository<InvoiceCreditNotes> invoiceCreditNoteRepository, IGenericRepository<InvoicePaymentHistory> invoicePaymentRepository, ILogger<InvoiceCreditNoteService> logger, IMapper mapper, IInvoiceStatusService invoiceStatusService, IInvoiceService invoiceService, IPaymentStatusService paymentStatusService, IGenericRepository<Invoice> invoiceRepository)
+        public InvoiceCreditNoteService(IGenericRepository<InvoiceCreditNotes> invoiceCreditNoteRepository, IGenericRepository<InvoicePaymentHistory> invoicePaymentRepository, ILogger<InvoiceCreditNoteService> logger, IMapper mapper, IInvoiceStatusService invoiceStatusService, IInvoiceService invoiceService, IGenericRepository<InvoiceHistory> invoiceHistoryRepository, IPaymentStatusService paymentStatusService, IGenericRepository<Invoice> invoiceRepository)
         {
             _invoiceCreditNoteRepository = invoiceCreditNoteRepository;
             _logger = logger;
@@ -32,6 +33,7 @@ namespace AddOptimization.Services.Services
             _invoiceService = invoiceService;
             _invoiceRepository = invoiceRepository;
             _invoicePaymentRepository=invoicePaymentRepository;
+            _invoiceHistoryRepository = invoiceHistoryRepository;
         }
 
         public async Task<ApiResult<InvoiceCreditPaymentDto>> Create(InvoiceCreditPaymentDto model)
@@ -92,6 +94,13 @@ namespace AddOptimization.Services.Services
                     paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.PAID.ToString()).Id;
                     dueAmount = 0;
                     invoice.InvoiceStatusId = closedStatusId;
+                    var invoiceHistory = new InvoiceHistory
+                    {
+                        InvoiceId = invoice.Id,
+                        InvoiceStatusId = invoice.InvoiceStatusId,
+                        Comment = "Invoice Closed"
+                    };
+                    await _invoiceHistoryRepository.InsertAsync(invoiceHistory);
                 }
                 else if (invoice.TotalPriceIncludingVat > 0)
                 {

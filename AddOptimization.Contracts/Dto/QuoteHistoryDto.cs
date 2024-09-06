@@ -12,6 +12,7 @@ namespace AddOptimization.Contracts.Dto
         public Guid Id { get; set; }
         public long QuoteId { get; set; }
         public Guid QuoteStatusId { get; set; }
+        public long QuoteNumber { get; set; } 
         public string QuoteStatusName { get; set; }
         public string Comment { get; set; }
         public DateTime? CreatedAt { get; set; }

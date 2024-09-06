@@ -746,10 +746,20 @@ namespace AddOptimization.Services.Services
         {
             try
             {
+                var eventStatus = (await _invoiceStatusService.Search()).Result;
+
+                var draftId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.DRAFT.ToString()).Id;
+                var declinedId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.DECLINED.ToString()).Id;
+
+                
                 var entity = await _invoiceRepository.FirstOrDefaultAsync(e => e.Id == id);
                 if (entity == null)
                 {
                     return ApiResult<InvoiceResponseDto>.NotFound("Invoice");
+                }
+                if (entity.InvoiceStatusId == declinedId) 
+                {
+                    entity.InvoiceStatusId = draftId; 
                 }
 
                 var existingDetails = await _invoiceDetailRepository.QueryAsync(e => e.InvoiceId == id);
@@ -887,12 +897,14 @@ namespace AddOptimization.Services.Services
             {
 
                 var entities = await _invoiceHistoryRepository.QueryAsync(e => e.InvoiceId == id, disableTracking: true);
-                var mappedEntities = entities.Select(e => new InvoiceHistoryDto
+                var mappedEntities = entities
+            .OrderByDescending(e => e.CreatedAt).Select(e => new InvoiceHistoryDto
                 {
                     Id = e.Id,
                     InvoiceId = e.InvoiceId,
                     InvoiceStatusId = e.InvoiceStatusId,
                     InvoiceStatusName = e.InvoiceStatus.Name,
+                    InvoiceNumber=e.Invoice.InvoiceNumber,
                     Comment = e.Comment,
                     CreatedAt = e.CreatedAt,
                 }).ToList();
