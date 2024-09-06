@@ -128,7 +128,8 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var associations = await _holidayAllocationRepository.FirstOrDefaultAsync(e => e.UserId == employeeId && !e.IsDeleted, include: entities => entities.Include(e => e.ApplicationUser));
+                var currentYear = DateTime.UtcNow.Year;
+                var associations = await _holidayAllocationRepository.FirstOrDefaultAsync(e => e.UserId == employeeId && !e.IsDeleted && e.CreatedAt.HasValue && e.CreatedAt.Value.Year == currentYear, include: entities => entities.Include(e => e.ApplicationUser));
                 var mappedEntity = _mapper.Map<HolidayAllocationResponseDto>(associations);
                 return ApiResult<HolidayAllocationResponseDto>.Success(mappedEntity);
             }
@@ -143,8 +144,9 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-              var totalHolidayAllocated = (await GetAllocatedHolidays(employeeId)).Result?.Holidays ?? 0 ;
-                var leaveTaken = (await _absenceApprovalService.GetAllAbsenseApproval(employeeId)).Result?.Count ?? 0;
+                var totalHolidayAllocated = (await GetAllocatedHolidays(employeeId)).Result?.Holidays ?? 0 ;
+                var leaveTakenResult = await _absenceApprovalService.GetAllAbsenseApproval(employeeId);
+                var leaveTaken = leaveTakenResult?.Result ?? 0;
                 var remainingLeaves = totalHolidayAllocated - leaveTaken;
 
                 var leaveBalanceDto = new LeaveBalanceDto

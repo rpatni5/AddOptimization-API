@@ -21,6 +21,7 @@ using AddOptimization.Data.Repositories;
 using System.Reflection.Metadata.Ecma335;
 using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Enums;
+using Org.BouncyCastle.Bcpg;
 
 
 namespace AddOptimization.Services.Services
@@ -38,6 +39,9 @@ namespace AddOptimization.Services.Services
         private readonly IConfiguration _configuration;
         private readonly IGenericRepository<ApplicationUser> _applicationUserRepository;
         private readonly IHolidayAllocationService _holidayAllocationService;
+        private readonly ICustomerEmployeeAssociationService _customerEmployeeAssociationService;
+        private readonly IPublicHolidayService _publicHolidayService;
+
 
 
         public AbsenceRequestService(IGenericRepository<AbsenceRequest> absenceRequestRepository,
@@ -49,6 +53,8 @@ namespace AddOptimization.Services.Services
             IConfiguration configuration,
             IEmailService emailService,
             ITemplateService templateService,
+            ICustomerEmployeeAssociationService customerEmployeeAssociationService,
+            IPublicHolidayService publicHolidayService,
             IHolidayAllocationService holidayAllocationService,
             IGenericRepository<ApplicationUser> applicationUserRepository)
         {
@@ -63,6 +69,8 @@ namespace AddOptimization.Services.Services
             _templateService = templateService;
             _configuration = configuration;
             _applicationUserRepository = applicationUserRepository;
+            _customerEmployeeAssociationService = customerEmployeeAssociationService;
+            _publicHolidayService = publicHolidayService;
         }
 
 
@@ -76,18 +84,42 @@ namespace AddOptimization.Services.Services
 
                 var requestedStatusId = leaveStatuses.First(x => x.Name.Equals(LeaveStatusesEnum.Requested.ToString(), StringComparison.InvariantCultureIgnoreCase)).Id;
                 var approvedStatusId = leaveStatuses.First(x => x.Name.Equals(LeaveStatusesEnum.Approved.ToString(), StringComparison.InvariantCultureIgnoreCase)).Id;
-                var isExisting = await _absenceRequestRepository.IsExist(s => s.Date == model.Date && s.UserId == userId && (s.LeaveStatusId == requestedStatusId || s.LeaveStatusId == approvedStatusId));
+
+
+                var isExisting = await _absenceRequestRepository.IsExist(s => s.UserId == userId && (!s.IsDeleted) && (s.LeaveStatusId == requestedStatusId || s.LeaveStatusId == approvedStatusId) && ((s.StartDate <= model.StartDate && model.StartDate <= s.EndDate) || (s.StartDate <= model.EndDate && model.EndDate <= s.EndDate) || (s.StartDate == model.StartDate) || (model.StartDate <= s.StartDate && model.EndDate >= s.StartDate)));
+
                 if (isExisting)
                 {
                     return ApiResult<AbsenceRequestResponseDto>.Failure(ValidationCodes.AbsenceRequestedProhibited, "You have already submitted requested for this date.");
                 }
+                var association = (await _customerEmployeeAssociationService.GetAssociatedCustomers(userId)).Result.ToList();
+                var publicHoliday = (await _publicHolidayService.SearchAllPublicHoliday()).Result.ToList();
+                var durationExcludingWeekends = (await GetDurationExcludingWeekends(model.StartDate, model.EndDate, association, publicHoliday, userId, model?.Duration)).Result;
+                if (durationExcludingWeekends == 0)
+                {
+                    return ApiResult<AbsenceRequestResponseDto>.Failure(ValidationCodes.AbsenceRequestedProhibited, "Cannot raise absence request as there is a public holiday.");
+                }
+                var currentYear = DateTime.UtcNow.Year;
                 var leaveBalanceResult = await _holidayAllocationService.GetEmployeeLeaveBalance(userId);
                 var leaveBalance = leaveBalanceResult.Result;
-                if (leaveBalance.leavesLeft<=model.Duration) {
+
+                var requestedAbsence = await GetAllAbsenseRequested(userId);
+                var requestedAbsenceDuration = requestedAbsence.Result;
+                var totalDurations = durationExcludingWeekends + requestedAbsenceDuration;
+
+                if (model.StartDate.Value.Year != currentYear)
+                {
+                    return ApiResult<AbsenceRequestResponseDto>.Failure(ValidationCodes.AbsenceRequestedProhibited, "Holiday not allocated for this year");
+                }
+                else if (leaveBalance.leavesLeft < totalDurations)
+                {
                     return ApiResult<AbsenceRequestResponseDto>.Failure(ValidationCodes.AbsenceRequestedProhibited, "You don’t have enough balance to request holiday");
                 }
+
                 model.UserId = userId;
+                model.Duration = durationExcludingWeekends;
                 model.LeaveStatusId = requestedStatusId;
+                model.IsActive = true;
                 var entity = _mapper.Map<AbsenceRequest>(model);
                 await _absenceRequestRepository.InsertAsync(entity);
                 var mappedEntity = _mapper.Map<AbsenceRequestResponseDto>(entity);
@@ -95,7 +127,7 @@ namespace AddOptimization.Services.Services
                 var user = (await _applicationUserRepository.FirstOrDefaultAsync(x => x.Id == mappedEntity.UserId));
                 foreach (var accountAdmin in accountAdminResult.Result.ToList())
                 {
-                   await SendAbsenceRequestEmailToAccountAdmin(accountAdmin, user, mappedEntity);
+                    await SendAbsenceRequestEmailToAccountAdmin(accountAdmin, user, mappedEntity);
                 }
                 return ApiResult<AbsenceRequestResponseDto>.Success(mappedEntity);
             }
@@ -151,14 +183,15 @@ namespace AddOptimization.Services.Services
                     {
                         Id = e.Id,
                         UserId = e.UserId,
-                        Date = e.Date,
                         LeaveStatusId = e.LeaveStatusId,
-                        LeaveStatusName=e.LeaveStatuses.Name,
+                        LeaveStatusName = e.LeaveStatuses.Name,
                         CreatedAt = e.CreatedAt,
                         UpdatedAt = e.UpdatedAt,
-                        Comment=e.Comment,
-                        Duration=e.Duration,
-                        UserName=e.ApplicationUser.FullName,
+                        Comment = e.Comment,
+                        Duration = e.Duration,
+                        UserName = e.ApplicationUser.FullName,
+                        StartDate = e.StartDate,
+                        EndDate = e.EndDate,
                     }).ToList()
                 );
 
@@ -186,11 +219,45 @@ namespace AddOptimization.Services.Services
                 {
                     return ApiResult<AbsenceRequestResponseDto>.NotFound("Absence Request");
                 }
+                var isExisting = await _absenceRequestRepository.IsExist(s => s.Id != model.Id && s.UserId == userId && (!s.IsDeleted) && (s.LeaveStatusId == requestedStatusId || s.LeaveStatusId == approvedStatusId) && ((s.StartDate <= model.StartDate && model.StartDate <= s.EndDate) || (s.StartDate <= model.EndDate && model.EndDate <= s.EndDate) || (s.StartDate == model.StartDate) || (model.StartDate <= s.StartDate && model.EndDate >= s.StartDate)));
+
+                if (isExisting)
+                {
+                    return ApiResult<AbsenceRequestResponseDto>.Failure(ValidationCodes.AbsenceRequestedProhibited, "You have already submitted requested for this date.");
+                }
+
+                var association = (await _customerEmployeeAssociationService.GetAssociatedCustomers(userId)).Result.ToList();
+                var publicHoliday = (await _publicHolidayService.SearchAllPublicHoliday()).Result.ToList();
+                var durationExcludingWeekends = (await GetDurationExcludingWeekends(model.StartDate, model.EndDate, association, publicHoliday, userId, model?.Duration)).Result;
+                if (durationExcludingWeekends == 0)
+                {
+                    return ApiResult<AbsenceRequestResponseDto>.Failure(ValidationCodes.AbsenceRequestedProhibited, "Cannot raise absence request as there is a public holiday.");
+                }
+
+                var leaveBalanceResult = (await _holidayAllocationService.GetEmployeeLeaveBalance(userId)).Result;
+                var currentYear = DateTime.UtcNow.Year;
+                var associations = await _absenceRequestRepository.QueryAsync(e => e.UserId == userId && !e.IsDeleted && e.Id != model.Id, include: entities => entities.Include(e => e.ApplicationUser).Include(e => e.LeaveStatuses));
+                var requestedAssociation = associations.Where(e => e.LeaveStatuses.Name.ToLower() == LeaveStatusesEnum.Requested.ToString().ToLower() && e.StartDate.HasValue && e.StartDate.Value.Year == currentYear && !e.IsDeleted);
+                var totalRequestedDuration = requestedAssociation.Sum(e => e.Duration);
+
+
+                var totalDurations = durationExcludingWeekends + totalRequestedDuration;
+                if (model.StartDate.Value.Year != currentYear)
+                {
+                    return ApiResult<AbsenceRequestResponseDto>.Failure(ValidationCodes.AbsenceRequestedProhibited, "Holiday not allocated for this year");
+                }
+                else if (leaveBalanceResult.leavesLeft < totalDurations)
+                {
+                    return ApiResult<AbsenceRequestResponseDto>.Failure(ValidationCodes.AbsenceRequestedProhibited, "You don’t have enough balance to request holiday");
+                }
+
+
                 var oldComment = entity.Comment;
-                var oldDuration = entity.Duration;
+                var oldDuration = durationExcludingWeekends;
 
                 model.UserId = userId;
                 model.LeaveStatusId = requestedStatusId;
+                model.Duration = durationExcludingWeekends;
                 _mapper.Map(model, entity);
                 entity = await _absenceRequestRepository.UpdateAsync(entity);
                 var mappedEntity = _mapper.Map<AbsenceRequestResponseDto>(entity);
@@ -219,6 +286,7 @@ namespace AddOptimization.Services.Services
                     return ApiResult<bool>.NotFound("Customer");
                 }
                 entity.IsDeleted = true;
+                entity.IsActive = false;
                 await _absenceRequestRepository.UpdateAsync(entity);
                 return ApiResult<bool>.Success(true);
             }
@@ -244,11 +312,15 @@ namespace AddOptimization.Services.Services
                 var duration = !isUpdated ? LocaleHelper.FormatNumber(absenceRequest.Duration) : $"{oldDuration} is updated to {LocaleHelper.FormatNumber(absenceRequest.Duration)}";
                 var comment = !isUpdated ? absenceRequest.Comment : $"{oldComment} is updated to {absenceRequest.Comment}";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.AbsenceRequestApproval);
+                var startDate = absenceRequest.StartDate.HasValue ? LocaleHelper.FormatDate(absenceRequest.StartDate.Value) : "";
+                var endDate = absenceRequest.EndDate.HasValue ? LocaleHelper.FormatDate(absenceRequest.EndDate.Value) : "";
+                var dateRange = absenceRequest.StartDate.HasValue ? absenceRequest.EndDate.HasValue ? $"{LocaleHelper.FormatDate(absenceRequest.StartDate.Value)} - {LocaleHelper.FormatDate(absenceRequest.EndDate.Value)}" : LocaleHelper.FormatDate(absenceRequest.StartDate.Value) : "";
+
                 emailTemplate = emailTemplate.Replace("[AccountAdminName]", accountAdmin.FullName)
                                              .Replace("[EmployeeName]", user.FullName)
                                              .Replace("[Action]", action)
                                              .Replace("[LinkToAbsenceRequests]", link)
-                                             .Replace("[Date]", LocaleHelper.FormatDate(absenceRequest.Date))
+                                             .Replace("[Date]", dateRange)
                                              .Replace("[Duration]", duration)
                                              .Replace("[Comment]", comment);
                 return await _emailService.SendEmail(accountAdmin.Email, subject, emailTemplate);
@@ -302,14 +374,24 @@ namespace AddOptimization.Services.Services
                 entities = entities.Where(e => e.ApplicationUser.FullName != null && e.ApplicationUser.FullName.ToLower().Contains(v.ToLower()));
             });
 
-            filter.GetValue<DateTime>("Date", (v) =>
+            filter.GetValue<DateTime>("startDate", (v) =>
             {
-                entities = entities.Where(e => e.Date < v);
+                entities = entities.Where(e => e.StartDate < v);
             }, OperatorType.lessthan, true);
 
-            filter.GetValue<DateTime>("Date", (v) =>
+            filter.GetValue<DateTime>("startDate", (v) =>
             {
-                entities = entities.Where(e => e.Date > v);
+                entities = entities.Where(e => e.StartDate > v);
+            }, OperatorType.greaterthan, true);
+
+            filter.GetValue<DateTime>("endDate", (v) =>
+            {
+                entities = entities.Where(e => e.EndDate < v);
+            }, OperatorType.lessthan, true);
+
+            filter.GetValue<DateTime>("endDate", (v) =>
+            {
+                entities = entities.Where(e => e.EndDate > v);
             }, OperatorType.greaterthan, true);
 
             filter.GetValue<int>("employeeId", (v) =>
@@ -326,7 +408,7 @@ namespace AddOptimization.Services.Services
             {
                 if (sort?.Name == null)
                 {
-                    orders = orders.OrderByDescending(o => o.Date);
+                    orders = orders.OrderByDescending(o => o.StartDate);
                     return orders;
                 }
                 var columnName = sort.Name.ToUpper();
@@ -336,9 +418,13 @@ namespace AddOptimization.Services.Services
                     {
                         orders = orders.OrderBy(o => o.Comment);
                     }
-                    if (columnName.ToUpper() == nameof(AbsenceRequestResponseDto.Date).ToUpper())
+                    if (columnName.ToUpper() == nameof(AbsenceRequestResponseDto.StartDate).ToUpper())
                     {
-                        orders = orders.OrderBy(o => o.Date);
+                        orders = orders.OrderBy(o => o.StartDate);
+                    }
+                    if (columnName.ToUpper() == nameof(AbsenceRequestResponseDto.EndDate).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.EndDate);
                     }
                     if (columnName.ToUpper() == nameof(AbsenceRequestResponseDto.LeaveStatusName).ToUpper())
                     {
@@ -356,9 +442,13 @@ namespace AddOptimization.Services.Services
                     {
                         orders = orders.OrderByDescending(o => o.Comment);
                     }
-                    if (columnName.ToUpper() == nameof(AbsenceRequestResponseDto.Date).ToUpper())
+                    if (columnName.ToUpper() == nameof(AbsenceRequestResponseDto.StartDate).ToUpper())
                     {
-                        orders = orders.OrderByDescending(o => o.Date);
+                        orders = orders.OrderByDescending(o => o.StartDate);
+                    }
+                    if (columnName.ToUpper() == nameof(AbsenceRequestResponseDto.EndDate).ToUpper())
+                    {
+                        orders = orders.OrderByDescending(o => o.EndDate);
                     }
                     if (columnName.ToUpper() == nameof(AbsenceRequestResponseDto.LeaveStatusName).ToUpper())
                     {
@@ -379,6 +469,94 @@ namespace AddOptimization.Services.Services
             }
         }
 
+        public async Task<ApiResult<decimal>> GetAllAbsenseRequested(int employeeId)
+        {
+            try
+            {
+                var currentYear = DateTime.UtcNow.Year;
+                var associations = await _absenceRequestRepository.QueryAsync(e => e.UserId == employeeId && !e.IsDeleted, include: entities => entities.Include(e => e.ApplicationUser).Include(e => e.LeaveStatuses));
+                var requestedAssociation = associations.Where(e => e.LeaveStatuses.Name.ToLower() == LeaveStatusesEnum.Requested.ToString().ToLower() && e.StartDate.HasValue && e.StartDate.Value.Year == currentYear && !e.IsDeleted);
+                var totalRequestedDuration = requestedAssociation.Sum(e => e.Duration);
+                return ApiResult<decimal>.Success(totalRequestedDuration);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+        public async Task<ApiResult<decimal>> GetDurationExcludingWeekends(DateTime? startDate, DateTime? endDate, List<CustomerEmployeeAssociationDto> association, List<PublicHolidayResponseDto> publicHoliday, int userId, decimal? duration)
+        {
+            try
+            {
+                bool hasAssociations = association.Any(a => a.EmployeeId == userId);
+                var associatedCountries = association.Where(a => a.EmployeeId == userId).Select(a => a.PublicHolidayCountryId).Distinct().ToList();
+
+                if (!startDate.HasValue)
+                {
+                    return ApiResult<decimal>.Success(0);
+                }
+
+                int totalDays = 0;
+                var currentDate = startDate.Value;
+                DateTime finalDate = endDate ?? startDate.Value;
+                while (currentDate <= finalDate)
+                {
+                    if (currentDate.DayOfWeek != DayOfWeek.Saturday && currentDate.DayOfWeek != DayOfWeek.Sunday)
+                    {
+                        bool allCountriesHaveHoliday = associatedCountries.All(countryId => publicHoliday.Any(ph => ph.CountryId == countryId && ph.Date.Date == currentDate.Date));
+
+                        if (duration == null)
+                        {
+                            if (!allCountriesHaveHoliday || !hasAssociations)
+                            {
+                                totalDays++;
+                            }
+                        }
+                        else
+                        {
+                            if (!allCountriesHaveHoliday || !hasAssociations)
+                            {
+                                return ApiResult<decimal>.Success((decimal)duration);
+                            }
+                            else
+                            {
+                                return ApiResult<decimal>.Success(0);
+                            }
+
+                        }
+                    }
+                    currentDate = currentDate.AddDays(1);
+                }
+
+                return ApiResult<decimal>.Success(totalDays);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return ApiResult<decimal>.Failure("An error occurred while calculating the duration.");
+            }
+        }
+
+
+        public async Task<ApiResult<decimal>> GetDurations(DateTime? startDate, DateTime? endDate)
+        {
+            try
+            {
+                var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
+                var association = (await _customerEmployeeAssociationService.GetAssociatedCustomers(userId)).Result.ToList();
+                var publicHoliday = (await _publicHolidayService.SearchAllPublicHoliday()).Result.ToList();
+                var durationExcludingWeekends = (await GetDurationExcludingWeekends(startDate, endDate, association, publicHoliday, userId, null)).Result;
+
+                return ApiResult<decimal>.Success(durationExcludingWeekends);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
 
     }
 }

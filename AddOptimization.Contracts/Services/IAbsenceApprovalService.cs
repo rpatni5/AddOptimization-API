@@ -13,6 +13,6 @@ namespace AddOptimization.Contracts.Services
     {
         Task<PagedApiResult<AbsenceRequestResponseDto>> Search(PageQueryFiterBase filters);
         Task<ApiResult<bool>> AbsenceAction(AdminApprovalRequestActionDto model);
-        Task<ApiResult<List<AbsenceRequestResponseDto>>> GetAllAbsenseApproval(int employeeId);
+        Task<ApiResult<decimal>> GetAllAbsenseApproval(int employeeId);
     }
 }
