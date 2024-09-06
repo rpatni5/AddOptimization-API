@@ -88,7 +88,7 @@ namespace AddOptimization.API.Controllers
             }
         }
 
-        [HttpGet("getAll/{startDate}/{endDate}")]
+        [HttpGet("get-all/{startDate}/{endDate}")]
         public async Task<IActionResult> GettotalDuration(DateTime? startDate, DateTime? endDate)
         {
             try

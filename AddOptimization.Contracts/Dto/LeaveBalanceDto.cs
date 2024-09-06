@@ -10,8 +10,8 @@ namespace AddOptimization.Contracts.Dto
     {
         public int EmployeeId { get; set; }
         public int TotalAllocatedHoliday {  get; set; }
-        public  Decimal LeaveTaken  { get; set; }
-        public Decimal leavesLeft { get; set; }
+        public  decimal LeaveTaken  { get; set; }
+        public decimal leavesLeft { get; set; }
 
     }
 }

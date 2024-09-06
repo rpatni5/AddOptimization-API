@@ -89,7 +89,7 @@ namespace AddOptimization.API.Controllers
             }
         }
 
-        [HttpPost("searchAll")]
+        [HttpPost("search-all")]
         public async Task<IActionResult> GetAll()
         {
             try
