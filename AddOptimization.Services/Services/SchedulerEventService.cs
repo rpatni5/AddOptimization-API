@@ -123,7 +123,12 @@ namespace AddOptimization.Services.Services
         }
         public async Task<ApiResult<bool>> Save(List<SchedulerEventDetailsDto> schedulerEventDetails)
         {
-            var userId = schedulerEventDetails.FirstOrDefault(x => x.UserId != null)?.UserId ?? _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
+            var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
+            var eventDetail = schedulerEventDetails.FirstOrDefault(x => x.SchedulerEventId != Guid.Empty);
+            if (eventDetail != null)
+            {
+                userId = (await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == eventDetail.SchedulerEventId)).UserId;
+            }
 
             schedulerEventDetails.ForEach(x =>
             {
@@ -410,7 +415,7 @@ namespace AddOptimization.Services.Services
             return await GetSchedulerEventDetails(eventDetails.Id);
         }
 
-        
+
 
         private IQueryable<SchedulerEvent> ApplyFilters(IQueryable<SchedulerEvent> entities, PageQueryFiterBase filter)
         {
