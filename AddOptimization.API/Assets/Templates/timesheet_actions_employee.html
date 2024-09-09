@@ -226,9 +226,17 @@
             <td class="content-cell">
                 <div class="f-fallback">
                     <p>Dear [EmployeeName],</p>
-                    <p>Your timesheet for the month [Month] [Year], with a total working days of [WorkDuration] days and total working overtime of [Overtime] hours has been [TimesheetAction] by [AdministrationContactName].</p>
+                    <p>Your timesheet is [TimesheetAction] by [Approver].</p>
+                    <p>
+                        <strong>Month:</strong> [Month] [Year]<br />
+                        <strong>Working days:</strong> [WorkDuration]<br />
+                        <strong>Overtime:</strong> [Overtime]
+                    </p>
                     <!-- Action -->
-                    <p>Comment:[Comment]<br /></p>
+                    <p>
+                        Please click on the link below to view this timesheet.<br />
+                        <a href="[LinkToTimesheet]" target="_blank" style="background-color: #202A44; color: white; padding: 5px;">View</a>
+                    </p>
                     Best Regards,
                     <br />AddOptimization Team
                 </div>

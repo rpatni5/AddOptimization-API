@@ -19,5 +19,6 @@ namespace AddOptimization.Contracts.Services
         Task<ApiResult<List<InvoiceHistoryDto>>> GetInvoiceHistoryById(int id);
         Task<ApiResult<InvoiceResponseDto>> FinalizedInvoice(int id);
         Task<ApiResult<bool>> Delete(int id);
+        Task<ApiResult<InvoiceResponseDto>> GetInvoiceById(int invoiceId);
     }
 }

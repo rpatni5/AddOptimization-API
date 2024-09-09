@@ -13,6 +13,7 @@ using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
 using AddOptimization.Utilities.Services;
 using AutoMapper;
+using iText.Layout.Element;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -380,14 +381,17 @@ namespace AddOptimization.Services.Services
                     return ApiResult<bool>.Success(false);
                 }
                 var amount = LocaleHelper.FormatCurrency(invoice.DueAmount);
-                var subject = $"AddOptimization invoice pending for {LocaleHelper.FormatDate(invoice.InvoiceDate.Date)} of {amount}";
+                var subject = $"Your invoice from AddOptimization";
                 var link = GetInvoiceLinkForCustomer(invoice.Id);
+                var contactName = string.IsNullOrEmpty(invoice?.Customer?.PartnerName) ? invoice?.Customer?.Organizations
+    : invoice?.Customer?.PartnerCompany;
+
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoice);
                 _ = int.TryParse(invoice?.Customer?.PaymentClearanceDays.ToString(), out int clearanceDays);
                 emailTemplate = emailTemplate
                                 .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
                                 .Replace("[CompanyName]", invoice?.Customer?.Organizations)
-                                .Replace("[CustomerAccountantContactName]", invoice?.Customer?.AccountContactName)
+                                .Replace("[Customer]", contactName)
                                 .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
                                 .Replace("[InvoiceDate]", LocaleHelper.FormatDate(invoice.InvoiceDate.Date))
                                 .Replace("[TotalAmountDue]", LocaleHelper.FormatCurrency(invoice.DueAmount))
@@ -409,16 +413,22 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private async Task<bool> SendInvoiceDeclinedEmailToAccountAdmins(IEnumerable<dynamic> accountAdmins, string accountContactName, long invoiceNumber, DateTime expiryDate, decimal totalAmountDue, string comment)
+        private async Task<bool> SendInvoiceDeclinedEmailToAccountAdmins(IEnumerable<dynamic> accountAdmins, string accountContactName, long invoiceNumber, DateTime expiryDate, decimal totalAmountDue, string comment, Invoice invoice)
         {
             try
             {
-                var subject = "Invoice Declined";
+                var  customer = string.IsNullOrEmpty(invoice?.Customer?.PartnerName) ? invoice?.Customer?.Organizations
+    : invoice?.Customer?.PartnerCompany;
+                var subject = $"Invoice #{invoiceNumber} is Declined by {customer}";
+                var link = GetInvoiceLinkForCustomer(invoice.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.DeclinedInvoice);
                 emailTemplate = emailTemplate.Replace("[AccountContactName]", accountContactName)
                                              .Replace("[InvoiceNumber]", invoiceNumber.ToString())
                                              .Replace("[TotalAmountDue]", LocaleHelper.FormatCurrency(totalAmountDue))
                                              .Replace("[ExpiryDate]", LocaleHelper.FormatDate(expiryDate))
+                                             .Replace("[Customer]", customer)
+                                              .Replace("[LinkToInvoice]", link)
+                                             .Replace("[InvoiceDate]", LocaleHelper.FormatDate(invoice.InvoiceDate))
                                              .Replace("[Comment]", !string.IsNullOrEmpty(comment) ? comment : "No comment added.");
                 foreach (var admin in accountAdmins)
                 {
@@ -858,7 +868,16 @@ namespace AddOptimization.Services.Services
             var details = (await _invoiceDetailRepository.QueryAsync(x => x.InvoiceId == invoiceId)).ToList();
             var companyInfoResult = await _companyService.GetCompanyInformation();
             var companyInfo = companyInfoResult.Result;
-            return await SendRequestInvoiceEmailToCustomer(entity.Customer.AccountContactEmail, entity, companyInfo);
+            var invoices = (await GetInvoiceById(invoiceId)).Result;
+            if (onlyEmail)
+            {
+                return await SendUnpaidInvoiceReminderEmailCustomer(invoices, companyInfo);
+            }
+            else
+            { 
+                return await SendRequestInvoiceEmailToCustomer(entity.Customer.AccountContactEmail, entity, companyInfo);
+
+            }
         }
 
         public async Task<ApiResult<bool>> DeclineRequest(InvoiceActionRequestDto model)
@@ -881,7 +900,7 @@ namespace AddOptimization.Services.Services
                 var accountAdmins = (await _applicationService.GetAccountAdmins()).Result;
                 var adminEmails = accountAdmins.Select(admin => new { Name = admin.FullName, Email = admin.Email });
 
-                await SendInvoiceDeclinedEmailToAccountAdmins(adminEmails, entities.Customer.AccountContactName, entities.InvoiceNumber, entities.ExpiryDate, entities.DueAmount, entity.Comment);
+                await SendInvoiceDeclinedEmailToAccountAdmins(adminEmails, entities.Customer.AccountContactName, entities.InvoiceNumber, entities.ExpiryDate, entities.DueAmount, entity.Comment ,entities);
 
                 return ApiResult<bool>.Success(true);
             }
@@ -924,6 +943,63 @@ namespace AddOptimization.Services.Services
 
                 return ApiResult<List<InvoiceHistoryDto>>.Success(mappedEntities);
             }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+        private async Task<ApiResult<bool>> SendUnpaidInvoiceReminderEmailCustomer(InvoiceResponseDto invoice, CompanyDto companyInfo)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(invoice?.Customer?.AccountContactEmail))
+                {
+                    _logger.LogError("Recipient Email is missing.");
+                    return ApiResult<bool>.Success(false);
+                }
+
+                var amount = LocaleHelper.FormatCurrency(invoice.DueAmount);
+                var subject = $"Invoice {invoice.InvoiceNumber} pending for payment.";
+                var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoiceReminder);
+                var customer = string.IsNullOrEmpty(invoice?.Customer?.PartnerName) ? invoice?.Customer?.Company : invoice?.Customer?.PartnerCompany;
+                var link = GetInvoiceLinkForCustomer(invoice.Id);
+                _ = int.TryParse(invoice?.PaymentClearanceDays.ToString(), out int clearanceDays);
+                emailTemplate = emailTemplate
+                                .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
+                                 .Replace("[AccountContactName]", invoice?.Customer?.AccountContactName)
+                                 .Replace("[CompanyAccountingEmail]", companyInfo.AccountingEmail)
+                                .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
+                                .Replace("[Customer]", customer)
+                                .Replace("[Company]", invoice?.Customer?.Company)
+                                .Replace("[InvoiceDate]", LocaleHelper.FormatDate(invoice.InvoiceDate.Date))
+                                .Replace("[TotalAmountDue]", LocaleHelper.FormatCurrency(invoice.DueAmount))
+                                .Replace("[DueDate]", LocaleHelper.FormatDate(invoice.ExpiryDate.Date))
+                                .Replace("[LinkToInvoice]", link);
+                var emailResult = await _emailService.SendEmail(invoice?.Customer?.AccountContactEmail, subject, emailTemplate);
+                return ApiResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation("An exception occurred while sending unpaid invoice reminder email to customer.");
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+        public async Task<ApiResult<InvoiceResponseDto>> GetInvoiceById(int invoiceId)
+        {
+            try
+            {
+                var entity = await _invoiceRepository.FirstOrDefaultAsync(e => e.Id == invoiceId && !e.IsDeleted, include: entities => entities.Include(e => e.Customer));
+                if (entity == null)
+                {
+                    return ApiResult<InvoiceResponseDto>.NotFound("Invoice");
+                }
+
+                var mappedEntity = _mapper.Map<InvoiceResponseDto>(entity);
+                return ApiResult<InvoiceResponseDto>.Success(mappedEntity);
+            }
+
             catch (Exception ex)
             {
                 _logger.LogException(ex);

@@ -306,10 +306,10 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var subject = !isUpdated ? "Absence Request" : "Absence Request Updated";
+                var subject = !isUpdated ? $"Absence Request from {user.FullName}." : $"Absence Request from {user.FullName} Updated.";
                 var link = GetAbsenceApprovalLinkForAccountAdmin(absenceRequest.Id);
                 var action = !isUpdated ? "submitted" : "updated";
-                var duration = !isUpdated ? LocaleHelper.FormatNumber(absenceRequest.Duration) : $"{oldDuration} is updated to {LocaleHelper.FormatNumber(absenceRequest.Duration)}";
+                var duration = !isUpdated ? LocaleHelper.FormatNumber(absenceRequest.Duration) :LocaleHelper.FormatNumber(absenceRequest.Duration);
                 var comment = !isUpdated ? absenceRequest.Comment : $"{oldComment} is updated to {absenceRequest.Comment}";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.AbsenceRequestApproval);
                 var startDate = absenceRequest.StartDate.HasValue ? LocaleHelper.FormatDate(absenceRequest.StartDate.Value) : "";

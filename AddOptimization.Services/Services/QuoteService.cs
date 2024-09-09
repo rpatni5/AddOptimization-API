@@ -30,6 +30,7 @@ using AddOptimization.Utilities.Services;
 using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 using AddOptimization.Utilities.Enums;
 using Microsoft.AspNet.Identity;
+using iText.Layout.Element;
 
 namespace AddOptimization.Services.Services
 {
@@ -354,11 +355,13 @@ namespace AddOptimization.Services.Services
                     _logger.LogError(" Sender Email is missing.");
                     return ApiResult<bool>.Success(false);
                 }
-                var subject = "Quote";
+                var subject = $"Quote #{quote.QuoteNo} for {customer}";
                 var link = GetQuoteLinkForCustomer(quote.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.CustomerQuote);
                 emailTemplate = emailTemplate.Replace("[TechnicalContactName]", technicalContactName)
                                              .Replace("[QuoteNumber]", quote.QuoteNo.ToString())
+                                             .Replace("[QuoteDate]",LocaleHelper.FormatDate(quote.QuoteDate))
+                                             .Replace("[ExpiryDate]", LocaleHelper.FormatDate(quote.ExpiryDate))
                                              .Replace("[LinkToQuote]", link)
                                              .Replace("[CustomerName]", customer)
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(quote.QuoteDate.Month))
@@ -649,7 +652,7 @@ namespace AddOptimization.Services.Services
                 var sendSuccess = true;
                 foreach (var accountAdmin in accountAdminResult.Result)
                 {
-                    var success = await SendTimesheetActionEmailToAccountAdmin(accountAdmin,customer, model.IsApproved, model.Comment,entities.QuoteNo,entities.QuoteDate, entities.ExpiryDate);
+                    var success = await SendTimesheetActionEmailToAccountAdmin(accountAdmin,customer, model.IsApproved, model.Comment,entities.QuoteNo,entities.QuoteDate, entities.ExpiryDate, entities);
                     if (!success)
                     {
                         sendSuccess = false;
@@ -691,17 +694,20 @@ namespace AddOptimization.Services.Services
         }
 
 
-        private async Task<bool> SendTimesheetActionEmailToAccountAdmin(ApplicationUserDto accountAdmin, Customer customer, bool isApprovedEmail, string comment, long quoteNo, DateTime quoteDate, DateTime expiryDate)
+        private async Task<bool> SendTimesheetActionEmailToAccountAdmin(ApplicationUserDto accountAdmin, Customer customer, bool isApprovedEmail, string comment, long quoteNo, DateTime quoteDate, DateTime expiryDate, Quote quote)
         {
             try
             {
-                var subject = $"Quote #{quoteNo} of {customer.Organizations} is {(isApprovedEmail ? "Approved" : "Declined")} by {customer.TechnicalContactName}";
+                var subject = $"Quote #{quoteNo} for {customer.Organizations} is {(isApprovedEmail ? "Approved" : "Declined")}.";
+                var link = GetQuoteLinkForCustomer(quote.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.QuoteActions);
                 emailTemplate = emailTemplate.Replace("[AccountAdminName]", accountAdmin.FullName)
                                              .Replace("[TechnicalContactName]", customer.TechnicalContactName)
                                              .Replace("[QuoteNumber]", quoteNo.ToString())
                                              .Replace("[QuoteDate]", LocaleHelper.FormatDate(quoteDate))
                                              .Replace("[ExpiryDate]", LocaleHelper.FormatDate(expiryDate))
+                                             .Replace("[Customer]",customer.Organizations)
+                                             .Replace("[LinkToQuote]", link)
                                              .Replace("[TimesheetAction]", isApprovedEmail ? "approved" : "declined")
                                              .Replace("[Comment]", !string.IsNullOrEmpty(comment) ? comment : "No comment added.");
                 return await _emailService.SendEmail(accountAdmin.Email, subject, emailTemplate);
