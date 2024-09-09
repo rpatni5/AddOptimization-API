@@ -684,7 +684,7 @@ namespace AddOptimization.Services.Services
                                              .Replace("[Customer]",customer.Organizations)
                                              .Replace("[LinkToQuote]", link)
                                              .Replace("[TimesheetAction]", isApprovedEmail ? "approved" : "declined")
-                                             .Replace("[Comment]", !string.IsNullOrEmpty(comment) ? comment : "No comment added.");
+                                             .Replace("[Comment]", comment);
                 return await _emailService.SendEmail(accountAdmin.Email, subject, emailTemplate);
             }
             catch (Exception ex)
