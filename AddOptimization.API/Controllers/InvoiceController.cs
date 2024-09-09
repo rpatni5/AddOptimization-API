@@ -117,5 +117,35 @@ namespace AddOptimization.API.Controllers
                 return HandleException(ex);
             }
         }
+
+        [HttpPut("get-draft-invoice-number/{id}")]
+        public async Task<IActionResult> GetDraftInvoiceNumber(int id)
+        {
+            try
+            {
+                var retVal = await _invoiceService.FinalizedInvoice(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                var retVal = await _invoiceService.Delete(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+
     }
 }
