@@ -32,6 +32,8 @@
 	[BankCountry] [nvarchar](100) NULL,
 	[SwiftCode] [nvarchar](100) NULL,
     [BankPostalCode] [varchar](200) NULL,
+    [IdentityNumber] [varchar](200) NULL,
+	[IdentityId] [uniqueidentifier] NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -63,6 +65,10 @@ GO
 
 ALTER TABLE [dbo].[Employees]  WITH NOCHECK ADD FOREIGN KEY([UserId])
 REFERENCES [dbo].[ApplicationUsers] ([Id])
+GO
+
+ALTER TABLE [dbo].[Employees]  WITH CHECK ADD FOREIGN KEY([IdentityId])
+REFERENCES [dbo].[EmployeeIdentity] ([Id])
 GO
 
 

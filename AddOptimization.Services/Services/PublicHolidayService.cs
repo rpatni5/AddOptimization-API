@@ -52,16 +52,8 @@ namespace AddOptimization.Services.Services
             {
                 var entities = await _publicholidayRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.Country).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Date));
 
-                PageQueryFiterBase associationFilter = new PageQueryFiterBase();
-                associationFilter.Take = 100;
-                filters.GetValue<int>("employeeId", employeeId =>
-                {
-                    associationFilter.AddFilter("employeeId", OperatorType.equal.ToString(), employeeId);
-                });
-
-                var association = (await _customerEmployeeAssociationService.SearchAllAssociations(associationFilter)).Result.ToList();
                 entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
-                entities = ApplyFilters(entities, filters, association);
+                entities = ApplyFilters(entities, filters);
 
                 var pagedResult = PageHelper<PublicHoliday, PublicHolidayResponseDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new PublicHolidayResponseDto
                 {
@@ -158,7 +150,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private IQueryable<PublicHoliday> ApplyFilters(IQueryable<PublicHoliday> entities, PageQueryFiterBase filter, List<CustomerEmployeeAssociationDto> association)
+        private IQueryable<PublicHoliday> ApplyFilters(IQueryable<PublicHoliday> entities, PageQueryFiterBase filter)
         {
             filter.GetValue<string>("countryId", (v) =>
             {
@@ -166,9 +158,8 @@ namespace AddOptimization.Services.Services
             });
             filter.GetValue<int>("employeeId", employeeId =>
             {
-                var associatedCountries = association
-                    .Where(a => a.EmployeeId == employeeId)
-                    .Select(a => a.PublicHolidayCountryId)
+                List<CustomerEmployeeAssociationDto> association = (_customerEmployeeAssociationService.GetAssociatedCustomers(employeeId)).Result.Result;
+                var associatedCountries = association.Select(a => a.PublicHolidayCountryId)
                     .Distinct()
                     .ToList();
 
@@ -251,5 +242,25 @@ namespace AddOptimization.Services.Services
             }
 
         }
+
+        public async Task<ApiResult<List<PublicHolidayResponseDto>>> SearchAllPublicHoliday()
+        {
+            try
+            {
+                var entities = await _publicholidayRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.Country).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Date));
+                var mappedEntities = _mapper.Map<List<PublicHolidayResponseDto>>(entities.ToList());
+                return ApiResult<List<PublicHolidayResponseDto>>.Success(mappedEntities);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+
     }
+
+   
+
 }

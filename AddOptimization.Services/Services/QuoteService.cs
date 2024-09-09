@@ -30,6 +30,7 @@ using AddOptimization.Utilities.Services;
 using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 using AddOptimization.Utilities.Enums;
 using Microsoft.AspNet.Identity;
+using iText.Layout.Element;
 
 namespace AddOptimization.Services.Services
 {
@@ -38,6 +39,7 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<Quote> _quoteRepository;
         private readonly IGenericRepository<QuoteSummary> _quoteSummaryRepository;
         private readonly IGenericRepository<Invoice> _invoiceRepository;
+        private readonly IGenericRepository<QuoteHistory> _quoteHistoryRepository;
         private readonly IGenericRepository<InvoiceDetail> _invoiceDetailRepository;
         private readonly IPaymentStatusService _paymentStatusService;
         private readonly IInvoiceStatusService _invoiceStatusService;
@@ -49,6 +51,7 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<Company> _companyRepository;
         private readonly IEmailService _emailService;
         private readonly ITemplateService _templateService;
+        private readonly IGenericRepository<InvoiceHistory> _invoiceHistoryRepository;
         private readonly IConfiguration _configuration;
         private readonly CustomDataProtectionService _protectionService;
         private readonly IApplicationUserService _applicationUserService;
@@ -56,7 +59,7 @@ namespace AddOptimization.Services.Services
 
         public QuoteService(IGenericRepository<Quote> quoteRepository, IGenericRepository<Invoice> invoiceRepository, IGenericRepository<InvoiceDetail> invoiceDetailRepository, IInvoiceStatusService invoiceStatusService, IGenericRepository<Customer> customersRepository,
             IPaymentStatusService paymentStatusService, IApplicationUserService applicationUserService,
-          ILogger<QuoteService> logger, IMapper mapper, IQuoteStatusService quoteStatusService, IGenericRepository<QuoteSummary> quoteSummaryRepository, IUnitOfWork unitOfWork, IGenericRepository<Company> companyRepository, IConfiguration configuration, IEmailService emailService, ITemplateService templateService, CustomDataProtectionService protectionService)
+          ILogger<QuoteService> logger, IMapper mapper, IQuoteStatusService quoteStatusService, IGenericRepository<QuoteSummary> quoteSummaryRepository, IUnitOfWork unitOfWork, IGenericRepository<Company> companyRepository, IGenericRepository<InvoiceHistory> invoiceHistoryRepository, IGenericRepository<QuoteHistory> quoteHistoryRepository, IConfiguration configuration, IEmailService emailService, ITemplateService templateService, CustomDataProtectionService protectionService)
         {
             _paymentStatusService = paymentStatusService;
             _invoiceStatusService = invoiceStatusService;
@@ -76,6 +79,8 @@ namespace AddOptimization.Services.Services
             _protectionService = protectionService;
             _applicationUserService = applicationUserService;
             _customersRepository = customersRepository;
+            _quoteHistoryRepository = quoteHistoryRepository;
+            _invoiceHistoryRepository = invoiceHistoryRepository;
         }
 
         public async Task<PagedApiResult<QuoteResponseDto>> Search(PageQueryFiterBase filters)
@@ -175,6 +180,15 @@ namespace AddOptimization.Services.Services
                     await _quoteSummaryRepository.InsertAsync(quoteSummary);
                     entity.QuoteSummaries.Add(quoteSummary);
                 }
+
+                QuoteHistory historyEntity = new QuoteHistory
+                {
+                    QuoteId = entity.Id,
+                    QuoteStatusId = entity.QuoteStatusId,
+                };
+                await _quoteHistoryRepository.InsertAsync(historyEntity);
+                   
+
                 await _unitOfWork.CommitTransactionAsync();
                 var mappedEntity = _mapper.Map<QuoteResponseDto>(entity);
                 return ApiResult<QuoteResponseDto>.Success(mappedEntity);
@@ -191,11 +205,18 @@ namespace AddOptimization.Services.Services
         {
             try
             {
+                var eventStatus = (await _quoteStatusService.Search()).Result;
 
+                var draftId = eventStatus.FirstOrDefault(x => x.StatusKey == QuoteStatusesEnum.DRAFT.ToString()).Id;
+                var declinedId = eventStatus.FirstOrDefault(x => x.StatusKey == QuoteStatusesEnum.DECLINED.ToString()).Id;
                 var entity = await _quoteRepository.FirstOrDefaultAsync(e => e.Id == id);
                 if (entity == null)
                 {
                     return ApiResult<QuoteResponseDto>.NotFound("Quote not found");
+                }
+                if (entity.QuoteStatusId == declinedId)
+                {
+                    entity.QuoteStatusId = draftId;
                 }
 
                 var existingSummaries = await _quoteSummaryRepository.QueryAsync(e => e.QuoteId == id);
@@ -224,6 +245,12 @@ namespace AddOptimization.Services.Services
                     newSummaries.Add(quotesummaries);
                 }
 
+                QuoteHistory historyEntity = new QuoteHistory
+                {
+                    QuoteId = entity.Id,
+                    QuoteStatusId = entity.QuoteStatusId,
+                };
+                await _quoteHistoryRepository.InsertAsync(historyEntity);
                 entity.TotalPriceIncVat = newSummaries.Sum(x => x.TotalPriceIncVat);
                 entity.TotalPriceExcVat = newSummaries.Sum(x => x.TotalPriceExcVat);
 
@@ -307,6 +334,13 @@ namespace AddOptimization.Services.Services
             var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == QuoteStatusesEnum.SEND_TO_CUSTOMER.ToString()).Id;
             var entity = (await _quoteRepository.QueryAsync(x => x.Id == quoteId, include: entities => entities.Include(e => e.Customer))).FirstOrDefault();
             entity.QuoteStatusId = statusId;
+
+            QuoteHistory historyEntity = new QuoteHistory
+            {
+                QuoteId = entity.Id,
+                QuoteStatusId = entity.QuoteStatusId,
+            };
+            await _quoteHistoryRepository.InsertAsync(historyEntity);
             await _quoteRepository.UpdateAsync(entity);
            return await SendQuoteToCustomer(entity.Customer.TechnicalContactEmail, entity, entity.Customer.TechnicalContactName, entity.Customer.Organizations);
         }
@@ -321,11 +355,13 @@ namespace AddOptimization.Services.Services
                     _logger.LogError(" Sender Email is missing.");
                     return ApiResult<bool>.Success(false);
                 }
-                var subject = "Quote";
+                var subject = $"Quote #{quote.QuoteNo} for {customer}";
                 var link = GetQuoteLinkForCustomer(quote.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.CustomerQuote);
                 emailTemplate = emailTemplate.Replace("[TechnicalContactName]", technicalContactName)
                                              .Replace("[QuoteNumber]", quote.QuoteNo.ToString())
+                                             .Replace("[QuoteDate]",LocaleHelper.FormatDate(quote.QuoteDate))
+                                             .Replace("[ExpiryDate]", LocaleHelper.FormatDate(quote.ExpiryDate))
                                              .Replace("[LinkToQuote]", link)
                                              .Replace("[CustomerName]", customer)
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(quote.QuoteDate.Month))
@@ -408,6 +444,22 @@ namespace AddOptimization.Services.Services
                 }
                 await _quoteRepository.UpdateAsync(quote);
                 await _invoiceRepository.InsertAsync(invoice);
+                var quoteHistory = new QuoteHistory
+                {
+                    QuoteId = quote.Id,
+                    QuoteStatusId = quotestatusId,
+                    CreatedAt = DateTime.UtcNow,
+                    Comment = "Quote Converted to Invoice",
+                };
+                var historyEntity = new InvoiceHistory
+                {
+                    InvoiceId = invoice.Id,
+                    InvoiceStatusId = invoice.InvoiceStatusId,
+                    CreatedAt = DateTime.UtcNow,
+                    Comment = "Quote Converted to Invoice",
+                };
+                await _quoteHistoryRepository.InsertAsync(quoteHistory);
+                await _invoiceHistoryRepository.InsertAsync(historyEntity);
                 await _unitOfWork.CommitTransactionAsync();
 
                 var mappedInvoice = _mapper.Map<InvoiceResponseDto>(invoice);
@@ -549,7 +601,6 @@ namespace AddOptimization.Services.Services
                 var eventStatus = (await _quoteStatusService.Search()).Result;
                 var customerApprovedId = eventStatus.FirstOrDefault(x => x.StatusKey == QuoteStatusesEnum.ACCEPTED.ToString()).Id;
                 var customerDeclinedId = eventStatus.FirstOrDefault(x => x.StatusKey == QuoteStatusesEnum.DECLINED.ToString()).Id;
-               
 
                 if (model.IsApproved)
                 {
@@ -560,14 +611,23 @@ namespace AddOptimization.Services.Services
                     eventDetails.QuoteStatusId = customerDeclinedId;
                 }
                 var result = await _quoteRepository.UpdateAsync(eventDetails);
-               
+
+                QuoteHistory historyEntity = new QuoteHistory()
+                {
+                    QuoteId = eventDetails.Id,
+                    QuoteStatusId = eventDetails.QuoteStatusId,
+                    Comment = model.Comment,
+                    CreatedAt = DateTime.UtcNow,
+                };
+                await _quoteHistoryRepository.InsertAsync(historyEntity);
+
                 var entities = (await _quoteRepository.QueryAsync(x => x.Id == result.Id, include: entities => entities.Include(e => e.Customer))).FirstOrDefault();
-                var customer = (await _customersRepository.FirstOrDefaultAsync(x => x.Id == result.CustomerId));               
+                var customer = (await _customersRepository.FirstOrDefaultAsync(x => x.Id == result.CustomerId));
                 var accountAdminResult = await _applicationUserService.GetAccountAdmins();
-                var sendSuccess = true;                
+                var sendSuccess = true;
                 foreach (var accountAdmin in accountAdminResult.Result)
                 {
-                    var success = await SendTimesheetActionEmailToAccountAdmin(accountAdmin,customer, model.IsApproved, model.Comment,entities.QuoteNo,entities.QuoteDate, entities.ExpiryDate);
+                    var success = await SendTimesheetActionEmailToAccountAdmin(accountAdmin,customer, model.IsApproved, model.Comment,entities.QuoteNo,entities.QuoteDate, entities.ExpiryDate, entities);
                     if (!success)
                     {
                         sendSuccess = false;
@@ -582,18 +642,47 @@ namespace AddOptimization.Services.Services
             }
         }
 
-
-        private async Task<bool> SendTimesheetActionEmailToAccountAdmin(ApplicationUserDto accountAdmin, Customer customer, bool isApprovedEmail, string comment, long quoteNo, DateTime quoteDate, DateTime expiryDate)
+        public async Task<ApiResult<List<QuoteHistoryDto>>> GetQuoteHistoryById(int id)
         {
             try
             {
-                var subject = $"Quote #{quoteNo} of {customer.Organizations} is {(isApprovedEmail ? "Approved" : "Declined")} by {customer.TechnicalContactName}";
+
+                var entities = await _quoteHistoryRepository.QueryAsync(e => e.QuoteId == id, disableTracking: true);
+                var mappedEntities = entities.OrderByDescending(e => e.CreatedAt).Select(e => new QuoteHistoryDto
+                {
+                    Id = e.Id,
+                    QuoteId = e.QuoteId,
+                    QuoteStatusId = e.QuoteStatusId,
+                    QuoteStatusName = e.QuoteStatuses.Name,
+                    Comment = e.Comment,
+                    CreatedAt = e.CreatedAt,
+                    QuoteNumber=e.Quote.QuoteNo,
+                }).ToList();
+
+                return ApiResult<List<QuoteHistoryDto>>.Success(mappedEntities);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+
+        private async Task<bool> SendTimesheetActionEmailToAccountAdmin(ApplicationUserDto accountAdmin, Customer customer, bool isApprovedEmail, string comment, long quoteNo, DateTime quoteDate, DateTime expiryDate, Quote quote)
+        {
+            try
+            {
+                var subject = $"Quote #{quoteNo} for {customer.Organizations} is {(isApprovedEmail ? "Approved" : "Declined")}.";
+                var link = GetQuoteLinkForCustomer(quote.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.QuoteActions);
                 emailTemplate = emailTemplate.Replace("[AccountAdminName]", accountAdmin.FullName)
                                              .Replace("[TechnicalContactName]", customer.TechnicalContactName)
                                              .Replace("[QuoteNumber]", quoteNo.ToString())
                                              .Replace("[QuoteDate]", LocaleHelper.FormatDate(quoteDate))
                                              .Replace("[ExpiryDate]", LocaleHelper.FormatDate(expiryDate))
+                                             .Replace("[Customer]",customer.Organizations)
+                                             .Replace("[LinkToQuote]", link)
                                              .Replace("[TimesheetAction]", isApprovedEmail ? "approved" : "declined")
                                              .Replace("[Comment]", !string.IsNullOrEmpty(comment) ? comment : "No comment added.");
                 return await _emailService.SendEmail(accountAdmin.Email, subject, emailTemplate);

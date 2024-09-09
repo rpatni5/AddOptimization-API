@@ -268,7 +268,6 @@ namespace AddOptimization.Services.Services
                 var currentYear = now.Year;
                 var currentMonth = now.Month;
                 var dateFormat = $"{currentYear}{currentMonth:D2}";
-
                 var maxId = (await _externalInvoiceRepository.QueryAsync(x => x.InvoiceNumber.ToString().StartsWith(dateFormat), ignoreGlobalFilter: true)).Count();
                 var newId = maxId + 1;
                 var invoiceNumber = long.Parse($"{DateTime.UtcNow:yyyyMM}{newId}");
@@ -305,12 +304,19 @@ namespace AddOptimization.Services.Services
                         UnitPrice = detail.UnitPrice,
                         TotalPriceExcludingVat = detail.TotalPriceExcludingVat,
                         TotalPriceIncludingVat = detail.TotalPriceIncludingVat
-
                     };
 
                     await _invoiceDetailRepository.InsertAsync(invoiceDetail);
                     entity.InvoiceDetails.Add(invoiceDetail);
                 }
+
+                ExternalInvoiceHistory historyEntity = new ExternalInvoiceHistory
+                {
+                    InvoiceId = entity.Id,
+                    InvoiceStatusId = entity.InvoiceStatusId,
+                };
+                await _externalInvoiceHistoryRepository.InsertAsync(historyEntity);
+
                 await _unitOfWork.CommitTransactionAsync();
                 var mappedEntity = _mapper.Map<ExternalInvoiceResponseDto>(entity);
                 return ApiResult<ExternalInvoiceResponseDto>.Success(mappedEntity);
@@ -419,10 +425,20 @@ namespace AddOptimization.Services.Services
         {
             try
             {
+                var eventStatus = (await _invoiceStatusService.Search()).Result;
+
+                var draftId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.DRAFT.ToString()).Id;
+                var declinedId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.DECLINED.ToString()).Id;
+
+
                 var entity = await _externalInvoiceRepository.FirstOrDefaultAsync(e => e.Id == id);
                 if (entity == null)
                 {
                     return ApiResult<ExternalInvoiceResponseDto>.NotFound("External Invoice");
+                }
+                if (entity.InvoiceStatusId == declinedId)
+                {
+                    entity.InvoiceStatusId = draftId;
                 }
 
                 var existingDetails = await _invoiceDetailRepository.QueryAsync(e => e.ExternalInvoiceId == id);
@@ -447,6 +463,12 @@ namespace AddOptimization.Services.Services
                     await _invoiceDetailRepository.InsertAsync(externalInvoiceDetail);
                     newInvoiceDetails.Add(externalInvoiceDetail);
                 }
+                ExternalInvoiceHistory historyEntity = new ExternalInvoiceHistory
+                {
+                    InvoiceId = entity.Id,
+                    InvoiceStatusId = entity.InvoiceStatusId,
+                };
+                await _externalInvoiceHistoryRepository.InsertAsync(historyEntity);
 
                 entity.VatValue = newInvoiceDetails.Sum(x => (x.UnitPrice * x.Quantity * x.VatPercent) / 100);
                 entity.TotalPriceIncludingVat = newInvoiceDetails.Sum(x => x.TotalPriceIncludingVat);
@@ -488,6 +510,12 @@ namespace AddOptimization.Services.Services
             var details = (await _invoiceDetailRepository.QueryAsync(x => x.ExternalInvoiceId == Id)).ToList();
             entity.PaymentStatusId = paymentStatusId;
             entity.InvoiceStatusId = invoiceStatusId;
+            ExternalInvoiceHistory historyEntity = new ExternalInvoiceHistory
+            {
+                InvoiceId = entity.Id,
+                InvoiceStatusId = entity.InvoiceStatusId,
+            };
+            await _externalInvoiceHistoryRepository.InsertAsync(historyEntity);
             await _externalInvoiceRepository.UpdateAsync(entity);
             var accountAdmins = (await _applicationService.GetAccountAdmins()).Result;
             var externalInvoiceDetail = externalInvoiceDetailsResponse.Result;
@@ -590,6 +618,12 @@ namespace AddOptimization.Services.Services
             var entity = (await _externalInvoiceRepository.QueryAsync(x => x.Id == Id, include: entities => entities.Include(e => e.ApplicationUser).Include(e => e.Company))).FirstOrDefault();
             var details = (await _invoiceDetailRepository.QueryAsync(x => x.ExternalInvoiceId == Id)).ToList();
             var externalInvoiceDetailsResponse = await FetchExternalInvoiceDetails(Id);
+            ExternalInvoiceHistory historyEntity = new ExternalInvoiceHistory
+            {
+                InvoiceId = entity.Id,
+                InvoiceStatusId = entity.InvoiceStatusId,
+            };
+            await _externalInvoiceHistoryRepository.InsertAsync(historyEntity);
             await _externalInvoiceRepository.UpdateAsync(entity);
             var externalInvoiceDetail = externalInvoiceDetailsResponse.Result;
 
@@ -618,6 +652,35 @@ namespace AddOptimization.Services.Services
                 return false;
             }
         }
+
+
+        public async Task<ApiResult<List<ExternalInvoiceHistoryDto>>> GetExternalInvoiceHistoryById(int id)
+        {
+            try
+            {
+                var entities = await _externalInvoiceHistoryRepository.QueryAsync(e => e.InvoiceId == id, disableTracking: true);
+           
+                var mappedEntities = entities.OrderByDescending(e=>e.CreatedAt).Select(e => new ExternalInvoiceHistoryDto
+                {
+                    Id = e.Id,
+                    InvoiceId = e.InvoiceId,
+                    InvoiceStatusId = e.InvoiceStatusId,
+                    InvoiceStatusName = e.InvoiceStatus.Name,
+                    Comment = e.Comment,
+                    CreatedAt = e.CreatedAt,
+                    InvoiceNumber=e.ExternalInvoice.InvoiceNumber,
+                }).ToList();
+
+                return ApiResult<List<ExternalInvoiceHistoryDto>>.Success(mappedEntities);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+
         private IQueryable<ExternalInvoice> ApplyFilters(IQueryable<ExternalInvoice> entities, PageQueryFiterBase filter)
         {
             filter.GetValue<string>("employeeId", (v) =>

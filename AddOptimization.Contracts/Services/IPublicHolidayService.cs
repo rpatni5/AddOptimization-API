@@ -16,7 +16,9 @@ public interface IPublicHolidayService
     Task<ApiResult<PublicHolidayResponseDto>> Update(Guid id, PublicHolidayRequestDto model);
     Task<ApiResult<bool>> Delete(Guid id);
     Task<ApiResult<PublicHolidayResponseDto>> Get(Guid id);
-  
+    Task<ApiResult<List<PublicHolidayResponseDto>>> SearchAllPublicHoliday();
+
+
 
 
 }
