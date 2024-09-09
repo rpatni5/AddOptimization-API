@@ -117,5 +117,19 @@ namespace AddOptimization.API.Controllers
                 return HandleException(ex);
             }
         }
+
+        [HttpGet("get-invoice/{id}")]
+        public async Task<IActionResult> GetInvoiceId(int id)
+        {
+            try
+            {
+                var retVal = await _invoiceService.GetInvoiceById(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
     }
 }
