@@ -10,7 +10,9 @@
 	[IsActive] [bit] NOT NULL,
 	[UserId] [int] NOT NULL,
 	[LeaveStatusId] [int] NOT NULL,
-	[Duration] [decimal](10, 2) NOT NULL
+	[Duration] [decimal](10, 2) NOT NULL,
+	[StartDate] [datetime] NULL,
+	[EndDate] [datetime] NULL
 ) ON [PRIMARY]
 
 GO
