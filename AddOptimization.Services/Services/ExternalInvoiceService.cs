@@ -372,7 +372,8 @@ namespace AddOptimization.Services.Services
             {
                 var model = new ExternalInvoiceResponseDto();
                 var entity = await _externalInvoiceRepository.FirstOrDefaultAsync(e => e.Id == id, include: source => source.Include(x => x.InvoiceStatus).Include(x => x.PaymentStatus).Include(x => x.ApplicationUser), ignoreGlobalFilter: true);
-                var employee = await _employeeRepository.FirstOrDefaultAsync(e => e.UserId == entity.EmployeeId, ignoreGlobalFilter: true);
+                var employee = await _employeeRepository.FirstOrDefaultAsync(e => e.UserId == entity.EmployeeId, include: entities => entities
+        .Include(e => e.ExternalCountry), ignoreGlobalFilter: true);
                 model.Id = entity.Id;
                 model.CompanyId = entity.CompanyId;
                 model.EmployeeId = entity.EmployeeId;
@@ -395,6 +396,7 @@ namespace AddOptimization.Services.Services
                 model.ExternalCompanyCity = employee?.ExternalCity;
                 model.ExternalCompanyState = employee?.ExternalState;
                 model.ExternalCompanyZipCode = employee?.ExternalZipCode;
+                model.ExternalCountry = employee?.ExternalCountry.CountryName;
                 model.BankName=employee?.BankName;
                 model.BankAddress=employee?.BankAddress;
                 model.BankCity=employee?.BankCity;
