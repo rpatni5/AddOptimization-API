@@ -13,6 +13,7 @@ using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
 using AddOptimization.Utilities.Services;
 using AutoMapper;
+using iText.Layout.Element;
 using iText.StyledXmlParser.Jsoup.Nodes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -706,11 +707,13 @@ namespace AddOptimization.Services.Services
             {
                 var subject = isApprovedEmail ? "Timesheet Approved" : "Timesheet Declined";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetActionsEmployee);
+                var link = GetTimesheetLinkForCustomer(schedulerEvent.Id);
                 emailTemplate = emailTemplate.Replace("[EmployeeName]", user.FullName)
                                              .Replace("[AdministrationContactName]", customer.AdministrationContactName)
                                              .Replace("[TimesheetAction]", isApprovedEmail ? "approved" : "declined")
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
                                              .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
+                                             .Replace("[LinkToTimesheet]", link)
                                              .Replace("[WorkDuration]", LocaleHelper.FormatNumber(totalWorkingDays))
                                              .Replace("[Overtime]", LocaleHelper.FormatNumber(overtimeHours))
                                              .Replace("[Comment]", !string.IsNullOrEmpty(comment) ? comment : "No comment added.");
@@ -730,12 +733,14 @@ namespace AddOptimization.Services.Services
             try
             {
                 var subject = isApprovedEmail ? "Timesheet Approved" : "Timesheet Declined";
+                var link = GetTimesheetLinkForCustomer(schedulerEvent.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetActions);
                 emailTemplate = emailTemplate.Replace("[AccountAdmin]", approver.FullName)
                                              .Replace("[EmployeeName]", user.FullName)
                                              .Replace("[AdministrationContactName]", customer.AdministrationContactName)
                                              .Replace("[TimesheetAction]", isApprovedEmail ? "approved" : "declined")
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
+                                              .Replace("[LinkToTimesheet]", link)
                                              .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
                                              .Replace("[WorkDuration]", LocaleHelper.FormatNumber(totalWorkingDays))
                                              .Replace("[Overtime]", LocaleHelper.FormatNumber(overtimeHours))
@@ -804,7 +809,7 @@ namespace AddOptimization.Services.Services
                     _logger.LogError(" Sender Email is missing.");
                     return ApiResult<bool>.Success(false);
                 }
-                var subject = "Timesheet Approval Request";
+                var subject = $"Timesheet Approval Request from {employeeName}.";
                 var link = GetTimesheetLinkForCustomer(schedulerEvent.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.RequestTimesheetApproval);
                 emailTemplate = emailTemplate.Replace("[AdministrationContactName]", administrationContactName)
@@ -828,7 +833,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var subject = "Timesheet Approval Request";
+                var subject = $"Timesheet Approval Request from {employeeName}";
                 var link = GetTimesheetLinkForAccountAdmin(schedulerEvent.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.RequestTimesheetApproval);
                 emailTemplate = emailTemplate.Replace("[AdministrationContactName]", approverName)

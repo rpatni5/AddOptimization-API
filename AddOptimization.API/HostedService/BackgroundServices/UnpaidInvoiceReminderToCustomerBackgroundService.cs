@@ -100,7 +100,6 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                         && invoice?.DueAmount > 0 && invoice.InvoiceStatusId == invoiceStatusId)
                     {
                         await SendUnpaidInvoiceReminderEmailCustomer(invoice, companyInfoResult);
-                        await SendUnpaidInvoiceReminderEmailAccountAdmin(invoice, approver.Result.FirstOrDefault(), companyInfoResult);
 
                         var historyEntity = new InvoiceHistory
                         {
@@ -137,6 +136,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 var amount = LocaleHelper.FormatCurrency(invoice.DueAmount);
                 var subject = $"AddOptimization invoice pending for {LocaleHelper.FormatDate(invoice.InvoiceDate.Date)} of {amount}";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoiceReminder);
+                var customer = string.IsNullOrEmpty(invoice?.Customer?.PartnerName) ? invoice?.Customer?.Company : invoice?.Customer?.PartnerCompany;
                 var link = GetInvoiceLinkForCustomer(invoice.Id);
                 _ = int.TryParse(invoice?.PaymentClearanceDays.ToString(), out int clearanceDays);
                 emailTemplate = emailTemplate
@@ -144,7 +144,8 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                                  .Replace("[AccountContactName]", invoice?.Customer?.AccountContactName)
                                  .Replace("[CompanyAccountingEmail]", companyInfo.AccountingEmail)
                                 .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
-                                .Replace("[CompanyName]", invoice?.Customer?.Company)
+                                .Replace("[Customer]", customer)
+                                .Replace("[Company]", invoice?.Customer?.Company)
                                 .Replace("[InvoiceDate]", LocaleHelper.FormatDate(invoice.InvoiceDate.Date))
                                 .Replace("[TotalAmountDue]", LocaleHelper.FormatCurrency(invoice.DueAmount))
                                 .Replace("[DueDate]",LocaleHelper.FormatDate(invoice.ExpiryDate.Date))
