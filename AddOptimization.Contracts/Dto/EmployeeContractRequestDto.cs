@@ -24,7 +24,8 @@ namespace AddOptimization.Contracts.Dto
         public string EmployeeName { get; set; }
         public bool IsExternal { get; set; }
         public decimal? Salary { get; set; }
-        public int? PublicHoliday { get; set; }
-        public string? NIENumber { get; set; }
+        public int? PublicHoliday { get; set; }        
+        public Guid? IdentityId {  get; set; }
+        public string IdentityNumber {  get; set; } 
     }
 }

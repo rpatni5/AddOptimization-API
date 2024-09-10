@@ -16,7 +16,8 @@ namespace AddOptimization.Contracts.Services
         Task<PagedApiResult<AbsenceRequestResponseDto>> Search(PageQueryFiterBase filters);
         Task<ApiResult<AbsenceRequestResponseDto>> Update(Guid id, AbsenceRequestRequestDto model);
         Task<ApiResult<bool>> Delete(Guid id);
-
+        Task<ApiResult<decimal>> GetDurationExcludingWeekends(DateTime? startDate, DateTime? endDate, List<CustomerEmployeeAssociationDto> association, List<PublicHolidayResponseDto> publicHoliday, int userId, decimal? duration);
+        Task<ApiResult<decimal>> GetDurations(DateTime? startDate, DateTime? endDate);
 
     }
 }

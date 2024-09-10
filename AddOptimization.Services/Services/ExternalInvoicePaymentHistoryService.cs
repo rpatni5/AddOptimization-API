@@ -24,13 +24,14 @@ namespace AddOptimization.Services.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IGenericRepository<ExternalInvoiceDetail> _invoiceDetailRepository;
         private readonly IGenericRepository<ExternalInvoiceHistory> _externalInvoiceHistoryRepository;
-        public ExternalInvoicePaymentHistoryService(IGenericRepository<ExternalInvoicePaymentHistory> externalInvoicePaymentRepository, ILogger<ExternalInvoicePaymentHistoryService> logger, IInvoiceStatusService invoiceStatusService, IPaymentStatusService paymentStatusService, IExternalInvoiceService externalInvoiceService, IGenericRepository<ExternalInvoice> externalInvoiceRepository, IMapper mapper)
+        public ExternalInvoicePaymentHistoryService(IGenericRepository<ExternalInvoicePaymentHistory> externalInvoicePaymentRepository, ILogger<ExternalInvoicePaymentHistoryService> logger, IInvoiceStatusService invoiceStatusService, IGenericRepository<ExternalInvoiceHistory> externalInvoiceHistoryRepository, IPaymentStatusService paymentStatusService, IExternalInvoiceService externalInvoiceService, IGenericRepository<ExternalInvoice> externalInvoiceRepository, IMapper mapper)
         {
             _externalInvoicePaymentRepository = externalInvoicePaymentRepository;
             _invoiceStatusService= invoiceStatusService;
             _paymentStatusService= paymentStatusService;
             _externalInvoiceService = externalInvoiceService;
             _externalInvoiceRepository = externalInvoiceRepository;
+            _externalInvoiceHistoryRepository = externalInvoiceHistoryRepository;
             _logger = logger;
             _mapper = mapper;
         }
@@ -86,6 +87,14 @@ namespace AddOptimization.Services.Services
                     paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.PAID.ToString()).Id;
                     dueAmount = 0;
                     invoice.InvoiceStatusId = closedStatusId;
+                    var invoiceHistory = new ExternalInvoiceHistory
+                    {
+                        InvoiceId = invoice.Id,
+                        InvoiceStatusId = invoice.InvoiceStatusId,
+                        Comment = "Invoice Closed"
+                    };
+                    await _externalInvoiceHistoryRepository.InsertAsync(invoiceHistory);
+
                 }
                 else if (invoice.TotalPriceIncludingVat > 0)
                 {

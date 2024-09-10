@@ -225,9 +225,10 @@
         <tr>
             <td class="content-cell">
                 <div class="f-fallback">
-                    <p>Dear [AccountContactName],</p>
+                    <p>Dear [Customer],</p>
                     <p>Our system detected an unpaid invoice.</p>
                     <p>
+                        Customer Name: [Customer]<br />
                         Invoice Number: #[InvoiceNumber]<br />
                         Invoice Date: [InvoiceDate]<br />
                         Total Amount Due: [TotalAmountDue]<br />
@@ -241,13 +242,10 @@
                         <a href="[LinkToInvoice]" target="_blank" style="background-color: #202A44; color: white; padding: 5px;">View</a>
                     </p>
                     <p>
-                        If payment have already being made, please disregard this email.<br />
+                        Disregard this email, if the invoice is already paid.<br />
                     </p>
                     <p>
                         Should you have any questions or need further assistance, please do not hesitate to contact us on <a href="mailto:[CompanyAccountingEmail]">[CompanyAccountingEmail]</a>.<br />
-                    </p>
-                    <p>
-                        Thank you for following up this unpaid invoice.<br />
                     </p>
                     Best Regards,
                     <br />AddOptimization Team

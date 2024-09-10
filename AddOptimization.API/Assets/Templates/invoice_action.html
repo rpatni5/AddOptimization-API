@@ -226,14 +226,21 @@
             <td class="content-cell">
                 <div class="f-fallback">
                     <p>Dear [AccountAdmin],</p>
-                    <p>The following invoice has been declined  by [AccountContactName].  </p>
+                    <p>The invoice for [Customer] is declined.</p>
                     <p>
+                        <strong>Customer Name:</strong> [Customer]<br />
                         <strong>Invoice Number:</strong> #[InvoiceNumber]<br />
+                        <strong>Invoice Date:</strong> [InvoiceDate]<br />
                         <strong>Total Amount Due:</strong> [TotalAmountDue]<br />
                         <strong>Due Date:</strong> [ExpiryDate]
                     </p>
                     <!-- Action -->
-                    <p><strong>Comment :</strong> [Comment]</p>
+                    <p>
+                        Please click on the link below to view this Invoice.<br />
+                    </p>
+                    <p>
+                        <a href="[LinkToInvoice]" target="_blank" style="background-color: #202A44; color: white; padding: 5px;">View</a>
+                    </p><br/>
                     Best Regards,
                     <br />AddOptimization Team
                 </div>

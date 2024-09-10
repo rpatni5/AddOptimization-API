@@ -215,7 +215,7 @@
             text-align: center;
             font-weight: bold;
             background-color: #202A44;
-            color:white;
+            color: white;
         }
     </style>
 </head>
@@ -226,16 +226,20 @@
             <td class="content-cell">
                 <div class="f-fallback">
                     <p>Dear [AccountAdminName],</p>
-                    <p>[EmployeeName] has [Action] there absence request.</p>
-                    <p>Date: [Date]</p>
-                    <p>Duration: [Duration]</p>
-                    <p>Comment: [Comment]</p>
+                    <p>[EmployeeName] has [Action] an absence request.</p>
+                    <p>
+                        Date: [Date]<br />
+                        Duration: [Duration]
+                    </p>
+
+                    <p>Comment: [Comment]</p><br />
                     <!-- Action -->
                     <p>
-                        Please click on the link below to view absence requests.<br />
-                        <a href="[LinkToAbsenceRequests]" target="_blank" style="background-color: #202A44; color: white; padding: 5px;">View</a>
+                        Please click on the link below to view absence request.<br />
                     </p>
-                    Best Regards,
+                    <p> <a href="[LinkToAbsenceRequests]" target="_blank" style="background-color: #202A44; color: white; padding: 5px;">View</a><br /></p>
+
+                     Best Regards,
                     <br />AddOptimization Team
                 </div>
             </td>

@@ -226,9 +226,16 @@
             <td class="content-cell">
                 <div class="f-fallback">
                     <p>Dear [EmployeeName],</p>
-                    <p>Your timesheet for the month [Month] [Year], with a total working days of [WorkDuration] days and total working overtime of [Overtime] hours has been [TimesheetAction] by [AdministrationContactName].</p>
+                    <p>Your timesheet is [TimesheetAction] by [Approver].</p>
+                    <p>
+                        <strong>Month:</strong> [Month] [Year]<br />
+                        <strong>Working days:</strong> [WorkDuration] days<br />
+                        <strong>Overtime:</strong> [Overtime] hrs
+                    </p>
                     <!-- Action -->
-                    <p>Comment:[Comment]<br /></p>
+                    [LinkSection]
+
+
                     Best Regards,
                     <br />AddOptimization Team
                 </div>

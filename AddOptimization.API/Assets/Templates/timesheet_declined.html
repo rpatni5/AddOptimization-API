@@ -215,7 +215,7 @@
             text-align: center;
             font-weight: bold;
             background-color: #202A44;
-            color:white;
+            color: white;
         }
     </style>
 </head>
@@ -226,10 +226,18 @@
             <td class="content-cell">
                 <div class="f-fallback">
                     <p>Dear [FullName],</p>
-                    <p>Your timesheet for the month  [Month] [Year], with a total working days of [WorkDuration] days and total working overtime of [Overtime] hours has been declined by [Approver].</p>
+                    <p>Your timesheet is declined by [Approver].</p>
+                    <p>
+                        <strong>Month:</strong> [Month] [Year]<br />
+                        <strong>Working days:</strong> [WorkDuration] days<br />
+                        <strong>Overtime:</strong> [Overtime] hrs
+                    </p>
                     <!-- Action -->
-                    <p>Comment:[Comment]<br /></p>
-                    <p>Please review and update your timesheet.</p><br />
+                    <p>
+                        Please click on the link below to view this timesheet.<br />
+                    </p>
+                    <p><a href="[LinkToTimesheet]" target="_blank" style="background-color: #202A44; color: white; padding: 5px;">View</a><br /></p>
+                  
                     Best Regards,
                     <br />AddOptimization Team
                 </div>

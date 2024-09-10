@@ -114,6 +114,8 @@ public class EmployeeService : IEmployeeService
                 ExternalState = model.ExternalState,
                 ExternalCountryId = model.ExternalCountryId,
                 ExternalAddress = model.ExternalAddress,
+                IdentityNumber = model.IdentityNumber,
+                IdentityId = model.IdentityId,
             };
 
             await _employeeRepository.InsertAsync(entity);
@@ -228,12 +230,12 @@ public class EmployeeService : IEmployeeService
             entities = ApplyFilters(entities, filter);
 
             var employeeIds = entities
-                .Select(e => (int?)e.UserId) 
-                .Where(id => id.HasValue) 
+                .Select(e => (int?)e.UserId)
+                .Where(id => id.HasValue)
                 .ToList();
 
             var contracts = await _employeeContract.QueryAsync(
-                x => employeeIds.Contains(x.EmployeeId.GetValueOrDefault()) 
+                x => employeeIds.Contains(x.EmployeeId.GetValueOrDefault())
             );
 
             var contractEmployeeIds = new HashSet<int>(contracts.Select(c => c.EmployeeId.GetValueOrDefault()));
@@ -244,7 +246,7 @@ public class EmployeeService : IEmployeeService
                 return e;
             }).ToList();
 
-            var pagedResult= PageHelper<Employee, EmployeeDto>.ApplyPaging(
+            var pagedResult = PageHelper<Employee, EmployeeDto>.ApplyPaging(
                 entities,
                 filter,
                 pagedEntities => pagedEntities.Select(e => new EmployeeDto
@@ -254,11 +256,11 @@ public class EmployeeService : IEmployeeService
                     FirstName = e.ApplicationUser.FirstName,
                     LastName = e.ApplicationUser.LastName,
                     Email = e.ApplicationUser.Email,
-                    UserName=e.ApplicationUser.FullName,
+                    UserName = e.ApplicationUser.FullName,
                     JobTitle = e.JobTitle,
                     Address = e.Address,
                     City = e.City,
-                    Salary=e.Salary,
+                    Salary = e.Salary,
                     CountryId = e.CountryId,
                     CountryName = e.Country.CountryName,
                     IsExternal = e.IsExternal,
@@ -270,6 +272,8 @@ public class EmployeeService : IEmployeeService
                     UpdatedBy = e.UpdatedByUser.FullName,
                     NdaSignDate = e.NdaSignDate,
                     ZipCode = e.ZipCode,
+                    IdentityId = e.IdentityId,
+                    IdentityNumber = e.IdentityNumber,
 
                     HasContract = contractEmployeeIds.Contains(e.UserId)
                 }).ToList()
@@ -326,7 +330,7 @@ public class EmployeeService : IEmployeeService
     {
         try
         {
-            var entity = await _employeeRepository.FirstOrDefaultAsync(t => t.UserId == id, include: entity => entity.Include(e => e.ApplicationUser).Include(e => e.Country), ignoreGlobalFilter: true);
+            var entity = await _employeeRepository.FirstOrDefaultAsync(t => t.UserId == id, include: entity => entity.Include(e => e.ApplicationUser).Include(e => e.Country).Include(e => e.EmployeeIdentity), ignoreGlobalFilter: true);
             var mappedEntity = _mapper.Map<EmployeeDto>(entity);
 
             return ApiResult<EmployeeDto>.Success(mappedEntity);
@@ -342,7 +346,7 @@ public class EmployeeService : IEmployeeService
     {
         try
         {
-            var entities = await _employeeRepository.QueryAsync((e=>e.ApplicationUser.IsActive),include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
+            var entities = await _employeeRepository.QueryAsync((e => e.ApplicationUser.IsActive), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
             entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
             entities = ApplyFilters(entities, filters);
 
@@ -356,7 +360,7 @@ public class EmployeeService : IEmployeeService
                 CreatedAt = e.CreatedAt,
                 IsExternal = e.IsExternal,
 
-        }).ToList());
+            }).ToList());
 
 
             var result = pagedResult;
@@ -371,7 +375,7 @@ public class EmployeeService : IEmployeeService
 
     private IQueryable<Employee> ApplyFilters(IQueryable<Employee> entities, PageQueryFiterBase filter)
     {
-       
+
         filter.GetValue<string>("firstName", (v) =>
         {
             entities = entities.Where(e => e.ApplicationUser.FullName.ToLower().Contains(v.ToLower()));
@@ -385,7 +389,7 @@ public class EmployeeService : IEmployeeService
         {
             entities = entities.Where(e => e.ApplicationUser.FullName != null && (e.ApplicationUser.FullName.ToLower().Contains(v.ToLower())));
         });
-       
+
         filter.GetValue<DateTime>("createdAt", (v) =>
         {
             entities = entities.Where(e => e.CreatedAt != null && e.CreatedAt < v);
@@ -444,7 +448,7 @@ public class EmployeeService : IEmployeeService
                 {
                     entities = entities.OrderBy(o => o.NdaSignDate);
                 }
-                
+
 
             }
 

@@ -72,13 +72,14 @@ namespace AddOptimization.Services.Services
                 {
                     Id = e.Id,
                     Comment = e.Comment,
-                    Date = e.Date,
                     UserId = e.UserId,
                     LeaveStatusId = e.LeaveStatusId,
                     LeaveStatusName = e.LeaveStatuses.Name,
                     UpdatedBy = e.CreatedByUser.FullName,
                     Duration = e.Duration,
                     UserName = e.ApplicationUser.FullName,
+                    StartDate = e.StartDate,
+                    EndDate = e.EndDate,
 
                 }).ToList());
                 var retVal = pagedResult;
@@ -163,24 +164,34 @@ namespace AddOptimization.Services.Services
 
             filter.GetList<DateTime>("duedateRange", (v) =>
             {
-                var date = new DateTime(v.Max().Year, v.Max().Month, 1);
-                entities = entities.Where(e => e.Date < date);
+                entities = entities.Where(e => e.StartDate <= v.Max().Date);
             }, OperatorType.lessthan, true);
 
             filter.GetList<DateTime>("duedateRange", (v) =>
             {
-                var date = (new DateTime(v.Min().Year, v.Min().Month, 1)).AddMonths(1).AddDays(-1);
-                entities = entities.Where(e => e.Date > date);
+                entities = entities.Where(e => e.StartDate >= v.Min().Date);
             }, OperatorType.greaterthan, true);
 
-            filter.GetValue<DateTime>("Date", (v) =>
+            filter.GetValue<DateTime>("startDate", (v) =>
             {
-                entities = entities.Where(e => e.Date != null && e.Date < v);
+                entities = entities.Where(e => e.StartDate < v);
             }, OperatorType.lessthan, true);
-            filter.GetValue<DateTime>("Date", (v) =>
+
+            filter.GetValue<DateTime>("startDate", (v) =>
             {
-                entities = entities.Where(e => e.Date != null && e.Date > v);
+                entities = entities.Where(e => e.StartDate > v);
             }, OperatorType.greaterthan, true);
+
+            filter.GetValue<DateTime>("endDate", (v) =>
+            {
+                entities = entities.Where(e => e.EndDate < v);
+            }, OperatorType.lessthan, true);
+
+            filter.GetValue<DateTime>("endDate", (v) =>
+            {
+                entities = entities.Where(e => e.EndDate > v);
+            }, OperatorType.greaterthan, true);
+
             return entities;
         }
 
@@ -190,7 +201,7 @@ namespace AddOptimization.Services.Services
             {
                 if (sort?.Name == null)
                 {
-                    orders = orders.OrderByDescending(o => o.Date);
+                    orders = orders.OrderByDescending(o => o.StartDate);
                     return orders;
                 }
                 var columnName = sort.Name.ToUpper();
@@ -200,9 +211,13 @@ namespace AddOptimization.Services.Services
                     {
                         orders = orders.OrderBy(o => o.Comment);
                     }
-                    if (columnName.ToUpper() == nameof(AbsenceRequestResponseDto.Date).ToUpper())
+                    if (columnName.ToUpper() == nameof(AbsenceRequestResponseDto.StartDate).ToUpper())
                     {
-                        orders = orders.OrderBy(o => o.Date);
+                        orders = orders.OrderBy(o => o.StartDate);
+                    }
+                    if (columnName.ToUpper() == nameof(AbsenceRequestResponseDto.EndDate).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.EndDate);
                     }
                     if (columnName.ToUpper() == nameof(AbsenceRequestResponseDto.LeaveStatusName).ToUpper())
                     {
@@ -220,9 +235,13 @@ namespace AddOptimization.Services.Services
                     {
                         orders = orders.OrderByDescending(o => o.Comment);
                     }
-                    if (columnName.ToUpper() == nameof(AbsenceRequestResponseDto.Date).ToUpper())
+                    if (columnName.ToUpper() == nameof(AbsenceRequestResponseDto.StartDate).ToUpper())
                     {
-                        orders = orders.OrderByDescending(o => o.Date);
+                        orders = orders.OrderByDescending(o => o.StartDate);
+                    }
+                    if (columnName.ToUpper() == nameof(AbsenceRequestResponseDto.EndDate).ToUpper())
+                    {
+                        orders = orders.OrderByDescending(o => o.EndDate);
                     }
                     if (columnName.ToUpper() == nameof(AbsenceRequestResponseDto.LeaveStatusName).ToUpper())
                     {
@@ -243,14 +262,15 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        public async Task<ApiResult<List<AbsenceRequestResponseDto>>> GetAllAbsenseApproval(int employeeId)
+        public async Task<ApiResult<decimal>> GetAllAbsenseApproval(int employeeId)
         {
             try
             {
                 var associations = await _absenceApprovalRepository.QueryAsync(e => e.UserId == employeeId && !e.IsDeleted, include: entities => entities.Include(e => e.ApplicationUser).Include(e => e.LeaveStatuses));
-                var approvedAssociations = associations.Where(e => e.LeaveStatuses.Name.ToLower() == LeaveStatusesEnum.Approved.ToString().ToLower());
-                var mappedEntities = _mapper.Map<List<AbsenceRequestResponseDto>>(approvedAssociations);
-                return ApiResult<List<AbsenceRequestResponseDto>>.Success(mappedEntities);
+                var currentYear = DateTime.UtcNow.Year;
+                var approvedAssociations = associations.Where(e => e.LeaveStatuses.Name.ToLower() == LeaveStatusesEnum.Approved.ToString().ToLower() && e.StartDate.HasValue && e.StartDate.Value.Year == currentYear && !e.IsDeleted);
+                var totalApprovedDuration = approvedAssociations.Sum(e => e.Duration);
+                return ApiResult<decimal>.Success(totalApprovedDuration);
             }
             catch (Exception ex)
             {
@@ -263,16 +283,28 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var subject = isApproved ? "Absence Request Approved" : "Absence Request Declined";
+                var subject = isApproved ? "Absence Request Approved." : "Absence Request Declined.";
                 var action = isApproved ? "Approved" : "Declined";
                 var link = GetAbsenceRequestLinkForAccountAdmin(absenceRequest.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.AbsenceRequestActions);
+                var dateRange = absenceRequest.StartDate.HasValue ? absenceRequest.EndDate.HasValue ? $"{LocaleHelper.FormatDate(absenceRequest.StartDate.Value)} - {LocaleHelper.FormatDate(absenceRequest.EndDate.Value)}" : LocaleHelper.FormatDate(absenceRequest.StartDate.Value) : "";
                 emailTemplate = emailTemplate.Replace("[AccountAdminName]", accountAdmin.FullName)
                                              .Replace("[EmployeeName]", user.FullName)
                                              .Replace("[Action]", action)
-                                             .Replace("[Date]", LocaleHelper.FormatDate(absenceRequest.Date))
+                                             .Replace("[Date]", dateRange)
+                                             .Replace("[Link]", link)
                                              .Replace("[Duration]", LocaleHelper.FormatNumber(absenceRequest.Duration))
                                              .Replace("[Comment]", absenceRequest.Comment);
+                if (!isApproved)
+                {
+                    var linkSection = $"<p>Please click on the link below to view absence request.<br /></p>" +
+                                      $"<p><a href=\"{link}\" target=\"_blank\" style=\"background-color: #202A44; color: white; padding: 5px;\">View</a><br /></p>";
+                    emailTemplate = emailTemplate.Replace("[LinkSection]", linkSection);
+                }
+                else
+                {
+                    emailTemplate = emailTemplate.Replace("[LinkSection]",string.Empty);
+                }
                 return await _emailService.SendEmail(user.Email, subject, emailTemplate);
             }
             catch (Exception ex)

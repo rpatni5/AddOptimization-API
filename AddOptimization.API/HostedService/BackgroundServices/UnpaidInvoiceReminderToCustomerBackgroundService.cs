@@ -1,6 +1,7 @@
 ﻿using AddOptimization.Contracts.Constants;
 using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
+using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
 using AddOptimization.Services.Constants;
 using AddOptimization.Services.Services;
@@ -14,6 +15,7 @@ using AddOptimization.Utilities.Services;
 using NPOI.SS.Formula.Eval;
 using NPOI.SS.Formula.Functions;
 using Sgbj.Cron;
+using Stripe;
 using System.Globalization;
 using System.Text;
 
@@ -32,7 +34,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
         #region Constructor
         public UnpaidInvoiceReminderToCustomerBackgroundService(IConfiguration configuration,
             ITemplateService templateService,
-            IServiceProvider serviceProvider, 
+            IServiceProvider serviceProvider,
             CustomDataProtectionService protectionService,
             ILogger<LicenseRenewalEmailBackgroundService> logger)
         {
@@ -82,7 +84,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 var appUserService = scope.ServiceProvider.GetRequiredService<IApplicationUserService>();
                 var invoiceStatusService = scope.ServiceProvider.GetRequiredService<IInvoiceStatusService>();
                 var companyService = scope.ServiceProvider.GetRequiredService<ICompanyService>();
-
+                var invoiceHistoryService = scope.ServiceProvider.GetRequiredService<IGenericRepository<InvoiceHistory>>();
                 var invoices = await invoiceService.GetUnpaidInvoicesForEmailReminder();
                 if (invoices?.Result == null) return false;
 
@@ -98,7 +100,15 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                         && invoice?.DueAmount > 0 && invoice.InvoiceStatusId == invoiceStatusId)
                     {
                         await SendUnpaidInvoiceReminderEmailCustomer(invoice, companyInfoResult);
-                        await SendUnpaidInvoiceReminderEmailAccountAdmin(invoice, approver.Result.FirstOrDefault(), companyInfoResult);
+
+                        var historyEntity = new InvoiceHistory
+                        {
+                            InvoiceId = invoice.Id,
+                            InvoiceStatusId = invoice.InvoiceStatusId,
+                            CreatedAt = DateTime.UtcNow,
+                            Comment = "Automatic Generated Unpaid Invoice",
+                        };
+                        await invoiceHistoryService.InsertAsync(historyEntity);
                     }
                 };
                 return true;
@@ -124,8 +134,9 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 var scope = _serviceProvider.CreateScope();
                 var _emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
                 var amount = LocaleHelper.FormatCurrency(invoice.DueAmount);
-                var subject = $"AddOptimization invoice pending for {LocaleHelper.FormatDate(invoice.InvoiceDate.Date)} of {amount}";
+                var subject = $"Invoice {invoice.InvoiceNumber} is Pending for payment.";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoiceReminder);
+                var customer = string.IsNullOrEmpty(invoice?.Customer?.PartnerCompany) ? invoice?.Customer?.Company : invoice?.Customer?.PartnerCompany;
                 var link = GetInvoiceLinkForCustomer(invoice.Id);
                 _ = int.TryParse(invoice?.PaymentClearanceDays.ToString(), out int clearanceDays);
                 emailTemplate = emailTemplate
@@ -133,7 +144,8 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                                  .Replace("[AccountContactName]", invoice?.Customer?.AccountContactName)
                                  .Replace("[CompanyAccountingEmail]", companyInfo.AccountingEmail)
                                 .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
-                                .Replace("[CompanyName]", invoice?.Customer?.Company)
+                                .Replace("[Customer]", customer)
+                                .Replace("[Company]", invoice?.Customer?.Company)
                                 .Replace("[InvoiceDate]", LocaleHelper.FormatDate(invoice.InvoiceDate.Date))
                                 .Replace("[TotalAmountDue]", LocaleHelper.FormatCurrency(invoice.DueAmount))
                                 .Replace("[DueDate]",LocaleHelper.FormatDate(invoice.ExpiryDate.Date))
@@ -155,7 +167,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 var scope = _serviceProvider.CreateScope();
                 var _emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
                 var amount =LocaleHelper.FormatCurrency(invoice.DueAmount);
-                var subject = $"AddOptimization invoice pending for {invoice?.Customer?.ManagerName} dated {LocaleHelper.FormatDate(invoice.InvoiceDate.Date)} of {amount}";
+                var subject = $"AddOptimization invoice pending for {invoice?.Customer?.ManagerName} dated {LocaleHelper.FormatDate(invoice.InvoiceDate.Date)} of {amount}.";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoiceReminderAccountAdmin);
                 var link = GetInvoiceLinkForAccountAdmin(invoice.Id);
                 _ = int.TryParse(invoice?.PaymentClearanceDays.ToString(), out int clearanceDays);
