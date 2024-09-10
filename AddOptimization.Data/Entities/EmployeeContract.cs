@@ -28,7 +28,6 @@ namespace AddOptimization.Data.Entities
         public decimal? Salary { get; set; }
         public int? PublicHoliday { get; set; }
         public long? ContractNumber { get; set; }
-        public string? NIENumber { get; set; }
         public Guid? IdentityId { get; set; }
         public string IdentityNumber { get; set; }
 

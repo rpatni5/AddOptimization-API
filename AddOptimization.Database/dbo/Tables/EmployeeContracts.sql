@@ -27,7 +27,6 @@ CREATE TABLE [dbo].[EmployeeContracts](
 	[IsExternal] [bit] NOT NULL,
 	[Salary] [decimal](10, 2) NULL,
 	[PublicHoliday] [int] NULL,
-	[NIENumber] [varchar](50) NULL,
 	[ContractNumber] [bigint] NULL,
 	[IdentityId] [uniqueidentifier] NULL,
 	[IdentityNumber] [varchar](500) NULL,
