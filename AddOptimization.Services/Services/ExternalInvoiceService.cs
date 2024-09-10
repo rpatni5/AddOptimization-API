@@ -268,15 +268,15 @@ namespace AddOptimization.Services.Services
                 var currentYear = now.Year;
                 var currentMonth = now.Month;
                 var dateFormat = $"{currentYear}{currentMonth:D2}";
-                var maxId = (await _externalInvoiceRepository.QueryAsync(x => x.InvoiceNumber.StartsWith(dateFormat), ignoreGlobalFilter: true)).Count();
+                var maxId = (await _externalInvoiceRepository.QueryAsync(x => x.InvoiceNumber.ToString().StartsWith(dateFormat), ignoreGlobalFilter: true)).Count();
                 var newId = maxId + 1;
-                var invoiceNumber = $"{DateTime.UtcNow:yyyyMM}{newId}";
+                var invoiceNumber = long.Parse($"{DateTime.UtcNow:yyyyMM}{newId}");
                 var id = await _externalInvoiceRepository.MaxAsync(e => (int)e.Id, ignoreGlobalFilter: true);
 
                 ExternalInvoice entity = new ExternalInvoice
                 {
                     Id = id + 1,
-                    InvoiceNumber = invoiceNumber,
+                    InvoiceNumber = Convert.ToInt64(invoiceNumber),
                     PaymentStatusId = paymentStatusId,
                     VatValue = model.ExternalInvoiceDetails.Sum(x => (x.UnitPrice * x.Quantity * x.VatPercent) / 100),
                     TotalPriceIncludingVat = model.ExternalInvoiceDetails.Sum(x => x.TotalPriceIncludingVat),
@@ -525,7 +525,7 @@ namespace AddOptimization.Services.Services
 
             return await SendInvoiceToAccountAdmin(accountAdmins, entity, entity.Company.CompanyName, entity.ApplicationUser.FullName, entity.InvoiceNumber, entity.TotalPriceIncludingVat , externalInvoiceDetail.ExternalCompanyName);
         }
-        private async Task<bool> SendInvoiceToAccountAdmin(List<ApplicationUserDto> accountAdmins, ExternalInvoice invoice, string companyName, string employeeName, string invoiceNumber, decimal totalAmountDue ,string externalCompany
+        private async Task<bool> SendInvoiceToAccountAdmin(List<ApplicationUserDto> accountAdmins, ExternalInvoice invoice, string companyName, string employeeName, long invoiceNumber, decimal totalAmountDue ,string externalCompany
          )
         {
             try
@@ -536,7 +536,7 @@ namespace AddOptimization.Services.Services
                 emailTemplate = emailTemplate.Replace("[CompanyName]",externalCompany)
                                              .Replace("[EmployeeName]", employeeName)
                                              .Replace("[LinkToOrder]", link)
-                                             .Replace("[InvoiceNumber]", invoiceNumber)
+                                             .Replace("[InvoiceNumber]", invoiceNumber.ToString())
                                              .Replace("[TotalAmountDue]", LocaleHelper.FormatCurrency(totalAmountDue));
 
                 foreach (var admin in accountAdmins)
@@ -554,7 +554,7 @@ namespace AddOptimization.Services.Services
                 return false;
             }
         }
-        private async Task<bool> SendInvoiceDeclinedEmailToEmployee(ApplicationUser employee, string companyName, string accountAdmin, string invoiceNumber, decimal totalAmountDue, string comment, string externalCompany)
+        private async Task<bool> SendInvoiceDeclinedEmailToEmployee(ApplicationUser employee, string companyName, string accountAdmin, long invoiceNumber, decimal totalAmountDue, string comment, string externalCompany)
         {
             try
             {
@@ -563,7 +563,7 @@ namespace AddOptimization.Services.Services
                 emailTemplate = emailTemplate.Replace("[AccountAdmin]", accountAdmin)
                     .Replace("[CompanyName]", externalCompany)
                                              .Replace("[EmployeeName]", employee.FullName)
-                                             .Replace("[InvoiceNumber]", invoiceNumber)
+                                             .Replace("[InvoiceNumber]", invoiceNumber.ToString())
                                              .Replace("[TotalAmountDue]", LocaleHelper.FormatCurrency(totalAmountDue))
                                              .Replace("[Comment]", !string.IsNullOrEmpty(comment) ? comment : "No comment added.");
 
@@ -631,7 +631,7 @@ namespace AddOptimization.Services.Services
 
             return await SendInvoiceToCustomer(entity.Company.Email, entity, entity.Company.CompanyName, entity.ApplicationUser.FullName, entity.InvoiceNumber, entity.TotalPriceIncludingVat ,externalInvoiceDetail.ExternalCompanyName);
         }
-        private async Task<bool> SendInvoiceToCustomer(string email, ExternalInvoice invoice, string companyName, string employeeName, string invoiceNumber, decimal totalAmountDue,string externalCompany
+        private async Task<bool> SendInvoiceToCustomer(string email, ExternalInvoice invoice, string companyName, string employeeName, long invoiceNumber, decimal totalAmountDue,string externalCompany
          )
         {
             try
@@ -642,7 +642,7 @@ namespace AddOptimization.Services.Services
                 emailTemplate = emailTemplate.Replace("[CompanyName]", externalCompany)
                                              .Replace("[EmployeeName]", employeeName)
                                              .Replace("[LinkToOrder]", link)
-                                             .Replace("[InvoiceNumber]", invoiceNumber)
+                                              .Replace("[InvoiceNumber]", invoiceNumber.ToString())
                                              .Replace("[TotalAmountDue]", LocaleHelper.FormatCurrency(totalAmountDue));
                 ;
 
@@ -700,7 +700,7 @@ namespace AddOptimization.Services.Services
 
             filter.GetValue<string>("invoiceNumber", (v) =>
             {
-                entities = entities.Where(e => e.InvoiceNumber == v);
+                entities = entities.Where(e => e.InvoiceNumber == Convert.ToInt32(v));
             });
 
             filter.GetValue<string>("companyName", (v) =>
