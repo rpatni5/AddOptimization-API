@@ -283,7 +283,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var subject = isApproved ? "Absence Request Approved" : "Absence Request Declined";
+                var subject = isApproved ? "Absence Request Approved." : "Absence Request Declined.";
                 var action = isApproved ? "Approved" : "Declined";
                 var link = GetAbsenceRequestLinkForAccountAdmin(absenceRequest.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.AbsenceRequestActions);
@@ -292,8 +292,19 @@ namespace AddOptimization.Services.Services
                                              .Replace("[EmployeeName]", user.FullName)
                                              .Replace("[Action]", action)
                                              .Replace("[Date]", dateRange)
+                                             .Replace("[Link]", link)
                                              .Replace("[Duration]", LocaleHelper.FormatNumber(absenceRequest.Duration))
                                              .Replace("[Comment]", absenceRequest.Comment);
+                if (!isApproved)
+                {
+                    var linkSection = $"<p>Please click on the link below to view absence request.<br /></p>" +
+                                      $"<p><a href=\"{link}\" target=\"_blank\" style=\"background-color: #202A44; color: white; padding: 5px;\">View</a><br /></p>";
+                    emailTemplate = emailTemplate.Replace("[LinkSection]", linkSection);
+                }
+                else
+                {
+                    emailTemplate = emailTemplate.Replace("[LinkSection]",string.Empty);
+                }
                 return await _emailService.SendEmail(user.Email, subject, emailTemplate);
             }
             catch (Exception ex)

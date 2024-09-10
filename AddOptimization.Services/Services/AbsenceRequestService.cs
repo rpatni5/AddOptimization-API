@@ -310,7 +310,6 @@ namespace AddOptimization.Services.Services
                 var link = GetAbsenceApprovalLinkForAccountAdmin(absenceRequest.Id);
                 var action = !isUpdated ? "submitted" : "updated";
                 var duration = !isUpdated ? LocaleHelper.FormatNumber(absenceRequest.Duration) :LocaleHelper.FormatNumber(absenceRequest.Duration);
-                var comment = !isUpdated ? absenceRequest.Comment : $"{oldComment} is updated to {absenceRequest.Comment}";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.AbsenceRequestApproval);
                 var startDate = absenceRequest.StartDate.HasValue ? LocaleHelper.FormatDate(absenceRequest.StartDate.Value) : "";
                 var endDate = absenceRequest.EndDate.HasValue ? LocaleHelper.FormatDate(absenceRequest.EndDate.Value) : "";
@@ -322,7 +321,7 @@ namespace AddOptimization.Services.Services
                                              .Replace("[LinkToAbsenceRequests]", link)
                                              .Replace("[Date]", dateRange)
                                              .Replace("[Duration]", duration)
-                                             .Replace("[Comment]", comment);
+                                             .Replace("[Comment]", absenceRequest.Comment);
                 return await _emailService.SendEmail(accountAdmin.Email, subject, emailTemplate);
             }
             catch (Exception ex)
