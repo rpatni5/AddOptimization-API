@@ -12,7 +12,7 @@ namespace AddOptimization.Data.Entities
     public class ExternalInvoice : BaseEntityNew<long>
 
     {
-        public string InvoiceNumber { get; set; }
+        public long InvoiceNumber { get; set; }
         public DateTime InvoiceDate { get; set; }
         public Guid? CompanyId { get; set; }
         public string CompanyName { get; set; }

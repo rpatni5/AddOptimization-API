@@ -44,6 +44,7 @@ namespace AddOptimization.Services.Services
                 var paymentStatus = (await _paymentStatusService.Search()).Result;
                 var closedStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.CLOSED.ToString()).Id;
                 var closedWithCreditNoteId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.CLOSED_WITH_CREDIT_NOTE.ToString()).Id;
+                var partiallyPaid = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.PARTIALLY_PAID.ToString()).Id;
                 var creditNotesList = (await _invoiceCreditNoteRepository.QueryAsync(e => e.InvoiceId == model.InvoiceId)).ToList();
                 foreach (var payment in creditNotesList)
                 {
@@ -121,6 +122,7 @@ namespace AddOptimization.Services.Services
                 {
                     paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.PARTIAL_PAID.ToString()).Id;
                     dueAmount = invoice.TotalPriceIncludingVat - totalPaidAmount;
+                    invoice.InvoiceStatusId = partiallyPaid;
                 }
                 else
                 {

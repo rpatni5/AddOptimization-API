@@ -276,10 +276,9 @@ namespace AddOptimization.Services.Services
             try
             {
                 var dateFormat = $"{month.StartDate.Year}{month.StartDate.Month:D2}";
-                var draftInvoicesCount = (await _invoiceRepository.QueryAsync(x => x.InvoiceNumber.StartsWith(dateFormat), ignoreGlobalFilter: true)).Count();
+                var draftInvoicesCount = (await _invoiceRepository.QueryAsync(x => x.InvoiceNumber.Contains(dateFormat), ignoreGlobalFilter: true)).Count();
                 var newDraftNumber = draftInvoicesCount + 1;
                 var draftInvoiceNumber = $"Draft-{DateTime.UtcNow:yyyyMM}{newDraftNumber}";
-                //var draftInvoiceNumber = $"{DateTime.UtcNow:yyyyMM}{newDraftNumber}";
 
                 return draftInvoiceNumber;
             }
@@ -1099,7 +1098,7 @@ namespace AddOptimization.Services.Services
                 {
                     InvoiceId = entity.Id,
                     InvoiceStatusId = entity.InvoiceStatusId,
-                    Comment = "Invoice Number Generated",
+                    Comment = "Invoice Finalized",
                 };
                 await _invoiceHistoryRepository.InsertAsync(historyEntity);
                 var mappedEntity = _mapper.Map<InvoiceResponseDto>(entity);

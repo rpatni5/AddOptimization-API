@@ -33,7 +33,7 @@
         public bool HasCreditNotes { get; set; }
 
         public string? SwiftCode { get; set; }
-        public bool HasInvoiceFinalized { get; set; }
+        public bool? HasInvoiceFinalized { get; set; }
         public virtual PaymentStatusDto PaymentStatus { get; set; }
         public virtual InvoiceStatusDto InvoiceStatus { get; set; }
         public virtual CustomerDto Customer { get; set; }
