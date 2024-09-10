@@ -10,7 +10,7 @@ namespace AddOptimization.Contracts.Dto
     {
         public Guid Id { get; set; }
         public long InvoiceId { get; set; }
-        public long InvoiceNumber { get; set; }
+        public string InvoiceNumber { get; set; }
         public Guid InvoiceStatusId { get; set; }
         public string InvoiceStatusName { get; set; }
         public string Comment { get; set; }

@@ -10,7 +10,7 @@ namespace AddOptimization.Contracts.Dto
 {
     public class ExternalInvoiceResponseDto:BaseDto<long>
     {
-        public long InvoiceNumber { get; set; }
+        public string InvoiceNumber { get; set; }
         public DateTime InvoiceDate { get; set; }
         public int? EmployeeId { get; set; }
         public Guid? CompanyId {  get; set; }

@@ -12,5 +12,8 @@ namespace AddOptimization.Services.Constants
         SEND_TO_CUSTOMER,
         DRAFT,
         DECLINED,
+        READY_TO_SEND,
+        PARTIALLY_PAID,
+        CLOSED_WITH_CREDIT_NOTE
     }
 }

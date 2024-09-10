@@ -2,7 +2,7 @@
 {
     public class InvoiceResponseDto : BaseDto<long>
     {
-        public long InvoiceNumber { get; set; }
+        public string InvoiceNumber { get; set; }
         public DateTime InvoiceDate { get; set; }
         public Guid CustomerId { get; set; }
         public string CustomerName { get; set; }
@@ -33,7 +33,7 @@
         public bool HasCreditNotes { get; set; }
 
         public string? SwiftCode { get; set; }
-
+        public bool HasInvoiceFinalized { get; set; }
         public virtual PaymentStatusDto PaymentStatus { get; set; }
         public virtual InvoiceStatusDto InvoiceStatus { get; set; }
         public virtual CustomerDto Customer { get; set; }
