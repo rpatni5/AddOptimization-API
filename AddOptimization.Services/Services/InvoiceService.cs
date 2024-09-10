@@ -652,7 +652,7 @@ namespace AddOptimization.Services.Services
                 {
                     InvoiceId = entity.Id,
                     InvoiceStatusId = entity.InvoiceStatusId,
-                    Comment = "Draft Invoice Generated",
+                    Comment = $"Draft Invoice [{invoiceNumber}] Generated",
                 };
                 await _invoiceHistoryRepository.InsertAsync(historyEntity);
 
@@ -698,6 +698,7 @@ namespace AddOptimization.Services.Services
                     DueAmount = e.DueAmount,
                     HasCreditNotes = e.HasCreditNotes,
                     CreditNoteNumber = e.CreditNoteNumber,
+                    HasInvoiceFinalized = e.HasInvoiceFinalized
                 }).ToList());
 
                 var result = pagedResult;
@@ -752,7 +753,7 @@ namespace AddOptimization.Services.Services
                 model.CreatedAt = entity.CreatedAt;
                 model.SwiftCode = company.SwiftCode;
                 model.DueAmount = entity.DueAmount;
-                model.HasInvoiceFinalized = entity.HasInvoiceFinalized;
+                model.HasInvoiceFinalized = entity?.HasInvoiceFinalized;
                 var invoiceSummary = (await _invoiceDetailRepository.QueryAsync(e => e.InvoiceId == id, disableTracking: true)).ToList();
                 model.InvoiceDetails = _mapper.Map<List<InvoiceDetailDto>>(invoiceSummary);
                 return ApiResult<InvoiceResponseDto>.Success(model);
@@ -1018,7 +1019,6 @@ namespace AddOptimization.Services.Services
                 var draftInvoicesCount = (await _invoiceRepository.QueryAsync(x => x.InvoiceNumber.Contains(dateFormat) && !x.IsDeleted , ignoreGlobalFilter: true)).Count();
                 var newDraftNumber = draftInvoicesCount + 1;
                 var draftInvoiceNumber = $"Draft-{DateTime.UtcNow:yyyyMM}{newDraftNumber}";
-                //var draftInvoiceNumber = $"{DateTime.UtcNow:yyyyMM}{newDraftNumber}";
 
                 return draftInvoiceNumber;
             }
@@ -1041,31 +1041,10 @@ namespace AddOptimization.Services.Services
                 
                 var finalizedInvoicesCount = (await _invoiceRepository.QueryAsync(x => (x.HasInvoiceFinalized == true) && x.InvoiceNumber.StartsWith(currentDateFormat), ignoreGlobalFilter: true)).Count();
 
-                var draftsToBeFinalized = await _invoiceRepository.QueryAsync(x => x.InvoiceStatus.StatusKey == InvoiceStatusEnum.DRAFT, ignoreGlobalFilter: true);
+                var invoiceNumber = finalizedInvoicesCount + 1;
+                var finalizedInvoiceNumber = $"{DateTime.UtcNow:yyyyMM}{invoiceNumber}";
 
-                if (draftsToBeFinalized.Any())
-                {
-                    foreach (var draft in draftsToBeFinalized)
-                    {
-                        var draftInvoiceNumber = draft.InvoiceNumber;
-                        var draftMonthYear = draftInvoiceNumber.Substring(0, 6);
-
-                        if (draftMonthYear == currentDateFormat)
-                        {
-                            var newInvoiceNumber = $"{currentDateFormat}{finalizedInvoicesCount + 1}";
-                            return newInvoiceNumber;
-                        }
-                        else
-                        {
-                            finalizedInvoicesCount++;
-                            var newInvoiceNumber = $"{currentDateFormat}{finalizedInvoicesCount}";
-                            return newInvoiceNumber;
-                        }
-                    }
-                }
-
-                var newFinalizedInvoiceNumber = $"{currentDateFormat}{finalizedInvoicesCount + 1}";
-                return newFinalizedInvoiceNumber;
+                return finalizedInvoiceNumber;
             }
             catch (Exception ex)
             {

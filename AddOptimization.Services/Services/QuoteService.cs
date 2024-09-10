@@ -391,15 +391,6 @@ namespace AddOptimization.Services.Services
                 var quote = await _quoteRepository.FirstOrDefaultAsync(e => e.Id == quoteId, include: source => source.Include(x => x.QuoteSummaries));
 
 
-                //var now = DateTime.UtcNow;
-                //var currentYear = now.Year;
-                //var currentMonth = now.Month;
-                //var dateFormat = $"{currentYear}{currentMonth:D2}";
-
-                //var maxId = (await _invoiceRepository.QueryAsync(x => x.InvoiceNumber.ToString().StartsWith(dateFormat), ignoreGlobalFilter: true)).Count();
-                //var newId = maxId + 1;
-                //var invoiceNumber = long.Parse($"{DateTime.UtcNow:yyyyMM}{newId}");
-
                 var invoiceNumber = await GenerateDraftNumber();
 
                 var id = await _invoiceRepository.MaxAsync(e => (int)e.Id, ignoreGlobalFilter: true);
