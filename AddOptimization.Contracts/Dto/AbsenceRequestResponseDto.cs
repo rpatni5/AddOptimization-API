@@ -21,5 +21,9 @@ namespace AddOptimization.Contracts.Dto
         public string UserName { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
+        public int TotalAllocatedHoliday { get; set; }
+        public decimal LeaveTaken { get; set; }
+        public decimal LeavesLeft { get; set; }
+      
     }
 }

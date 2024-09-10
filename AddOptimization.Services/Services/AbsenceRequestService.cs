@@ -41,8 +41,8 @@ namespace AddOptimization.Services.Services
         private readonly IHolidayAllocationService _holidayAllocationService;
         private readonly ICustomerEmployeeAssociationService _customerEmployeeAssociationService;
         private readonly IPublicHolidayService _publicHolidayService;
-
-
+        private readonly IGenericRepository<HolidayAllocation> _holidayAllocationRepository;
+        private readonly IAbsenceApprovalService _absenceApprovalService;
 
         public AbsenceRequestService(IGenericRepository<AbsenceRequest> absenceRequestRepository,
             ILogger<AbsenceRequestService> logger,
@@ -52,15 +52,18 @@ namespace AddOptimization.Services.Services
             IApplicationUserService applicationUserService,
             IConfiguration configuration,
             IEmailService emailService,
+            IGenericRepository<HolidayAllocation> holidayAllocationRepository,
             ITemplateService templateService,
             ICustomerEmployeeAssociationService customerEmployeeAssociationService,
             IPublicHolidayService publicHolidayService,
             IHolidayAllocationService holidayAllocationService,
+            IAbsenceApprovalService absenceApprovalService,
             IGenericRepository<ApplicationUser> applicationUserRepository)
         {
             _absenceRequestRepository = absenceRequestRepository;
             _logger = logger;
             _mapper = mapper;
+            _holidayAllocationRepository = holidayAllocationRepository;
             _httpContextAccessor = httpContextAccessor;
             _leaveStatusesService = leaveStatusesService;
             _applicationUserService = applicationUserService;
@@ -71,6 +74,7 @@ namespace AddOptimization.Services.Services
             _applicationUserRepository = applicationUserRepository;
             _customerEmployeeAssociationService = customerEmployeeAssociationService;
             _publicHolidayService = publicHolidayService;
+            _absenceApprovalService = absenceApprovalService;
         }
 
 
@@ -549,6 +553,41 @@ namespace AddOptimization.Services.Services
                 var durationExcludingWeekends = (await GetDurationExcludingWeekends(startDate, endDate, association, publicHoliday, userId, null)).Result;
 
                 return ApiResult<decimal>.Success(durationExcludingWeekends);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+
+        public async Task<ApiResult<List<AbsenceRequestResponseDto>>> GetLeaveHistory(int employeeId)
+        {
+            try
+            {
+                var currentYear = DateTime.UtcNow.Year;
+                var entities = await _absenceRequestRepository.QueryAsync(e => e.UserId == employeeId && !e.IsDeleted && e.CreatedAt.HasValue && e.CreatedAt.Value.Year == currentYear, include: entities => entities.Include(e => e.ApplicationUser));
+                var holidayAllocationResult = await _holidayAllocationService.GetAllocatedHolidays(employeeId);
+                var totalHolidayAllocated = holidayAllocationResult.Result?.Holidays ?? 0;
+                var leaveTakenResult = await _absenceApprovalService.GetAllAbsenseApproval(employeeId);
+                var leaveTaken = leaveTakenResult?.Result ?? 0;
+                var remainingLeaves = totalHolidayAllocated - leaveTaken;
+                var mappedEntity = entities.OrderByDescending(e => e.CreatedAt).Select(e => new AbsenceRequestResponseDto
+                {
+                    Comment = e.Comment,
+                    UserId = e.UserId,
+                    LeaveStatusId = e.LeaveStatusId,
+                    LeaveStatusName = e.LeaveStatuses.Name,
+                    Duration = e.Duration,
+                    StartDate = e.StartDate,
+                    CreatedAt = e.CreatedAt,
+                    EndDate = e.EndDate,
+                    TotalAllocatedHoliday = totalHolidayAllocated,
+                    LeaveTaken = leaveTaken,
+                    LeavesLeft = remainingLeaves
+                }).ToList();
+                return ApiResult<List<AbsenceRequestResponseDto>>.Success(mappedEntity);
             }
             catch (Exception ex)
             {
