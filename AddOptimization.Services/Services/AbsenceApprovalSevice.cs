@@ -283,7 +283,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var subject = isApproved ? "Absence Request Approved" : "Absence Request Declined";
+                var subject = isApproved ? "Absence Request Approved." : "Absence Request Declined.";
                 var action = isApproved ? "Approved" : "Declined";
                 var link = GetAbsenceRequestLinkForAccountAdmin(absenceRequest.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.AbsenceRequestActions);

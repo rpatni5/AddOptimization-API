@@ -167,7 +167,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 var scope = _serviceProvider.CreateScope();
                 var _emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
                 var amount =LocaleHelper.FormatCurrency(invoice.DueAmount);
-                var subject = $"AddOptimization invoice pending for {invoice?.Customer?.ManagerName} dated {LocaleHelper.FormatDate(invoice.InvoiceDate.Date)} of {amount}";
+                var subject = $"AddOptimization invoice pending for {invoice?.Customer?.ManagerName} dated {LocaleHelper.FormatDate(invoice.InvoiceDate.Date)} of {amount}.";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoiceReminderAccountAdmin);
                 var link = GetInvoiceLinkForAccountAdmin(invoice.Id);
                 _ = int.TryParse(invoice?.PaymentClearanceDays.ToString(), out int clearanceDays);

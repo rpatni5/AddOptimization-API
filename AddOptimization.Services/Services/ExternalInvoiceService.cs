@@ -530,7 +530,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var subject = $"External Invoice from {externalCompany} #{invoiceNumber}";
+                var subject = $"External Invoice from {externalCompany} #{invoiceNumber}.";
                 var link = GetInvoiceLinkForAccountAdmin((int)invoice.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.RequestExternalInvoice);
                 emailTemplate = emailTemplate.Replace("[CompanyName]",externalCompany)
@@ -558,7 +558,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var subject = "External Invoice Declined";
+                var subject = "External Invoice Declined.";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.DeclinedExternalInvoice);
                 emailTemplate = emailTemplate.Replace("[AccountAdmin]", accountAdmin)
                     .Replace("[CompanyName]", externalCompany)
@@ -636,7 +636,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var subject = "External Invoice Request";
+                var subject = "External Invoice Request.";
                 var link = GetInvoiceLinkForAccountAdmin((int)invoice.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.RequestExternalInvoice);
                 emailTemplate = emailTemplate.Replace("[CompanyName]", externalCompany)

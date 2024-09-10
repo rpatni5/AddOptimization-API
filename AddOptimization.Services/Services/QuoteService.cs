@@ -355,7 +355,7 @@ namespace AddOptimization.Services.Services
                     _logger.LogError(" Sender Email is missing.");
                     return ApiResult<bool>.Success(false);
                 }
-                var subject = $"Quote #{quote.QuoteNo} for {customer}";
+                var subject = $"Quote #{quote.QuoteNo} for {customer}.";
                 var link = GetQuoteLinkForCustomer(quote.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.CustomerQuote);
                 emailTemplate = emailTemplate.Replace("[TechnicalContactName]", technicalContactName)
