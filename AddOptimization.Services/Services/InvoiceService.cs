@@ -446,7 +446,7 @@ namespace AddOptimization.Services.Services
         {
             filter.GetValue<string>("invoiceNumber", (v) =>
             {
-                entities = entities.Where(e => e.InvoiceNumber == v);
+                entities = entities.Where(e => e.InvoiceNumber.ToLower().Contains(v.ToLower()) || e.InvoiceNumber.ToLower().Contains(v.ToLower()));
             });
 
             filter.GetValue<string>("customerName", (v) =>
@@ -1038,8 +1038,8 @@ namespace AddOptimization.Services.Services
                 var currentYear = now.Year;
                 var currentMonth = now.Month;
                 var currentDateFormat = $"{currentYear}{currentMonth:D2}";
-
-                var finalizedInvoicesCount = (await _invoiceRepository.QueryAsync(x => x.HasInvoiceFinalized && x.InvoiceNumber.StartsWith(currentDateFormat), ignoreGlobalFilter: true)).Count();
+                
+                var finalizedInvoicesCount = (await _invoiceRepository.QueryAsync(x => (x.HasInvoiceFinalized == true) && x.InvoiceNumber.StartsWith(currentDateFormat), ignoreGlobalFilter: true)).Count();
 
                 var draftsToBeFinalized = await _invoiceRepository.QueryAsync(x => x.InvoiceStatus.StatusKey == InvoiceStatusEnum.DRAFT, ignoreGlobalFilter: true);
 
