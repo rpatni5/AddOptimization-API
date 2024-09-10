@@ -381,9 +381,9 @@ namespace AddOptimization.Services.Services
                     return ApiResult<bool>.Success(false);
                 }
                 var amount = LocaleHelper.FormatCurrency(invoice.DueAmount);
-                var subject = $"Your invoice from AddOptimization";
+                var subject = $"Your invoice from AddOptimization.";
                 var link = GetInvoiceLinkForCustomer(invoice.Id);
-                var contactName = string.IsNullOrEmpty(invoice?.Customer?.PartnerName) ? invoice?.Customer?.Organizations
+                var contactName = string.IsNullOrEmpty(invoice?.Customer?.PartnerCompany) ? invoice?.Customer?.Organizations
     : invoice?.Customer?.PartnerCompany;
 
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoice);
@@ -417,9 +417,9 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var  customer = string.IsNullOrEmpty(invoice?.Customer?.PartnerName) ? invoice?.Customer?.Organizations
+                var  customer = string.IsNullOrEmpty(invoice?.Customer?.PartnerCompany) ? invoice?.Customer?.Organizations
     : invoice?.Customer?.PartnerCompany;
-                var subject = $"Invoice #{invoiceNumber} is Declined by {customer}";
+                var subject = $"Invoice #{invoiceNumber} is Declined by {customer}.";
                 var link = GetInvoiceLinkForCustomer(invoice.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.DeclinedInvoice);
                 emailTemplate = emailTemplate.Replace("[AccountContactName]", accountContactName)
@@ -960,9 +960,9 @@ namespace AddOptimization.Services.Services
                 }
 
                 var amount = LocaleHelper.FormatCurrency(invoice.DueAmount);
-                var subject = $"Invoice {invoice.InvoiceNumber} pending for payment.";
+                var subject = $"Invoice #{invoice.InvoiceNumber} is pending for payment.";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoiceReminder);
-                var customer = string.IsNullOrEmpty(invoice?.Customer?.PartnerName) ? invoice?.Customer?.Company : invoice?.Customer?.PartnerCompany;
+                var customer = string.IsNullOrEmpty(invoice?.Customer?.PartnerCompany) ? invoice?.Customer?.Company : invoice?.Customer?.PartnerCompany;
                 var link = GetInvoiceLinkForCustomer(invoice.Id);
                 _ = int.TryParse(invoice?.PaymentClearanceDays.ToString(), out int clearanceDays);
                 emailTemplate = emailTemplate

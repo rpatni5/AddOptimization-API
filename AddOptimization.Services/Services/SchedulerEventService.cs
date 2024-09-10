@@ -688,7 +688,7 @@ namespace AddOptimization.Services.Services
                 var details = (await _schedulersDetailsRepository.QueryAsync(x => x.SchedulerEventId == result.Id)).ToList();
                 var duration = await CalculateTimesheetsDaysAndOvertimeHours(result, details);
                 await SendTimesheetActionEmailToAccountAdmin(approver, customer, user, eventDetails, model.IsApproved, entity.Comment, duration.Item1, duration.Item2);
-                await SendTimesheetActionEmailToEmployee(customer, user, eventDetails, model.IsApproved, entity.Comment, duration.Item1, duration.Item2);
+                await SendTimesheetActionEmailToEmployee(customer, user, eventDetails, model.IsApproved, entity.Comment, duration.Item1, duration.Item2 ,approver );
 
                 return ApiResult<bool>.Success(true);
             }
@@ -701,11 +701,11 @@ namespace AddOptimization.Services.Services
 
         private async Task<bool> SendTimesheetActionEmailToEmployee(Customer customer,
             ApplicationUser user, SchedulerEvent schedulerEvent, bool isApprovedEmail,
-            string comment, decimal totalWorkingDays, decimal overtimeHours)
+            string comment, decimal totalWorkingDays, decimal overtimeHours , ApplicationUser approver)
         {
             try
             {
-                var subject = isApprovedEmail ? "Timesheet Approved" : "Timesheet Declined";
+                var subject = isApprovedEmail ? "Timesheet Approved." : "Timesheet Declined.";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetActionsEmployee);
                 var link = GetTimesheetLinkForCustomer(schedulerEvent.Id);
                 emailTemplate = emailTemplate.Replace("[EmployeeName]", user.FullName)
@@ -714,9 +714,21 @@ namespace AddOptimization.Services.Services
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
                                              .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
                                              .Replace("[LinkToTimesheet]", link)
+                                             .Replace("[Approver]",customer.AdministrationContactName)
                                              .Replace("[WorkDuration]", LocaleHelper.FormatNumber(totalWorkingDays))
                                              .Replace("[Overtime]", LocaleHelper.FormatNumber(overtimeHours))
-                                             .Replace("[Comment]", !string.IsNullOrEmpty(comment) ? comment : "No comment added.");
+                                             .Replace("[Comment]",comment);
+                if (!isApprovedEmail)
+                {
+                    var linkSection = $"<p>Please click on the link below to view this timesheet.<br /></p>" +
+                                      $"<p><a href=\"{link}\" target=\"_blank\" style=\"background-color: #202A44; color: white; padding: 5px;\">View</a><br /></p>";
+                    emailTemplate = emailTemplate.Replace("[LinkSection]", linkSection);
+                }
+                else
+                {
+                    var linkSection = $"<p>No further action is required from you.<br/></p>";
+                    emailTemplate = emailTemplate.Replace("[LinkSection]", linkSection);
+                }
                 return await _emailService.SendEmail(user.Email, subject, emailTemplate);
             }
             catch (Exception ex)
@@ -733,7 +745,7 @@ namespace AddOptimization.Services.Services
             try
             {
                 var subject = isApprovedEmail ? "Timesheet Approved" : "Timesheet Declined";
-                var link = GetTimesheetLinkForCustomer(schedulerEvent.Id);
+                var link = GetTimesheetLinkForAccountAdmin(schedulerEvent.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetActions);
                 emailTemplate = emailTemplate.Replace("[AccountAdmin]", approver.FullName)
                                              .Replace("[EmployeeName]", user.FullName)
@@ -744,7 +756,19 @@ namespace AddOptimization.Services.Services
                                              .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
                                              .Replace("[WorkDuration]", LocaleHelper.FormatNumber(totalWorkingDays))
                                              .Replace("[Overtime]", LocaleHelper.FormatNumber(overtimeHours))
-                                             .Replace("[Comment]", !string.IsNullOrEmpty(comment) ? comment : "No comment added.");
+                                             .Replace("[Comment]",comment);
+                if (!isApprovedEmail)
+                {
+                    var linkSection = $"<p>Please click on the link below to view this timesheet.<br /></p>" +
+                                      $"<p><a href=\"{link}\" target=\"_blank\" style=\"background-color: #202A44; color: white; padding: 5px;\">View</a><br /></p>";
+                    emailTemplate = emailTemplate.Replace("[LinkSection]", linkSection);
+                }
+                else
+                {
+
+                    var linkSection = $"<p>No further action is required from you.<br/></p>";
+                    emailTemplate = emailTemplate.Replace("[LinkSection]", linkSection);
+                }
                 return await _emailService.SendEmail(approver.Email, subject, emailTemplate);
             }
             catch (Exception ex)
@@ -782,6 +806,7 @@ namespace AddOptimization.Services.Services
             try
             {
                 var subject = "Timesheet Declined";
+                var link = GetTimesheetLinkForCustomer(schedulerEvent.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetDeclined);
                 emailTemplate = emailTemplate.Replace("[FullName]", fullName)
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
@@ -789,6 +814,7 @@ namespace AddOptimization.Services.Services
                                              .Replace("[Approver]", approverName)
                                              .Replace("[WorkDuration]", LocaleHelper.FormatNumber(totalWorkingDays))
                                              .Replace("[Overtime]", LocaleHelper.FormatNumber(overtimeHours))
+                                             .Replace("[LinkToTimesheet]", link)
                                              .Replace("[Comment]", declinedReason);
                 return await _emailService.SendEmail(email, subject, emailTemplate);
             }
@@ -833,7 +859,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var subject = $"Timesheet Approval Request from {employeeName}";
+                var subject = $"Timesheet Approval Request from {employeeName}.";
                 var link = GetTimesheetLinkForAccountAdmin(schedulerEvent.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.RequestTimesheetApproval);
                 emailTemplate = emailTemplate.Replace("[AdministrationContactName]", approverName)

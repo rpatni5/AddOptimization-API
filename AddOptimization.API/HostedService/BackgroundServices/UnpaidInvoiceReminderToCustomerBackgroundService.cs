@@ -136,7 +136,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 var amount = LocaleHelper.FormatCurrency(invoice.DueAmount);
                 var subject = $"Invoice {invoice.InvoiceNumber} is Pending for payment.";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoiceReminder);
-                var customer = string.IsNullOrEmpty(invoice?.Customer?.PartnerName) ? invoice?.Customer?.Company : invoice?.Customer?.PartnerCompany;
+                var customer = string.IsNullOrEmpty(invoice?.Customer?.PartnerCompany) ? invoice?.Customer?.Company : invoice?.Customer?.PartnerCompany;
                 var link = GetInvoiceLinkForCustomer(invoice.Id);
                 _ = int.TryParse(invoice?.PaymentClearanceDays.ToString(), out int clearanceDays);
                 emailTemplate = emailTemplate
@@ -167,7 +167,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 var scope = _serviceProvider.CreateScope();
                 var _emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
                 var amount =LocaleHelper.FormatCurrency(invoice.DueAmount);
-                var subject = $"AddOptimization invoice pending for {invoice?.Customer?.ManagerName} dated {LocaleHelper.FormatDate(invoice.InvoiceDate.Date)} of {amount}";
+                var subject = $"AddOptimization invoice pending for {invoice?.Customer?.ManagerName} dated {LocaleHelper.FormatDate(invoice.InvoiceDate.Date)} of {amount}.";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.UnpaidInvoiceReminderAccountAdmin);
                 var link = GetInvoiceLinkForAccountAdmin(invoice.Id);
                 _ = int.TryParse(invoice?.PaymentClearanceDays.ToString(), out int clearanceDays);
