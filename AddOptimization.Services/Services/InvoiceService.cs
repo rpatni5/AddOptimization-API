@@ -370,7 +370,7 @@ namespace AddOptimization.Services.Services
                     return ApiResult<bool>.Success(false);
                 }
                 var amount = LocaleHelper.FormatCurrency(invoice.DueAmount);
-                var subject = $"Your invoice from AddOptimization";
+                var subject = $"Your invoice from AddOptimization.";
                 var link = GetInvoiceLinkForCustomer(invoice.Id);
                 var contactName = string.IsNullOrEmpty(invoice?.Customer?.PartnerCompany) ? invoice?.Customer?.Organizations
     : invoice?.Customer?.PartnerCompany;
@@ -408,7 +408,7 @@ namespace AddOptimization.Services.Services
             {
                 var  customer = string.IsNullOrEmpty(invoice?.Customer?.PartnerCompany) ? invoice?.Customer?.Organizations
     : invoice?.Customer?.PartnerCompany;
-                var subject = $"Invoice #{invoiceNumber} is Declined by {customer}";
+                var subject = $"Invoice #{invoiceNumber} is Declined by {customer}.";
                 var link = GetInvoiceLinkForCustomer(invoice.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.DeclinedInvoice);
                 emailTemplate = emailTemplate.Replace("[AccountContactName]", accountContactName)

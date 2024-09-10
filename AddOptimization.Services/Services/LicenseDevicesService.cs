@@ -213,7 +213,7 @@ public class LicenseDeviceService : ILicenseDeviceService
     {
         try
         {
-            var subject = "AddOptimization new device license activated";
+            var subject = "AddOptimization new device license activated.";
             var emailTemplate = _templateService.ReadTemplate(EmailTemplates.DeviceActivated);
             emailTemplate = emailTemplate
                             .Replace("[CustomerName]", userFullName)

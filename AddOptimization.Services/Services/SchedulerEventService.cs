@@ -705,7 +705,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var subject = isApprovedEmail ? "Timesheet Approved" : "Timesheet Declined";
+                var subject = isApprovedEmail ? "Timesheet Approved." : "Timesheet Declined.";
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.TimesheetActionsEmployee);
                 var link = GetTimesheetLinkForCustomer(schedulerEvent.Id);
                 emailTemplate = emailTemplate.Replace("[EmployeeName]", user.FullName)
@@ -859,7 +859,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var subject = $"Timesheet Approval Request from {employeeName}";
+                var subject = $"Timesheet Approval Request from {employeeName}.";
                 var link = GetTimesheetLinkForAccountAdmin(schedulerEvent.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.RequestTimesheetApproval);
                 emailTemplate = emailTemplate.Replace("[AdministrationContactName]", approverName)
