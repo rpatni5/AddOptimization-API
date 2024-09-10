@@ -413,7 +413,7 @@ namespace AddOptimization.Services.Services
                 var invoice = new Invoice
                 {
                     Id = id+1,
-                    InvoiceNumber = Convert.ToInt64(invoiceNumber),
+                    InvoiceNumber = invoiceNumber,
                     CustomerId = quote.CustomerId,
                     InvoiceDate = DateTime.UtcNow,
                     CustomerAddress = quote.CustomerAddress,
@@ -485,10 +485,9 @@ namespace AddOptimization.Services.Services
                 var currentMonth = now.Month;
                 var dateFormat = $"{currentYear}{currentMonth:D2}";
 
-                var draftInvoicesCount = (await _invoiceRepository.QueryAsync(x => x.InvoiceNumber.ToString().StartsWith(dateFormat), ignoreGlobalFilter: true)).Count();
+                var draftInvoicesCount = (await _invoiceRepository.QueryAsync(x => x.InvoiceNumber.Contains(dateFormat), ignoreGlobalFilter: true)).Count();
                 var newDraftNumber = draftInvoicesCount + 1;
-                //var invoiceNumber = $"Draft-{DateTime.UtcNow:yyyyMM}{newDraftNumber:D4}";
-                var draftInvoiceNumber = $"{DateTime.UtcNow:yyyyMM}{newDraftNumber}";
+                var draftInvoiceNumber = $"Draft-{DateTime.UtcNow:yyyyMM}{newDraftNumber}";
 
                 return draftInvoiceNumber;
             }

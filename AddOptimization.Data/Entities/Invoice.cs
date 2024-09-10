@@ -5,7 +5,7 @@ namespace AddOptimization.Data.Entities
 {
     public class Invoice : BaseEntityNew<long>
     {
-        public long InvoiceNumber { get; set; }
+        public string InvoiceNumber { get; set; }
 
         public long? CreditNoteNumber { get; set; }
         public DateTime InvoiceDate { get; set; }

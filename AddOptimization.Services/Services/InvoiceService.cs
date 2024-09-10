@@ -140,7 +140,6 @@ namespace AddOptimization.Services.Services
                 string companyAddress = await GenerateCompanyAddress(company);
                 string companyBankDetails = GenerateCompanyBankDetails(company);
                 var invoiceNumber = await GenerateInvoiceNumber(month);
-                //var invoiceNumber =  await GenerateInvoiceNumber();
 
                 var invoiceStatus = (await _invoiceStatusService.Search()).Result;
                 var draftStatusId = invoiceStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusEnum.DRAFT.ToString()).Id;
@@ -157,7 +156,7 @@ namespace AddOptimization.Services.Services
                     CompanyBankDetails = companyBankDetails,
                     ExpiryDate = customer.PaymentClearanceDays.HasValue ? DateTime.UtcNow.AddDays(customer.PaymentClearanceDays.Value) : DateTime.UtcNow.AddDays(15),
                     InvoiceDate = month.EndDate,
-                    InvoiceNumber = Convert.ToInt64(invoiceNumber),
+                    InvoiceNumber = invoiceNumber,
                     InvoiceStatusId = draftStatusId,
                     PaymentStatusId = unPaidStatusId,
                     PaymentClearanceDays = customer.PaymentClearanceDays.HasValue ? customer.PaymentClearanceDays.Value : 15,
@@ -277,10 +276,10 @@ namespace AddOptimization.Services.Services
             try
             {
                 var dateFormat = $"{month.StartDate.Year}{month.StartDate.Month:D2}";
-                var draftInvoicesCount = (await _invoiceRepository.QueryAsync(x => x.InvoiceNumber.ToString().StartsWith(dateFormat), ignoreGlobalFilter: true)).Count();
+                var draftInvoicesCount = (await _invoiceRepository.QueryAsync(x => x.InvoiceNumber.StartsWith(dateFormat), ignoreGlobalFilter: true)).Count();
                 var newDraftNumber = draftInvoicesCount + 1;
-                //var invoiceNumber = $"Draft-{DateTime.UtcNow:yyyyMM}{newDraftNumber:D4}";
-                var draftInvoiceNumber = $"{DateTime.UtcNow:yyyyMM}{newDraftNumber}";
+                var draftInvoiceNumber = $"Draft-{DateTime.UtcNow:yyyyMM}{newDraftNumber}";
+                //var draftInvoiceNumber = $"{DateTime.UtcNow:yyyyMM}{newDraftNumber}";
 
                 return draftInvoiceNumber;
             }
@@ -392,7 +391,7 @@ namespace AddOptimization.Services.Services
                                 .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
                                 .Replace("[CompanyName]", invoice?.Customer?.Organizations)
                                 .Replace("[Customer]", contactName)
-                                .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
+                                .Replace("[InvoiceNumber]", invoice?.InvoiceNumber)
                                 .Replace("[InvoiceDate]", LocaleHelper.FormatDate(invoice.InvoiceDate.Date))
                                 .Replace("[TotalAmountDue]", LocaleHelper.FormatCurrency(invoice.DueAmount))
                                 .Replace("[DueDate]", LocaleHelper.FormatDate(invoice.ExpiryDate.Date))
@@ -413,7 +412,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private async Task<bool> SendInvoiceDeclinedEmailToAccountAdmins(IEnumerable<dynamic> accountAdmins, string accountContactName, long invoiceNumber, DateTime expiryDate, decimal totalAmountDue, string comment, Invoice invoice)
+        private async Task<bool> SendInvoiceDeclinedEmailToAccountAdmins(IEnumerable<dynamic> accountAdmins, string accountContactName, string invoiceNumber, DateTime expiryDate, decimal totalAmountDue, string comment, Invoice invoice)
         {
             try
             {
@@ -423,7 +422,7 @@ namespace AddOptimization.Services.Services
                 var link = GetInvoiceLinkForCustomer(invoice.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.DeclinedInvoice);
                 emailTemplate = emailTemplate.Replace("[AccountContactName]", accountContactName)
-                                             .Replace("[InvoiceNumber]", invoiceNumber.ToString())
+                                             .Replace("[InvoiceNumber]", invoiceNumber)
                                              .Replace("[TotalAmountDue]", LocaleHelper.FormatCurrency(totalAmountDue))
                                              .Replace("[ExpiryDate]", LocaleHelper.FormatDate(expiryDate))
                                              .Replace("[Customer]", customer)
@@ -448,7 +447,7 @@ namespace AddOptimization.Services.Services
         {
             filter.GetValue<string>("invoiceNumber", (v) =>
             {
-                entities = entities.Where(e => e.InvoiceNumber == Convert.ToInt32(v));
+                entities = entities.Where(e => e.InvoiceNumber == v);
             });
 
             filter.GetValue<string>("customerName", (v) =>
@@ -613,7 +612,7 @@ namespace AddOptimization.Services.Services
                 Invoice entity = new Invoice
                 {
                     Id = id + 1,
-                    InvoiceNumber = Convert.ToInt64(invoiceNumber),
+                    InvoiceNumber = invoiceNumber,
                     PaymentStatusId = paymentStatusId,
                     VatValue = model.InvoiceDetails.Sum(x => (x.UnitPrice * x.Quantity * x.VatPercent) / 100),
                     TotalPriceIncludingVat = model.InvoiceDetails.Sum(x => x.TotalPriceIncludingVat),
@@ -969,7 +968,7 @@ namespace AddOptimization.Services.Services
                                 .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
                                  .Replace("[AccountContactName]", invoice?.Customer?.AccountContactName)
                                  .Replace("[CompanyAccountingEmail]", companyInfo.AccountingEmail)
-                                .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
+                                .Replace("[InvoiceNumber]", invoice?.InvoiceNumber)
                                 .Replace("[Customer]", customer)
                                 .Replace("[Company]", invoice?.Customer?.Company)
                                 .Replace("[InvoiceDate]", LocaleHelper.FormatDate(invoice.InvoiceDate.Date))
@@ -1017,10 +1016,10 @@ namespace AddOptimization.Services.Services
                 var currentMonth = now.Month;
                 var dateFormat = $"{currentYear}{currentMonth:D2}";
 
-                var draftInvoicesCount = (await _invoiceRepository.QueryAsync(x => x.InvoiceNumber.ToString().StartsWith(dateFormat), ignoreGlobalFilter: true)).Count();
+                var draftInvoicesCount = (await _invoiceRepository.QueryAsync(x => x.InvoiceNumber.Contains(dateFormat) && !x.IsDeleted , ignoreGlobalFilter: true)).Count();
                 var newDraftNumber = draftInvoicesCount + 1;
-                //var invoiceNumber = $"Draft-{DateTime.UtcNow:yyyyMM}{newDraftNumber}";
-                var draftInvoiceNumber = $"{DateTime.UtcNow:yyyyMM}{newDraftNumber}";
+                var draftInvoiceNumber = $"Draft-{DateTime.UtcNow:yyyyMM}{newDraftNumber}";
+                //var draftInvoiceNumber = $"{DateTime.UtcNow:yyyyMM}{newDraftNumber}";
 
                 return draftInvoiceNumber;
             }
@@ -1041,7 +1040,7 @@ namespace AddOptimization.Services.Services
                 var currentMonth = now.Month;
                 var currentDateFormat = $"{currentYear}{currentMonth:D2}";
 
-                var finalizedInvoicesCount = (await _invoiceRepository.QueryAsync(x => x.HasInvoiceFinalized && x.InvoiceNumber.ToString().StartsWith(currentDateFormat), ignoreGlobalFilter: true)).Count();
+                var finalizedInvoicesCount = (await _invoiceRepository.QueryAsync(x => x.HasInvoiceFinalized && x.InvoiceNumber.StartsWith(currentDateFormat), ignoreGlobalFilter: true)).Count();
 
                 var draftsToBeFinalized = await _invoiceRepository.QueryAsync(x => x.InvoiceStatus.StatusKey == InvoiceStatusEnum.DRAFT, ignoreGlobalFilter: true);
 
@@ -1049,7 +1048,7 @@ namespace AddOptimization.Services.Services
                 {
                     foreach (var draft in draftsToBeFinalized)
                     {
-                        var draftInvoiceNumber = draft.InvoiceNumber.ToString();
+                        var draftInvoiceNumber = draft.InvoiceNumber;
                         var draftMonthYear = draftInvoiceNumber.Substring(0, 6);
 
                         if (draftMonthYear == currentDateFormat)
@@ -1091,7 +1090,7 @@ namespace AddOptimization.Services.Services
                 var readyToSendStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.READY_TO_SEND.ToString()).Id;
 
                 var invoiceNumber = await GenerateInvoiceNumber();
-                entity.InvoiceNumber = long.Parse(invoiceNumber.ToString());
+                entity.InvoiceNumber = invoiceNumber;
                 entity.HasInvoiceFinalized = true;
 
                 entity.InvoiceStatusId = readyToSendStatusId;
