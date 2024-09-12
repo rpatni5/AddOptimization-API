@@ -71,11 +71,22 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var isExisting = await _holidayAllocationRepository.IsExist(s => s.UserId == model.UserId && !s.IsDeleted && s.Id != model.Id);
+                var startOfYear = new DateTime(DateTime.Now.Year, 1, 1);
+                var endOfYear = new DateTime(DateTime.Now.Year, 12, 31, 23, 59, 59);
+
+                var isExisting = await _holidayAllocationRepository.IsExist(s =>
+                    s.UserId == model.UserId &&
+                    s.CreatedAt.HasValue &&               
+                    s.CreatedAt.Value >= startOfYear &&   
+                    s.CreatedAt.Value <= endOfYear &&
+                    !s.IsDeleted &&
+                    s.Id != model.Id);  
+
                 if (isExisting)
                 {
                     return ApiResult<HolidayAllocationResponseDto>.Failure(ValidationCodes.FieldNameAlreadyExists);
                 }
+
                 HolidayAllocation entity;
                 if (model.Id != Guid.Empty)
                 {
@@ -84,14 +95,16 @@ namespace AddOptimization.Services.Services
                     {
                         return ApiResult<HolidayAllocationResponseDto>.Failure(ValidationCodes.NotFound);
                     }
-                    var createdAt = entity.CreatedAt;
+
+                    var createdAt = entity.CreatedAt;  
                     _mapper.Map(model, entity);
-                    entity.CreatedAt = createdAt;
+                    entity.CreatedAt = createdAt;      
                     await _holidayAllocationRepository.UpdateAsync(entity);
                 }
                 else
                 {
                     entity = _mapper.Map<HolidayAllocation>(model);
+                    entity.CreatedAt = DateTime.Now;   
                     await _holidayAllocationRepository.InsertAsync(entity);
                 }
                 var mappedEntity = _mapper.Map<HolidayAllocationResponseDto>(entity);

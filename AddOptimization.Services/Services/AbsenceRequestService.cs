@@ -561,33 +561,46 @@ namespace AddOptimization.Services.Services
             }
         }
 
-
-        public async Task<ApiResult<List<AbsenceRequestResponseDto>>> GetLeaveHistory(int employeeId)
+        public async Task<ApiResult<LeaveHistoryResponseDto>> GetLeaveHistory(int employeeId)
         {
             try
             {
                 var currentYear = DateTime.UtcNow.Year;
-                var entities = await _absenceRequestRepository.QueryAsync(e => e.UserId == employeeId && !e.IsDeleted && e.CreatedAt.HasValue && e.CreatedAt.Value.Year == currentYear, include: entities => entities.Include(e => e.ApplicationUser));
+
+                var entities = await _absenceRequestRepository.QueryAsync(
+                    e => e.UserId == employeeId && !e.IsDeleted && e.CreatedAt.HasValue && e.CreatedAt.Value.Year == currentYear,
+                    include: entities => entities.Include(e => e.ApplicationUser)
+                );
+
                 var holidayAllocationResult = await _holidayAllocationService.GetAllocatedHolidays(employeeId);
                 var totalHolidayAllocated = holidayAllocationResult.Result?.Holidays ?? 0;
+
                 var leaveTakenResult = await _absenceApprovalService.GetAllAbsenseApproval(employeeId);
                 var leaveTaken = leaveTakenResult?.Result ?? 0;
                 var remainingLeaves = totalHolidayAllocated - leaveTaken;
-                var mappedEntity = entities.OrderByDescending(e => e.CreatedAt).Select(e => new AbsenceRequestResponseDto
+
+                var mappedEntities = entities.OrderByDescending(e => e.CreatedAt)
+                    .Select(e => new AbsenceRequestResponseDto
+                    {
+                        Comment = e.Comment,
+                        UserId = e.UserId,
+                        LeaveStatusId = e.LeaveStatusId,
+                        LeaveStatusName = e.LeaveStatuses.Name,
+                        Duration = e.Duration,
+                        StartDate = e.StartDate,
+                        CreatedAt = e.CreatedAt,
+                        EndDate = e.EndDate
+                    }).ToList();
+
+                var response = new LeaveHistoryResponseDto
                 {
-                    Comment = e.Comment,
-                    UserId = e.UserId,
-                    LeaveStatusId = e.LeaveStatusId,
-                    LeaveStatusName = e.LeaveStatuses.Name,
-                    Duration = e.Duration,
-                    StartDate = e.StartDate,
-                    CreatedAt = e.CreatedAt,
-                    EndDate = e.EndDate,
                     TotalAllocatedHoliday = totalHolidayAllocated,
                     LeaveTaken = leaveTaken,
-                    LeavesLeft = remainingLeaves
-                }).ToList();
-                return ApiResult<List<AbsenceRequestResponseDto>>.Success(mappedEntity);
+                    LeavesLeft = remainingLeaves,
+                    AbsenceRequests = mappedEntities
+                };
+
+                return ApiResult<LeaveHistoryResponseDto>.Success(response);
             }
             catch (Exception ex)
             {
