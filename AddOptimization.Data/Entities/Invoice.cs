@@ -20,7 +20,8 @@ namespace AddOptimization.Data.Entities
         public decimal TotalPriceIncludingVat { get; set; }
         public decimal TotalPriceExcludingVat { get; set; }
         public bool IsDeleted { get; set; }
-        public DateTime ExpiryDate { get; set; }
+        public DateTime? ExpiryDate { get; set; }
+        public DateTime? InvoiceSentDate { get; set; }
         public int? PaymentClearanceDays { get; set; }
         public decimal DueAmount { get; set; }
         public bool HasCreditNotes { get; set; }

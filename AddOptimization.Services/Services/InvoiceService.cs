@@ -154,7 +154,6 @@ namespace AddOptimization.Services.Services
                     CustomerAddress = customerAddress,
                     CompanyAddress = companyAddress,
                     CompanyBankDetails = companyBankDetails,
-                    ExpiryDate = customer.PaymentClearanceDays.HasValue ? DateTime.UtcNow.AddDays(customer.PaymentClearanceDays.Value) : DateTime.UtcNow.AddDays(15),
                     InvoiceDate = month.EndDate,
                     InvoiceNumber = invoiceNumber,
                     InvoiceStatusId = draftStatusId,
@@ -393,7 +392,7 @@ namespace AddOptimization.Services.Services
                                 .Replace("[InvoiceNumber]", invoice?.InvoiceNumber)
                                 .Replace("[InvoiceDate]", LocaleHelper.FormatDate(invoice.InvoiceDate.Date))
                                 .Replace("[TotalAmountDue]", LocaleHelper.FormatCurrency(invoice.DueAmount))
-                                .Replace("[DueDate]", LocaleHelper.FormatDate(invoice.ExpiryDate.Date))
+                                .Replace("[DueDate]", LocaleHelper.FormatDate(invoice.ExpiryDate.Value.Date))
                                 .Replace("[LinkToInvoice]", link)
                                 .Replace("[CompanyAccountingEmail]", companyInfo.AccountingEmail)
                                 .Replace("[company]", companyInfo.CompanyName)
@@ -617,7 +616,6 @@ namespace AddOptimization.Services.Services
                     TotalPriceIncludingVat = model.InvoiceDetails.Sum(x => x.TotalPriceIncludingVat),
                     TotalPriceExcludingVat = model.InvoiceDetails.Sum(x => x.TotalPriceExcludingVat),
                     CustomerId = model.CustomerId,
-                    ExpiryDate = model.ExpiryDate,
                     InvoiceDate = model.InvoiceDate,
                     CustomerAddress = model.CustomerAddress,
                     InvoiceStatusId = statusId,
@@ -675,7 +673,6 @@ namespace AddOptimization.Services.Services
                 var entities = await _invoiceRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(x => x.Customer).Include(x => x.PaymentStatus).Include(x => x.InvoiceStatus), ignoreGlobalFilter: true);
                 entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
                 entities = ApplyFilters(entities, filters);
-                entities = entities.Where(e => !(e.InvoiceStatus.Name == "Draft" && e.ExpiryDate < DateTime.UtcNow));
                 var pagedResult = PageHelper<Invoice, InvoiceResponseDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new InvoiceResponseDto
                 {
                     Id = e.Id,
@@ -743,6 +740,7 @@ namespace AddOptimization.Services.Services
                 model.CompanyBankAddress = company.BankAddress;
                 model.CompanyBankDetails = entity.CompanyBankDetails;
                 model.InvoiceStatusId = entity.InvoiceStatusId;
+                model.InvoiceSentDate = entity.InvoiceSentDate;
                 model.PaymentStatusId = entity.PaymentStatusId;
                 model.InvoiceNumber = entity.InvoiceNumber;
                 model.VatValue = entity.VatValue;
@@ -856,6 +854,8 @@ namespace AddOptimization.Services.Services
                 var eventStatus = (await _invoiceStatusService.Search()).Result;
                 var sentToCustomerStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.SEND_TO_CUSTOMER.ToString()).Id;
                 entity.InvoiceStatusId = sentToCustomerStatusId;
+                entity.InvoiceSentDate = DateTime.UtcNow;
+                entity.ExpiryDate = entity.InvoiceSentDate.Value.AddDays(entity.PaymentClearanceDays.Value);
                 await _invoiceRepository.UpdateAsync(entity);
             }
             InvoiceHistory historyEntity = new InvoiceHistory
@@ -899,7 +899,7 @@ namespace AddOptimization.Services.Services
                 var accountAdmins = (await _applicationService.GetAccountAdmins()).Result;
                 var adminEmails = accountAdmins.Select(admin => new { Name = admin.FullName, Email = admin.Email });
 
-                await SendInvoiceDeclinedEmailToAccountAdmins(adminEmails, entities.Customer.AccountContactName, entities.InvoiceNumber, entities.ExpiryDate, entities.DueAmount, entity.Comment ,entities);
+                await SendInvoiceDeclinedEmailToAccountAdmins(adminEmails, entities.Customer.AccountContactName, entities.InvoiceNumber, entities.ExpiryDate.Value, entities.DueAmount, entity.Comment ,entities);
 
                 return ApiResult<bool>.Success(true);
             }
@@ -973,7 +973,7 @@ namespace AddOptimization.Services.Services
                                 .Replace("[Company]", invoice?.Customer?.Company)
                                 .Replace("[InvoiceDate]", LocaleHelper.FormatDate(invoice.InvoiceDate.Date))
                                 .Replace("[TotalAmountDue]", LocaleHelper.FormatCurrency(invoice.DueAmount))
-                                .Replace("[DueDate]", LocaleHelper.FormatDate(invoice.ExpiryDate.Date))
+                                .Replace("[DueDate]", LocaleHelper.FormatDate(invoice.ExpiryDate.Value.Date))
                                 .Replace("[LinkToInvoice]", link);
                 var emailResult = await _emailService.SendEmail(invoice?.Customer?.AccountContactEmail, subject, emailTemplate);
                 return ApiResult<bool>.Success(true);
