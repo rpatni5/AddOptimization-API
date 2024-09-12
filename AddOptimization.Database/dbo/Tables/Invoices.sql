@@ -16,13 +16,14 @@
 	[UpdatedAt] [datetime2](7) NULL,
 	[UpdatedByUserId] [int] NULL,
 	[CustomerId] [uniqueidentifier] NOT NULL,
-	[ExpiryDate] [datetime2](7) NOT NULL,
+	[ExpiryDate] [datetime2](7) NULL,
 	[PaymentClearanceDays] [int] NULL,
 	[DueAmount] [decimal](10, 2) NOT NULL,
 	[Metadata] [varchar](max) NULL,
 	[HasCreditNotes] [bit] NOT NULL,
 	[CreditNoteNumber] [bigint] NULL,
 	[HasInvoiceFinalized] [bit] NULL,
+    [InvoiceSentDate] [datetime2](7) NULL,
  CONSTRAINT [PK_Invoices] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC

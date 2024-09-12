@@ -96,7 +96,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 foreach (var invoice in invoices?.Result)
                 {
                     var paymentClearanceDays = invoice.PaymentClearanceDays;
-                    if (invoice.CreatedAt?.AddDays(paymentClearanceDays.Value) < DateTime.Today
+                    if (invoice.ExpiryDate.HasValue && invoice.ExpiryDate.Value < DateTime.Today
                         && invoice?.DueAmount > 0 && invoice.InvoiceStatusId == invoiceStatusId)
                     {
                         await SendUnpaidInvoiceReminderEmailCustomer(invoice, companyInfoResult);
@@ -148,7 +148,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                                 .Replace("[Company]", invoice?.Customer?.Company)
                                 .Replace("[InvoiceDate]", LocaleHelper.FormatDate(invoice.InvoiceDate.Date))
                                 .Replace("[TotalAmountDue]", LocaleHelper.FormatCurrency(invoice.DueAmount))
-                                .Replace("[DueDate]",LocaleHelper.FormatDate(invoice.ExpiryDate.Date))
+                                .Replace("[DueDate]",LocaleHelper.FormatDate(invoice.ExpiryDate.Value.Date))
                                 .Replace("[LinkToInvoice]", link);
                 var emailResult = await _emailService.SendEmail(invoice?.Customer?.AccountContactEmail, subject, emailTemplate);
                 return ApiResult<bool>.Success(true);
@@ -179,7 +179,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                                 .Replace("[InvoiceNumber]", invoice?.InvoiceNumber)
                                 .Replace("[InvoiceDate]", LocaleHelper.FormatDate(invoice.InvoiceDate.Date))
                                 .Replace("[TotalAmountDue]",LocaleHelper.FormatCurrency(invoice.DueAmount))
-                                .Replace("[DueDate]", LocaleHelper.FormatDate(invoice.ExpiryDate.Date))
+                                .Replace("[DueDate]", LocaleHelper.FormatDate(invoice.ExpiryDate.Value.Date))
                                 .Replace("[LinkToInvoice]", link);
                 return await _emailService.SendEmail(accountAdmin.Email, subject, emailTemplate);
             }
