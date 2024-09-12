@@ -18,7 +18,7 @@ namespace AddOptimization.Contracts.Services
         Task<ApiResult<bool>> Delete(Guid id);
         Task<ApiResult<decimal>> GetDurationExcludingWeekends(DateTime? startDate, DateTime? endDate, List<CustomerEmployeeAssociationDto> association, List<PublicHolidayResponseDto> publicHoliday, int userId, decimal? duration);
         Task<ApiResult<decimal>> GetDurations(DateTime? startDate, DateTime? endDate);
-        Task<ApiResult<List<AbsenceRequestResponseDto>>> GetLeaveHistory(int employeeId);
+        Task<ApiResult<LeaveHistoryResponseDto>> GetLeaveHistory(int employeeId);
 
     }
 }
