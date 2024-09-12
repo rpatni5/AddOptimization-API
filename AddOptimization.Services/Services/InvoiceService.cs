@@ -276,7 +276,7 @@ namespace AddOptimization.Services.Services
             try
             {
                 var dateFormat = $"{month.StartDate.Year}{month.StartDate.Month:D2}";
-                var draftInvoicesCount = (await _invoiceRepository.QueryAsync(x => x.InvoiceNumber.Contains(dateFormat), ignoreGlobalFilter: true)).Count();
+                var draftInvoicesCount = (await _invoiceRepository.QueryAsync(x => x.InvoiceNumber.Contains(dateFormat) && !x.IsDeleted, ignoreGlobalFilter: true)).Count();
                 var newDraftNumber = draftInvoicesCount + 1;
                 var draftInvoiceNumber = $"Draft-{DateTime.UtcNow:yyyyMM}{newDraftNumber}";
 
