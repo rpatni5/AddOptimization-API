@@ -5,7 +5,7 @@ namespace AddOptimization.Data.Entities
 {
     public class Invoice : BaseEntityNew<long>
     {
-        public long InvoiceNumber { get; set; }
+        public string InvoiceNumber { get; set; }
 
         public long? CreditNoteNumber { get; set; }
         public DateTime InvoiceDate { get; set; }
@@ -20,11 +20,12 @@ namespace AddOptimization.Data.Entities
         public decimal TotalPriceIncludingVat { get; set; }
         public decimal TotalPriceExcludingVat { get; set; }
         public bool IsDeleted { get; set; }
-        public DateTime ExpiryDate { get; set; }
+        public DateTime? ExpiryDate { get; set; }
+        public DateTime? InvoiceSentDate { get; set; }
         public int? PaymentClearanceDays { get; set; }
         public decimal DueAmount { get; set; }
-
         public bool HasCreditNotes { get; set; }
+        public bool? HasInvoiceFinalized { get; set; }
 
         [ForeignKey(nameof(PaymentStatusId))]
         public virtual PaymentStatus PaymentStatus { get; set; }

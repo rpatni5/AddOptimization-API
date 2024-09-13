@@ -2,6 +2,7 @@
 using AddOptimization.Contracts.Dto;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Data.Entities;
+using AddOptimization.Services.Services;
 using AddOptimization.Utilities.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -101,6 +102,22 @@ namespace AddOptimization.API.Controllers
                 return HandleException(ex);
             }
         }
+
+
+        [HttpGet("get-leave-history/{employeeId}")]
+        public async Task<IActionResult> GetLeaveHistory(int employeeId)
+        {
+            try
+            {
+                var retVal = await _absenceRequestService.GetLeaveHistory(employeeId);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+       
 
     }
 }

@@ -582,6 +582,39 @@ BEGIN
 END
 -- Invoicing seed data ends
 
+/* Adding CLOSED_WITH_CREDIT_NOTE status data in Invoice Status */
+
+IF NOT EXISTS (SELECT 1 FROM InvoiceStatuses Where StatusKey= 'CLOSED_WITH_CREDIT_NOTE')
+BEGIN 
+    INSERT INTO InvoiceStatuses(Id,Name,StatusKey)
+    VALUES
+        (NEWID(),'Closed with credit note','CLOSED_WITH_CREDIT_NOTE')
+END
+
+/* Adding PARTIALLY_PAID status data in Invoice Status */
+
+IF NOT EXISTS (SELECT 1 FROM InvoiceStatuses Where StatusKey= 'PARTIALLY_PAID')
+BEGIN 
+    INSERT INTO InvoiceStatuses(Id,Name,StatusKey)
+    VALUES
+        (NEWID(),'Partially paid','PARTIALLY_PAID')
+END
+
+
+/* Adding READY_TO_SEND status data in Invoice Status */
+
+IF NOT EXISTS (SELECT 1 FROM InvoiceStatuses Where StatusKey= 'READY_TO_SEND')
+BEGIN 
+    INSERT INTO InvoiceStatuses(Id,Name,StatusKey)
+    VALUES
+        (NEWID(),'Ready to send','READY_TO_SEND')
+END
+
+
+-- Invoicing seed data ends
+
+
+
 
 /* Adding Draft Quote Status data in Quote Status */
 

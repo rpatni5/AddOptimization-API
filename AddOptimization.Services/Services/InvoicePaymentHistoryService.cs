@@ -49,6 +49,7 @@ namespace AddOptimization.Services.Services
                 var paymentStatus = (await _paymentStatusService.Search()).Result;
                 var closedStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.CLOSED.ToString()).Id;
                 var paymentList = (await _invoicePaymentRepository.QueryAsync(e => e.InvoiceId == model.InvoiceId)).ToList();
+                var closedWithCreditNoteId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.CLOSED_WITH_CREDIT_NOTE.ToString()).Id;
                 foreach (var payment in paymentList)
                 {
                     await _invoicePaymentRepository.DeleteAsync(payment);
@@ -84,25 +85,45 @@ namespace AddOptimization.Services.Services
                 var invoice = await _invoiceRepository.FirstOrDefaultAsync(x => x.Id == model.InvoiceId);
 
                 Guid paymentStatusId;
+                Guid invoicePatiallyPaidStatusId;
 
                 var dueAmount = invoice.TotalPriceIncludingVat;
                 if (invoice.TotalPriceIncludingVat == totalPaidAmount)
                 {
                     paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.PAID.ToString()).Id;
                     dueAmount = 0;
-                    invoice.InvoiceStatusId = closedStatusId;
-                    var invoiceHistory = new InvoiceHistory
+                    if (creditNoteEntities.Any())
                     {
-                        InvoiceId = invoice.Id,
-                        InvoiceStatusId = invoice.InvoiceStatusId,
-                        Comment = "Invoice Closed"
-                    };
-                    await _invoiceHistoryRepository.InsertAsync(invoiceHistory);
+                        
+                        invoice.InvoiceStatusId = closedWithCreditNoteId;
+                        var invoiceHistory = new InvoiceHistory
+                        {
+                            InvoiceId = invoice.Id,
+                            InvoiceStatusId = invoice.InvoiceStatusId,
+                            Comment = "Invoice closed with credit note"
+                        };
+                        await _invoiceHistoryRepository.InsertAsync(invoiceHistory);
+                    }
+                    else
+                    {
+                        paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.PAID.ToString()).Id;
+                        dueAmount = 0;
+                        invoice.InvoiceStatusId = closedStatusId;
+                        var invoiceHistory = new InvoiceHistory
+                        {
+                            InvoiceId = invoice.Id,
+                            InvoiceStatusId = invoice.InvoiceStatusId,
+                            Comment = "Invoice Closed"
+                        };
+                        await _invoiceHistoryRepository.InsertAsync(invoiceHistory);
+                    }
                 }
                 else if (invoice.TotalPriceIncludingVat > 0)
                 {
                     paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.PARTIAL_PAID.ToString()).Id;
                     dueAmount = invoice.TotalPriceIncludingVat - totalPaidAmount;
+                    invoicePatiallyPaidStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.PARTIALLY_PAID.ToString()).Id;
+                    invoice.InvoiceStatusId = invoicePatiallyPaidStatusId;
                 }
                 else
                 {
