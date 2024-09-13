@@ -642,7 +642,7 @@ namespace AddOptimization.Services.Services
                 emailTemplate = emailTemplate.Replace("[CompanyName]", externalCompany)
                                              .Replace("[EmployeeName]", employeeName)
                                              .Replace("[LinkToOrder]", link)
-                                             .Replace("[InvoiceNumber]", invoiceNumber.ToString())
+                                              .Replace("[InvoiceNumber]", invoiceNumber.ToString())
                                              .Replace("[TotalAmountDue]", LocaleHelper.FormatCurrency(totalAmountDue));
                 ;
 

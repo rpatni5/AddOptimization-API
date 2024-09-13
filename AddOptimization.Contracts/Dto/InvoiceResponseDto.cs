@@ -2,7 +2,7 @@
 {
     public class InvoiceResponseDto : BaseDto<long>
     {
-        public long InvoiceNumber { get; set; }
+        public string InvoiceNumber { get; set; }
         public DateTime InvoiceDate { get; set; }
         public Guid CustomerId { get; set; }
         public string CustomerName { get; set; }
@@ -20,20 +20,20 @@
         public string CompanyBankAccountName { get; set; }
         public string CompanyBankAccontNumber { get; set; }
         public string CompanyBankAddress { get; set; }
-
         public string CompanyBankDetails { get; set; }
         public decimal VatValue { get; set; }
         public decimal TotalPriceIncludingVat { get; set; }
         public decimal TotalPriceExcludingVat { get; set; }
         public bool IsDeleted { get; set; }
-        public DateTime ExpiryDate { get; set; }
+        public DateTime? ExpiryDate { get; set; }
+        public DateTime? InvoiceSentDate { get; set; }
         public int? PaymentClearanceDays { get; set; }
         public decimal DueAmount { get; set; }
         public long? CreditNoteNumber { get; set; }
-        public bool HasCreditNotes { get; set; }
+        public bool? HasCreditNotes { get; set; }
 
         public string? SwiftCode { get; set; }
-
+        public bool? HasInvoiceFinalized { get; set; }
         public virtual PaymentStatusDto PaymentStatus { get; set; }
         public virtual InvoiceStatusDto InvoiceStatus { get; set; }
         public virtual CustomerDto Customer { get; set; }
