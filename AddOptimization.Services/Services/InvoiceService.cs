@@ -154,9 +154,8 @@ namespace AddOptimization.Services.Services
                     CustomerAddress = customerAddress,
                     CompanyAddress = companyAddress,
                     CompanyBankDetails = companyBankDetails,
-                    ExpiryDate = customer.PaymentClearanceDays.HasValue ? DateTime.UtcNow.AddDays(customer.PaymentClearanceDays.Value) : DateTime.UtcNow.AddDays(15),
                     InvoiceDate = month.EndDate,
-                    InvoiceNumber = Convert.ToInt64(invoiceNumber),
+                    InvoiceNumber = invoiceNumber,
                     InvoiceStatusId = draftStatusId,
                     PaymentStatusId = unPaidStatusId,
                     PaymentClearanceDays = customer.PaymentClearanceDays.HasValue ? customer.PaymentClearanceDays.Value : 15,
@@ -273,11 +272,20 @@ namespace AddOptimization.Services.Services
 
         private async Task<string> GenerateInvoiceNumber(MonthDateRange month)
         {
-            var dateFormat = $"{month.StartDate.Year}{month.StartDate.Month:D2}";
+            try
+            {
+                var dateFormat = $"{month.StartDate.Year}{month.StartDate.Month:D2}";
+                var draftInvoicesCount = (await _invoiceRepository.QueryAsync(x => x.InvoiceNumber.Contains(dateFormat) , ignoreGlobalFilter: true)).Count();
+                var newDraftNumber = draftInvoicesCount + 1;
+                var draftInvoiceNumber = $"Draft-{dateFormat}{newDraftNumber}";
 
-            var maxInvoiceNo = (await _invoiceRepository.QueryAsync(x => x.InvoiceNumber.ToString().StartsWith(dateFormat), ignoreGlobalFilter: true)).Count();
-
-            return $"{dateFormat}{maxInvoiceNo + 1}";
+                return draftInvoiceNumber;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
         }
 
         private async Task<string> GetCustomerAddress(Customer customer)
@@ -381,10 +389,10 @@ namespace AddOptimization.Services.Services
                                 .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
                                 .Replace("[CompanyName]", invoice?.Customer?.Organizations)
                                 .Replace("[Customer]", contactName)
-                                .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
+                                .Replace("[InvoiceNumber]", invoice?.InvoiceNumber)
                                 .Replace("[InvoiceDate]", LocaleHelper.FormatDate(invoice.InvoiceDate.Date))
                                 .Replace("[TotalAmountDue]", LocaleHelper.FormatCurrency(invoice.DueAmount))
-                                .Replace("[DueDate]", LocaleHelper.FormatDate(invoice.ExpiryDate.Date))
+                                .Replace("[DueDate]", LocaleHelper.FormatDate(invoice.ExpiryDate.Value.Date))
                                 .Replace("[LinkToInvoice]", link)
                                 .Replace("[CompanyAccountingEmail]", companyInfo.AccountingEmail)
                                 .Replace("[company]", companyInfo.CompanyName)
@@ -402,7 +410,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private async Task<bool> SendInvoiceDeclinedEmailToAccountAdmins(IEnumerable<dynamic> accountAdmins, string accountContactName, long invoiceNumber, DateTime expiryDate, decimal totalAmountDue, string comment, Invoice invoice)
+        private async Task<bool> SendInvoiceDeclinedEmailToAccountAdmins(IEnumerable<dynamic> accountAdmins, string accountContactName, string invoiceNumber, DateTime expiryDate, decimal totalAmountDue, string comment, Invoice invoice)
         {
             try
             {
@@ -412,7 +420,7 @@ namespace AddOptimization.Services.Services
                 var link = GetInvoiceLinkForCustomer(invoice.Id);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.DeclinedInvoice);
                 emailTemplate = emailTemplate.Replace("[AccountContactName]", accountContactName)
-                                             .Replace("[InvoiceNumber]", invoiceNumber.ToString())
+                                             .Replace("[InvoiceNumber]", invoiceNumber)
                                              .Replace("[TotalAmountDue]", LocaleHelper.FormatCurrency(totalAmountDue))
                                              .Replace("[ExpiryDate]", LocaleHelper.FormatDate(expiryDate))
                                              .Replace("[Customer]", customer)
@@ -437,7 +445,7 @@ namespace AddOptimization.Services.Services
         {
             filter.GetValue<string>("invoiceNumber", (v) =>
             {
-                entities = entities.Where(e => e.InvoiceNumber == Convert.ToInt32(v));
+                entities = entities.Where(e => e.InvoiceNumber.ToLower().Contains(v.ToLower()) || e.InvoiceNumber.ToLower().Contains(v.ToLower()));
             });
 
             filter.GetValue<string>("customerName", (v) =>
@@ -577,84 +585,85 @@ namespace AddOptimization.Services.Services
 
         public async Task<ApiResult<InvoiceResponseDto>> Create(InvoiceRequestDto model)
         {
-                try
+            try
+            {
+                await _unitOfWork.BeginTransactionAsync();
+                var eventStatus = (await _invoiceStatusService.Search()).Result;
+                var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.DRAFT.ToString()).Id;
+                var company = await _companyRepository.FirstOrDefaultAsync(ignoreGlobalFilter: true);
+                string companyAddress = await GenerateCompanyAddress(company);
+                string companyBankDetails = GenerateCompanyBankDetails(company);
+                var paymentStatus = (await _paymentStatusService.Search()).Result;
+                var paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.UNPAID.ToString()).Id;
+
+                string invoiceNumber;
+                if (model.HasInvoiceFinalized)
                 {
-                    await _unitOfWork.BeginTransactionAsync();
-                    var eventStatus = (await _invoiceStatusService.Search()).Result;
-                    var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.DRAFT.ToString()).Id;
-                    var company = await _companyRepository.FirstOrDefaultAsync(ignoreGlobalFilter: true);
-                    string companyAddress = await GenerateCompanyAddress(company);
-                    string companyBankDetails = GenerateCompanyBankDetails(company);
+                    invoiceNumber = await GenerateInvoiceNumber();
+                }
+                else
+                {
+                    invoiceNumber = await GenerateDraftNumber();
+                }
+                var id = await _invoiceRepository.MaxAsync(e => (int)e.Id, ignoreGlobalFilter: true);
 
-                    var paymentStatus = (await _paymentStatusService.Search()).Result;
-                    var paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.UNPAID.ToString()).Id;
+                Invoice entity = new Invoice
+                {
+                    Id = id + 1,
+                    InvoiceNumber = invoiceNumber,
+                    PaymentStatusId = paymentStatusId,
+                    VatValue = model.InvoiceDetails.Sum(x => (x.UnitPrice * x.Quantity * x.VatPercent) / 100),
+                    TotalPriceIncludingVat = model.InvoiceDetails.Sum(x => x.TotalPriceIncludingVat),
+                    TotalPriceExcludingVat = model.InvoiceDetails.Sum(x => x.TotalPriceExcludingVat),
+                    CustomerId = model.CustomerId,
+                    InvoiceDate = model.InvoiceDate,
+                    CustomerAddress = model.CustomerAddress,
+                    InvoiceStatusId = statusId,
+                    PaymentClearanceDays = model.PaymentClearanceDays,
+                    CompanyAddress = companyAddress,
+                    CompanyBankDetails = companyBankDetails,
+                    MetaData = "Manual",
+                };
+                entity.DueAmount = entity.TotalPriceIncludingVat;
+                await _invoiceRepository.InsertAsync(entity);
 
-                    var now = DateTime.UtcNow;
-                    var currentYear = now.Year;
-                    var currentMonth = now.Month;
-                    var dateFormat = $"{currentYear}{currentMonth:D2}";
-
-                    var maxId = (await _invoiceRepository.QueryAsync(x => x.InvoiceNumber.ToString().StartsWith(dateFormat), ignoreGlobalFilter: true)).Count();
-                    var newId = maxId + 1;
-                    var invoiceNumber = long.Parse($"{DateTime.UtcNow:yyyyMM}{newId}");
-                    var id = await _invoiceRepository.MaxAsync(e => (int)e.Id, ignoreGlobalFilter: true);
-                    Invoice entity = new Invoice
+                foreach (var summary in model.InvoiceDetails)
+                {
+                    var invoiceDetail = new InvoiceDetail
                     {
-                        Id = id + 1,
-                        InvoiceNumber = Convert.ToInt64(invoiceNumber),
-                        PaymentStatusId = paymentStatusId,
-                        VatValue = model.InvoiceDetails.Sum(x => (x.UnitPrice * x.Quantity * x.VatPercent) / 100),
-                        TotalPriceIncludingVat = model.InvoiceDetails.Sum(x => x.TotalPriceIncludingVat),
-                        TotalPriceExcludingVat = model.InvoiceDetails.Sum(x => x.TotalPriceExcludingVat),
-                        CustomerId = model.CustomerId,
-                        ExpiryDate = model.ExpiryDate,
-                        InvoiceDate = model.InvoiceDate,
-                        CustomerAddress = model.CustomerAddress,
-                        InvoiceStatusId = statusId,
-                        PaymentClearanceDays = model.PaymentClearanceDays,
-                        CompanyAddress = companyAddress,
-                        CompanyBankDetails = companyBankDetails,
-                        MetaData = "Manual",
+                        InvoiceId = entity.Id,
+                        ReferenceName = summary.ReferenceName,
+                        Quantity = summary.Quantity,
+                        VatPercent = summary.VatPercent,
+                        UnitPrice = summary.UnitPrice,
+                        TotalPriceExcludingVat = summary.TotalPriceExcludingVat,
+                        TotalPriceIncludingVat = summary.TotalPriceIncludingVat,
+                        Metadata = "Manual",
+                        Description = summary.Description,
+
                     };
-                    entity.DueAmount = entity.TotalPriceIncludingVat;
-                    await _invoiceRepository.InsertAsync(entity);
 
-                    foreach (var summary in model.InvoiceDetails)
-                    {
-                        var invoiceDetail = new InvoiceDetail
-                        {
-                            InvoiceId = entity.Id,
-                            ReferenceName = summary.ReferenceName,
-                            Quantity = summary.Quantity,
-                            VatPercent = summary.VatPercent,
-                            UnitPrice = summary.UnitPrice,
-                            TotalPriceExcludingVat = summary.TotalPriceExcludingVat,
-                            TotalPriceIncludingVat = summary.TotalPriceIncludingVat,
-                            Metadata = "Manual",
-                            Description = summary.Description,
-
-                        };
-
-                        await _invoiceDetailRepository.InsertAsync(invoiceDetail);
-                        entity.InvoiceDetails.Add(invoiceDetail);
-                    }
+                    await _invoiceDetailRepository.InsertAsync(invoiceDetail);
+                    entity.InvoiceDetails.Add(invoiceDetail);
+                }
                 InvoiceHistory historyEntity = new InvoiceHistory
                 {
                     InvoiceId = entity.Id,
                     InvoiceStatusId = entity.InvoiceStatusId,
+                    Comment = $"Draft Invoice [{invoiceNumber}] Generated",
                 };
                 await _invoiceHistoryRepository.InsertAsync(historyEntity);
 
                 await _unitOfWork.CommitTransactionAsync();
-                    var mappedEntity = _mapper.Map<InvoiceResponseDto>(entity);
-                    return ApiResult<InvoiceResponseDto>.Success(mappedEntity);
-                }
-                catch (Exception ex)
-                {
-                    await _unitOfWork.RollbackTransactionAsync();
-                    _logger.LogException(ex);
-                    throw;
-                }
+                var mappedEntity = _mapper.Map<InvoiceResponseDto>(entity);
+                return ApiResult<InvoiceResponseDto>.Success(mappedEntity);
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                _logger.LogException(ex);
+                throw;
+            }
         }
 
         public async Task<PagedApiResult<InvoiceResponseDto>> Search(PageQueryFiterBase filters)
@@ -664,7 +673,6 @@ namespace AddOptimization.Services.Services
                 var entities = await _invoiceRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(x => x.Customer).Include(x => x.PaymentStatus).Include(x => x.InvoiceStatus), ignoreGlobalFilter: true);
                 entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
                 entities = ApplyFilters(entities, filters);
-                entities = entities.Where(e => !(e.InvoiceStatus.Name == "Draft" && e.ExpiryDate < DateTime.UtcNow));
                 var pagedResult = PageHelper<Invoice, InvoiceResponseDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new InvoiceResponseDto
                 {
                     Id = e.Id,
@@ -687,6 +695,7 @@ namespace AddOptimization.Services.Services
                     DueAmount = e.DueAmount,
                     HasCreditNotes = e.HasCreditNotes,
                     CreditNoteNumber = e.CreditNoteNumber,
+                    HasInvoiceFinalized = e.HasInvoiceFinalized
                 }).ToList());
 
                 var result = pagedResult;
@@ -731,6 +740,7 @@ namespace AddOptimization.Services.Services
                 model.CompanyBankAddress = company.BankAddress;
                 model.CompanyBankDetails = entity.CompanyBankDetails;
                 model.InvoiceStatusId = entity.InvoiceStatusId;
+                model.InvoiceSentDate = entity.InvoiceSentDate;
                 model.PaymentStatusId = entity.PaymentStatusId;
                 model.InvoiceNumber = entity.InvoiceNumber;
                 model.VatValue = entity.VatValue;
@@ -741,7 +751,7 @@ namespace AddOptimization.Services.Services
                 model.CreatedAt = entity.CreatedAt;
                 model.SwiftCode = company.SwiftCode;
                 model.DueAmount = entity.DueAmount;
-               
+                model.HasInvoiceFinalized = entity?.HasInvoiceFinalized;
                 var invoiceSummary = (await _invoiceDetailRepository.QueryAsync(e => e.InvoiceId == id, disableTracking: true)).ToList();
                 model.InvoiceDetails = _mapper.Map<List<InvoiceDetailDto>>(invoiceSummary);
                 return ApiResult<InvoiceResponseDto>.Success(model);
@@ -762,15 +772,15 @@ namespace AddOptimization.Services.Services
                 var draftId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.DRAFT.ToString()).Id;
                 var declinedId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.DECLINED.ToString()).Id;
 
-                
+
                 var entity = await _invoiceRepository.FirstOrDefaultAsync(e => e.Id == id);
                 if (entity == null)
                 {
                     return ApiResult<InvoiceResponseDto>.NotFound("Invoice");
                 }
-                if (entity.InvoiceStatusId == declinedId) 
+                if (entity.InvoiceStatusId == declinedId)
                 {
-                    entity.InvoiceStatusId = draftId; 
+                    entity.InvoiceStatusId = draftId;
                 }
 
                 var existingDetails = await _invoiceDetailRepository.QueryAsync(e => e.InvoiceId == id);
@@ -828,7 +838,6 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-
         public string GetInvoiceLinkForCustomer(long invoiceId)
         {
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
@@ -845,6 +854,8 @@ namespace AddOptimization.Services.Services
                 var eventStatus = (await _invoiceStatusService.Search()).Result;
                 var sentToCustomerStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.SEND_TO_CUSTOMER.ToString()).Id;
                 entity.InvoiceStatusId = sentToCustomerStatusId;
+                entity.InvoiceSentDate = DateTime.UtcNow;
+                entity.ExpiryDate = entity.InvoiceSentDate.Value.AddDays(entity.PaymentClearanceDays.Value);
                 await _invoiceRepository.UpdateAsync(entity);
             }
             InvoiceHistory historyEntity = new InvoiceHistory
@@ -888,7 +899,7 @@ namespace AddOptimization.Services.Services
                 var accountAdmins = (await _applicationService.GetAccountAdmins()).Result;
                 var adminEmails = accountAdmins.Select(admin => new { Name = admin.FullName, Email = admin.Email });
 
-                await SendInvoiceDeclinedEmailToAccountAdmins(adminEmails, entities.Customer.AccountContactName, entities.InvoiceNumber, entities.ExpiryDate, entities.DueAmount, entity.Comment ,entities);
+                await SendInvoiceDeclinedEmailToAccountAdmins(adminEmails, entities.Customer.AccountContactName, entities.InvoiceNumber, entities.ExpiryDate.Value, entities.DueAmount, entity.Comment ,entities);
 
                 return ApiResult<bool>.Success(true);
             }
@@ -919,15 +930,15 @@ namespace AddOptimization.Services.Services
                 var entities = await _invoiceHistoryRepository.QueryAsync(e => e.InvoiceId == id, disableTracking: true);
                 var mappedEntities = entities
             .OrderByDescending(e => e.CreatedAt).Select(e => new InvoiceHistoryDto
-                {
-                    Id = e.Id,
-                    InvoiceId = e.InvoiceId,
-                    InvoiceStatusId = e.InvoiceStatusId,
-                    InvoiceStatusName = e.InvoiceStatus.Name,
-                    InvoiceNumber=e.Invoice.InvoiceNumber,
-                    Comment = e.Comment,
-                    CreatedAt = e.CreatedAt,
-                }).ToList();
+            {
+                Id = e.Id,
+                InvoiceId = e.InvoiceId,
+                InvoiceStatusId = e.InvoiceStatusId,
+                InvoiceStatusName = e.InvoiceStatus.Name,
+                InvoiceNumber = e.Invoice.InvoiceNumber,
+                Comment = e.Comment,
+                CreatedAt = e.CreatedAt,
+            }).ToList();
 
                 return ApiResult<List<InvoiceHistoryDto>>.Success(mappedEntities);
             }
@@ -957,12 +968,12 @@ namespace AddOptimization.Services.Services
                                 .Replace("[CustomerName]", invoice?.Customer?.ManagerName)
                                  .Replace("[AccountContactName]", invoice?.Customer?.AccountContactName)
                                  .Replace("[CompanyAccountingEmail]", companyInfo.AccountingEmail)
-                                .Replace("[InvoiceNumber]", invoice?.InvoiceNumber.ToString())
+                                .Replace("[InvoiceNumber]", invoice?.InvoiceNumber)
                                 .Replace("[Customer]", customer)
                                 .Replace("[Company]", invoice?.Customer?.Company)
                                 .Replace("[InvoiceDate]", LocaleHelper.FormatDate(invoice.InvoiceDate.Date))
                                 .Replace("[TotalAmountDue]", LocaleHelper.FormatCurrency(invoice.DueAmount))
-                                .Replace("[DueDate]", LocaleHelper.FormatDate(invoice.ExpiryDate.Date))
+                                .Replace("[DueDate]", LocaleHelper.FormatDate(invoice.ExpiryDate.Value.Date))
                                 .Replace("[LinkToInvoice]", link);
                 var emailResult = await _emailService.SendEmail(invoice?.Customer?.AccountContactEmail, subject, emailTemplate);
                 return ApiResult<bool>.Success(true);
@@ -994,5 +1005,109 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
+
+
+        private async Task<string> GenerateDraftNumber()
+        {
+            try
+            {
+                var now = DateTime.UtcNow;
+                var currentYear = now.Year;
+                var currentMonth = now.Month;
+                var dateFormat = $"{currentYear}{currentMonth:D2}";
+
+                var draftInvoicesCount = (await _invoiceRepository.QueryAsync(x => x.InvoiceNumber.Contains(dateFormat) , ignoreGlobalFilter: true)).Count();
+                var newDraftNumber = draftInvoicesCount + 1;
+                var draftInvoiceNumber = $"Draft-{DateTime.UtcNow:yyyyMM}{newDraftNumber}";
+
+                return draftInvoiceNumber;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+
+        private async Task<string> GenerateInvoiceNumber()
+        {
+            try
+            {
+                var now = DateTime.UtcNow;
+                var currentYear = now.Year;
+                var currentMonth = now.Month;
+                var currentDateFormat = $"{currentYear}{currentMonth:D2}";
+                
+                var finalizedInvoicesCount = (await _invoiceRepository.QueryAsync(x => (x.HasInvoiceFinalized == true) && x.InvoiceNumber.StartsWith(currentDateFormat), ignoreGlobalFilter: true)).Count();
+
+                var invoiceNumber = finalizedInvoicesCount + 1;
+                var finalizedInvoiceNumber = $"{DateTime.UtcNow:yyyyMM}{invoiceNumber}";
+
+                return finalizedInvoiceNumber;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+
+        public async Task<ApiResult<InvoiceResponseDto>> FinalizedInvoice(int id)
+        {
+            try
+            {
+
+                var entity = await _invoiceRepository.FirstOrDefaultAsync(e => e.Id == id);
+                if (entity == null)
+                {
+                    return ApiResult<InvoiceResponseDto>.NotFound("Invoice");
+                }
+                var eventStatus = (await _invoiceStatusService.Search()).Result;
+                var readyToSendStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusesEnum.READY_TO_SEND.ToString()).Id;
+
+                var invoiceNumber = await GenerateInvoiceNumber();
+                entity.InvoiceNumber = invoiceNumber;
+                entity.HasInvoiceFinalized = true;
+
+                entity.InvoiceStatusId = readyToSendStatusId;
+                await _invoiceRepository.UpdateAsync(entity);
+                InvoiceHistory historyEntity = new InvoiceHistory
+                {
+                    InvoiceId = entity.Id,
+                    InvoiceStatusId = entity.InvoiceStatusId,
+                    Comment = "Invoice Finalized",
+                };
+                await _invoiceHistoryRepository.InsertAsync(historyEntity);
+                var mappedEntity = _mapper.Map<InvoiceResponseDto>(entity);
+                return ApiResult<InvoiceResponseDto>.Success(mappedEntity);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+        public async Task<ApiResult<bool>> Delete(int id)
+        {
+            try
+            {
+                var entity = await _invoiceRepository.FirstOrDefaultAsync(t => t.Id == id);
+                entity.IsDeleted = true;
+                await _invoiceRepository.UpdateAsync(entity);
+                return ApiResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
     }
+
+
+
 }
