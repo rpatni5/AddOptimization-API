@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using AddOptimization.Data.Common;
 using AddOptimization.Data.Extensions;
 using AddOptimization.Utilities.Extensions;
+using System.Text.RegularExpressions;
 
 namespace AddOptimization.Data.Entities;
 
@@ -79,7 +80,12 @@ public partial class AddOptimizationContext : DbContext
     public virtual DbSet<InvoiceCreditNotes> InvoiceCreditNotes { get; set; }
     public virtual DbSet<EmployeeIdentity> EmployeeIdentity{ get; set; }
     public virtual DbSet<QuoteHistory> QuoteHistory { get; set; }
-
+    public virtual DbSet<Template> Templates { get; set; }
+    public virtual DbSet<TemplateFolder> TemplateFolders { get; set; }
+    public virtual DbSet<TemplateEntries> TemplateEntries { get; set; }
+    public virtual DbSet<Group> Groups { get; set; }
+    public virtual DbSet<GroupMember> GroupMembers { get; set; }
+    public virtual DbSet<SharedEntry> SharedEntries { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
