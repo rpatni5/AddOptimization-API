@@ -381,8 +381,19 @@ namespace AddOptimization.Services.Mappings
 
             });
             CreateMap<InvoiceCreditPaymentDto, InvoiceCreditNotes>();
+            CreateMap<TemplateFolder, TemplateFolderDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+            });
+            CreateMap<TemplateFolderDto, TemplateFolder>();
 
-
+            CreateMap<Template, TemplateDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+            });
+            CreateMap<TemplateDto, Template>();
         }
     }
 }
