@@ -234,9 +234,8 @@ public class AuthService : IAuthService
 
     public async Task<ApiResult<AuthResponseDto>> MicrosoftLogin(MicrosoftLoginDto model)
     {
-        var issuer = _configuration["Issuer"]; // Read from config
-        var audience = _configuration["MicrosoftClientId"];
-        var isTokenValid = ValidateIdToken(model?.IdToken, issuer, audience, out var preferredUsername);
+
+        var isTokenValid = ValidateIdToken(model?.IdToken, out var preferredUsername);
         if (!isTokenValid)
             return null;
 
@@ -294,29 +293,42 @@ public class AuthService : IAuthService
     {
         return entity.UserRoles.Any(c => c.Role.Name.Contains("Employee", StringComparison.InvariantCultureIgnoreCase));
     }
-    public bool ValidateIdToken(string token, string expectedIssuer, string expectedAudience, out string preferredUsername)
+    public bool ValidateIdToken(string token, out string preferredUsername)
     {
         try
         {
             // Decode the token
+            var issuer = _configuration["Issuer"];
+            var expectedIssuerMobile = _configuration["IssuerMobile"];
+            var audience = _configuration["MicrosoftClientId"];
             var handler = new JwtSecurityTokenHandler();
             var parsedToken = handler.ReadJwtToken(token);
-
-            // Validate required fields
-            if (!parsedToken.Issuer.Contains(expectedIssuer))
+            var isWebIDToken = false;
+            switch (true)
             {
-                preferredUsername = "";
-                return false;
+                case true when parsedToken.Issuer.Contains(issuer):
+                    isWebIDToken = true;
+                    _logger.LogInformation("Microsoft login token contains the web issuer.");
+                    break;
+
+                case true when parsedToken.Issuer.Contains(expectedIssuerMobile):
+                    _logger.LogInformation("Microsoft login token contains the mobile issuer.");
+                    break;
+
+                default:
+                    preferredUsername = "";
+                    return false;
             }
 
-            if (parsedToken.Audiences.FirstOrDefault() != expectedAudience)
+            if (parsedToken.Audiences.FirstOrDefault() != audience)
             {
                 preferredUsername = "";
                 return false;
             }
 
             var claims = (List<Claim>)parsedToken.Claims;
-            var preferredUsernameValue = claims.FirstOrDefault(c => c.Type == "preferred_username")?.Value;
+            var name = isWebIDToken ? "preferred_username" : "unique_name";
+            var preferredUsernameValue = claims.FirstOrDefault(c => c.Type == name)?.Value;
             if (preferredUsernameValue == null || preferredUsernameValue == "")
             {
                 preferredUsername = "";
