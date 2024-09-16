@@ -1,0 +1,16 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace AddOptimization.Contracts.Dto
+{
+    public class CustomFieldDto
+    {
+        public string FieldType { get; set; }
+        public string Name { get; set; }
+        public string Value { get; set; }
+        public bool Hide { get; set; }
+    }
+}

@@ -1,0 +1,33 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using AddOptimization.API.Common;
+using AddOptimization.Contracts.Services;
+using AddOptimization.Contracts.Constants;
+using AddOptimization.Contracts.Dto;
+
+namespace AddOptimization.API.Controllers;
+[Authorize]
+public class CreditCardController : CustomApiControllerBase
+{
+
+    private readonly ICreditCardService _creditCardService;
+    public CreditCardController(ILogger<CreditCardController> logger, ICreditCardService creditCardService) : base(logger)
+    {
+        _creditCardService = creditCardService;
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create(TemplateEntryDto model)
+    {
+        try
+        {
+            var retVal = await _creditCardService.SaveCreditCardDetails(model);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+   
+}
