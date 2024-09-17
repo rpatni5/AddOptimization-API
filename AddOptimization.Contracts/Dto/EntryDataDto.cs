@@ -10,8 +10,10 @@ namespace AddOptimization.Contracts.Dto
     public class EntryDataDto
     {
         public string? Title { get; set; }
-        public  CreditCardDto? crditCardInfo { get; set; }
+        public  CreditCardDto? CreditCardInfo { get; set; }
         public string? Notes { get; set; }
-        public List<CustomFieldDto> CustomFields { get; set; }
+        public List<CustomFieldDto> CustomFields { get; set; } 
+
+        public bool IsValueEncrypted { get; set; }
     }
 }

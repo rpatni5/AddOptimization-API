@@ -4,6 +4,8 @@ using AddOptimization.API.Common;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Contracts.Constants;
 using AddOptimization.Contracts.Dto;
+using AddOptimization.Services.Services;
+using AddOptimization.Utilities.Models;
 
 namespace AddOptimization.API.Controllers;
 [Authorize]
@@ -29,5 +31,20 @@ public class CreditCardController : CustomApiControllerBase
             return HandleException(ex);
         }
     }
-   
+
+
+    [HttpPost("search")]
+    public async Task<IActionResult> Search()
+    {
+        try
+        {
+            var result = await _creditCardService.Search();
+            return HandleResponse(result);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
 }

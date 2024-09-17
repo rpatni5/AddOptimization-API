@@ -3,7 +3,6 @@ using AddOptimization.Data.Entities;
 using AddOptimization.Contracts.Dto;
 using System.Text.Json;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
-using Newtonsoft.Json;
 
 namespace AddOptimization.Services.Mappings
 {
@@ -396,18 +395,24 @@ namespace AddOptimization.Services.Mappings
             });
             CreateMap<TemplateDto, Template>();
 
+            CreateMap<string, EntryDataDto>().ConvertUsing(json => JsonSerializer.Deserialize<EntryDataDto>(json, jsonOptions));
+
+
             CreateMap<TemplateEntries, TemplateEntryDto>().AfterMap((s, d) =>
             {
                 d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
                 d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
                 d.CreatedAt = s.CreatedAt?.Date;
                 d.UpdatedAt = s.UpdatedAt?.Date;
-                d.EntryData = !string.IsNullOrEmpty(s.EntryData)? JsonConvert.DeserializeObject<EntryDataDto>(s.EntryData): new EntryDataDto();
+                d.EntryData = s.EntryData == null ? new EntryDataDto() : JsonSerializer.Deserialize<EntryDataDto>(s.EntryData);
             });
-            CreateMap<TemplateEntryDto, TemplateEntries>().AfterMap((d, s) =>
+
+            CreateMap<TemplateEntryDto, TemplateEntries>().AfterMap((s, d) =>
             {
-                s.EntryData = JsonConvert.SerializeObject(d.EntryData); s.EntryData = d.EntryData != null ? JsonConvert.SerializeObject(d.EntryData) : string.Empty;
+                d.EntryData = s.EntryData != null ? JsonSerializer.Serialize(s.EntryData, jsonOptions) : string.Empty;
             });
+
+            CreateMap<CreditCardDto, EntryDataDto>();
         }
     }
 }

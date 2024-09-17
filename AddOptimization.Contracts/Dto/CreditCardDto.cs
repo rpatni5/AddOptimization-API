@@ -11,8 +11,8 @@ namespace AddOptimization.Contracts.Dto
         public string? CardholderName { get; set; }
         public string? CardNumber { get; set; }
         public string? ExpirationDate { get; set; }
-        public int? Cvv { get; set; }
-        public int? CardPin { get; set; }
+        public string? Cvv { get; set; }
+        public string? CardPin { get; set; }
         public string? ZipCode { get; set; }
     }
 }
