@@ -79,7 +79,7 @@ public partial class AddOptimizationContext : DbContext
     public virtual DbSet<InvoiceCreditNotes> InvoiceCreditNotes { get; set; }
     public virtual DbSet<EmployeeIdentity> EmployeeIdentity{ get; set; }
     public virtual DbSet<QuoteHistory> QuoteHistory { get; set; }
-
+    public virtual DbSet<SavedSearch> SavedSearches { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
