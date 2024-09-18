@@ -8,6 +8,7 @@ namespace AddOptimization.Contracts.Services
         Task<ApiResult<bool>> SaveCreditCardDetails(TemplateEntryDto model);
         Task<ApiResult<TemplateEntryDto>> GetCardDetailsById(Guid id);
         Task<ApiResult<List<TemplateEntryDto>>> Search();
+        Task<ApiResult<TemplateEntryDto>> Update(Guid id, TemplateEntryDto model);
     }
 }
 

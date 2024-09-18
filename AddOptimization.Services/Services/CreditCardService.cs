@@ -166,6 +166,43 @@ namespace AddOptimization.Services.Services
             }
         }
 
+        public async Task<ApiResult<TemplateEntryDto>> Update(Guid id, TemplateEntryDto model)
+        {
+            try
+            {
+                var entity = await _templateEntryRepository.FirstOrDefaultAsync(e => e.Id == id);
+                _mapper.Map(model, entity);
+                entity.FolderId = model.FolderId;
+
+                var (key, iv) = GetEncryptionKeyAndIV();
+
+                if (model.EntryData?.CreditCardInfo != null)
+                {
+                    var creditCardInfo = model.EntryData.CreditCardInfo;
+                    if (!string.IsNullOrEmpty(creditCardInfo.Cvv))
+                    {
+                        creditCardInfo.Cvv = Convert.ToBase64String(AesEncryptionDecryptionHelper.Encrypt(creditCardInfo.Cvv, key, iv));
+                        model.EntryData.IsValueEncrypted = true;
+                    }
+
+                    if (!string.IsNullOrEmpty(creditCardInfo.CardPin))
+                    {
+                        creditCardInfo.CardPin = Convert.ToBase64String(AesEncryptionDecryptionHelper.Encrypt(creditCardInfo.CardPin, key, iv));
+                        model.EntryData.IsValueEncrypted = true;
+                    }
+                }
+
+                entity.EntryData = JsonConvert.SerializeObject(model.EntryData);
+                await _templateEntryRepository.UpdateAsync(entity);
+                var mappedEntity = _mapper.Map<TemplateEntryDto>(entity);
+                return ApiResult<TemplateEntryDto>.Success(mappedEntity);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
         private (byte[] key, byte[] iv) GetEncryptionKeyAndIV()
         {
             var key = Encoding.ASCII.GetBytes(_configuration["EncryptionSettings:Key"]);

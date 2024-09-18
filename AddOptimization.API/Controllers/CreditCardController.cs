@@ -61,6 +61,18 @@ public class CreditCardController : CustomApiControllerBase
         }
     }
 
-
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] TemplateEntryDto model)
+    {
+        try
+        {
+            var retVal = await _creditCardService.Update(id, model);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
 
 }
