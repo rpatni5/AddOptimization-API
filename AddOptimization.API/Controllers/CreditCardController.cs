@@ -47,4 +47,20 @@ public class CreditCardController : CustomApiControllerBase
         }
     }
 
+    [HttpGet("get-by-cardId/{id}")]
+    public async Task<IActionResult> GetCardDetailsById(Guid id)
+    {
+        try
+        {
+            var retVal = await _creditCardService.GetCardDetailsById(id);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+
+
 }

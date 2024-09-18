@@ -127,6 +127,45 @@ namespace AddOptimization.Services.Services
         }
 
 
+        public async Task<ApiResult<TemplateEntryDto>> GetCardDetailsById(Guid id)
+        {
+            try
+            {
+                var entity = (await _templateEntryRepository.QueryAsync(o => o.Id == id && !o.IsDeleted, ignoreGlobalFilter: true)).FirstOrDefault();
+                if (entity == null)
+                {
+                    return ApiResult<TemplateEntryDto>.NotFound("Country");
+                }
+
+                var mappedEntity = _mapper.Map<TemplateEntryDto>(entity);
+               
+                    var creditCardInfo = mappedEntity.EntryData?.CreditCardInfo;
+                    if (creditCardInfo != null && mappedEntity.EntryData.IsValueEncrypted == true)
+                    {
+                        var (key, iv) = GetEncryptionKeyAndIV();
+
+                        if (!string.IsNullOrEmpty(creditCardInfo.Cvv))
+                        {
+                            var cipherBytes = Convert.FromBase64String(creditCardInfo.Cvv);
+                            creditCardInfo.Cvv = AesEncryptionDecryptionHelper.Decrypt(cipherBytes, key, iv);
+                        }
+
+                        if (!string.IsNullOrEmpty(creditCardInfo.CardPin))
+                        {
+                            var cipherBytes = Convert.FromBase64String(creditCardInfo.CardPin);
+                            creditCardInfo.CardPin = AesEncryptionDecryptionHelper.Decrypt(cipherBytes, key, iv);
+                        }
+                    }
+                return ApiResult<TemplateEntryDto>.Success(mappedEntity);
+            }
+
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
         private (byte[] key, byte[] iv) GetEncryptionKeyAndIV()
         {
             var key = Encoding.ASCII.GetBytes(_configuration["EncryptionSettings:Key"]);
