@@ -9,6 +9,7 @@ namespace AddOptimization.Contracts.Services
         Task<ApiResult<TemplateEntryDto>> GetCardDetailsById(Guid id);
         Task<ApiResult<List<TemplateEntryDto>>> Search();
         Task<ApiResult<TemplateEntryDto>> Update(Guid id, TemplateEntryDto model);
+        Task<ApiResult<bool>> Delete(Guid id);
     }
 }
 

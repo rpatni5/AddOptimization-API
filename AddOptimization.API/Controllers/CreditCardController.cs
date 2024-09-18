@@ -75,4 +75,19 @@ public class CreditCardController : CustomApiControllerBase
         }
     }
 
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        try
+        {
+            var retVal = await _creditCardService.Delete(id);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
 }

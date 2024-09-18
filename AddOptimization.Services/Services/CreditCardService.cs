@@ -203,6 +203,28 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
+
+        public async Task<ApiResult<bool>> Delete(Guid id)
+        {
+            try
+            {
+                var entity = await _templateEntryRepository.FirstOrDefaultAsync(t => t.Id == id, ignoreGlobalFilter: true);
+                if (entity == null)
+                {
+                    return ApiResult<bool>.NotFound("Card Details");
+                }
+
+                entity.IsDeleted = true;
+                await _templateEntryRepository.UpdateAsync(entity);
+                return ApiResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
         private (byte[] key, byte[] iv) GetEncryptionKeyAndIV()
         {
             var key = Encoding.ASCII.GetBytes(_configuration["EncryptionSettings:Key"]);
