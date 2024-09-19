@@ -10,6 +10,8 @@ namespace AddOptimization.Contracts.Services
         Task<ApiResult<List<TemplateEntryDto>>> Search();
         Task<ApiResult<TemplateEntryDto>> Update(Guid id, TemplateEntryDto model);
         Task<ApiResult<bool>> Delete(Guid id);
+        Task<ApiResult<List<ApplicationUserDto>>> GetAllUsers();
+        Task<ApiResult<List<GroupDto>>> GetAllGroups();
     }
 }
 

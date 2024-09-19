@@ -30,14 +30,18 @@ namespace AddOptimization.Services.Services
         private readonly IMapper _mapper;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration;
+        private readonly IGenericRepository<ApplicationUser> _applicationUserRepository;
+        private readonly IGenericRepository<Group> _groupRepository;
 
-        public CreditCardService(IGenericRepository<TemplateEntries> templateEntryRepository, ILogger<CreditCardService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, IConfiguration configuration)
+        public CreditCardService(IGenericRepository<TemplateEntries> templateEntryRepository, ILogger<CreditCardService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository)
         {
             _templateEntryRepository = templateEntryRepository;
             _logger = logger;
             _mapper = mapper;
             _httpContextAccessor = httpContextAccessor;
             _configuration = configuration;
+            _applicationUserRepository = applicationUserRepository;
+            _groupRepository = groupRepository;
         }
 
 
@@ -224,6 +228,39 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
+
+
+        public async Task<ApiResult<List<ApplicationUserDto>>> GetAllUsers()
+        {
+            try
+            {
+                var entities = await _applicationUserRepository.QueryAsync((e => e.IsActive), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser));
+                var mappedEntities = _mapper.Map<List<ApplicationUserDto>>(entities);
+                return ApiResult<List<ApplicationUserDto>>.Success(mappedEntities);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+
+        public async Task<ApiResult<List<GroupDto>>> GetAllGroups()
+        {
+            try
+            {
+                var entities = await _groupRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser));
+                var mappedEntities = _mapper.Map<List<GroupDto>>(entities);
+                return ApiResult<List<GroupDto>>.Success(mappedEntities);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
 
         private (byte[] key, byte[] iv) GetEncryptionKeyAndIV()
         {

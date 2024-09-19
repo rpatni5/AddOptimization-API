@@ -90,4 +90,32 @@ public class CreditCardController : CustomApiControllerBase
         }
     }
 
+    [HttpGet("get-all-users")]
+    public async Task<IActionResult> GetAllUsers()
+    {
+        try
+        {
+            var retVal = await _creditCardService.GetAllUsers();
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    [HttpGet("get-all-groups")]
+    public async Task<IActionResult> GetAllGroups()
+    {
+        try
+        {
+            var retVal = await _creditCardService.GetAllGroups();
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
 }

@@ -413,6 +413,13 @@ namespace AddOptimization.Services.Mappings
             });
 
             CreateMap<CreditCardDto, EntryDataDto>();
+
+            CreateMap<Group, GroupDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+            });
+            CreateMap<GroupDto, Group>();
         }
     }
 }
