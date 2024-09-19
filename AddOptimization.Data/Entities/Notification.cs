@@ -6,6 +6,9 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using iText.Layout.Element;
+using MathNet.Numerics.Distributions;
+using Stripe.Terminal;
 
 namespace AddOptimization.Data.Entities
 {
@@ -25,10 +28,9 @@ namespace AddOptimization.Data.Entities
         public bool? IsRead { get; set; }
 
         public int? AppplicationUserId { get; set; }
-
         public DateTime? ReadAt { get; set; }
 
         [ForeignKey("AppplicationUserId")]
-        public ApplicationUser ApplicationUser { get; set; }
+        public virtual ApplicationUser ApplicationUser { get; set; }
     }
 }

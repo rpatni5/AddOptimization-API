@@ -85,21 +85,27 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                 var invoiceStatusService = scope.ServiceProvider.GetRequiredService<IInvoiceStatusService>();
                 var companyService = scope.ServiceProvider.GetRequiredService<ICompanyService>();
                 var invoiceHistoryService = scope.ServiceProvider.GetRequiredService<IGenericRepository<InvoiceHistory>>();
-                var invoices = await invoiceService.GetUnpaidInvoicesForEmailReminder();
-                if (invoices?.Result == null) return false;
+                var invoices = (await invoiceService.GetUnpaidInvoicesForEmailReminder()).Result;
+                if (invoices == null) return false;
 
                 var companyInfoResult = (await companyService.GetCompanyInformation()).Result;
                 var customerEmployeeAssociation = (await customerEmployeeAssociationService.Search()).Result;
-                var approver = await appUserService.GetAccountAdmins();
+                var approver = (await appUserService.GetAccountAdmins()).Result;
                 var eventStatus = (await invoiceStatusService.Search()).Result;
                 var invoiceStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusEnum.SEND_TO_CUSTOMER.ToString()).Id;
-                foreach (var invoice in invoices?.Result)
+                foreach (var invoice in invoices)
                 {
                     var paymentClearanceDays = invoice.PaymentClearanceDays;
                     if (invoice.ExpiryDate.HasValue && invoice.ExpiryDate.Value < DateTime.Today
                         && invoice?.DueAmount > 0 && invoice.InvoiceStatusId == invoiceStatusId)
                     {
                         await SendUnpaidInvoiceReminderEmailCustomer(invoice, companyInfoResult);
+                        if (invoice?.HasInvoiceSentToAccAdmin ==false)
+                        {
+                            await invoiceService.SendOverdueNotificationToAccountAdmin(invoices, approver);
+                            invoice.HasInvoiceSentToAccAdmin = true;
+                            await invoiceService.UpdateInvoice(invoice);
+                        }
 
                         var historyEntity = new InvoiceHistory
                         {

@@ -15,6 +15,7 @@ using AddOptimization.Utilities.Services;
 using AutoMapper;
 using iText.Layout.Element;
 using iText.StyledXmlParser.Jsoup.Nodes;
+using Microsoft.AspNet.Identity;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -42,8 +43,9 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<ApplicationUser> _appUserRepository;
         private readonly ISchedulerEventTypeService _schedulerEventTypeService;
         private readonly IAbsenceRequestService _absenceRequestService;
+        private readonly INotificationService _notificationService;
         public SchedulerEventService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulerEventService> logger, IMapper mapper, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ISchedulersStatusService schedulersStatusService, IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository, IGenericRepository<Customer> customersRepository, IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository, ISchedulerEventTypeService schedulerEventTypeService, IAbsenceRequestService absenceRequestService,
-        IConfiguration configuration, IEmailService emailService, ITemplateService templateService, CustomDataProtectionService protectionService, IGenericRepository<ApplicationUser> appUserRepository)
+        IConfiguration configuration, IEmailService emailService, ITemplateService templateService, CustomDataProtectionService protectionService, IGenericRepository<ApplicationUser> appUserRepository, INotificationService notificationService)
         {
             _schedulersRepository = schedulersRepository;
             _logger = logger;
@@ -62,6 +64,7 @@ namespace AddOptimization.Services.Services
             _appUserRepository = appUserRepository;
             _schedulerEventTypeService = schedulerEventTypeService;
             _absenceRequestService = absenceRequestService;
+            _notificationService = notificationService;
         }
 
 
@@ -406,8 +409,32 @@ namespace AddOptimization.Services.Services
             var details = (await _schedulersDetailsRepository.QueryAsync(x => x.SchedulerEventId == result.Id)).ToList();
             var duration = await CalculateTimesheetsDaysAndOvertimeHours(result, details);
             await SendRequestTimesheetApprovalEmailToAccountAdmin(approver.Email, result, approver.FullName, user.FullName, duration.Item1, duration.Item2);
+            await SendNotificationToAccountAdmin(approver.Id, user, result);
             //Send email on timesheet submission to approvar -> send direct link of approval
             return saveResult;
+        }
+        private async Task SendNotificationToAccountAdmin(int Id, ApplicationUser user, SchedulerEvent schedulerEvent)
+        {
+            var subject = $"Timesheet submitted by {user.FullName}";
+            var bodyContent = $"{user.FullName} has submitted a timesheet for month {DateTimeFormatInfo.CurrentInfo.GetMonthName(schedulerEvent.StartDate.Month)}";
+            var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
+            var linkUrl = GetTimesheetLinkForAccountAdmin(schedulerEvent.Id);
+            var createdByUser = new NotificationUserDto
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+            };
+            var model = new NotificationDto
+            {
+                Subject = subject,
+                Content = bodyContent,
+                Link = linkUrl,
+                AppplicationUserId = Id,
+                GroupKey = $"Timesheet submitted #{user.FullName}",
+            };
+
+            await _notificationService.CreateAsync(model);
         }
 
         public async Task<ApiResult<List<SchedulerEventDetailsDto>>> GetSchedulerEventDetails(SchedulerEventRequestDto model)
@@ -604,6 +631,7 @@ namespace AddOptimization.Services.Services
                 else
                 {
                     await SendTimesheetApprovedEmailToEmployee(user.Email, result, user.FullName, model.ApprovarName, duration.Item1, duration.Item2);
+                    await SendApprovedNotificationToEmployee(model, user, result);
                 }
 
                 return ApiResult<bool>.Success(true);
@@ -614,6 +642,29 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
+        private async Task SendApprovedNotificationToEmployee(AccountAdminActionRequestDto admin, ApplicationUser user, SchedulerEvent schedulerEvent)
+        {
+            var subject = $"Timesheet approved by {admin.Approvar.FullName}";
+            var bodyContent = $"{admin.Approvar.FullName} has approved your timesheet for {DateTimeFormatInfo.CurrentInfo.GetMonthName(schedulerEvent.StartDate.Month)}";
+            var linkUrl = GetTimesheetLinkForEmployee(schedulerEvent.Id);
+            var createdByUser = new NotificationUserDto
+            {
+                Id = admin.Approvar.Id,
+                FullName = admin.Approvar.FullName,
+                Email = admin.Approvar.Email,
+            };
+            var model = new NotificationDto
+            {
+                Subject = subject,
+                Content = bodyContent,
+                Link = linkUrl,
+                AppplicationUserId = user.Id,
+                GroupKey = $"Timesheet approved #{admin.Approvar.FullName}",
+            };
+
+            await _notificationService.CreateAsync(model);
+        }
+
         public async Task<ApiResult<bool>> DeclineRequest(AccountAdminActionRequestDto model)
         {
             try
@@ -640,6 +691,7 @@ namespace AddOptimization.Services.Services
                 var details = (await _schedulersDetailsRepository.QueryAsync(x => x.SchedulerEventId == result.Id)).ToList();
                 var duration = await CalculateTimesheetsDaysAndOvertimeHours(result, details);
                 await SendTimesheetDeclinedEmailToEmployee(user.Email, result, user.FullName, model.ApprovarName, duration.Item1, duration.Item2, model.Comment);
+                await SendDeclinedNotificationToEmployee(model, user, result);
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -647,6 +699,29 @@ namespace AddOptimization.Services.Services
                 _logger.LogException(ex);
                 throw;
             }
+        }
+        private async Task SendDeclinedNotificationToEmployee(AccountAdminActionRequestDto admin, ApplicationUser user, SchedulerEvent schedulerEvent)
+        {
+            var subject = $"Timesheet declined by {admin.Approvar.FullName}";
+            var bodyContent = $"{admin.Approvar.FullName} has declined your timesheet for {DateTimeFormatInfo.CurrentInfo.GetMonthName(schedulerEvent.StartDate.Month)}";
+            var linkUrl = GetTimesheetLinkForEmployee(schedulerEvent.Id);
+            
+            var createdByUser = new NotificationUserDto
+            {
+                Id = admin.Approvar.Id,
+                FullName = admin.Approvar.FullName,
+                Email = admin.Approvar.Email,
+            };
+            var model = new NotificationDto
+            {
+                Subject = subject,
+                Content = bodyContent,
+                Link = linkUrl,
+                AppplicationUserId = user.Id,
+                GroupKey = $"Timesheet declined #{admin.Approvar.FullName}",
+            };
+
+            await _notificationService.CreateAsync(model);
         }
         public async Task<ApiResult<bool>> TimesheetAction(CustomerTimesheetActionDto model)
         {
@@ -688,7 +763,9 @@ namespace AddOptimization.Services.Services
                 var details = (await _schedulersDetailsRepository.QueryAsync(x => x.SchedulerEventId == result.Id)).ToList();
                 var duration = await CalculateTimesheetsDaysAndOvertimeHours(result, details);
                 await SendTimesheetActionEmailToAccountAdmin(approver, customer, user, eventDetails, model.IsApproved, entity.Comment, duration.Item1, duration.Item2);
-                await SendTimesheetActionEmailToEmployee(customer, user, eventDetails, model.IsApproved, entity.Comment, duration.Item1, duration.Item2 ,approver );
+                await SendTimesheetActionEmailToEmployee(customer, user, eventDetails, model.IsApproved, entity.Comment, duration.Item1, duration.Item2, approver);
+                await SendTimesheetActionNotificationToEmployee(customer, user, eventDetails, model.IsApproved, approver);
+                await SendTimesheetActionNotificationToAccountAdmin(approver, user, eventDetails, model.IsApproved, customer);
 
                 return ApiResult<bool>.Success(true);
             }
@@ -698,10 +775,59 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
+        private async Task SendTimesheetActionNotificationToAccountAdmin(ApplicationUser approver,
+         ApplicationUser user, SchedulerEvent schedulerEvent, bool isApprovedEmail,Customer customer)
+        {
+            var action = isApprovedEmail ? "approved" : "declined";
+            var subject = $"Timesheet {action} by {customer.Organizations}";         
+            var bodyContent = $"{customer.Organizations} has {action} timesheet for {DateTimeFormatInfo.CurrentInfo.GetMonthName(schedulerEvent.StartDate.Month)}";
+            var linkUrl = GetTimesheetLinkForAccountAdmin(schedulerEvent.Id);
+            var createdByUser = new NotificationUserDto
+            {
+                FullName = customer.Organizations,
+                Email = customer.Email,
+            };
+            var model = new NotificationDto
+            {
+                Subject = subject,
+                Content = bodyContent,
+                Link = linkUrl,
+                AppplicationUserId =approver.Id,
+                GroupKey = $"Timesheet {action} #{customer.Organizations}",
+            };
+
+            await _notificationService.CreateAsync(model);
+        }
+        private async Task SendTimesheetActionNotificationToEmployee(Customer customer,
+            ApplicationUser user, SchedulerEvent schedulerEvent, bool isApprovedEmail,
+            ApplicationUser approver)
+        {
+            var action = isApprovedEmail ? "approved" : "declined";
+            var subject = $"Timesheet {action} by {approver.FullName}";
+            var bodyContent = $"{approver.FullName} has {action} your timesheet for {DateTimeFormatInfo.CurrentInfo.GetMonthName(schedulerEvent.StartDate.Month)}";
+            var linkUrl = GetTimesheetLinkForEmployee(schedulerEvent.Id);
+            var createdByUser = new NotificationUserDto
+            {
+                Id = approver.Id,
+                FullName = approver.FullName,
+                Email = approver.Email,
+            };
+            var model = new NotificationDto
+            {
+                Subject = subject,
+                Content = bodyContent,
+                Link = linkUrl,
+                AppplicationUserId = user.Id,
+                GroupKey = $"Timesheet {action} #{approver.FullName}",
+            };
+
+            await _notificationService.CreateAsync(model);
+        }
+
 
         private async Task<bool> SendTimesheetActionEmailToEmployee(Customer customer,
             ApplicationUser user, SchedulerEvent schedulerEvent, bool isApprovedEmail,
-            string comment, decimal totalWorkingDays, decimal overtimeHours , ApplicationUser approver)
+            string comment, decimal totalWorkingDays, decimal overtimeHours, ApplicationUser approver)
         {
             try
             {
@@ -714,10 +840,10 @@ namespace AddOptimization.Services.Services
                                              .Replace("[Month]", DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(schedulerEvent.StartDate.Month))
                                              .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
                                              .Replace("[LinkToTimesheet]", link)
-                                             .Replace("[Approver]",customer.AdministrationContactName)
+                                             .Replace("[Approver]", customer.AdministrationContactName)
                                              .Replace("[WorkDuration]", LocaleHelper.FormatNumber(totalWorkingDays))
                                              .Replace("[Overtime]", LocaleHelper.FormatNumber(overtimeHours))
-                                             .Replace("[Comment]",comment);
+                                             .Replace("[Comment]", comment);
                 if (!isApprovedEmail)
                 {
                     var linkSection = $"<p>Please click on the link below to view this timesheet.<br /></p>" +
@@ -756,7 +882,7 @@ namespace AddOptimization.Services.Services
                                              .Replace("[Year]", schedulerEvent.StartDate.Year.ToString())
                                              .Replace("[WorkDuration]", LocaleHelper.FormatNumber(totalWorkingDays))
                                              .Replace("[Overtime]", LocaleHelper.FormatNumber(overtimeHours))
-                                             .Replace("[Comment]",comment);
+                                             .Replace("[Comment]", comment);
                 if (!isApprovedEmail)
                 {
                     var linkSection = $"<p>Please click on the link below to view this timesheet.<br /></p>" +
@@ -888,6 +1014,11 @@ namespace AddOptimization.Services.Services
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
             return $"{baseUrl}admin/timesheets/time-sheets-review-calendar/{schedulerEventId}";
         }
+        public string GetTimesheetLinkForEmployee(Guid schedulerEventId)
+        {
+            var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl.TrimEnd('/'));
+            return $"{baseUrl}/admin/timesheets/time-sheets-calendar/{schedulerEventId}";
+        }
         public async Task<ApiResult<bool>> SendTimesheetApprovalEmailToCustomer(Guid schedulerEventId)
         {
             var entity = (await _schedulersRepository.QueryAsync(x => x.Id == schedulerEventId, include: entities => entities.Include(e => e.ApplicationUser).Include(e => e.Customer))).FirstOrDefault();
@@ -927,6 +1058,27 @@ namespace AddOptimization.Services.Services
             var IsApproved = result.All(x => employeeIds.Contains(x.UserId));
             return IsApproved;
 
+        }
+        public async Task<ApiResult<bool>> SendNotificationToEmployee(List<SchedulerEventResponseDto> schedulerEvents)
+        {
+            var notifications = new List<NotificationDto>();
+            foreach (var schedulerEvent in schedulerEvents)
+            {
+                var subject = $"Timesheet reminder for month {DateTimeFormatInfo.CurrentInfo.GetMonthName(schedulerEvent.StartDate.Month)}";
+                var bodyContent = $"Timesheet reminder for month {DateTimeFormatInfo.CurrentInfo.GetMonthName(schedulerEvent.StartDate.Month)}";
+                var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
+                var linkUrl = GetTimesheetLinkForEmployee(schedulerEvent.Id);
+                var model = new NotificationDto
+                {
+                    Subject = subject,
+                    Content = bodyContent,
+                    Link = linkUrl,
+                    AppplicationUserId = schedulerEvent.ApplicationUser.Id,
+                    GroupKey = $"Timesheet reminder",
+                };
+                notifications.Add(model);
+            }
+            return await _notificationService.BulkCreateAsync(notifications);
         }
 
         #endregion

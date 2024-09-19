@@ -26,6 +26,7 @@ namespace AddOptimization.Data.Entities
         public decimal DueAmount { get; set; }
         public bool HasCreditNotes { get; set; }
         public bool? HasInvoiceFinalized { get; set; }
+        public bool? HasInvoiceSentToAccAdmin { get; set; }
 
         [ForeignKey(nameof(PaymentStatusId))]
         public virtual PaymentStatus PaymentStatus { get; set; }

@@ -21,7 +21,7 @@ namespace AddOptimization.Contracts.Dto
         public NotificationUserDto CreatedByUser { get; set; }
         public DateTime? ReadAt { get; set; }
         public DateTime? CreatedAt { get; set; }
-
+        public int? CreatedByUserId { get; set; }
 
     }
     public class NotificationUserDto

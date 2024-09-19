@@ -41,9 +41,9 @@ namespace AddOptimization.Services.Services
         private readonly IHolidayAllocationService _holidayAllocationService;
         private readonly ICustomerEmployeeAssociationService _customerEmployeeAssociationService;
         private readonly IPublicHolidayService _publicHolidayService;
+        private readonly INotificationService _notificationService;
         private readonly IGenericRepository<HolidayAllocation> _holidayAllocationRepository;
         private readonly IAbsenceApprovalService _absenceApprovalService;
-
         public AbsenceRequestService(IGenericRepository<AbsenceRequest> absenceRequestRepository,
             ILogger<AbsenceRequestService> logger,
             IMapper mapper,
@@ -57,6 +57,7 @@ namespace AddOptimization.Services.Services
             ICustomerEmployeeAssociationService customerEmployeeAssociationService,
             IPublicHolidayService publicHolidayService,
             IHolidayAllocationService holidayAllocationService,
+            INotificationService notificationService,
             IAbsenceApprovalService absenceApprovalService,
             IGenericRepository<ApplicationUser> applicationUserRepository)
         {
@@ -75,6 +76,7 @@ namespace AddOptimization.Services.Services
             _customerEmployeeAssociationService = customerEmployeeAssociationService;
             _publicHolidayService = publicHolidayService;
             _absenceApprovalService = absenceApprovalService;
+            _notificationService = notificationService;
         }
 
 
@@ -129,10 +131,12 @@ namespace AddOptimization.Services.Services
                 var mappedEntity = _mapper.Map<AbsenceRequestResponseDto>(entity);
                 var accountAdminResult = await _applicationUserService.GetAccountAdmins();
                 var user = (await _applicationUserRepository.FirstOrDefaultAsync(x => x.Id == mappedEntity.UserId));
+                var accountAdmins = accountAdminResult.Result.ToList();
                 foreach (var accountAdmin in accountAdminResult.Result.ToList())
                 {
                     await SendAbsenceRequestEmailToAccountAdmin(accountAdmin, user, mappedEntity);
                 }
+                await SendNotificationToAccountAdmin(accountAdmins, user, mappedEntity);
                 return ApiResult<AbsenceRequestResponseDto>.Success(mappedEntity);
             }
             catch (Exception ex)
@@ -267,10 +271,12 @@ namespace AddOptimization.Services.Services
                 var mappedEntity = _mapper.Map<AbsenceRequestResponseDto>(entity);
                 var accountAdminResult = await _applicationUserService.GetAccountAdmins();
                 var user = (await _applicationUserRepository.FirstOrDefaultAsync(x => x.Id == mappedEntity.UserId));
+                var accountAdmins = accountAdminResult.Result.ToList();
                 foreach (var accountAdmin in accountAdminResult.Result.ToList())
                 {
                     await SendAbsenceRequestEmailToAccountAdmin(accountAdmin, user, mappedEntity, oldComment, oldDuration, true);
                 }
+                await SendNotificationToAccountAdmin(accountAdmins, user, mappedEntity);
                 return ApiResult<AbsenceRequestResponseDto>.Success(mappedEntity);
             }
             catch (Exception ex)
@@ -313,7 +319,7 @@ namespace AddOptimization.Services.Services
                 var subject = !isUpdated ? $"Absence Request from {user.FullName}." : $"Absence Request from {user.FullName} Updated.";
                 var link = GetAbsenceApprovalLinkForAccountAdmin(absenceRequest.Id);
                 var action = !isUpdated ? "submitted" : "updated";
-                var duration = !isUpdated ? LocaleHelper.FormatNumber(absenceRequest.Duration) :LocaleHelper.FormatNumber(absenceRequest.Duration);
+                var duration = !isUpdated ? LocaleHelper.FormatNumber(absenceRequest.Duration) : LocaleHelper.FormatNumber(absenceRequest.Duration);
                 var emailTemplate = _templateService.ReadTemplate(EmailTemplates.AbsenceRequestApproval);
                 var startDate = absenceRequest.StartDate.HasValue ? LocaleHelper.FormatDate(absenceRequest.StartDate.Value) : "";
                 var endDate = absenceRequest.EndDate.HasValue ? LocaleHelper.FormatDate(absenceRequest.EndDate.Value) : "";
@@ -334,6 +340,36 @@ namespace AddOptimization.Services.Services
                 return false;
             }
         }
+        private async Task SendNotificationToAccountAdmin(List<ApplicationUserDto> accountAdmins, ApplicationUser user, AbsenceRequestResponseDto absenceRequest)
+        {
+            var subject = "New absence request submitted";
+            var startDate = LocaleHelper.FormatDate(absenceRequest.StartDate.Value);
+            var endDate = LocaleHelper.FormatDate(absenceRequest.EndDate.Value);
+            var bodyContent = $"{user.FullName} has requested absence request " + (endDate == null? $"for {startDate}" : $"from {startDate} to {endDate}");
+            var linkUrl = GetAbsenceApprovalLinkForAccountAdmin(absenceRequest.Id);
+            var notifications = new List<NotificationDto>();
+            var createdByUser = new NotificationUserDto
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+            };
+            foreach (var accountAdmin in accountAdmins)
+            {
+                var model = new NotificationDto
+                {
+                    Subject = subject,
+                    Content = bodyContent,
+                    Link = linkUrl,
+                    AppplicationUserId = accountAdmin.Id,
+                    GroupKey = $"Absence request #{user.FirstName}",
+                };
+                notifications.Add(model);
+            }
+
+            await _notificationService.BulkCreateAsync(notifications);
+        }
+
 
         public string GetAbsenceApprovalLinkForAccountAdmin(Guid schedulerEventId)
         {

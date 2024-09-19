@@ -21,20 +21,20 @@ public class PermissionService: IPermissionService
     private readonly IGenericRepository<RolePermission> _rolePermissionRepository;
     private readonly IGenericRepository<Role> _roleRepository;
     private readonly IGenericRepository<Field> _fieldRepository;
-   // private readonly IGenericRepository<Notification> _notificationRepository;
+    private readonly IGenericRepository<Notification> _notificationRepository;
     private readonly IGenericRepository<ApplicationUser> _applicationUserRepository;
     private readonly IGenericRepository<Screen> _screenRepository;
     private readonly ILogger<PermissionService> _logger;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IMemoryCache _cache;
-    public PermissionService(ILogger<PermissionService> logger, IHttpContextAccessor httpContextAccessor, IMemoryCache cache, IGenericRepository<RolePermission> rolePermissionRepository, IGenericRepository<Screen> screenRepository, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Role> roleRepository, IGenericRepository<Field> fieldRepository) //IGenericRepository<Notification> notificationRepository,
+    public PermissionService(ILogger<PermissionService> logger, IHttpContextAccessor httpContextAccessor, IMemoryCache cache, IGenericRepository<RolePermission> rolePermissionRepository, IGenericRepository<Screen> screenRepository, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Role> roleRepository, IGenericRepository<Field> fieldRepository,IGenericRepository<Notification> notificationRepository)
     {
         _httpContextAccessor = httpContextAccessor;
         _logger = logger;
         _cache = cache;
         _rolePermissionRepository = rolePermissionRepository;
         _screenRepository = screenRepository;
-       // _notificationRepository = notificationRepository;
+        _notificationRepository = notificationRepository;
         _applicationUserRepository = applicationUserRepository;
         _roleRepository = roleRepository;
         _fieldRepository = fieldRepository;
@@ -199,13 +199,13 @@ public class PermissionService: IPermissionService
             var currentRoles = GetCurrentUserRoles();
             var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId();
             bool isRoleUpdated = previousRoles.Count != currentRoles.Count || currentRoles.Any(r => !previousRoles.Contains(r)) || previousRoles.Any(r => !currentRoles.Contains(r));
-           // var notificationCount = (await _notificationRepository.QueryMappedAsync(n => n.Id, n => n.IsRead != true && n.AppplicationUserId == currentUserId)).Count();
+            var notificationCount = (await _notificationRepository.QueryMappedAsync(n => n.Id, n => n.IsRead != true && n.AppplicationUserId == currentUserId)).Count();
             var isEmailsEnabled = (await _applicationUserRepository.FirstOrDefaultAsync(u => u.Id == currentUserId))?.IsEmailsEnabled;
             var result = new UserAccessDto
             {
                 PermissionsVersion = permissionVersion,
                 Roles = previousRoles,
-                UnreadNotificationCount =0,// notificationCount,
+                UnreadNotificationCount = notificationCount,
                 IsEmailsEnabled = isEmailsEnabled ?? false
             };
 
