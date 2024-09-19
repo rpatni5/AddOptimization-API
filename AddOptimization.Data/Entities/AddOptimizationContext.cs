@@ -80,7 +80,7 @@ public partial class AddOptimizationContext : DbContext
     public virtual DbSet<EmployeeIdentity> EmployeeIdentity{ get; set; }
     public virtual DbSet<QuoteHistory> QuoteHistory { get; set; }
     public virtual DbSet<SavedSearch> SavedSearches { get; set; }
-
+    public virtual DbSet<Notification> Notifications { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
