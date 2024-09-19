@@ -388,7 +388,7 @@ namespace AddOptimization.Services.Services
 
                 var paymentStatus = (await _paymentStatusService.Search()).Result;
                 var paymentStatusId = paymentStatus.FirstOrDefault(x => x.StatusKey == PaymentStatusesEnum.UNPAID.ToString()).Id;
-                var quote = await _quoteRepository.FirstOrDefaultAsync(e => e.Id == quoteId, include: source => source.Include(x => x.QuoteSummaries));
+                var quote = await _quoteRepository.FirstOrDefaultAsync(e => e.Id == quoteId, include: source => source.Include(x => x.QuoteSummaries).Include(x => x.Customer));
 
 
                 var invoiceNumber = await GenerateDraftNumber();
@@ -415,8 +415,7 @@ namespace AddOptimization.Services.Services
                     TotalPriceIncludingVat = quote.QuoteSummaries.Sum(x => x.TotalPriceIncVat),
                     DueAmount = quote.QuoteSummaries.Sum(x => x.TotalPriceIncVat),
                     TotalPriceExcludingVat = quote.QuoteSummaries.Sum(x => x.TotalPriceExcVat),
-                    ExpiryDate = quote.ExpiryDate,
-                    PaymentClearanceDays = (quote.ExpiryDate - DateTime.UtcNow).Days,
+                    PaymentClearanceDays = quote.Customer.PaymentClearanceDays,
                     InvoiceDetails = new List<InvoiceDetail>()
                 };
 

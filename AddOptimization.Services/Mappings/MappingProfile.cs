@@ -382,6 +382,10 @@ namespace AddOptimization.Services.Mappings
             });
             CreateMap<InvoiceCreditPaymentDto, InvoiceCreditNotes>();
 
+            CreateMap<SavedSearch, SavedSearchDto>().AfterMap((s, d) =>
+            {
+            });
+            CreateMap<SavedSearchDto, SavedSearch>();
             CreateMap<Notification, NotificationDto>().AfterMap((s, d) => d.Meta = s.Meta ?? "{}");
 
             CreateMap<NotificationDto, Notification>();
