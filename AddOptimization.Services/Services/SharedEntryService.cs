@@ -111,6 +111,51 @@ namespace AddOptimization.Services.Services
             }
         }
 
+        public async Task<ApiResult<bool>> Delete(Guid id)
+        {
+            try
+            {
+                var entity = await _sharedEntryRepository.FirstOrDefaultAsync(t => t.Id == id, ignoreGlobalFilter: true);
+                if (entity == null)
+                {
+                    return ApiResult<bool>.NotFound("Card Details");
+                }
+
+                entity.IsDeleted = true;
+                await _sharedEntryRepository.UpdateAsync(entity);
+                return ApiResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+        public async Task<ApiResult<List<SharedEntryResponseDto>>> Update(Guid id, PermissionLevelDto model)
+        {
+            try
+            {
+                var sharedEntries = await _sharedEntryRepository.QueryAsync(e => e.EntryId == id && !e.IsDeleted, ignoreGlobalFilter: true);
+                foreach (var item in model.PermissionLevelEntries)
+                {
+                    var sharedEntry = sharedEntries.FirstOrDefault(e => e.Id == item.Id);
+                    if (sharedEntry != null)
+                    {
+                        sharedEntry.PermissionLevel = item.PermissionLevel;
+                        await _sharedEntryRepository.UpdateAsync(sharedEntry);
+                    }
+                }
+                var mappedEntities = _mapper.Map<List<SharedEntryResponseDto>>(sharedEntries);
+                return ApiResult<List<SharedEntryResponseDto>>.Success(mappedEntities);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
     }
 
 

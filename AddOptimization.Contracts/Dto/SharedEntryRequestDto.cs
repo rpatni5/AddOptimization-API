@@ -23,7 +23,18 @@ namespace AddOptimization.Contracts.Dto
     {
         public string Id { get; set; }
         public string Type { get; set; }
-
-
     }
+
+    public class PermissionLevelDto
+    {
+        public Guid EntryId { get; set; }
+        public List<PermissionLevelEntriesDto> PermissionLevelEntries { get; set; }
+    }
+
+    public class PermissionLevelEntriesDto
+    {
+        public Guid Id { get; set; }
+        public string PermissionLevel { get; set; }
+    }
+
 }

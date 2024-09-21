@@ -7,6 +7,8 @@ namespace AddOptimization.Contracts.Services
     {
         Task<ApiResult<bool>> Create(SharedEntryRequestDto model);
         Task<ApiResult<List<SharedEntryResponseDto>>> GetSharedDataBySharedId(Guid id);
+        Task<ApiResult<bool>> Delete(Guid id);
+        Task<ApiResult<List<SharedEntryResponseDto>>> Update(Guid id, PermissionLevelDto model);
     }
 }
 

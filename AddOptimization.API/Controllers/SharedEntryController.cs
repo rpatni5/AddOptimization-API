@@ -46,4 +46,33 @@ public class SharedEntryController : CustomApiControllerBase
         }
     }
 
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        try
+        {
+            var retVal = await _sharedEntryService.Delete(id);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] PermissionLevelDto model)
+    {
+        try
+        {
+            var retVal = await _sharedEntryService.Update(id, model);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
 }
