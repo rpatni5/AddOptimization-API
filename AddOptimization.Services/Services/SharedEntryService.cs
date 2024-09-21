@@ -7,6 +7,7 @@ using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Models;
 using AutoMapper;
+using iText.StyledXmlParser.Jsoup.Nodes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -28,14 +29,17 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<SharedEntry> _sharedEntryRepository;
         private readonly ILogger<SharedEntryService> _logger;
         private readonly IMapper _mapper;
+        private readonly ICreditCardService _creditCardService;
+        private readonly IGenericRepository<ApplicationUser> _applicationUserRepository;
+        private readonly IGenericRepository<Group> _groupRepository;
 
-
-        public SharedEntryService(IGenericRepository<SharedEntry> sharedEntryRepository, ILogger<SharedEntryService> logger, IMapper mapper)
+        public SharedEntryService(IGenericRepository<SharedEntry> sharedEntryRepository, ILogger<SharedEntryService> logger, IMapper mapper, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository)
         {
             _sharedEntryRepository = sharedEntryRepository;
             _logger = logger;
             _mapper = mapper;
-
+            _applicationUserRepository = applicationUserRepository;
+            _groupRepository = groupRepository;
         }
 
         public async Task<ApiResult<bool>> Create(SharedEntryRequestDto model)
@@ -70,6 +74,42 @@ namespace AddOptimization.Services.Services
             }
         }
 
+
+        public async Task<ApiResult<List<SharedEntryResponseDto>>> GetSharedDataBySharedId(Guid id)
+        {
+            try
+            {
+                var entities = (await _sharedEntryRepository.QueryAsync(o => o.EntryId == id && !o.IsDeleted,include : entities => entities.Include(e => e.ApplicationUser), ignoreGlobalFilter: true));
+                if (entities == null)
+                {
+                    return ApiResult<List<SharedEntryResponseDto>>.NotFound("details");
+                }
+                var users = await _applicationUserRepository.QueryAsync((e => e.IsActive));
+                var groups = await _groupRepository.QueryAsync((e => !e.IsDeleted));
+                var mappedEntity = _mapper.Map<List<SharedEntryResponseDto>>(entities);
+
+                foreach (var entry in mappedEntity)
+                {
+                    if (entry.SharedWithType == "user")
+                    {
+                        var user = users.FirstOrDefault(u => u.Id.ToString() == entry.SharedWithId);
+                        entry.SharedWithName = user?.FullName ?? "Unknown User";
+                    }
+                    else if (entry.SharedWithType == "group")
+                    {
+                        var group = groups.FirstOrDefault(g => g.Id.ToString() == entry.SharedWithId);
+                        entry.SharedWithName = group?.Name ?? "Unknown Group";
+                    }
+                }
+
+                return ApiResult<List<SharedEntryResponseDto>>.Success(mappedEntity);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
 
     }
 

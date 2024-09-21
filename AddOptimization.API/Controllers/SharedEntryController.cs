@@ -32,5 +32,18 @@ public class SharedEntryController : CustomApiControllerBase
         }
     }
 
+    [HttpGet("get-by-entryId/{id}")]
+    public async Task<IActionResult> GetSharedDataBySharedId(Guid id)
+    {
+        try
+        {
+            var retVal = await _sharedEntryService.GetSharedDataBySharedId(id);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
 
 }

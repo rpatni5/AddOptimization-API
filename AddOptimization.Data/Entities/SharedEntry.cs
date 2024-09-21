@@ -19,6 +19,7 @@ namespace AddOptimization.Data.Entities
 
         [ForeignKey(nameof(EntryId))]
         public virtual TemplateEntries TemplateEntries { get; set; }
+     
 
     }
 

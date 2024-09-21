@@ -427,6 +427,7 @@ namespace AddOptimization.Services.Mappings
                 d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
                 d.CreatedAt = s.CreatedAt?.Date;
                 d.UpdatedAt = s.UpdatedAt?.Date;
+                //d.SharedWithName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
             });
             CreateMap<SharedEntryRequestDto, SharedEntry>();
         }
