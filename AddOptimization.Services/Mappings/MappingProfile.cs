@@ -435,9 +435,26 @@ namespace AddOptimization.Services.Mappings
                 d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
                 d.CreatedAt = s.CreatedAt?.Date;
                 d.UpdatedAt = s.UpdatedAt?.Date;
-                //d.SharedWithName = s.ApplicationUser != null ? s.ApplicationUser.FullName : string.Empty;
             });
             CreateMap<SharedEntryRequestDto, SharedEntry>();
+
+            CreateMap<Group, GroupDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.CreatedAt = s.CreatedAt?.Date;
+                d.UpdatedAt = s.UpdatedAt?.Date;
+            });
+            CreateMap<CombineGroupModelRequestDto, Group>();
+
+            CreateMap<GroupMember, GroupMemberDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.CreatedAt = s.CreatedAt?.Date;
+                d.UpdatedAt = s.UpdatedAt?.Date;
+            });
+            CreateMap<CombineGroupModelRequestDto, GroupMember>();
         }
     }
 }

@@ -6,9 +6,14 @@ namespace AddOptimization.Data.Entities
     public class GroupMember : BaseEntityNew<Guid>
     {
         public Guid GroupId { get; set; }
-        public Guid UserId { get; set; }
-        public DateTime JoinedDate { get; set; }
+        public int UserId { get; set; }
+        public DateTime? JoinedDate { get; set; }
         public bool IsDeleted { get; set; }
+
+        [ForeignKey(nameof(GroupId))]
+        public virtual Group Group { get; set; }
+
+
 
     }
 
