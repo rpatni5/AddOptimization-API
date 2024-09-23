@@ -395,6 +395,11 @@ namespace AddOptimization.Services.Mappings
             });
             CreateMap<TemplateDto, Template>();
 
+            CreateMap<SavedSearch, SavedSearchDto>().AfterMap((s, d) =>
+            {
+            });
+            CreateMap<SavedSearchDto, SavedSearch>();
+            CreateMap<Notification, NotificationDto>().AfterMap((s, d) => d.Meta = s.Meta ?? "{}");
             CreateMap<string, EntryDataDto>().ConvertUsing(json => JsonSerializer.Deserialize<EntryDataDto>(json, jsonOptions));
 
 
@@ -407,6 +412,9 @@ namespace AddOptimization.Services.Mappings
                 d.EntryData = s.EntryData == null ? new EntryDataDto() : JsonSerializer.Deserialize<EntryDataDto>(s.EntryData);
             });
 
+            CreateMap<NotificationDto, Notification>();
+            CreateMap<NotificationUserDto, ApplicationUser>();
+            CreateMap<ApplicationUser, NotificationUserDto>();
             CreateMap<TemplateEntryDto, TemplateEntries>().AfterMap((s, d) =>
             {
                 d.EntryData = s.EntryData != null ? JsonSerializer.Serialize(s.EntryData, jsonOptions) : string.Empty;

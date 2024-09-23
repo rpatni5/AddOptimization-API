@@ -80,6 +80,8 @@ public partial class AddOptimizationContext : DbContext
     public virtual DbSet<InvoiceCreditNotes> InvoiceCreditNotes { get; set; }
     public virtual DbSet<EmployeeIdentity> EmployeeIdentity{ get; set; }
     public virtual DbSet<QuoteHistory> QuoteHistory { get; set; }
+    public virtual DbSet<SavedSearch> SavedSearches { get; set; }
+    public virtual DbSet<Notification> Notifications { get; set; }
     public virtual DbSet<Template> Templates { get; set; }
     public virtual DbSet<TemplateFolder> TemplateFolders { get; set; }
     public virtual DbSet<TemplateEntries> TemplateEntries { get; set; }

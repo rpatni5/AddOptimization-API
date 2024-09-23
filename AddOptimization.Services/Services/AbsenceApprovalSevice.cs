@@ -35,6 +35,8 @@ namespace AddOptimization.Services.Services
         private readonly IConfiguration _configuration;
         private readonly IGenericRepository<ApplicationUser> _applicationUserRepository;
         private readonly IApplicationUserService _applicationUserService;
+        private readonly INotificationService _notificationService;
+        
 
         public AbsenceApprovalSevice(IGenericRepository<AbsenceRequest> absenceApprovalRepository,
             IGenericRepository<LeaveStatuses> leaveStatusesRepository,
@@ -46,7 +48,8 @@ namespace AddOptimization.Services.Services
             IEmailService emailService,
             ITemplateService templateService,
             IGenericRepository<ApplicationUser> applicationUserRepository,
-            IApplicationUserService applicationUserService
+            IApplicationUserService applicationUserService,
+            INotificationService notificationService
             )
         {
             _absenceApprovalRepository = absenceApprovalRepository;
@@ -60,6 +63,8 @@ namespace AddOptimization.Services.Services
             _configuration = configuration;
             _applicationUserRepository = applicationUserRepository;
             _applicationUserService = applicationUserService;
+            _notificationService = notificationService;
+
         }
         public async Task<PagedApiResult<AbsenceRequestResponseDto>> Search(PageQueryFiterBase filters)
         {
@@ -117,10 +122,12 @@ namespace AddOptimization.Services.Services
                 if (model.IsApproved)
                 {
                     await SendAbsenceRequestActionEmailEmployee(model.IsApproved, accountAdmin, user, result);
+                    await SendNotificationToEmployee(model.IsApproved, accountAdmin, user, result);
                 }
                 else
                 {                 
                     await SendAbsenceRequestActionEmailEmployee(model.IsApproved, accountAdmin, user, result);
+                    await SendNotificationToEmployee(model.IsApproved, accountAdmin, user, result);
                 }
 
                 return ApiResult<bool>.Success(true);
@@ -313,6 +320,31 @@ namespace AddOptimization.Services.Services
                 return false;
             }
         }
+        private async Task SendNotificationToEmployee(bool isApproved,ApplicationUserDto accountAdmin, ApplicationUser user, AbsenceRequest absenceRequest)
+        {
+            var startDate = LocaleHelper.FormatDate(absenceRequest.StartDate.Value);
+            var endDate =absenceRequest.EndDate.HasValue ? LocaleHelper.FormatDate(absenceRequest.EndDate.Value) : string.Empty;
+            var action = isApproved ? "accepted" : "declined";
+            var subject = $"Absence request {action} " + (endDate == null ? $"for {startDate}" : $"from {startDate} to {endDate}"); ;
+            var bodyContent = $"Absence request {action} by {accountAdmin.FullName}";
+            var linkUrl = GetAbsenceRequestLinkForAccountAdmin(absenceRequest.Id);
+            var createdByUser = new NotificationUserDto
+            {
+                Id = accountAdmin.Id,
+                FullName = accountAdmin.FullName,
+                Email = accountAdmin.Email,
+            };
+            var model = new NotificationDto
+            {
+                Subject = subject,
+                Content = bodyContent,
+                Link = linkUrl,
+                AppplicationUserId = user.Id,
+                GroupKey = $"Absence request #{action}",
+            };
+            await _notificationService.CreateAsync(model);
+        }
+
 
         public string GetAbsenceRequestLinkForAccountAdmin(Guid schedulerEventId)
         {

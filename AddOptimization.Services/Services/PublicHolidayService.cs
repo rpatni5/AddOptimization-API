@@ -82,13 +82,30 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var isExisting = await _publicholidayRepository.IsExist(s => s.Title.ToLower() == model.Title.ToLower() && s.CountryId == model.CountryId);
-                if (isExisting)
+                var holidayDate = model.Date.Date;
+                var titleLower = model.Title.Trim().ToLower();
+                var countryId = model.CountryId;
+
+                var isTitleCountryExisting = await _publicholidayRepository.IsExist(
+                    s => s.Title.Trim().ToLower() == titleLower &&
+                         s.CountryId == countryId &&
+                         !s.IsDeleted);
+
+                if (isTitleCountryExisting)
                 {
-                    return ApiResult<PublicHolidayResponseDto>.Failure(ValidationCodes.FieldNameAlreadyExists);
+                    return ApiResult<PublicHolidayResponseDto>.Failure(ValidationCodes.FieldNameAlreadyExists, ValidationErrorMessage.TitleExist);
+                }
+                var isCountryDateExisting = await _publicholidayRepository.IsExist(
+                    s => s.CountryId == countryId &&
+                         s.Date.Date == holidayDate &&
+                         !s.IsDeleted);
+
+                if (isCountryDateExisting)
+                {
+                    return ApiResult<PublicHolidayResponseDto>.Failure(ValidationCodes.FieldNameAlreadyExists, ValidationErrorMessage.DateExist);
                 }
                 var entity = _mapper.Map<PublicHoliday>(model);
-                entity.Date = entity.Date.Date;
+                entity.Date = holidayDate;
                 await _publicholidayRepository.InsertAsync(entity);
                 var mappedEntity = _mapper.Map<PublicHolidayResponseDto>(entity);
                 return ApiResult<PublicHolidayResponseDto>.Success(mappedEntity);

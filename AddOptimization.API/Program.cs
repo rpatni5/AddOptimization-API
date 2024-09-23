@@ -42,6 +42,7 @@ services.AddHostedService<FillTimesheetReminderEmailBackgroundService>();
 services.AddHostedService<PendingTimesheetReminderToCustomerBackgroundService>();
 services.AddHostedService<GenerateInvoiceBackgroundService>();
 services.AddHostedService<UnpaidInvoiceReminderToCustomerBackgroundService>();
+services.AddHostedService<OverdueNotificationBackgroundService>();
 services.AddLoggingService();
 #endregion
 #region configure

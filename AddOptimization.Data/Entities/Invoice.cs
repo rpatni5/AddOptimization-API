@@ -20,11 +20,13 @@ namespace AddOptimization.Data.Entities
         public decimal TotalPriceIncludingVat { get; set; }
         public decimal TotalPriceExcludingVat { get; set; }
         public bool IsDeleted { get; set; }
-        public DateTime ExpiryDate { get; set; }
+        public DateTime? ExpiryDate { get; set; }
+        public DateTime? InvoiceSentDate { get; set; }
         public int? PaymentClearanceDays { get; set; }
         public decimal DueAmount { get; set; }
         public bool HasCreditNotes { get; set; }
         public bool? HasInvoiceFinalized { get; set; }
+        public bool? HasInvoiceSentToAccAdmin { get; set; }
 
         [ForeignKey(nameof(PaymentStatusId))]
         public virtual PaymentStatus PaymentStatus { get; set; }
