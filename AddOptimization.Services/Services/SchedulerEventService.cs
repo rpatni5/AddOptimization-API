@@ -100,9 +100,15 @@ namespace AddOptimization.Services.Services
                     IsCustomerApprovalPending = e.AdminStatus.StatusKey.ToString() == SchedulerStatusesEnum.PENDING_CUSTOMER_APPROVAL.ToString(),
                 }).ToList());
 
-                pagedResult.Result.ForEach(e =>
+                filters.GetValue<bool>("includeHoliday", (v) =>
                 {
-                    e.Holiday = GetHolidaysCount(e.StartDate, e.EndDate, e.UserId);
+                    if (v)
+                    {
+                        pagedResult.Result.ForEach(e =>
+                        {
+                            e.Holiday = GetHolidaysCount(e.StartDate, e.EndDate, e.UserId);
+                        });
+                    }
                 });
 
                 var retVal = pagedResult;
@@ -705,7 +711,7 @@ namespace AddOptimization.Services.Services
             var subject = $"Timesheet declined by {admin.Approvar.FullName}";
             var bodyContent = $"{admin.Approvar.FullName} has declined your timesheet for {DateTimeFormatInfo.CurrentInfo.GetMonthName(schedulerEvent.StartDate.Month)}";
             var linkUrl = GetTimesheetLinkForEmployee(schedulerEvent.Id);
-            
+
             var createdByUser = new NotificationUserDto
             {
                 Id = admin.Approvar.Id,
@@ -779,7 +785,7 @@ namespace AddOptimization.Services.Services
          ApplicationUser user, SchedulerEvent schedulerEvent, bool isApprovedEmail,Customer customer)
         {
             var action = isApprovedEmail ? "approved" : "declined";
-            var subject = $"Timesheet {action} by {customer.Organizations}";         
+            var subject = $"Timesheet {action} by {customer.Organizations}";
             var bodyContent = $"{customer.Organizations} has {action} timesheet for {DateTimeFormatInfo.CurrentInfo.GetMonthName(schedulerEvent.StartDate.Month)}";
             var linkUrl = GetTimesheetLinkForAccountAdmin(schedulerEvent.Id);
             var createdByUser = new NotificationUserDto
