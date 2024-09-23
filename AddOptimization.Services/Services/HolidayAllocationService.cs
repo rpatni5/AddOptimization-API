@@ -215,6 +215,16 @@ namespace AddOptimization.Services.Services
                 entities = entities.Where(e => e.UpdatedAt > v);
             }, OperatorType.greaterthan, true);
 
+            filter.GetList<DateTime>("dateRange", (v) =>
+            {
+                entities = entities.Where(e => e.CreatedAt.Value.Date <= v.Max().Date);
+            }, OperatorType.lessthan, true);
+
+            filter.GetList<DateTime>("dateRange", (v) =>
+            {
+                entities = entities.Where(e => e.CreatedAt.Value.Date >= v.Min().Date);
+            }, OperatorType.greaterthan, true);
+
             return entities;
         }
         private IQueryable<HolidayAllocation> ApplySorting(IQueryable<HolidayAllocation> entities, SortModel sort)

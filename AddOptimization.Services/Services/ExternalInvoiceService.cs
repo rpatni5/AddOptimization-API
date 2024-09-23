@@ -16,6 +16,7 @@ using AddOptimization.Utilities.Services;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic;
@@ -53,6 +54,7 @@ namespace AddOptimization.Services.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<ExternalInvoiceService> _logger;
         private readonly IMapper _mapper;
+        private readonly INotificationService _notificationService;
 
         public ExternalInvoiceService(IGenericRepository<ExternalInvoice> externalInvoiceRepository,
             IGenericRepository<Customer> customer,
@@ -76,6 +78,7 @@ namespace AddOptimization.Services.Services
                IApplicationUserService applicationService,
               IMapper mapper,
               IUnitOfWork unitOfWork,
+              INotificationService notificationService,
         ILogger<ExternalInvoiceService> logger)
         {
             _companyRepository = companyRepository;
@@ -103,6 +106,7 @@ namespace AddOptimization.Services.Services
             _logger = logger;
             _mapper = mapper;
             _unitOfWork = unitOfWork;
+            _notificationService = notificationService;
         }
 
         public async Task<ApiResult<List<ExternalInvoiceResponseDto>>> GenerateExternalInvoice(Guid customerId, MonthDateRange month,
@@ -522,9 +526,40 @@ namespace AddOptimization.Services.Services
             var accountAdmins = (await _applicationService.GetAccountAdmins()).Result;
             var externalInvoiceDetail = externalInvoiceDetailsResponse.Result;
 
+            await SendInvoiceToAccountAdmin(accountAdmins, entity, entity.Company.CompanyName, entity.ApplicationUser.FullName, entity.InvoiceNumber, entity.TotalPriceIncludingVat , externalInvoiceDetail.ExternalCompanyName);
+            await SendNotificationToAccountAdmin(accountAdmins, entity.ApplicationUser, entity);
+            return true;
 
-            return await SendInvoiceToAccountAdmin(accountAdmins, entity, entity.Company.CompanyName, entity.ApplicationUser.FullName, entity.InvoiceNumber, entity.TotalPriceIncludingVat , externalInvoiceDetail.ExternalCompanyName);
+
         }
+        private async Task SendNotificationToAccountAdmin(List<ApplicationUserDto> accountAdmins, ApplicationUser user, ExternalInvoice invoice)
+        {
+            var subject = $"New external invoice submitted by {user.FullName}";
+            var bodyContent = $"{user.FullName} has submitted an external invoice";
+            var linkUrl = GetInvoiceLinkForAccountAdmin((int)invoice.Id);
+            var createdByUser = new NotificationUserDto
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+            };
+            var notifications = new List<NotificationDto>();
+            foreach (var accountAdmin in accountAdmins)
+            {
+                var model = new NotificationDto
+                {
+                    Subject = subject,
+                    Content = bodyContent,
+                    Link = linkUrl,
+                    AppplicationUserId = accountAdmin.Id,
+                    GroupKey = $"External invoice #{user.FirstName}",
+                };
+                notifications.Add(model);
+            }
+
+            await _notificationService.BulkCreateAsync(notifications);
+        }
+
         private async Task<bool> SendInvoiceToAccountAdmin(List<ApplicationUserDto> accountAdmins, ExternalInvoice invoice, string companyName, string employeeName, long invoiceNumber, decimal totalAmountDue ,string externalCompany
          )
         {

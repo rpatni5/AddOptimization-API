@@ -24,6 +24,7 @@
 	[CreditNoteNumber] [bigint] NULL,
 	[HasInvoiceFinalized] [bit] NULL,
     [InvoiceSentDate] [datetime2](7) NULL,
+	[HasInvoiceSentToAccAdmin] [bit] NULL,
  CONSTRAINT [PK_Invoices] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -38,6 +39,11 @@ ALTER TABLE [dbo].[Invoices] ADD  DEFAULT ((0)) FOR [HasCreditNotes]
 GO
 
 ALTER TABLE [dbo].[Invoices] ADD  DEFAULT ((0)) FOR [HasInvoiceFinalized]
+
+GO
+
+ALTER TABLE [dbo].[Invoices] ADD  DEFAULT ((0)) FOR [HasInvoiceSentToAccAdmin]
+
 GO
 
 ALTER TABLE [dbo].[Invoices]  WITH CHECK ADD  CONSTRAINT [FK_Invoices_ApplicationUsers_CreatedByUserId] FOREIGN KEY([CreatedByUserId])

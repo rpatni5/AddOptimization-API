@@ -83,6 +83,7 @@ namespace AddOptimization.API.HostedService.BackgroundServices
                         {
                             await SendFillTimesheetReminderEmail(item);
                         };
+                        await schedulerEventService.SendNotificationToEmployee(events);
                     }
                 }
                 _logger.LogInformation("GetNotFilledTimesheetData Completed.");
