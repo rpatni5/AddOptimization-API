@@ -33,5 +33,47 @@ public class GroupController : CustomApiControllerBase
         }
     }
 
+    [HttpPost("search")]
+    public async Task<IActionResult> Search()
+    {
+        try
+        {
+            var result = await _groupService.GetAllGroups();
+            return HandleResponse(result);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+
+    [HttpGet("get-by-groupId/{id}")]
+    public async Task<IActionResult> GetGroupMembersByGroupId(Guid id)
+    {
+        try
+        {
+            var retVal = await _groupService.GetGroupMembersByGroupId(id);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        try
+        {
+            var retVal = await _groupService.Delete(id);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
 
 }
