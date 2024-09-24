@@ -13,6 +13,9 @@ namespace AddOptimization.Data.Entities
         [ForeignKey(nameof(GroupId))]
         public virtual Group Group { get; set; }
 
+        [ForeignKey(nameof(UserId))]
+        public virtual ApplicationUser ApplicationUser { get; set; }
+
 
 
     }

@@ -7,6 +7,7 @@ using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Models;
 using AutoMapper;
+using iText.StyledXmlParser.Jsoup.Nodes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -19,7 +20,6 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 
 
 namespace AddOptimization.Services.Services
@@ -99,20 +99,28 @@ namespace AddOptimization.Services.Services
             {
                 var groupEntity = await _groupRepository.FirstOrDefaultAsync(t => t.Id == groupId, ignoreGlobalFilter: true);
 
-                var memberEntities = (await _groupMemberRepository.QueryAsync(o => o.Id == groupId && !o.IsDeleted, ignoreGlobalFilter: true));
+                var memberEntities = (await _groupMemberRepository.QueryAsync(o => o.GroupId == groupId && !o.IsDeleted, include: entities => entities.Include(e => e.ApplicationUser), ignoreGlobalFilter: true));
                 if (memberEntities == null && groupEntity == null)
                 {
                     return ApiResult<CombineGroupModelDto>.NotFound("member");
                 }
-                var groupDto = _mapper.Map<GroupDto>(groupEntity);
-                var groupMemberDtos = _mapper.Map<List<GroupMemberDto>>(memberEntities);
 
-                var result = new CombineGroupModelDto
+                var users = await _applicationUserRepository.QueryAsync(e => e.IsActive);
+                var groupDto = _mapper.Map<GroupDto>(groupEntity);
+                var memberDtos = _mapper.Map<List<GroupMemberDto>>(memberEntities);
+
+                foreach (var member in memberDtos)
+                {
+                    var user = users.FirstOrDefault(u => u.Id == member.UserId);
+                    member.UserName = user?.FullName ?? "Unknown User";
+                }
+                var combinedDto = new CombineGroupModelDto
                 {
                     group = groupDto,
-                    groupMembers = groupMemberDtos
+                    groupMembers = memberDtos
                 };
-                return ApiResult<CombineGroupModelDto>.Success(result);
+
+                return ApiResult<CombineGroupModelDto>.Success(combinedDto);
             }
             catch (Exception ex)
             {
@@ -153,6 +161,84 @@ namespace AddOptimization.Services.Services
             }
         }
 
+
+        public async Task<ApiResult<bool>> Update(Guid id, CombineGroupModelDto model)
+        {
+            try
+            {
+
+                var groupEntity = await _groupRepository.FirstOrDefaultAsync(t => t.Id == id, ignoreGlobalFilter: true);
+                if (groupEntity == null)
+                {
+                    return ApiResult<bool>.NotFound("Group not found.");
+                }
+                _mapper.Map(model.group, groupEntity);
+                await _groupRepository.UpdateAsync(groupEntity);
+
+                var existingGroupMembers = await _groupMemberRepository.QueryAsync(gm => gm.GroupId == id && !gm.IsDeleted, ignoreGlobalFilter: true);
+                foreach (var memberDto in model.groupMembers)
+                {
+                    var existingMember = existingGroupMembers.FirstOrDefault(m => m.UserId == memberDto.UserId);
+                    if (existingMember != null)
+                    {
+                        existingMember.JoinedDate = memberDto.JoinedDate;
+                        await _groupMemberRepository.UpdateAsync(existingMember);
+                    }
+                    else
+                    {
+                        var newMember = new GroupMember
+                        {
+                            Id = Guid.NewGuid(),
+                            GroupId = id,
+                            UserId = memberDto.UserId,
+                            JoinedDate = memberDto.JoinedDate,
+                            IsDeleted = false,
+
+                        };
+                        await _groupMemberRepository.InsertAsync(newMember);
+                    }
+                    foreach (var existMember in existingGroupMembers)
+                    {
+                        if (!model.groupMembers.Any(m => m.UserId == existMember.UserId))
+                        {
+                            existMember.IsDeleted = true;
+                            await _groupMemberRepository.UpdateAsync(existingMember);
+                        }
+                    }
+                }
+                return ApiResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+
+        public async Task<ApiResult<bool>> DeleteGroupMember(Guid id)
+        {
+            try
+            {
+                var members = await _groupMemberRepository.QueryAsync(t => t.Id == id, ignoreGlobalFilter: true);
+                var memberList = members.ToList();
+                if (memberList.Any())
+                {
+                    foreach (var member in memberList)
+                    {
+                        member.IsDeleted = true;
+                        await _groupMemberRepository.UpdateAsync(member);
+                    }
+                }
+
+                return ApiResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
     }
 
 }

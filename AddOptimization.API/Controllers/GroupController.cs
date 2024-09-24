@@ -76,4 +76,33 @@ public class GroupController : CustomApiControllerBase
         }
     }
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] CombineGroupModelDto model)
+    {
+        try
+        {
+            var retVal = await _groupService.Update(id, model);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+
+    [HttpDelete("delete-group-members/{id}")]
+    public async Task<IActionResult> DeleteMember(Guid id)
+    {
+        try
+        {
+            var retVal = await _groupService.DeleteGroupMember(id);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
 }
