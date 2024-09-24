@@ -173,5 +173,19 @@ namespace AddOptimization.API.Controllers
                 return HandleException(ex);
             }
         }
+
+        [HttpPost("{send-to-draft}/{timesheetid}")]
+        public async Task<IActionResult> SendToDraft( Guid timesheetid)
+        {
+            try
+            {
+                var result = await _schedulerEventService.SendToDraft(timesheetid);
+                return HandleResponse(result);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
     }
 }
