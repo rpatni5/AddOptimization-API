@@ -19,6 +19,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 
 
 namespace AddOptimization.Services.Services
@@ -45,7 +46,7 @@ namespace AddOptimization.Services.Services
         }
 
 
-        public async Task<ApiResult<bool>> Create(CombineGroupModelRequestDto model)
+        public async Task<ApiResult<bool>> Create(CombineGroupModelDto model)
         {
             try
             {
@@ -92,18 +93,26 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        public async Task<ApiResult<List<GroupMemberDto>>> GetGroupMembersByGroupId(Guid groupId)
+        public async Task<ApiResult<CombineGroupModelDto>> GetGroupAndMembersByGroupId(Guid groupId)
         {
             try
             {
-                var entities = (await _groupMemberRepository.QueryAsync(o => o.Id == groupId && !o.IsDeleted, ignoreGlobalFilter: true));
-                if (entities == null)
-                {
-                    return ApiResult<List<GroupMemberDto>>.NotFound("member");
-                }
-                var mappedEntity = _mapper.Map<List<GroupMemberDto>>(entities);
+                var groupEntity = await _groupRepository.FirstOrDefaultAsync(t => t.Id == groupId, ignoreGlobalFilter: true);
 
-                return ApiResult<List<GroupMemberDto>>.Success(mappedEntity);
+                var memberEntities = (await _groupMemberRepository.QueryAsync(o => o.Id == groupId && !o.IsDeleted, ignoreGlobalFilter: true));
+                if (memberEntities == null && groupEntity == null)
+                {
+                    return ApiResult<CombineGroupModelDto>.NotFound("member");
+                }
+                var groupDto = _mapper.Map<GroupDto>(groupEntity);
+                var groupMemberDtos = _mapper.Map<List<GroupMemberDto>>(memberEntities);
+
+                var result = new CombineGroupModelDto
+                {
+                    group = groupDto,
+                    groupMembers = groupMemberDtos
+                };
+                return ApiResult<CombineGroupModelDto>.Success(result);
             }
             catch (Exception ex)
             {

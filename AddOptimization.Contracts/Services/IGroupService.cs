@@ -7,8 +7,8 @@ namespace AddOptimization.Contracts.Services
     {
 
         Task<ApiResult<List<GroupDto>>> GetAllGroups();
-        Task<ApiResult<bool>> Create(CombineGroupModelRequestDto model);
-        Task<ApiResult<List<GroupMemberDto>>> GetGroupMembersByGroupId(Guid groupId);
+        Task<ApiResult<bool>> Create(CombineGroupModelDto model);
+        Task<ApiResult<CombineGroupModelDto>> GetGroupAndMembersByGroupId(Guid groupId);
         Task<ApiResult<bool>> Delete(Guid id);
     }
 }

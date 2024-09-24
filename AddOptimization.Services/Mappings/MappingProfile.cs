@@ -445,7 +445,7 @@ namespace AddOptimization.Services.Mappings
                 d.CreatedAt = s.CreatedAt?.Date;
                 d.UpdatedAt = s.UpdatedAt?.Date;
             });
-            CreateMap<CombineGroupModelRequestDto, Group>();
+            CreateMap<CombineGroupModelDto, Group>();
 
             CreateMap<GroupMember, GroupMemberDto>().AfterMap((s, d) =>
             {
@@ -454,7 +454,7 @@ namespace AddOptimization.Services.Mappings
                 d.CreatedAt = s.CreatedAt?.Date;
                 d.UpdatedAt = s.UpdatedAt?.Date;
             });
-            CreateMap<CombineGroupModelRequestDto, GroupMember>();
+            CreateMap<CombineGroupModelDto, GroupMember>();
         }
     }
 }

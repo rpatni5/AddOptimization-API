@@ -21,7 +21,7 @@ namespace AddOptimization.Contracts.Dto
     }
 
 
-    public class CombineGroupModelRequestDto
+    public class CombineGroupModelDto
 
     {
         public GroupDto group { get; set; }

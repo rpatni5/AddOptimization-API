@@ -20,7 +20,7 @@ public class GroupController : CustomApiControllerBase
 
 
     [HttpPost]
-    public async Task<IActionResult> Create(CombineGroupModelRequestDto model)
+    public async Task<IActionResult> Create(CombineGroupModelDto model)
     {
         try
         {
@@ -53,7 +53,7 @@ public class GroupController : CustomApiControllerBase
     {
         try
         {
-            var retVal = await _groupService.GetGroupMembersByGroupId(id);
+            var retVal = await _groupService.GetGroupAndMembersByGroupId(id);
             return HandleResponse(retVal);
         }
         catch (Exception ex)
