@@ -88,8 +88,9 @@ namespace AddOptimization.Services.Services
         {
             try
             {
+                var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
                 var entities = await _templateEntryRepository.QueryAsync(
-                    e => !e.IsDeleted,
+                    e => !e.IsDeleted && e.UserId == currentUserId,
                     include: entities => entities
                         .Include(e => e.CreatedByUser).Include(e =>e.TemplateFolder).Include(e=>e.Template)
                         .Include(e => e.UpdatedByUser)
