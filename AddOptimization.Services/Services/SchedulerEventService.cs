@@ -44,7 +44,8 @@ namespace AddOptimization.Services.Services
         private readonly ISchedulerEventTypeService _schedulerEventTypeService;
         private readonly IAbsenceRequestService _absenceRequestService;
         private readonly INotificationService _notificationService;
-        public SchedulerEventService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulerEventService> logger, IMapper mapper, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ISchedulersStatusService schedulersStatusService, IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository, IGenericRepository<Customer> customersRepository, IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository, ISchedulerEventTypeService schedulerEventTypeService, IAbsenceRequestService absenceRequestService,
+        private readonly IGenericRepository<Invoice> _invoiceRepository;
+        public SchedulerEventService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulerEventService> logger, IMapper mapper, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ISchedulersStatusService schedulersStatusService, IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository, IGenericRepository<Customer> customersRepository, IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository, ISchedulerEventTypeService schedulerEventTypeService, IAbsenceRequestService absenceRequestService, IGenericRepository<Invoice> invoiceRepository,
         IConfiguration configuration, IEmailService emailService, ITemplateService templateService, CustomDataProtectionService protectionService, IGenericRepository<ApplicationUser> appUserRepository, INotificationService notificationService)
         {
             _schedulersRepository = schedulersRepository;
@@ -58,6 +59,7 @@ namespace AddOptimization.Services.Services
             _emailService = emailService;
             _templateService = templateService;
             _configuration = configuration;
+            _invoiceRepository = invoiceRepository;
             _protectionService = protectionService;
             _customersRepository = customersRepository;
             _schedulerEventHistoryRepository = schedulerEventHistoryRepository;
@@ -252,6 +254,69 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
+
+        public async Task<ApiResult<SchedulerEventResponseDto>> SendToDraft(Guid timesheetId)
+        {
+            try
+            {
+                var existingEvent = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == timesheetId);
+
+                if (existingEvent == null)
+                {
+                    return ApiResult<SchedulerEventResponseDto>.Failure("Scheduler event not found.");
+                }
+
+                var invoices = await _invoiceRepository.QueryAsync(i =>
+                    i.CustomerId == existingEvent.CustomerId &&
+                    i.MetaData == "Timesheet" && i.InvoiceDate.Date == existingEvent.EndDate.Date
+                );
+
+                if (invoices.Any())
+                {
+                    return ApiResult<SchedulerEventResponseDto>.Failure(ValidationCodes.FieldNameAlreadyExists, ValidationErrorMessage.TimeSheetExist);
+                }
+
+                var eventStatus = (await _schedulersStatusService.Search()).Result;
+                var draftStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.DRAFT.ToString())?.Id;
+
+
+                existingEvent.AdminStatusId = draftStatusId.Value;
+                existingEvent.UserStatusId = draftStatusId.Value;
+                existingEvent.IsDraft = true;
+
+                await _schedulersRepository.UpdateAsync(existingEvent);
+
+                SchedulerEventHistory entity = new SchedulerEventHistory()
+                {
+                    SchedulerEventId = existingEvent.Id,
+                    UserId = existingEvent.UserId,
+                    UserStatusId = draftStatusId.Value,
+                    AdminStatusId = draftStatusId.Value,
+                    Comment = "Timesheet Converted to Invoice",
+                };
+
+                await _schedulerEventHistoryRepository.InsertAsync(entity);
+
+                existingEvent = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == existingEvent.Id,
+                    include: entities => entities
+                        .Include(e => e.Approvar)
+                        .Include(e => e.UserStatus)
+                        .Include(e => e.AdminStatus)
+                        .Include(e => e.ApplicationUser)
+                        .Include(e => e.CreatedByUser)
+                        .Include(e => e.UpdatedByUser)
+                        .Include(e => e.Customer));
+
+                var mappedEntity = _mapper.Map<SchedulerEventResponseDto>(existingEvent);
+                return ApiResult<SchedulerEventResponseDto>.Success(mappedEntity);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
 
         public async Task<ApiResult<SchedulerEventResponseDto>> GetSchedulerEvent(Guid id)
         {
