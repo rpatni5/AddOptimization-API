@@ -13,6 +13,6 @@ namespace AddOptimization.Utilities.Constants
         public const string EmployeeExist = "Employee  already exists.";
         public const string DateExist = "Date Already Exist for selected Country";
         public const string TitleExist = "Title Already  Exist for selected Country";
-        public const string TimeSheetExist = "The timesheet has been  converted to an Invoice, It can not be sent back to draft status";
+        public const string TimeSheetExist = "The timesheet has been converted to an Invoice, It can not be sent back to draft status";
     }
 }
