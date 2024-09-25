@@ -116,6 +116,47 @@ namespace AddOptimization.Services.Services
             }
         }
 
+
+        public async Task<ApiResult<TemplateEntryDto>> GetSecureNoteById(Guid id)
+        {
+            try
+            {
+                var entity = (await _templateEntryRepository.QueryAsync(o => o.Id == id && !o.IsDeleted, ignoreGlobalFilter: true)).FirstOrDefault();
+                if (entity == null)
+                {
+                    return ApiResult<TemplateEntryDto>.NotFound("note");
+                }
+                var mappedEntity = _mapper.Map<TemplateEntryDto>(entity);
+                return ApiResult<TemplateEntryDto>.Success(mappedEntity);
+            }
+
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+
+        public async Task<ApiResult<TemplateEntryDto>> Update(Guid id, TemplateEntryDto model)
+        {
+            try
+            {
+                var entity = await _templateEntryRepository.FirstOrDefaultAsync(e => e.Id == id);
+                _mapper.Map(model, entity);
+                entity.FolderId = model.FolderId;
+                entity.EntryData = JsonConvert.SerializeObject(model.EntryData);
+                await _templateEntryRepository.UpdateAsync(entity);
+                var mappedEntity = _mapper.Map<TemplateEntryDto>(entity);
+                return ApiResult<TemplateEntryDto>.Success(mappedEntity);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
     }
 
 }

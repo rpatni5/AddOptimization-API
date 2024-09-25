@@ -59,5 +59,31 @@ public class SecureNoteController : CustomApiControllerBase
             return HandleException(ex);
         }
     }
+    [HttpGet("get-by-noteId/{id}")]
+    public async Task<IActionResult> GetSecureNoteById(Guid id)
+    {
+        try
+        {
+            var retVal = await _secureNoteService.GetSecureNoteById(id);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] TemplateEntryDto model)
+    {
+        try
+        {
+            var retVal = await _secureNoteService.Update(id, model);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
 }
