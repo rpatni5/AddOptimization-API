@@ -26,13 +26,16 @@ namespace AddOptimization.Services.Services
         private readonly IConfiguration _configuration;
         private readonly IGenericRepository<ApplicationUser> _applicationUserRepository;
         private readonly IGenericRepository<Group> _groupRepository;
+        private readonly IGenericRepository<GroupMember> _groupMemberRepository;
         private readonly ITemplatesService _templateService;
+        private readonly IGenericRepository<SharedEntry> _sharedEntryRepository;
+
         JsonSerializerOptions jsonOptions = new()
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
 
-        public SecureNoteService(IGenericRepository<TemplateEntries> templateEntryRepository, ILogger<SecureNoteService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, ITemplatesService templateService)
+        public SecureNoteService(IGenericRepository<TemplateEntries> templateEntryRepository, ILogger<SecureNoteService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, ITemplatesService templateService, IGenericRepository<SharedEntry> sharedEntryRepository, IGenericRepository<GroupMember> groupMemberRepository)
         {
             _templateEntryRepository = templateEntryRepository;
             _logger = logger;
@@ -42,6 +45,8 @@ namespace AddOptimization.Services.Services
             _applicationUserRepository = applicationUserRepository;
             _groupRepository = groupRepository;
             _templateService = templateService;
+            _sharedEntryRepository = sharedEntryRepository;
+            _groupMemberRepository = groupMemberRepository;
         }
 
 
@@ -72,8 +77,13 @@ namespace AddOptimization.Services.Services
                 var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
                 var templates = (await _templateService.GetAllTemplate()).Result;
                 var secureNoteId = templates.FirstOrDefault(x => x.Name == "Secure Notes".ToString()).Id;
+
+                var groupIds = (await _groupMemberRepository.QueryAsync(x => !x.IsDeleted && x.UserId == currentUserId)).Select(x => x.GroupId.ToString()).Distinct().ToList();
+
+                var entryIds = (await _sharedEntryRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == currentUserId.ToString() || groupIds.Contains(x.SharedWithId)))).Select(x => x.Id).ToList();
+
                 var entities = await _templateEntryRepository.QueryAsync(
-                    e => !e.IsDeleted && e.UserId == currentUserId && e.TemplateId == secureNoteId,
+                    e => !e.IsDeleted && (e.UserId == currentUserId || entryIds.Contains(e.Id)) && e.TemplateId == secureNoteId,
                     include: entities => entities
                         .Include(e => e.CreatedByUser).Include(e => e.TemplateFolder).Include(e => e.Template)
                         .Include(e => e.UpdatedByUser)
