@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 
@@ -34,6 +35,10 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<ApplicationUser> _applicationUserRepository;
         private readonly IGenericRepository<Group> _groupRepository;
         private readonly ITemplatesService _templateService;
+        JsonSerializerOptions jsonOptions = new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
 
         public SecureNoteService(IGenericRepository<TemplateEntries> templateEntryRepository, ILogger<SecureNoteService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, ITemplatesService templateService)
         {
@@ -143,9 +148,8 @@ namespace AddOptimization.Services.Services
             try
             {
                 var entity = await _templateEntryRepository.FirstOrDefaultAsync(e => e.Id == id);
-                _mapper.Map(model, entity);
                 entity.FolderId = model.FolderId;
-                entity.EntryData = JsonConvert.SerializeObject(model.EntryData);
+                entity.EntryData = JsonConvert.SerializeObject(model.EntryData, jsonOptions);
                 await _templateEntryRepository.UpdateAsync(entity);
                 var mappedEntity = _mapper.Map<TemplateEntryDto>(entity);
                 return ApiResult<TemplateEntryDto>.Success(mappedEntity);
