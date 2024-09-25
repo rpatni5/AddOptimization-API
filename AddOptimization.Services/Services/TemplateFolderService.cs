@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 
 
 namespace AddOptimization.Services.Services
@@ -51,6 +52,13 @@ namespace AddOptimization.Services.Services
         {
             try
             {
+                var isExists = await _folderRepository.IsExist(t => t.Name == model.Name, ignoreGlobalFilter: true);
+
+                if (isExists)
+                {
+                    var errorMessage = "Folder already exists.";
+                    return ApiResult<bool>.Failure(ValidationCodes.FolderAlreadyExists, errorMessage);
+                }
                 var entity = _mapper.Map<TemplateFolder>(model);
                 await _folderRepository.InsertAsync(entity);
                 return ApiResult<bool>.Success(true);
@@ -66,18 +74,11 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var isExists = await _folderRepository.IsExist(t => t.Id == id, ignoreGlobalFilter: true);
-
-                //if (isExists)
-                //{
-                //    var errorMessage = "Folder already exists.";
-                //    return ApiResult<TemplateFolderDto>.Failure(ValidationCodes.EmailUserNameAlreadyExists, errorMessage);
-                //}
                 var entity = await _folderRepository.FirstOrDefaultAsync(t => t.Id == id, ignoreGlobalFilter: true);
                 if (entity == null)
                 {
                     return ApiResult<TemplateFolderDto>.NotFound("Folder not found");
-                }              
+                }
                 _mapper.Map(model, entity);
                 await _folderRepository.UpdateAsync(entity);
                 var mappedEntity = _mapper.Map<TemplateFolderDto>(entity);
