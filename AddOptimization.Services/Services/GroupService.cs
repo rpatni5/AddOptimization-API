@@ -55,7 +55,7 @@ namespace AddOptimization.Services.Services
 
                 if (isExists)
                 {
-                    var errorMessage = "Group  already exists.";
+                    var errorMessage = "Group already exists.";
                     return ApiResult<bool>.Failure(ValidationCodes.GroupAlreadyExists, errorMessage);
                 }
 
