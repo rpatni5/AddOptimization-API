@@ -44,6 +44,7 @@ public class ValidationCodes
     public const string LoginWithMicrosoftProvider = "LoginWithMicrosoftProvider";
     public const string NotFound = "CustomerEmployeeAssociationNotFound";
     public const string FolderAlreadyExists = "FolderAlreadyExist";
+    public const string GroupAlreadyExists = "GroupAlreadyExists";
     public const string EmailNotificationSettingIsDisabled = "EmailNotificationSettingIsDisabled";
     public const string UnpaidInvoiceDoesNotExists = "UnpaidInvoiceDoesNotExists";
 }

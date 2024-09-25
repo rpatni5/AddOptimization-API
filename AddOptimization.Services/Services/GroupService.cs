@@ -3,6 +3,7 @@ using AddOptimization.Contracts.Services;
 using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
 using AddOptimization.Utilities.Common;
+using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Models;
@@ -50,6 +51,14 @@ namespace AddOptimization.Services.Services
         {
             try
             {
+                var isExists = await _groupRepository.IsExist(t => t.Name == model.group.Name, ignoreGlobalFilter: true);
+
+                if (isExists)
+                {
+                    var errorMessage = "Group  already exists.";
+                    return ApiResult<bool>.Failure(ValidationCodes.GroupAlreadyExists, errorMessage);
+                }
+
                 var groupEntity = _mapper.Map<Group>(model.group);
                 await _groupRepository.InsertAsync(groupEntity);
 
