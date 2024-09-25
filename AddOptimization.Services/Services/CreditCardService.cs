@@ -11,15 +11,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 
 namespace AddOptimization.Services.Services
@@ -79,7 +72,7 @@ namespace AddOptimization.Services.Services
                     }
                 }
 
-                entity.EntryData = JsonConvert.SerializeObject(model.EntryData);
+                entity.EntryData = JsonSerializer.Serialize(model.EntryData, jsonOptions);
                 await _templateEntryRepository.InsertAsync(entity);
                 return ApiResult<bool>.Success(true);
             }

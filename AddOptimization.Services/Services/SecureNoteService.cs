@@ -12,15 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 
 namespace AddOptimization.Services.Services
@@ -61,7 +53,7 @@ namespace AddOptimization.Services.Services
                 var entity = _mapper.Map<TemplateEntries>(model);
                 entity.UserId = userId;
                 entity.FolderId = model.FolderId;
-                entity.EntryData = JsonConvert.SerializeObject(model.EntryData);
+                entity.EntryData = JsonSerializer.Serialize(model.EntryData, jsonOptions);
                 await _templateEntryRepository.InsertAsync(entity);
                 return ApiResult<bool>.Success(true);
             }
@@ -149,7 +141,7 @@ namespace AddOptimization.Services.Services
             {
                 var entity = await _templateEntryRepository.FirstOrDefaultAsync(e => e.Id == id);
                 entity.FolderId = model.FolderId;
-                entity.EntryData = JsonConvert.SerializeObject(model.EntryData, jsonOptions);
+                entity.EntryData = System.Text.Json.JsonSerializer.Serialize(model.EntryData, jsonOptions);
                 await _templateEntryRepository.UpdateAsync(entity);
                 var mappedEntity = _mapper.Map<TemplateEntryDto>(entity);
                 return ApiResult<TemplateEntryDto>.Success(mappedEntity);
