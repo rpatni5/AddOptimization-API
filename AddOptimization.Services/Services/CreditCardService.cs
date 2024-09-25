@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 
@@ -33,6 +34,10 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<ApplicationUser> _applicationUserRepository;
         private readonly IGenericRepository<Group> _groupRepository;
         private readonly ITemplatesService _templateService;
+        JsonSerializerOptions jsonOptions = new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
 
         public CreditCardService(IGenericRepository<TemplateEntries> templateEntryRepository, ILogger<CreditCardService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, ITemplatesService templateService)
         {
@@ -96,7 +101,7 @@ namespace AddOptimization.Services.Services
                 var entities = await _templateEntryRepository.QueryAsync(
                     e => !e.IsDeleted && e.UserId == currentUserId && e.TemplateId == creditCardId,
                     include: entities => entities
-                        .Include(e => e.CreatedByUser).Include(e =>e.TemplateFolder).Include(e=>e.Template)
+                        .Include(e => e.CreatedByUser).Include(e => e.TemplateFolder).Include(e => e.Template)
                         .Include(e => e.UpdatedByUser)
                         .Include(e => e.ApplicationUser),
                     orderBy: x => x.OrderByDescending(x => x.CreatedAt)
@@ -147,24 +152,24 @@ namespace AddOptimization.Services.Services
                 }
 
                 var mappedEntity = _mapper.Map<TemplateEntryDto>(entity);
-               
-                    var creditCardInfo = mappedEntity.EntryData?.CreditCardInfo;
-                    if (creditCardInfo != null && mappedEntity.EntryData.IsValueEncrypted == true)
+
+                var creditCardInfo = mappedEntity.EntryData?.CreditCardInfo;
+                if (creditCardInfo != null && mappedEntity.EntryData.IsValueEncrypted == true)
+                {
+                    var (key, iv) = GetEncryptionKeyAndIV();
+
+                    if (!string.IsNullOrEmpty(creditCardInfo.Cvv))
                     {
-                        var (key, iv) = GetEncryptionKeyAndIV();
-
-                        if (!string.IsNullOrEmpty(creditCardInfo.Cvv))
-                        {
-                            var cipherBytes = Convert.FromBase64String(creditCardInfo.Cvv);
-                            creditCardInfo.Cvv = AesEncryptionDecryptionHelper.Decrypt(cipherBytes, key, iv);
-                        }
-
-                        if (!string.IsNullOrEmpty(creditCardInfo.CardPin))
-                        {
-                            var cipherBytes = Convert.FromBase64String(creditCardInfo.CardPin);
-                            creditCardInfo.CardPin = AesEncryptionDecryptionHelper.Decrypt(cipherBytes, key, iv);
-                        }
+                        var cipherBytes = Convert.FromBase64String(creditCardInfo.Cvv);
+                        creditCardInfo.Cvv = AesEncryptionDecryptionHelper.Decrypt(cipherBytes, key, iv);
                     }
+
+                    if (!string.IsNullOrEmpty(creditCardInfo.CardPin))
+                    {
+                        var cipherBytes = Convert.FromBase64String(creditCardInfo.CardPin);
+                        creditCardInfo.CardPin = AesEncryptionDecryptionHelper.Decrypt(cipherBytes, key, iv);
+                    }
+                }
                 return ApiResult<TemplateEntryDto>.Success(mappedEntity);
             }
 
@@ -180,8 +185,8 @@ namespace AddOptimization.Services.Services
             try
             {
                 var entity = await _templateEntryRepository.FirstOrDefaultAsync(e => e.Id == id);
-                _mapper.Map(model, entity);
                 entity.FolderId = model.FolderId;
+                entity.EntryData = System.Text.Json.JsonSerializer.Serialize(model.EntryData, jsonOptions);
 
                 var (key, iv) = GetEncryptionKeyAndIV();
 
