@@ -409,7 +409,7 @@ namespace AddOptimization.Services.Mappings
                 d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
                 d.CreatedAt = s.CreatedAt?.Date;
                 d.UpdatedAt = s.UpdatedAt?.Date;
-                d.EntryData = s.EntryData == null ? new EntryDataDto() : JsonSerializer.Deserialize<EntryDataDto>(s.EntryData, jsonOptio);
+                d.EntryData = s.EntryData == null ? new EntryDataDto() : JsonSerializer.Deserialize<EntryDataDto>(s.EntryData, jsonOptions);
             });
 
             CreateMap<NotificationDto, Notification>();
