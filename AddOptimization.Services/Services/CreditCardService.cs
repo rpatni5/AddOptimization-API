@@ -32,8 +32,9 @@ namespace AddOptimization.Services.Services
         private readonly IConfiguration _configuration;
         private readonly IGenericRepository<ApplicationUser> _applicationUserRepository;
         private readonly IGenericRepository<Group> _groupRepository;
+        private readonly ITemplatesService _templateService;
 
-        public CreditCardService(IGenericRepository<TemplateEntries> templateEntryRepository, ILogger<CreditCardService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository)
+        public CreditCardService(IGenericRepository<TemplateEntries> templateEntryRepository, ILogger<CreditCardService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, ITemplatesService templateService)
         {
             _templateEntryRepository = templateEntryRepository;
             _logger = logger;
@@ -42,6 +43,7 @@ namespace AddOptimization.Services.Services
             _configuration = configuration;
             _applicationUserRepository = applicationUserRepository;
             _groupRepository = groupRepository;
+            _templateService = templateService;
         }
 
 
@@ -89,8 +91,10 @@ namespace AddOptimization.Services.Services
             try
             {
                 var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
+                var templates = (await _templateService.GetAllTemplate()).Result;
+                var creditCardId = templates.FirstOrDefault(x => x.Name == "Credit Cards".ToString()).Id;
                 var entities = await _templateEntryRepository.QueryAsync(
-                    e => !e.IsDeleted && e.UserId == currentUserId,
+                    e => !e.IsDeleted && e.UserId == currentUserId && e.TemplateId == creditCardId,
                     include: entities => entities
                         .Include(e => e.CreatedByUser).Include(e =>e.TemplateFolder).Include(e=>e.Template)
                         .Include(e => e.UpdatedByUser)

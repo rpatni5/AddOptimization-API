@@ -11,6 +11,7 @@ namespace AddOptimization.Contracts.Dto
     {
         public string? Title { get; set; }
         public  CreditCardDto? CreditCardInfo { get; set; }
+        public  SecureNoteDto? SecureNoteInfo { get; set; }
         public string? Notes { get; set; }
         public List<CustomFieldDto> CustomFields { get; set; } 
 
