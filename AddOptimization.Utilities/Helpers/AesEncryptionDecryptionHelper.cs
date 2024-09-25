@@ -12,8 +12,9 @@ namespace AddOptimization.Utilities.Helpers
     public static class AesEncryptionDecryptionHelper
     {
 
-        public static byte[] Encrypt(string text, byte[] key, byte[] iv)
+        public static string Encrypt(string text)
         {
+            var (key, iv) = GetEncryptionKeyAndIV();
             byte[] cipheredtext;
 
             using (Aes aes = Aes.Create())
@@ -35,12 +36,13 @@ namespace AddOptimization.Utilities.Helpers
                     }
                 }
             }
-            return cipheredtext;
+            return Convert.ToBase64String(cipheredtext);
         }
 
-        public static string Decrypt(byte[] cipherText, byte[] key, byte[] iv)
+        public static string Decrypt(byte[] cipherText)
         {
             string plainText;
+            var (key, iv) = GetEncryptionKeyAndIV();
 
             using (Aes aes = Aes.Create())
             {
@@ -61,6 +63,18 @@ namespace AddOptimization.Utilities.Helpers
                 }
             }
             return plainText;
+        }
+
+        private static (byte[] key, byte[] iv) GetEncryptionKeyAndIV()
+        {
+            var key = Encoding.ASCII.GetBytes("0123456789ABCDEF0123456789ABCDEF");
+            var iv = Encoding.ASCII.GetBytes("1234567890123456");
+            if (key.Length != 32)
+                throw new ArgumentException("Key must be 32 bytes for AES-256.");
+
+            if (iv.Length != 16)
+                throw new ArgumentException("IV must be 16 bytes for AES.");
+            return (key, iv);
         }
 
 

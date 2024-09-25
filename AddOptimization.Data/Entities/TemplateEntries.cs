@@ -11,6 +11,7 @@ namespace AddOptimization.Data.Entities
         public Guid TemplateId { get; set; }
         public Guid? FolderId { get; set; }
         public string EntryData { get; set; }
+        public string Title { get; set; }
         public bool IsDeleted { get; set; }
 
         [ForeignKey(nameof(TemplateId))]

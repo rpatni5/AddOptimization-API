@@ -19,61 +19,71 @@ namespace AddOptimization.Services.Services
 {
     public class CreditCardService : ICreditCardService
     {
-        private readonly IGenericRepository<TemplateEntries> _templateEntryRepository;
         private readonly ILogger<CreditCardService> _logger;
         private readonly IMapper _mapper;
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IConfiguration _configuration;
         private readonly IGenericRepository<ApplicationUser> _applicationUserRepository;
         private readonly IGenericRepository<Group> _groupRepository;
         private readonly ITemplatesService _templateService;
-        JsonSerializerOptions jsonOptions = new()
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
+        private readonly ITemplateEntryService _templateEntryService;
 
-        public CreditCardService(IGenericRepository<TemplateEntries> templateEntryRepository, ILogger<CreditCardService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, ITemplatesService templateService)
+        public CreditCardService( ILogger<CreditCardService> logger, IMapper mapper, IConfiguration configuration, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, ITemplatesService templateService, ITemplateEntryService templateEntryService)
         {
-            _templateEntryRepository = templateEntryRepository;
             _logger = logger;
             _mapper = mapper;
-            _httpContextAccessor = httpContextAccessor;
-            _configuration = configuration;
             _applicationUserRepository = applicationUserRepository;
             _groupRepository = groupRepository;
             _templateService = templateService;
+            _templateEntryService = templateEntryService;
         }
 
+       
+        private void EncryptCreditCardInfo(TemplateEntryDto model)       {
+           
+
+            if (model.EntryData?.CreditCardInfo != null)
+            {
+                var creditCardInfo = model.EntryData.CreditCardInfo;
+                if (!string.IsNullOrEmpty(creditCardInfo.Cvv))
+                {
+                    creditCardInfo.Cvv =AesEncryptionDecryptionHelper.Encrypt(creditCardInfo.Cvv);
+                    model.EntryData.IsValueEncrypted = true;
+                }
+
+                if (!string.IsNullOrEmpty(creditCardInfo.CardPin))
+                {
+                    creditCardInfo.CardPin =AesEncryptionDecryptionHelper.Encrypt(creditCardInfo.CardPin);
+                    model.EntryData.IsValueEncrypted = true;
+                }
+            }
+
+        }
+
+        private void DecryptCreditCardInfo(TemplateEntryDto entity)
+        {
+            var creditCardInfo = entity.EntryData?.CreditCardInfo;
+            if (creditCardInfo != null && entity.EntryData.IsValueEncrypted == true)
+            {
+
+                if (!string.IsNullOrEmpty(creditCardInfo.Cvv))
+                {
+                    var cipherBytes = Convert.FromBase64String(creditCardInfo.Cvv);
+                    creditCardInfo.Cvv = AesEncryptionDecryptionHelper.Decrypt(cipherBytes);
+                }
+
+                if (!string.IsNullOrEmpty(creditCardInfo.CardPin))
+                {
+                    var cipherBytes = Convert.FromBase64String(creditCardInfo.CardPin);
+                    creditCardInfo.CardPin = AesEncryptionDecryptionHelper.Decrypt(cipherBytes);
+                }
+            }
+        }
 
         public async Task<ApiResult<bool>> SaveCreditCardDetails(TemplateEntryDto model)
         {
             try
             {
-                var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
-                var entity = _mapper.Map<TemplateEntries>(model);
-                entity.UserId = userId;
-                entity.FolderId = model.FolderId;
-
-                var (key, iv) = GetEncryptionKeyAndIV();
-
-                if (model.EntryData?.CreditCardInfo != null)
-                {
-                    var creditCardInfo = model.EntryData.CreditCardInfo;
-                    if (!string.IsNullOrEmpty(creditCardInfo.Cvv))
-                    {
-                        creditCardInfo.Cvv = Convert.ToBase64String(AesEncryptionDecryptionHelper.Encrypt(creditCardInfo.Cvv, key, iv));
-                        model.EntryData.IsValueEncrypted = true;
-                    }
-
-                    if (!string.IsNullOrEmpty(creditCardInfo.CardPin))
-                    {
-                        creditCardInfo.CardPin = Convert.ToBase64String(AesEncryptionDecryptionHelper.Encrypt(creditCardInfo.CardPin, key, iv));
-                        model.EntryData.IsValueEncrypted = true;
-                    }
-                }
-
-                entity.EntryData = JsonSerializer.Serialize(model.EntryData, jsonOptions);
-                await _templateEntryRepository.InsertAsync(entity);
+                EncryptCreditCardInfo(model);
+                await _templateEntryService.Save(model);
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -83,47 +93,17 @@ namespace AddOptimization.Services.Services
             }
         }
 
-
         public async Task<ApiResult<List<TemplateEntryDto>>> Search()
         {
             try
             {
-                var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
                 var templates = (await _templateService.GetAllTemplate()).Result;
                 var creditCardId = templates.FirstOrDefault(x => x.Name == "Credit Cards".ToString()).Id;
-                var entities = await _templateEntryRepository.QueryAsync(
-                    e => !e.IsDeleted && e.UserId == currentUserId && e.TemplateId == creditCardId,
-                    include: entities => entities
-                        .Include(e => e.CreatedByUser).Include(e => e.TemplateFolder).Include(e => e.Template)
-                        .Include(e => e.UpdatedByUser)
-                        .Include(e => e.ApplicationUser),
-                    orderBy: x => x.OrderByDescending(x => x.CreatedAt)
-                );
-
-                var mappedEntities = _mapper.Map<List<TemplateEntryDto>>(entities.ToList());
-
+                var mappedEntities = (await _templateEntryService.Search(creditCardId)).Result;
                 foreach (var entity in mappedEntities)
                 {
-
-                    var creditCardInfo = entity.EntryData?.CreditCardInfo;
-                    if (creditCardInfo != null && entity.EntryData.IsValueEncrypted == true)
-                    {
-                        var (key, iv) = GetEncryptionKeyAndIV();
-
-                        if (!string.IsNullOrEmpty(creditCardInfo.Cvv))
-                        {
-                            var cipherBytes = Convert.FromBase64String(creditCardInfo.Cvv);
-                            creditCardInfo.Cvv = AesEncryptionDecryptionHelper.Decrypt(cipherBytes, key, iv);
-                        }
-
-                        if (!string.IsNullOrEmpty(creditCardInfo.CardPin))
-                        {
-                            var cipherBytes = Convert.FromBase64String(creditCardInfo.CardPin);
-                            creditCardInfo.CardPin = AesEncryptionDecryptionHelper.Decrypt(cipherBytes, key, iv);
-                        }
-                    }
+                    DecryptCreditCardInfo(entity);
                 }
-
                 return ApiResult<List<TemplateEntryDto>>.Success(mappedEntities);
             }
             catch (Exception ex)
@@ -138,31 +118,8 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entity = (await _templateEntryRepository.QueryAsync(o => o.Id == id && !o.IsDeleted, ignoreGlobalFilter: true)).FirstOrDefault();
-                if (entity == null)
-                {
-                    return ApiResult<TemplateEntryDto>.NotFound("Country");
-                }
-
-                var mappedEntity = _mapper.Map<TemplateEntryDto>(entity);
-
-                var creditCardInfo = mappedEntity.EntryData?.CreditCardInfo;
-                if (creditCardInfo != null && mappedEntity.EntryData.IsValueEncrypted == true)
-                {
-                    var (key, iv) = GetEncryptionKeyAndIV();
-
-                    if (!string.IsNullOrEmpty(creditCardInfo.Cvv))
-                    {
-                        var cipherBytes = Convert.FromBase64String(creditCardInfo.Cvv);
-                        creditCardInfo.Cvv = AesEncryptionDecryptionHelper.Decrypt(cipherBytes, key, iv);
-                    }
-
-                    if (!string.IsNullOrEmpty(creditCardInfo.CardPin))
-                    {
-                        var cipherBytes = Convert.FromBase64String(creditCardInfo.CardPin);
-                        creditCardInfo.CardPin = AesEncryptionDecryptionHelper.Decrypt(cipherBytes, key, iv);
-                    }
-                }
+                var mappedEntity = (await _templateEntryService.Get(id)).Result;
+                DecryptCreditCardInfo(mappedEntity);
                 return ApiResult<TemplateEntryDto>.Success(mappedEntity);
             }
 
@@ -177,31 +134,8 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entity = await _templateEntryRepository.FirstOrDefaultAsync(e => e.Id == id);
-                entity.FolderId = model.FolderId;
-                entity.EntryData = System.Text.Json.JsonSerializer.Serialize(model.EntryData, jsonOptions);
-
-                var (key, iv) = GetEncryptionKeyAndIV();
-
-                if (model.EntryData?.CreditCardInfo != null)
-                {
-                    var creditCardInfo = model.EntryData.CreditCardInfo;
-                    if (!string.IsNullOrEmpty(creditCardInfo.Cvv))
-                    {
-                        creditCardInfo.Cvv = Convert.ToBase64String(AesEncryptionDecryptionHelper.Encrypt(creditCardInfo.Cvv, key, iv));
-                        model.EntryData.IsValueEncrypted = true;
-                    }
-
-                    if (!string.IsNullOrEmpty(creditCardInfo.CardPin))
-                    {
-                        creditCardInfo.CardPin = Convert.ToBase64String(AesEncryptionDecryptionHelper.Encrypt(creditCardInfo.CardPin, key, iv));
-                        model.EntryData.IsValueEncrypted = true;
-                    }
-                }
-
-                entity.EntryData = JsonSerializer.Serialize(model.EntryData, jsonOptions);
-                await _templateEntryRepository.UpdateAsync(entity);
-                var mappedEntity = _mapper.Map<TemplateEntryDto>(entity);
+                EncryptCreditCardInfo(model);
+                var mappedEntity = (await _templateEntryService.Update(id, model)).Result;
                 return ApiResult<TemplateEntryDto>.Success(mappedEntity);
             }
             catch (Exception ex)
@@ -215,14 +149,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entity = await _templateEntryRepository.FirstOrDefaultAsync(t => t.Id == id, ignoreGlobalFilter: true);
-                if (entity == null)
-                {
-                    return ApiResult<bool>.NotFound("Card Details");
-                }
-
-                entity.IsDeleted = true;
-                await _templateEntryRepository.UpdateAsync(entity);
+                await _templateEntryService.Delete(id);
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -262,19 +189,6 @@ namespace AddOptimization.Services.Services
                 _logger.LogException(ex);
                 throw;
             }
-        }
-
-
-        private (byte[] key, byte[] iv) GetEncryptionKeyAndIV()
-        {
-            var key = Encoding.ASCII.GetBytes(_configuration["EncryptionSettings:Key"]);
-            var iv = Encoding.ASCII.GetBytes(_configuration["EncryptionSettings:IV"]);
-            if (key.Length != 32)
-                throw new ArgumentException("Key must be 32 bytes for AES-256.");
-
-            if (iv.Length != 16)
-                throw new ArgumentException("IV must be 16 bytes for AES.");
-            return (key, iv);
         }
 
 

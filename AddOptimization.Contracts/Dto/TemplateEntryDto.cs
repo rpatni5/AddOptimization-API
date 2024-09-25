@@ -12,6 +12,8 @@ namespace AddOptimization.Contracts.Dto
         public int UserId { get; set; }
         public Guid TemplateId { get; set; }
         public Guid? FolderId { get; set; }
+        public string Title { get; set; }
+
         public EntryDataDto EntryData { get; set; }
         public bool IsDeleted { get; set; }
         public DateTime? CreatedAt { get; set; }
