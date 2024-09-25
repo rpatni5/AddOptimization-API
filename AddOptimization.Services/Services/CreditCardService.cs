@@ -199,7 +199,7 @@ namespace AddOptimization.Services.Services
                     }
                 }
 
-                entity.EntryData = JsonConvert.SerializeObject(model.EntryData);
+                entity.EntryData = JsonSerializer.Serialize(model.EntryData, jsonOptions);
                 await _templateEntryRepository.UpdateAsync(entity);
                 var mappedEntity = _mapper.Map<TemplateEntryDto>(entity);
                 return ApiResult<TemplateEntryDto>.Success(mappedEntity);
