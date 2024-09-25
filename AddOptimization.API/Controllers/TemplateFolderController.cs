@@ -86,7 +86,6 @@ namespace AddOptimization.API.Controllers
                 return HandleException(ex);
             }
         }
-
     }
 }
 
