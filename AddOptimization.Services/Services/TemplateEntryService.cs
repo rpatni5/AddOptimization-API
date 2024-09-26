@@ -105,8 +105,6 @@ namespace AddOptimization.Services.Services
 
                 var mappedEntities = entities.Select(x => SelectTemplate(x, sharedEntries)).ToList();
 
-                //var mappedEntities = _mapper.Map<List<TemplateEntryDto>>(entities.ToList());
-
                 return ApiResult<List<TemplateEntryDto>>.Success(mappedEntities);
             }
             catch (Exception ex)

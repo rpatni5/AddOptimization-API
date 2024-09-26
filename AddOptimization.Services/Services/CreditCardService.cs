@@ -164,7 +164,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _applicationUserRepository.QueryAsync((e => e.IsActive), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser));
+                var entities = await _applicationUserRepository.QueryAsync((e => e.IsActive && e.FullName != null), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: entities => entities.OrderBy(x => x.FullName));
                 var mappedEntities = _mapper.Map<List<ApplicationUserDto>>(entities);
                 return ApiResult<List<ApplicationUserDto>>.Success(mappedEntities);
             }
@@ -180,7 +180,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _groupRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser));
+                var entities = await _groupRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: entities => entities.OrderBy(x => x.Name));
                 var mappedEntities = _mapper.Map<List<GroupDto>>(entities);
                 return ApiResult<List<GroupDto>>.Success(mappedEntities);
             }
