@@ -102,7 +102,7 @@ namespace AddOptimization.Services.Services
                     IsCustomerApprovalPending = e.AdminStatus.StatusKey.ToString() == SchedulerStatusesEnum.PENDING_CUSTOMER_APPROVAL.ToString(),
                 }).ToList());
 
-                filters.GetValue<bool>("includeHoliday", (v) =>
+                filters.GetValue<bool>("includeHoliday", (v) =>                
                 {
                     if (v)
                     {
@@ -530,7 +530,7 @@ namespace AddOptimization.Services.Services
             });
             filter.GetValue<string>("customer", (v) =>
             {
-                entities = entities.Where(e => e.CustomerId.ToString() == v);
+                entities = entities.Where(e => e.CustomerId.ToString() == v || e.Customer.Organizations.ToLower().Contains(v.ToLower()));
             });
             filter.GetValue<bool>("isDraft", (v) =>
             {
