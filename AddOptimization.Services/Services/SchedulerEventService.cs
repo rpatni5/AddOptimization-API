@@ -127,11 +127,13 @@ namespace AddOptimization.Services.Services
         private decimal GetHolidaysCount(DateTime startDate, DateTime endDate, int employeeId)
         {
             PageQueryFiterBase filter = new PageQueryFiterBase();
-            filter.AddFilter("startDate", OperatorType.equal.ToString(), startDate);
-            filter.AddFilter("endDate", OperatorType.equal.ToString(), endDate);
             filter.AddFilter("employeeId", OperatorType.equal.ToString(), employeeId);
             var result = (_absenceRequestService.Search(filter)).Result.Result;
-            return result.Sum(x => x.Duration);
+            return result
+                .Where(x =>
+                    x.LeaveStatusId == 2 && 
+                    (x.StartDate <= endDate && x.EndDate >= startDate)) 
+                .Sum(x => x.Duration);
         }
         public async Task<ApiResult<bool>> Save(List<SchedulerEventDetailsDto> schedulerEventDetails)
         {
