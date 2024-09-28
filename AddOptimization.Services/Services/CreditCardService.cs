@@ -136,6 +136,12 @@ namespace AddOptimization.Services.Services
                 foreach (var entity in mappedEntities)
                 {
                     DecryptCreditCardInfo(entity);
+                    if (entity.EntryData != null)
+                    {
+                        string entryDataJson = JsonSerializer.Serialize(entity.EntryData, jsonOptions);
+                        entity.EntryDataEncrypted = DecryptionHelper.Encrypt(entryDataJson);
+                        entity.EntryData = null;
+                    }
                 }
                 return ApiResult<List<TemplateEntryDto>>.Success(mappedEntities);
             }
@@ -153,6 +159,12 @@ namespace AddOptimization.Services.Services
             {
                 var mappedEntity = (await _templateEntryService.Get(id)).Result;
                 DecryptCreditCardInfo(mappedEntity);
+                if (mappedEntity.EntryData != null)
+                {
+                    string entryDataJson = JsonSerializer.Serialize(mappedEntity.EntryData, jsonOptions);
+                    mappedEntity.EntryDataEncrypted = DecryptionHelper.Encrypt(entryDataJson);
+                    mappedEntity.EntryData = null;
+                }
                 return ApiResult<TemplateEntryDto>.Success(mappedEntity);
             }
 
