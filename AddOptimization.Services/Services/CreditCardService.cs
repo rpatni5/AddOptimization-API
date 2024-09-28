@@ -3,6 +3,7 @@ using AddOptimization.Contracts.Services;
 using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
 using AddOptimization.Utilities.Common;
+using AddOptimization.Utilities.Enums;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Models;
@@ -25,6 +26,11 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<Group> _groupRepository;
         private readonly ITemplatesService _templateService;
         private readonly ITemplateEntryService _templateEntryService;
+
+        JsonSerializerOptions jsonOptions = new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
 
         public CreditCardService( ILogger<CreditCardService> logger, IMapper mapper, IConfiguration configuration, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, ITemplatesService templateService, ITemplateEntryService templateEntryService)
         {
@@ -78,10 +84,37 @@ namespace AddOptimization.Services.Services
             }
         }
 
+        private void Decrypt(TemplateEntryDto model)
+        {
+            if (model.EntryDataEncrypted != null)
+            {
+                try
+                {
+                    string encryptedData = model.EntryDataEncrypted; 
+                    string decryptedJson = DecryptionHelper.Decrypt(encryptedData);
+
+                    var decryptedEntryData = JsonSerializer.Deserialize<EntryDataDto>(decryptedJson , jsonOptions);
+
+                    model.EntryData = decryptedEntryData ?? new EntryDataDto();
+
+                    if (decryptedEntryData != null)
+                    {
+                        model.EntryData.CreditCardInfo = decryptedEntryData.CreditCardInfo; 
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError("Decryption failed: {Message}", ex.Message);
+                    throw new InvalidOperationException("Decryption failed", ex);
+                }
+            }
+        }
+
         public async Task<ApiResult<bool>> SaveCreditCardDetails(TemplateEntryDto model)
         {
             try
             {
+                Decrypt(model);
                 EncryptCreditCardInfo(model);
                 await _templateEntryService.Save(model);
                 return ApiResult<bool>.Success(true);
@@ -134,6 +167,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
+                Decrypt(model);
                 EncryptCreditCardInfo(model);
                 var mappedEntity = (await _templateEntryService.Update(id, model)).Result;
                 return ApiResult<TemplateEntryDto>.Success(mappedEntity);

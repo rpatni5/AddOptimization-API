@@ -8,7 +8,7 @@ namespace AddOptimization.Contracts.Dto
 {
     public class SecureNoteDto
     {
-        public string? SecureNote { get; set; }
+        public string SecureNote { get; set; }
         
     }
 }
