@@ -143,10 +143,6 @@ IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository, ISche
 
             return result.Sum(x => x.Duration);
         }
-
-
-
-
         public async Task<ApiResult<bool>> Save(List<SchedulerEventDetailsDto> schedulerEventDetails)
         {
             var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
