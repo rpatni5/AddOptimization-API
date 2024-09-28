@@ -35,6 +35,7 @@ namespace AddOptimization.Services.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ISchedulersStatusService _schedulersStatusService;
+        private readonly ILeaveStatusesService _leaveStatusesService;
         private readonly IEmailService _emailService;
         private readonly ITemplateService _templateService;
         private readonly IConfiguration _configuration;
@@ -45,7 +46,8 @@ namespace AddOptimization.Services.Services
         private readonly IAbsenceRequestService _absenceRequestService;
         private readonly INotificationService _notificationService;
         private readonly IGenericRepository<Invoice> _invoiceRepository;
-        public SchedulerEventService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulerEventService> logger, IMapper mapper, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ISchedulersStatusService schedulersStatusService, IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository, IGenericRepository<Customer> customersRepository, IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository, ISchedulerEventTypeService schedulerEventTypeService, IAbsenceRequestService absenceRequestService, IGenericRepository<Invoice> invoiceRepository,
+        public SchedulerEventService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulerEventService> logger, IMapper mapper, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ISchedulersStatusService schedulersStatusService, IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository, IGenericRepository<Customer> customersRepository, ILeaveStatusesService leaveStatusesService,
+IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository, ISchedulerEventTypeService schedulerEventTypeService, IAbsenceRequestService absenceRequestService, IGenericRepository<Invoice> invoiceRepository,
         IConfiguration configuration, IEmailService emailService, ITemplateService templateService, CustomDataProtectionService protectionService, IGenericRepository<ApplicationUser> appUserRepository, INotificationService notificationService)
         {
             _schedulersRepository = schedulersRepository;
@@ -55,6 +57,7 @@ namespace AddOptimization.Services.Services
             _httpContextAccessor = httpContextAccessor;
             _schedulersStatusService = schedulersStatusService;
             _schedulersDetailsRepository = schedulersDetailsRepository;
+            _leaveStatusesService = leaveStatusesService;
             _currentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
             _emailService = emailService;
             _templateService = templateService;
@@ -126,11 +129,18 @@ namespace AddOptimization.Services.Services
 
         private decimal GetHolidaysCount(DateTime startDate, DateTime endDate, int employeeId)
         {
+            var leaveStatuses = _leaveStatusesService.Search(null).Result.Result;
+
+            var approvedStatusId = leaveStatuses.FirstOrDefault(x => x.Name.ToLower() == LeaveStatusesEnum.Approved.ToString().ToLower())?.Id;
+
             PageQueryFiterBase filter = new PageQueryFiterBase();
-            filter.AddFilter("startDate", OperatorType.equal.ToString(), startDate);
-            filter.AddFilter("endDate", OperatorType.equal.ToString(), endDate);
             filter.AddFilter("employeeId", OperatorType.equal.ToString(), employeeId);
-            var result = (_absenceRequestService.Search(filter)).Result.Result;
+            filter.AddFilter("LeaveStatusId", OperatorType.equal.ToString(), approvedStatusId);
+            filter.AddFilter("StartDate", OperatorType.lessthan.ToString(), endDate.AddDays(1)); 
+            filter.AddFilter("EndDate", OperatorType.greaterthan.ToString(), startDate.AddDays(-1));
+
+            var result = _absenceRequestService.Search(filter).Result.Result;
+
             return result.Sum(x => x.Duration);
         }
         public async Task<ApiResult<bool>> Save(List<SchedulerEventDetailsDto> schedulerEventDetails)
