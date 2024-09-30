@@ -18,7 +18,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using System.Globalization;
 using System.Text;
 
 namespace AddOptimization.Services.Services
@@ -53,6 +52,9 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<Role> _roleRepository;
         private readonly IApplicationUserService _applicationService;
         private readonly ICompanyService _companyService;
+        private readonly INotificationService _notificationService;
+        private readonly IApplicationUserService _applicationUserService;
+        private readonly ICustomerEmployeeAssociationService _customerEmployeeAssociationService;
 
 
         private readonly ILogger<InvoiceService> _logger;
@@ -84,7 +86,9 @@ namespace AddOptimization.Services.Services
             IGenericRepository<InvoiceCreditNotes> invoiceCreditNoteRepository,
             IGenericRepository<InvoicePaymentHistory> invoicePaymentRepository,
             IGenericRepository<CustomerEmployeeAssociation> associationRepository,
-
+            INotificationService notificationService,
+            IApplicationUserService applicationUserService,
+            ICustomerEmployeeAssociationService customerEmployeeAssociationService,
         ILogger<InvoiceService> logger)
         {
             _paymentStatusService = paymentStatusService;
@@ -117,6 +121,9 @@ namespace AddOptimization.Services.Services
             _invoiceCreditNoteRepository = invoiceCreditNoteRepository;
             _invoicePaymentRepository = invoicePaymentRepository;
             _associationRepository = associationRepository;
+            _notificationService = notificationService;
+            _applicationUserService = applicationUserService;
+            _customerEmployeeAssociationService = customerEmployeeAssociationService;
         }
 
         public async Task<ApiResult<bool>> GenerateInvoice(Guid customerId, MonthDateRange month,
@@ -237,6 +244,25 @@ namespace AddOptimization.Services.Services
 
                 var finalInvoice = await _invoiceRepository.UpdateAsync(invoiceResult);
                 _logger.LogInformation("GenerateInvoice service Completed.");
+                var applicationUser = (await _applicationUserService.GetAccountAdmins()).Result;
+                var invoiceDetail = (await _invoiceRepository.QueryAsync(c => c.Id == finalInvoice.Id, include: entities => entities.Include(i => i.Customer), ignoreGlobalFilter: true)).ToList();
+
+                var historyEntity = new InvoiceHistory
+                {
+                    InvoiceId = invoice.Id,
+                    InvoiceStatusId = invoice.InvoiceStatusId,
+                    CreatedAt = DateTime.UtcNow,
+                    Comment = "Automatic Generated Unpaid Invoice",
+                };
+                await _invoiceHistoryRepository.InsertAsync(historyEntity);
+
+
+                var invoiceResponseDtoList = _mapper.Map<List<InvoiceResponseDto>>(invoiceDetail);
+                foreach (var admin in applicationUser)
+                {
+                    await SendNotificationToAccountAdmin(invoiceResponseDtoList, admin);
+                }
+
                 return ApiResult<bool>.Success("true");
             }
             catch (Exception ex)
@@ -275,7 +301,7 @@ namespace AddOptimization.Services.Services
             try
             {
                 var dateFormat = $"{month.StartDate.Year}{month.StartDate.Month:D2}";
-                var draftInvoicesCount = (await _invoiceRepository.QueryAsync(x => x.InvoiceNumber.Contains(dateFormat) , ignoreGlobalFilter: true)).Count();
+                var draftInvoicesCount = (await _invoiceRepository.QueryAsync(x => x.InvoiceNumber.Contains(dateFormat), ignoreGlobalFilter: true)).Count();
                 var newDraftNumber = draftInvoicesCount + 1;
                 var draftInvoiceNumber = $"Draft-{dateFormat}{newDraftNumber}";
 
@@ -367,7 +393,6 @@ namespace AddOptimization.Services.Services
             }
         }
 
-
         private async Task<ApiResult<bool>> SendRequestInvoiceEmailToCustomer(string email, Invoice invoice, CompanyDto companyInfo)
         {
             try
@@ -414,7 +439,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var  customer = string.IsNullOrEmpty(invoice?.Customer?.PartnerCompany) ? invoice?.Customer?.Organizations
+                var customer = string.IsNullOrEmpty(invoice?.Customer?.PartnerCompany) ? invoice?.Customer?.Organizations
     : invoice?.Customer?.PartnerCompany;
                 var subject = $"Invoice #{invoiceNumber} is Declined by {customer}.";
                 var link = GetInvoiceLinkForCustomer(invoice.Id);
@@ -695,7 +720,8 @@ namespace AddOptimization.Services.Services
                     DueAmount = e.DueAmount,
                     HasCreditNotes = e.HasCreditNotes,
                     CreditNoteNumber = e.CreditNoteNumber,
-                    HasInvoiceFinalized = e.HasInvoiceFinalized
+                    HasInvoiceFinalized = e.HasInvoiceFinalized,
+                    HasInvoiceSentToAccAdmin = e.HasInvoiceSentToAccAdmin,
                 }).ToList());
 
                 var result = pagedResult;
@@ -752,6 +778,7 @@ namespace AddOptimization.Services.Services
                 model.SwiftCode = company.SwiftCode;
                 model.DueAmount = entity.DueAmount;
                 model.HasInvoiceFinalized = entity?.HasInvoiceFinalized;
+                model.HasInvoiceSentToAccAdmin = entity?.HasInvoiceSentToAccAdmin;
                 var invoiceSummary = (await _invoiceDetailRepository.QueryAsync(e => e.InvoiceId == id, disableTracking: true)).ToList();
                 model.InvoiceDetails = _mapper.Map<List<InvoiceDetailDto>>(invoiceSummary);
                 return ApiResult<InvoiceResponseDto>.Success(model);
@@ -873,7 +900,7 @@ namespace AddOptimization.Services.Services
                 return await SendUnpaidInvoiceReminderEmailCustomer(invoices, companyInfo);
             }
             else
-            { 
+            {
                 return await SendRequestInvoiceEmailToCustomer(entity.Customer.AccountContactEmail, entity, companyInfo);
 
             }
@@ -899,7 +926,7 @@ namespace AddOptimization.Services.Services
                 var accountAdmins = (await _applicationService.GetAccountAdmins()).Result;
                 var adminEmails = accountAdmins.Select(admin => new { Name = admin.FullName, Email = admin.Email });
 
-                await SendInvoiceDeclinedEmailToAccountAdmins(adminEmails, entities.Customer.AccountContactName, entities.InvoiceNumber, entities.ExpiryDate.Value, entities.DueAmount, entity.Comment ,entities);
+                await SendInvoiceDeclinedEmailToAccountAdmins(adminEmails, entities.Customer.AccountContactName, entities.InvoiceNumber, entities.ExpiryDate.Value, entities.DueAmount, entity.Comment, entities);
 
                 return ApiResult<bool>.Success(true);
             }
@@ -912,7 +939,11 @@ namespace AddOptimization.Services.Services
 
         public async Task<ApiResult<List<InvoiceResponseDto>>> GetUnpaidInvoicesForEmailReminder()
         {
-            var entity = await _invoiceRepository.QueryAsync(x => x.PaymentStatus.StatusKey == PaymentStatusesEnum.UNPAID.ToString() && !x.IsDeleted, include: entities => entities.Include(e => e.Customer));
+            var eventStatus = (await _invoiceStatusService.Search()).Result;
+            var invoiceStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == InvoiceStatusEnum.SEND_TO_CUSTOMER.ToString()).Id;
+
+            var entity = await _invoiceRepository.QueryAsync(x => x.PaymentStatus.StatusKey == PaymentStatusesEnum.UNPAID.ToString() && !x.IsDeleted && x.InvoiceStatusId == invoiceStatusId, include: entities => entities.Include(e => e.Customer));
+
             if (entity == null || !entity.Any())
             {
                 return ApiResult<List<InvoiceResponseDto>>.Failure(ValidationCodes.UnpaidInvoiceDoesNotExists);
@@ -985,6 +1016,26 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
+        private async Task SendNotificationToAccountAdmin(List<InvoiceResponseDto> invoices, ApplicationUserDto accountAdmin)
+        {
+            var notifications = new List<NotificationDto>();
+            foreach (var invoice in invoices)
+            {
+                var subject = $"Invoice created for {invoice?.Customer?.Company}";
+                var bodyContent = $"Invoice created for {invoice?.Customer?.Company} with invoice number #{invoice?.InvoiceNumber}";
+                var linkUrl = GetInvoiceLinkForCustomer(invoice.Id);
+                var model = new NotificationDto
+                {
+                    Subject = subject,
+                    Content = bodyContent,
+                    Link = linkUrl,
+                    AppplicationUserId = accountAdmin.Id,
+                    GroupKey = $"Invoice created #{invoice?.Customer?.Company}",
+                };
+                notifications.Add(model);
+            }
+            await _notificationService.BulkCreateAsync(notifications);
+        }
         public async Task<ApiResult<InvoiceResponseDto>> GetInvoiceById(int invoiceId)
         {
             try
@@ -1016,7 +1067,7 @@ namespace AddOptimization.Services.Services
                 var currentMonth = now.Month;
                 var dateFormat = $"{currentYear}{currentMonth:D2}";
 
-                var draftInvoicesCount = (await _invoiceRepository.QueryAsync(x => x.InvoiceNumber.Contains(dateFormat) , ignoreGlobalFilter: true)).Count();
+                var draftInvoicesCount = (await _invoiceRepository.QueryAsync(x => x.InvoiceNumber.Contains(dateFormat), ignoreGlobalFilter: true)).Count();
                 var newDraftNumber = draftInvoicesCount + 1;
                 var draftInvoiceNumber = $"Draft-{DateTime.UtcNow:yyyyMM}{newDraftNumber}";
 
@@ -1038,7 +1089,7 @@ namespace AddOptimization.Services.Services
                 var currentYear = now.Year;
                 var currentMonth = now.Month;
                 var currentDateFormat = $"{currentYear}{currentMonth:D2}";
-                
+
                 var finalizedInvoicesCount = (await _invoiceRepository.QueryAsync(x => (x.HasInvoiceFinalized == true) && x.InvoiceNumber.StartsWith(currentDateFormat), ignoreGlobalFilter: true)).Count();
 
                 var invoiceNumber = finalizedInvoicesCount + 1;
@@ -1105,9 +1156,80 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
+        public async Task<ApiResult<bool>> SendOverdueNotificationToAccountAdmin(InvoiceResponseDto invoice, List<ApplicationUserDto> accountAdmin)
+        {
+            var notifications = new List<NotificationDto>();
+            var subject = $"Invoice overdue for {invoice?.Customer?.Company}";
+            var bodyContent = $"Invoice overerdue for {invoice?.Customer?.Company} with invoice number #{invoice?.InvoiceNumber}";
+            var linkUrl = GetInvoiceLinkForCustomer(invoice.Id);
+            foreach (var admin in accountAdmin)
+            {
+                var model = new NotificationDto
+                {
+                    Subject = subject,
+                    Content = bodyContent,
+                    Link = linkUrl,
+                    AppplicationUserId = admin.Id,
+                    GroupKey = $"Invoice overdue #{invoice?.Customer?.Company}",
+                };
+                notifications.Add(model);
+            }
+            return await _notificationService.BulkCreateAsync(notifications);
+
+        }
+        private async Task<ApiResult<InvoiceResponseDto>> UpdateInvoiceNotificationSentToAccountAdmin(InvoiceResponseDto invoice)
+        {
+            var invoiceEntity = await _invoiceRepository.FirstOrDefaultAsync(e => e.Id == invoice.Id);
+            invoiceEntity.HasInvoiceSentToAccAdmin = invoice.HasInvoiceSentToAccAdmin;
+            await _invoiceRepository.UpdateAsync(invoiceEntity);
+            return ApiResult<InvoiceResponseDto>.Success();
+        }
+
+        public async Task<bool> GetUnpaidInvoiceData(bool isNotification = false)
+        {
+            try
+            {
+                var invoices = (await GetUnpaidInvoicesForEmailReminder()).Result;
+                if (invoices == null) return false;
+
+                var companyInfoResult = (await _companyService.GetCompanyInformation()).Result;
+                var customerEmployeeAssociation = (await _customerEmployeeAssociationService.Search()).Result;
+                var approver = (await _applicationService.GetAccountAdmins()).Result;                
+
+                foreach (var invoice in invoices)
+                {
+                    var paymentClearanceDays = invoice.PaymentClearanceDays;
+                    if (invoice.ExpiryDate.HasValue && invoice.ExpiryDate.Value < DateTime.Today
+                        && invoice?.DueAmount > 0)
+                    {
+                        if (isNotification)
+                        {
+                            var applicationUser = (await _applicationService.GetAccountAdmins()).Result;
+                            await SendOverdueNotificationToAccountAdmin(invoice, applicationUser);
+                        }
+                        else
+                        {
+                            await SendUnpaidInvoiceReminderEmailCustomer(invoice, companyInfoResult);
+                            if (invoice?.HasInvoiceSentToAccAdmin == false)
+                            {
+                                await SendOverdueNotificationToAccountAdmin(invoice, approver);
+                                invoice.HasInvoiceSentToAccAdmin = true;
+                                await UpdateInvoiceNotificationSentToAccountAdmin(invoice);
+                            }
+                        }
+                    }
+                };
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation("An exception occurred while getting unpaid invoice data for reminder email.");
+                _logger.LogException(ex);
+                return false;
+            }
+        }
+
 
     }
-
-
-
 }
+

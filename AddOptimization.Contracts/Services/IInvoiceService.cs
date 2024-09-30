@@ -1,4 +1,5 @@
-﻿using AddOptimization.Contracts.Dto;
+﻿
+using AddOptimization.Contracts.Dto;
 using AddOptimization.Utilities.Common;
 using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Models;
@@ -20,5 +21,8 @@ namespace AddOptimization.Contracts.Services
         Task<ApiResult<InvoiceResponseDto>> FinalizedInvoice(int id);
         Task<ApiResult<bool>> Delete(int id);
         Task<ApiResult<InvoiceResponseDto>> GetInvoiceById(int invoiceId);
+        Task<ApiResult<bool>> SendOverdueNotificationToAccountAdmin(InvoiceResponseDto invoice , List<ApplicationUserDto>accountAdmin);
+        Task<bool> GetUnpaidInvoiceData(bool isNotification = false);
+
     }
 }

@@ -12,6 +12,7 @@ namespace AddOptimization.Contracts.Dto
         public DateTime ExpiryDate { get; set; }
         public int? PaymentClearanceDays { get; set; }
         public bool HasInvoiceFinalized { get; set; }
+        public bool? HasInvoiceSentToAccAdmin { get; set; }
         public List<InvoiceDetailDto> InvoiceDetails { get; set; }
 
     }

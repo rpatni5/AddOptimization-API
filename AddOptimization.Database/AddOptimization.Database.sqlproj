@@ -111,6 +111,8 @@
     <Build Include="dbo\Tables\InvoiceCreditNotes.sql" />
     <Build Include="dbo\Tables\EmployeeIdentity.sql" />
     <Build Include="dbo\Tables\QuoteHistory.sql" />
+    <Build Include="dbo\Tables\SavedSearches.sql" />
+    <Build Include="dbo\Tables\Notifications.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Scripts\SeedData_Script.PostDeployment.sql" />
