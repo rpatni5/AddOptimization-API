@@ -23,5 +23,6 @@ namespace AddOptimization.Contracts.Services
         Task<ApiResult<bool>> TimesheetAction(CustomerTimesheetActionDto model);
         Task<ApiResult<bool>> SendTimesheetApprovalEmailToCustomer(Guid schedulerEventId);
         Task<bool> IsTimesheetApproved(Guid customerId, List<int> employeeIds, MonthDateRange month);
+        Task<ApiResult<SchedulerEventResponseDto>> SendToDraft(Guid timesheetid);
     }
 }
