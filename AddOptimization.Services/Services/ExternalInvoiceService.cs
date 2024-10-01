@@ -502,7 +502,7 @@ namespace AddOptimization.Services.Services
         public string GetInvoiceLinkForAccountAdmin(int externalInvoiceId)
         {
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
-            return $"{baseUrl}external-Invoice/approval/{externalInvoiceId}";
+            return $"{baseUrl}external-Invoice/approval/{externalInvoiceId}?sidenav=collapsed";
         }
         public async Task<bool> SendInvoiceApprovalEmailToAccountAdmin(int Id)
         {

@@ -349,7 +349,7 @@ namespace AddOptimization.Services.Services
         public string GetAbsenceRequestLinkForAccountAdmin(Guid schedulerEventId)
         {
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
-            return $"{baseUrl}admin/timesheets/absence-request";
+            return $"{baseUrl}admin/timesheets/absence-request?sidenav=collapsed";
         }
     }
 }

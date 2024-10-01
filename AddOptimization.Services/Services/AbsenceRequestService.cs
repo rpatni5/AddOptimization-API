@@ -374,7 +374,7 @@ namespace AddOptimization.Services.Services
         public string GetAbsenceApprovalLinkForAccountAdmin(Guid schedulerEventId)
         {
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
-            return $"{baseUrl}admin/timesheets/absence-approval";
+            return $"{baseUrl}admin/timesheets/absence-approval?sidenav=collapsed";
         }
 
 
