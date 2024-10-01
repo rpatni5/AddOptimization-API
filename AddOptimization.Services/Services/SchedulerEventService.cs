@@ -105,16 +105,20 @@ IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository, ISche
                     IsCustomerApprovalPending = e.AdminStatus.StatusKey.ToString() == SchedulerStatusesEnum.PENDING_CUSTOMER_APPROVAL.ToString(),
                 }).ToList());
 
-                filters.GetValue<bool>("includeHoliday", (v) =>                
-                {
-                    if (v)
-                    {
-                        pagedResult.Result.ForEach(e =>
-                        {
-                            e.Holiday = GetHolidaysCount(e.StartDate, e.EndDate, e.UserId);
-                        });
-                    }
-                });
+                pagedResult.Result.ForEach(e =>
+                       {
+                           e.Holiday = GetHolidaysCount(e.StartDate, e.EndDate, e.UserId);
+                       });
+                //filters.GetValue<bool>("includeHoliday", (v) =>                
+                //{
+                //    if (v)
+                //    {
+                //        pagedResult.Result.ForEach(e =>
+                //        {
+                //            e.Holiday = GetHolidaysCount(e.StartDate, e.EndDate, e.UserId);
+                //        });
+                //    }
+                //});
 
                 var retVal = pagedResult;
                 return PagedApiResult<SchedulerEventResponseDto>.Success(retVal);
@@ -342,6 +346,7 @@ IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository, ISche
             mappedEntity.IsCustomerApprovalPending = mappedEntity.AdminStatusId.ToString() == statusId.ToString();
             mappedEntity.StartDate = mappedEntity.StartDate;
             mappedEntity.EndDate = mappedEntity.EndDate;
+            mappedEntity .Holiday = GetHolidaysCount(mappedEntity.StartDate, mappedEntity.EndDate, mappedEntity.UserId);
             return ApiResult<SchedulerEventResponseDto>.Success(mappedEntity);
         }
 
@@ -1088,17 +1093,17 @@ IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository, ISche
         {
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
             var encryptedId = _protectionService.Encode(schedulerEventId.ToString());
-            return $"{baseUrl}timesheet/approval/{encryptedId}";
+            return $"{baseUrl}timesheet/approval/{encryptedId}?sidenav=collapsed";
         }
         public string GetTimesheetLinkForAccountAdmin(Guid schedulerEventId)
         {
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
-            return $"{baseUrl}admin/timesheets/time-sheets-review-calendar/{schedulerEventId}";
+            return $"{baseUrl}admin/timesheets/time-sheets-review-calendar/{schedulerEventId}?sidenav=collapsed";
         }
         public string GetTimesheetLinkForEmployee(Guid schedulerEventId)
         {
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl.TrimEnd('/'));
-            return $"{baseUrl}/admin/timesheets/time-sheets-calendar/{schedulerEventId}";
+            return $"{baseUrl}/admin/timesheets/time-sheets-calendar/{schedulerEventId}?sidenav=collapsed";
         }
         public async Task<ApiResult<bool>> SendTimesheetApprovalEmailToCustomer(Guid schedulerEventId)
         {
