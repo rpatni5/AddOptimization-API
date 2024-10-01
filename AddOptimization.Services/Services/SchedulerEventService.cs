@@ -105,16 +105,20 @@ IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository, ISche
                     IsCustomerApprovalPending = e.AdminStatus.StatusKey.ToString() == SchedulerStatusesEnum.PENDING_CUSTOMER_APPROVAL.ToString(),
                 }).ToList());
 
-                filters.GetValue<bool>("includeHoliday", (v) =>                
-                {
-                    if (v)
-                    {
-                        pagedResult.Result.ForEach(e =>
-                        {
-                            e.Holiday = GetHolidaysCount(e.StartDate, e.EndDate, e.UserId);
-                        });
-                    }
-                });
+                pagedResult.Result.ForEach(e =>
+                       {
+                           e.Holiday = GetHolidaysCount(e.StartDate, e.EndDate, e.UserId);
+                       });
+                //filters.GetValue<bool>("includeHoliday", (v) =>                
+                //{
+                //    if (v)
+                //    {
+                //        pagedResult.Result.ForEach(e =>
+                //        {
+                //            e.Holiday = GetHolidaysCount(e.StartDate, e.EndDate, e.UserId);
+                //        });
+                //    }
+                //});
 
                 var retVal = pagedResult;
                 return PagedApiResult<SchedulerEventResponseDto>.Success(retVal);
