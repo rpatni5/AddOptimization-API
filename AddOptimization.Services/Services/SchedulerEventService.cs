@@ -342,6 +342,7 @@ IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository, ISche
             mappedEntity.IsCustomerApprovalPending = mappedEntity.AdminStatusId.ToString() == statusId.ToString();
             mappedEntity.StartDate = mappedEntity.StartDate;
             mappedEntity.EndDate = mappedEntity.EndDate;
+            mappedEntity .Holiday = GetHolidaysCount(mappedEntity.StartDate, mappedEntity.EndDate, mappedEntity.UserId);
             return ApiResult<SchedulerEventResponseDto>.Success(mappedEntity);
         }
 
