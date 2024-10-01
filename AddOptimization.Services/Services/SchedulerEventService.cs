@@ -1099,7 +1099,7 @@ IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository, ISche
         public string GetTimesheetLinkForEmployee(Guid schedulerEventId)
         {
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl.TrimEnd('/'));
-            return $"{baseUrl}/admin/timesheets/time-sheets-calendar/{schedulerEventId}";
+            return $"{baseUrl}/admin/timesheets/my-timesheets";
         }
         public async Task<ApiResult<bool>> SendTimesheetApprovalEmailToCustomer(Guid schedulerEventId)
         {
