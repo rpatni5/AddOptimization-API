@@ -35,6 +35,7 @@ namespace AddOptimization.Services.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ISchedulersStatusService _schedulersStatusService;
+        private readonly ILeaveStatusesService _leaveStatusesService;
         private readonly IEmailService _emailService;
         private readonly ITemplateService _templateService;
         private readonly IConfiguration _configuration;
@@ -44,7 +45,9 @@ namespace AddOptimization.Services.Services
         private readonly ISchedulerEventTypeService _schedulerEventTypeService;
         private readonly IAbsenceRequestService _absenceRequestService;
         private readonly INotificationService _notificationService;
-        public SchedulerEventService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulerEventService> logger, IMapper mapper, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ISchedulersStatusService schedulersStatusService, IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository, IGenericRepository<Customer> customersRepository, IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository, ISchedulerEventTypeService schedulerEventTypeService, IAbsenceRequestService absenceRequestService,
+        private readonly IGenericRepository<Invoice> _invoiceRepository;
+        public SchedulerEventService(IGenericRepository<SchedulerEvent> schedulersRepository, ILogger<SchedulerEventService> logger, IMapper mapper, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, ISchedulersStatusService schedulersStatusService, IGenericRepository<SchedulerEventDetails> schedulersDetailsRepository, IGenericRepository<Customer> customersRepository, ILeaveStatusesService leaveStatusesService,
+IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository, ISchedulerEventTypeService schedulerEventTypeService, IAbsenceRequestService absenceRequestService, IGenericRepository<Invoice> invoiceRepository,
         IConfiguration configuration, IEmailService emailService, ITemplateService templateService, CustomDataProtectionService protectionService, IGenericRepository<ApplicationUser> appUserRepository, INotificationService notificationService)
         {
             _schedulersRepository = schedulersRepository;
@@ -54,10 +57,12 @@ namespace AddOptimization.Services.Services
             _httpContextAccessor = httpContextAccessor;
             _schedulersStatusService = schedulersStatusService;
             _schedulersDetailsRepository = schedulersDetailsRepository;
+            _leaveStatusesService = leaveStatusesService;
             _currentUserRoles = httpContextAccessor.HttpContext.GetCurrentUserRoles();
             _emailService = emailService;
             _templateService = templateService;
             _configuration = configuration;
+            _invoiceRepository = invoiceRepository;
             _protectionService = protectionService;
             _customersRepository = customersRepository;
             _schedulerEventHistoryRepository = schedulerEventHistoryRepository;
@@ -101,9 +106,19 @@ namespace AddOptimization.Services.Services
                 }).ToList());
 
                 pagedResult.Result.ForEach(e =>
-                {
-                    e.Holiday = GetHolidaysCount(e.StartDate, e.EndDate, e.UserId);
-                });
+                       {
+                           e.Holiday = GetHolidaysCount(e.StartDate, e.EndDate, e.UserId);
+                       });
+                //filters.GetValue<bool>("includeHoliday", (v) =>                
+                //{
+                //    if (v)
+                //    {
+                //        pagedResult.Result.ForEach(e =>
+                //        {
+                //            e.Holiday = GetHolidaysCount(e.StartDate, e.EndDate, e.UserId);
+                //        });
+                //    }
+                //});
 
                 var retVal = pagedResult;
                 return PagedApiResult<SchedulerEventResponseDto>.Success(retVal);
@@ -118,11 +133,18 @@ namespace AddOptimization.Services.Services
 
         private decimal GetHolidaysCount(DateTime startDate, DateTime endDate, int employeeId)
         {
+            var leaveStatuses = _leaveStatusesService.Search(null).Result.Result;
+
+            var approvedStatusId = leaveStatuses.FirstOrDefault(x => x.Name.ToLower() == LeaveStatusesEnum.Approved.ToString().ToLower())?.Id;
+
             PageQueryFiterBase filter = new PageQueryFiterBase();
-            filter.AddFilter("startDate", OperatorType.equal.ToString(), startDate);
-            filter.AddFilter("endDate", OperatorType.equal.ToString(), endDate);
             filter.AddFilter("employeeId", OperatorType.equal.ToString(), employeeId);
-            var result = (_absenceRequestService.Search(filter)).Result.Result;
+            filter.AddFilter("LeaveStatusId", OperatorType.equal.ToString(), approvedStatusId);
+            filter.AddFilter("StartDate", OperatorType.lessthan.ToString(), endDate.AddDays(1)); 
+            filter.AddFilter("EndDate", OperatorType.greaterthan.ToString(), startDate.AddDays(-1));
+
+            var result = _absenceRequestService.Search(filter).Result.Result;
+
             return result.Sum(x => x.Duration);
         }
         public async Task<ApiResult<bool>> Save(List<SchedulerEventDetailsDto> schedulerEventDetails)
@@ -247,6 +269,69 @@ namespace AddOptimization.Services.Services
             }
         }
 
+        public async Task<ApiResult<SchedulerEventResponseDto>> SendToDraft(Guid timesheetId)
+        {
+            try
+            {
+                var existingEvent = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == timesheetId);
+
+                if (existingEvent == null)
+                {
+                    return ApiResult<SchedulerEventResponseDto>.Failure("Scheduler event not found.");
+                }
+
+                var invoices = await _invoiceRepository.QueryAsync(i =>
+                    i.CustomerId == existingEvent.CustomerId &&
+                    i.MetaData == "Timesheet" && i.InvoiceDate.Date == existingEvent.EndDate.Date
+                );
+
+                if (invoices.Any())
+                {
+                    return ApiResult<SchedulerEventResponseDto>.Failure(ValidationCodes.FieldNameAlreadyExists, ValidationErrorMessage.TimeSheetExist);
+                }
+
+                var eventStatus = (await _schedulersStatusService.Search()).Result;
+                var draftStatusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.DRAFT.ToString())?.Id;
+
+
+                existingEvent.AdminStatusId = draftStatusId.Value;
+                existingEvent.UserStatusId = draftStatusId.Value;
+                existingEvent.IsDraft = true;
+
+                await _schedulersRepository.UpdateAsync(existingEvent);
+
+                SchedulerEventHistory entity = new SchedulerEventHistory()
+                {
+                    SchedulerEventId = existingEvent.Id,
+                    UserId = existingEvent.UserId,
+                    UserStatusId = draftStatusId.Value,
+                    AdminStatusId = draftStatusId.Value,
+                    Comment = "Timesheet Converted to Invoice",
+                };
+
+                await _schedulerEventHistoryRepository.InsertAsync(entity);
+
+                existingEvent = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == existingEvent.Id,
+                    include: entities => entities
+                        .Include(e => e.Approvar)
+                        .Include(e => e.UserStatus)
+                        .Include(e => e.AdminStatus)
+                        .Include(e => e.ApplicationUser)
+                        .Include(e => e.CreatedByUser)
+                        .Include(e => e.UpdatedByUser)
+                        .Include(e => e.Customer));
+
+                var mappedEntity = _mapper.Map<SchedulerEventResponseDto>(existingEvent);
+                return ApiResult<SchedulerEventResponseDto>.Success(mappedEntity);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+
         public async Task<ApiResult<SchedulerEventResponseDto>> GetSchedulerEvent(Guid id)
         {
             var eventTypes = (await _schedulerEventTypeService.Search()).Result;
@@ -256,11 +341,12 @@ namespace AddOptimization.Services.Services
             var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_CUSTOMER_APPROVAL.ToString()).Id;
             var entity = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer).Include(e => e.EventDetails));
             var mappedEntity = _mapper.Map<SchedulerEventResponseDto>(entity);
-            mappedEntity.WorkDuration = entity.EventDetails.Where(x => x.EventTypeId == timesheetEventId).Sum(x => x.Duration);
+            mappedEntity.WorkDuration = entity.EventDetails.Where(x => x.EventTypeId == timesheetEventId && !x.IsDeleted).Sum(x => x.Duration);
             mappedEntity.Overtime = entity.EventDetails.Where(x => x.EventTypeId == overtimeId).Sum(x => x.Duration);
             mappedEntity.IsCustomerApprovalPending = mappedEntity.AdminStatusId.ToString() == statusId.ToString();
             mappedEntity.StartDate = mappedEntity.StartDate;
             mappedEntity.EndDate = mappedEntity.EndDate;
+            mappedEntity .Holiday = GetHolidaysCount(mappedEntity.StartDate, mappedEntity.EndDate, mappedEntity.UserId);
             return ApiResult<SchedulerEventResponseDto>.Success(mappedEntity);
         }
 
@@ -459,7 +545,7 @@ namespace AddOptimization.Services.Services
             });
             filter.GetValue<string>("customer", (v) =>
             {
-                entities = entities.Where(e => e.CustomerId.ToString() == v);
+                entities = entities.Where(e => e.CustomerId.ToString() == v || e.Customer.Organizations.ToLower().Contains(v.ToLower()));
             });
             filter.GetValue<bool>("isDraft", (v) =>
             {
@@ -705,7 +791,7 @@ namespace AddOptimization.Services.Services
             var subject = $"Timesheet declined by {admin.Approvar.FullName}";
             var bodyContent = $"{admin.Approvar.FullName} has declined your timesheet for {DateTimeFormatInfo.CurrentInfo.GetMonthName(schedulerEvent.StartDate.Month)}";
             var linkUrl = GetTimesheetLinkForEmployee(schedulerEvent.Id);
-            
+
             var createdByUser = new NotificationUserDto
             {
                 Id = admin.Approvar.Id,
@@ -779,7 +865,7 @@ namespace AddOptimization.Services.Services
          ApplicationUser user, SchedulerEvent schedulerEvent, bool isApprovedEmail,Customer customer)
         {
             var action = isApprovedEmail ? "approved" : "declined";
-            var subject = $"Timesheet {action} by {customer.Organizations}";         
+            var subject = $"Timesheet {action} by {customer.Organizations}";
             var bodyContent = $"{customer.Organizations} has {action} timesheet for {DateTimeFormatInfo.CurrentInfo.GetMonthName(schedulerEvent.StartDate.Month)}";
             var linkUrl = GetTimesheetLinkForAccountAdmin(schedulerEvent.Id);
             var createdByUser = new NotificationUserDto
@@ -1007,17 +1093,17 @@ namespace AddOptimization.Services.Services
         {
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
             var encryptedId = _protectionService.Encode(schedulerEventId.ToString());
-            return $"{baseUrl}timesheet/approval/{encryptedId}";
+            return $"{baseUrl}timesheet/approval/{encryptedId}?sidenav=collapsed";
         }
         public string GetTimesheetLinkForAccountAdmin(Guid schedulerEventId)
         {
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
-            return $"{baseUrl}admin/timesheets/time-sheets-review-calendar/{schedulerEventId}";
+            return $"{baseUrl}admin/timesheets/time-sheets-review-calendar/{schedulerEventId}?sidenav=collapsed";
         }
         public string GetTimesheetLinkForEmployee(Guid schedulerEventId)
         {
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl.TrimEnd('/'));
-            return $"{baseUrl}/admin/timesheets/time-sheets-calendar/{schedulerEventId}";
+            return $"{baseUrl}/admin/timesheets/my-timesheets?sidenav=collapsed";
         }
         public async Task<ApiResult<bool>> SendTimesheetApprovalEmailToCustomer(Guid schedulerEventId)
         {

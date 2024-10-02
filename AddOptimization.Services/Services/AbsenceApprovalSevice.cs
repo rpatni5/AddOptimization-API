@@ -325,8 +325,8 @@ namespace AddOptimization.Services.Services
             var startDate = LocaleHelper.FormatDate(absenceRequest.StartDate.Value);
             var endDate =absenceRequest.EndDate.HasValue ? LocaleHelper.FormatDate(absenceRequest.EndDate.Value) : string.Empty;
             var action = isApproved ? "accepted" : "declined";
-            var subject = $"Absence request {action} " + (endDate == null ? $"for {startDate}" : $"from {startDate} to {endDate}"); ;
-            var bodyContent = $"Absence request {action} by {accountAdmin.FullName}";
+            var subject = $"Absence request {action} by {accountAdmin.FullName}";
+            var bodyContent = $"Absence request {action} " + (endDate == null ? $"for {startDate}" : $"from {startDate} to {endDate}");
             var linkUrl = GetAbsenceRequestLinkForAccountAdmin(absenceRequest.Id);
             var createdByUser = new NotificationUserDto
             {
@@ -349,7 +349,7 @@ namespace AddOptimization.Services.Services
         public string GetAbsenceRequestLinkForAccountAdmin(Guid schedulerEventId)
         {
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
-            return $"{baseUrl}admin/timesheets/absence-request";
+            return $"{baseUrl}admin/timesheets/absence-request?sidenav=collapsed";
         }
     }
 }
