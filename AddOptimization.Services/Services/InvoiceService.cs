@@ -713,7 +713,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _invoiceRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(x => x.Customer).Include(x => x.PaymentStatus).Include(x => x.InvoiceStatus), ignoreGlobalFilter: true);
+                var entities = await _invoiceRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(x => x.Customer).Include(x => x.PaymentStatus).Include(x => x.InvoiceStatus), orderBy: x => x.OrderByDescending(x => x.CreatedAt) , ignoreGlobalFilter: true);
                 entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
                 entities = ApplyFilters(entities, filters);
                 var pagedResult = PageHelper<Invoice, InvoiceResponseDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new InvoiceResponseDto
@@ -740,6 +740,7 @@ namespace AddOptimization.Services.Services
                     CreditNoteNumber = e.CreditNoteNumber,
                     HasInvoiceFinalized = e.HasInvoiceFinalized,
                     HasInvoiceSentToAccAdmin = e.HasInvoiceSentToAccAdmin,
+                    CreatedAt = e.CreatedAt,
                 }).ToList());
 
                 var result = pagedResult;
