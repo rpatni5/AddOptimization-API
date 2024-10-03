@@ -105,16 +105,20 @@ IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository, ISche
                     IsCustomerApprovalPending = e.AdminStatus.StatusKey.ToString() == SchedulerStatusesEnum.PENDING_CUSTOMER_APPROVAL.ToString(),
                 }).ToList());
 
-                filters.GetValue<bool>("includeHoliday", (v) =>                
-                {
-                    if (v)
-                    {
-                        pagedResult.Result.ForEach(e =>
-                        {
-                            e.Holiday = GetHolidaysCount(e.StartDate, e.EndDate, e.UserId);
-                        });
-                    }
-                });
+                pagedResult.Result.ForEach(e =>
+                       {
+                           e.Holiday = GetHolidaysCount(e.StartDate, e.EndDate, e.UserId);
+                       });
+                //filters.GetValue<bool>("includeHoliday", (v) =>                
+                //{
+                //    if (v)
+                //    {
+                //        pagedResult.Result.ForEach(e =>
+                //        {
+                //            e.Holiday = GetHolidaysCount(e.StartDate, e.EndDate, e.UserId);
+                //        });
+                //    }
+                //});
 
                 var retVal = pagedResult;
                 return PagedApiResult<SchedulerEventResponseDto>.Success(retVal);
@@ -337,7 +341,7 @@ IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository, ISche
             var statusId = eventStatus.FirstOrDefault(x => x.StatusKey == SchedulerStatusesEnum.PENDING_CUSTOMER_APPROVAL.ToString()).Id;
             var entity = await _schedulersRepository.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, include: entities => entities.Include(e => e.Approvar).Include(e => e.UserStatus).Include(e => e.AdminStatus).Include(e => e.ApplicationUser).Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.Customer).Include(e => e.EventDetails));
             var mappedEntity = _mapper.Map<SchedulerEventResponseDto>(entity);
-            mappedEntity.WorkDuration = entity.EventDetails.Where(x => x.EventTypeId == timesheetEventId).Sum(x => x.Duration);
+            mappedEntity.WorkDuration = entity.EventDetails.Where(x => x.EventTypeId == timesheetEventId && !x.IsDeleted).Sum(x => x.Duration);
             mappedEntity.Overtime = entity.EventDetails.Where(x => x.EventTypeId == overtimeId).Sum(x => x.Duration);
             mappedEntity.IsCustomerApprovalPending = mappedEntity.AdminStatusId.ToString() == statusId.ToString();
             mappedEntity.StartDate = mappedEntity.StartDate;
@@ -1089,17 +1093,17 @@ IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository, ISche
         {
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
             var encryptedId = _protectionService.Encode(schedulerEventId.ToString());
-            return $"{baseUrl}timesheet/approval/{encryptedId}";
+            return $"{baseUrl}timesheet/approval/{encryptedId}?sidenav=collapsed";
         }
         public string GetTimesheetLinkForAccountAdmin(Guid schedulerEventId)
         {
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
-            return $"{baseUrl}admin/timesheets/time-sheets-review-calendar/{schedulerEventId}";
+            return $"{baseUrl}admin/timesheets/time-sheets-review-calendar/{schedulerEventId}?sidenav=collapsed";
         }
         public string GetTimesheetLinkForEmployee(Guid schedulerEventId)
         {
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl.TrimEnd('/'));
-            return $"{baseUrl}/admin/timesheets/time-sheets-calendar/{schedulerEventId}";
+            return $"{baseUrl}/admin/timesheets/my-timesheets?sidenav=collapsed";
         }
         public async Task<ApiResult<bool>> SendTimesheetApprovalEmailToCustomer(Guid schedulerEventId)
         {

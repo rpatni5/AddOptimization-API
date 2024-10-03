@@ -85,7 +85,7 @@ IF NOT EXISTS (SELECT 1 FROM SchedulerStatuses Where StatusKey= 'PENDING_CUSTOME
 BEGIN 
     INSERT INTO SchedulerStatuses(Id,Name,StatusKey,IsAdmin)
     VALUES
-        (NEWID(),'Pending Customer Appproval','PENDING_CUSTOMER_APPROVAL',1)
+        (NEWID(),'Pending Customer Approval','PENDING_CUSTOMER_APPROVAL',1)
 END
 
 

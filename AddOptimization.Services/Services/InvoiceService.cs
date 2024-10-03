@@ -869,7 +869,7 @@ namespace AddOptimization.Services.Services
         {
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
             var encryptedId = _protectionService.Encode(invoiceId.ToString());
-            return $"{baseUrl}invoice/approval/{encryptedId}";
+            return $"{baseUrl}invoice/approval/{encryptedId}?sidenav=collapsed";
         }
 
         public async Task<ApiResult<bool>> SendInvoiceToCustomer(int invoiceId, bool onlyEmail = false)
