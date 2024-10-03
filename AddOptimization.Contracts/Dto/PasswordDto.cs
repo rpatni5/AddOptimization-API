@@ -12,6 +12,6 @@ namespace AddOptimization.Contracts.Dto
         public string Email { get; set; }
         public string Password{ get; set; }
         public string WebsiteAddress { get; set; }
-        public List<string> Websites { get; set; }
+        public List<WebsiteDto> Websites { get; set; }
     }
 }

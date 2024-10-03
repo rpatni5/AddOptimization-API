@@ -55,6 +55,19 @@ namespace AddOptimization.API.Controllers
                 return HandleException(ex);
             }
         }
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(Guid id, [FromBody] TemplateEntryDto model)
+        {
+            try
+            {
+                var retVal = await _passwordService.Update(id, model);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
 
 
         [HttpDelete("{id}")]
