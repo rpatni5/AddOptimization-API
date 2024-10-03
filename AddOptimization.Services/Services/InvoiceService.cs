@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
 namespace AddOptimization.Services.Services
@@ -320,20 +321,22 @@ namespace AddOptimization.Services.Services
             var country = await _countryRepository.FirstOrDefaultAsync(c => c.Id == customer.CountryId, ignoreGlobalFilter: true);
             string sb = string.Empty;
 
-            if (customer.PartnerName != null)
+            if (!customer.PartnerCompany.IsNullOrEmpty())
             {
                 var partnerCountry = await _countryRepository.FirstOrDefaultAsync(c => c.Id == customer.PartnerCountryId, ignoreGlobalFilter: true);
 
-                sb += JoinNonNull(customer.PartnerAddress, customer.PartnerAddress2);
-                sb += JoinNonNull(customer.PartnerCity, customer.PartnerState);
-                sb += JoinNonNull(customer.PartnerZipCode?.ToString(), partnerCountry?.CountryName);
+                sb += JoinNonNull(customer.PartnerAddress);
+                sb += JoinNonNull(customer?.PartnerAddress2);
+                sb += JoinNonNullWithoutCommaAfterZip(customer.PartnerZipCode?.ToString(), customer.PartnerCity, customer.PartnerState);
+                sb += JoinNonNull( partnerCountry?.CountryName);
                 sb += JoinNonNull(customer.PartnerVATNumber);
             }
             else
             {
-                sb += JoinNonNull(customer.Address, customer.Address2);
-                sb += JoinNonNull(customer.City, customer.State);
-                sb += JoinNonNull(country.CountryName, customer.ZipCode.ToString());
+                sb += JoinNonNull(customer.Address);
+                sb += JoinNonNull(customer?.Address2);
+                sb += JoinNonNullWithoutCommaAfterZip(customer.ZipCode.ToString(), customer.City, customer.State);
+                sb += JoinNonNull(country.CountryName);
                 sb += JoinNonNull(customer.VATNumber);
             }
             customerAddress = sb.ToString();
@@ -347,6 +350,21 @@ namespace AddOptimization.Services.Services
             var newString = string.Join(", ", nonNullValues);
             return string.IsNullOrEmpty(newString) ? string.Empty : newString + Environment.NewLine;
         }
+
+        public string JoinNonNullWithoutCommaAfterZip(string zipCode, string city, string state)
+        {
+            var result = zipCode;
+            if (!string.IsNullOrEmpty(city))
+            {
+                result += " " + city;
+            }
+            if (!string.IsNullOrEmpty(state))
+            {
+                result += ", " + state;
+            }
+            return string.IsNullOrEmpty(result) ? string.Empty : result + Environment.NewLine;
+        }
+
 
         private async Task CalculateAndSaveInvoiceDetails(Invoice invoice, List<SchedulerEventDetails> schedulerEventDetails, decimal daily, decimal vat, string description)
         {
