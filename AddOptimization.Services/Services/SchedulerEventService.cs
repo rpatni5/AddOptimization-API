@@ -13,6 +13,7 @@ using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
 using AddOptimization.Utilities.Services;
 using AutoMapper;
+using iText.Kernel.Pdf.Canvas.Parser;
 using iText.Layout.Element;
 using iText.StyledXmlParser.Jsoup.Nodes;
 using Microsoft.AspNet.Identity;
@@ -105,25 +106,58 @@ IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository, ISche
                     IsCustomerApprovalPending = e.AdminStatus.StatusKey.ToString() == SchedulerStatusesEnum.PENDING_CUSTOMER_APPROVAL.ToString(),
                 }).ToList());
 
-                pagedResult.Result.ForEach(e =>
-                       {
-                           e.Holiday = GetHolidaysCount(e.StartDate, e.EndDate, e.UserId);
-                       });
-                //filters.GetValue<bool>("includeHoliday", (v) =>                
-                //{
-                //    if (v)
-                //    {
-                //        pagedResult.Result.ForEach(e =>
-                //        {
-                //            e.Holiday = GetHolidaysCount(e.StartDate, e.EndDate, e.UserId);
-                //        });
-                //    }
-                //});
+                filters.GetValue<bool>("includeHoliday", (v) =>                
+                {
+                    if (v)
+                    {
+                        pagedResult.Result.ForEach(e =>
+                        {
+                            e.Holiday = GetHolidaysCount(e.StartDate, e.EndDate, e.UserId);
+                        });
+                    }
+                });
 
                 var retVal = pagedResult;
                 return PagedApiResult<SchedulerEventResponseDto>.Success(retVal);
 
             }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+
+        public async Task<ApiResult<SchedulerEventResponseDto>> GetDataForApproveAndDecline(Guid id)
+        {
+            try
+            {
+                var entity = (await _schedulersRepository.QueryAsync(o => o.Id == id && !o.IsDeleted, include: entities => entities.Include(e => e.Approvar).Include(e => e.Customer).Include(e => e.UserStatus).Include(e => e.EventDetails).Include(e => e.AdminStatus).Include(e => e.ApplicationUser))).FirstOrDefault();
+                if (entity == null)
+                {
+                    return ApiResult<SchedulerEventResponseDto>.NotFound("data");
+                }
+                var eventTypes = (await _schedulerEventTypeService.Search()).Result;
+                var timesheetEventId = eventTypes.FirstOrDefault(x => x.Name.Equals("timesheet", StringComparison.InvariantCultureIgnoreCase)).Id;
+                var overtimeId = eventTypes.FirstOrDefault(x => x.Name.Equals("overtime", StringComparison.InvariantCultureIgnoreCase)).Id;
+                var mappedEntity = new SchedulerEventResponseDto
+                {
+                    Id = entity.Id,
+                    CustomerId = entity.CustomerId,
+                    CustomerName = entity.Customer?.Organizations ?? "",
+                    UserId = entity.UserId,
+                    UserName = entity.ApplicationUser?.FullName ?? "",
+                    StartDate = entity.StartDate,
+                    EndDate = entity.EndDate,
+                };
+                mappedEntity.WorkDuration = entity.EventDetails.Where(x => x.EventTypeId == timesheetEventId && !x.IsDeleted).Sum(x => x.Duration);
+                mappedEntity.Overtime = entity.EventDetails.Where(x => x.EventTypeId == overtimeId).Sum(x => x.Duration);
+                mappedEntity.Holiday = GetHolidaysCount(entity.StartDate, entity.EndDate, entity.UserId);
+                return ApiResult<SchedulerEventResponseDto>.Success(mappedEntity);
+            
+            }
+
             catch (Exception ex)
             {
                 _logger.LogException(ex);
@@ -530,7 +564,7 @@ IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository, ISche
         }
 
 
-
+     
         private IQueryable<SchedulerEvent> ApplyFilters(IQueryable<SchedulerEvent> entities, PageQueryFiterBase filter)
         {
 
