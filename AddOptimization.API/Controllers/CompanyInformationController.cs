@@ -1,21 +1,19 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using AddOptimization.API.Common;
-using AddOptimization.Contracts.Services;
-using AddOptimization.Contracts.Constants;
+﻿using AddOptimization.API.Common;
 using AddOptimization.Contracts.Dto;
-using AddOptimization.Services.Services;
-using AddOptimization.Utilities.Models;
+using AddOptimization.Contracts.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 
 namespace AddOptimization.API.Controllers;
 [Authorize]
-public class PersonalInformationController : CustomApiControllerBase
+public class CompanyInformationController : CustomApiControllerBase
 
 {
-    private readonly IPersonalInformationService _personalInformationService;
-    public PersonalInformationController(ILogger<PersonalInformationController> logger, IPersonalInformationService personalInformationService) : base(logger)
+    private readonly ICompanyInformationService _companyInformationService;
+    public CompanyInformationController(ILogger<CompanyInformationController> logger, ICompanyInformationService companyInformationService) : base(logger)
     {
-        _personalInformationService = personalInformationService;
+        _companyInformationService = companyInformationService;
     }
 
     [HttpPost]
@@ -23,7 +21,7 @@ public class PersonalInformationController : CustomApiControllerBase
     {
         try
         {
-            var retVal = await _personalInformationService.SavePersonalInformationDetails(model);
+            var retVal = await _companyInformationService.SaveCompanyInformationDetails(model);
             return HandleResponse(retVal);
         }
         catch (Exception ex)
@@ -38,7 +36,7 @@ public class PersonalInformationController : CustomApiControllerBase
     {
         try
         {
-            var retVal = await _personalInformationService.Update(id, model);
+            var retVal = await _companyInformationService.Update(id, model);
             return HandleResponse(retVal);
         }
         catch (Exception ex)
@@ -47,12 +45,12 @@ public class PersonalInformationController : CustomApiControllerBase
         }
     }
 
-    [HttpGet("get-by-infoId/{id}")]
-    public async Task<IActionResult> GetCardDetailsById(Guid id)
+    [HttpGet("get-by-companyId/{id}")]
+    public async Task<IActionResult> GetCompanyDetailsById(Guid id)
     {
         try
         {
-            var retVal = await _personalInformationService.GetInfoDetailsById(id);
+            var retVal = await _companyInformationService.GetCompanyDetailsById(id);
             return HandleResponse(retVal);
         }
         catch (Exception ex)
@@ -66,7 +64,7 @@ public class PersonalInformationController : CustomApiControllerBase
     {
         try
         {
-            var result = await _personalInformationService.Search();
+            var result = await _companyInformationService.Search();
             return HandleResponse(result);
         }
         catch (Exception ex)
@@ -80,7 +78,7 @@ public class PersonalInformationController : CustomApiControllerBase
     {
         try
         {
-            var retVal = await _personalInformationService.Delete(id);
+            var retVal = await _companyInformationService.Delete(id);
             return HandleResponse(retVal);
         }
         catch (Exception ex)
@@ -90,3 +88,4 @@ public class PersonalInformationController : CustomApiControllerBase
     }
 
 }
+
