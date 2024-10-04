@@ -188,18 +188,6 @@ namespace AddOptimization.API.Controllers
             }
         }
 
-        [HttpGet("get-approval-decline-details/{id}")]
-        public async Task<IActionResult> GetDataForApproveAndDecline(Guid id)
-        {
-            try
-            {
-                var retVal = await _schedulerEventService.GetDataForApproveAndDecline(id);
-                return HandleResponse(retVal);
-            }
-            catch (Exception ex)
-            {
-                return HandleException(ex);
-            }
-        }
+     
     }
 }

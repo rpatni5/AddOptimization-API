@@ -128,43 +128,6 @@ IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository, ISche
             }
         }
 
-
-        public async Task<ApiResult<SchedulerEventResponseDto>> GetDataForApproveAndDecline(Guid id)
-        {
-            try
-            {
-                var entity = (await _schedulersRepository.QueryAsync(o => o.Id == id && !o.IsDeleted, include: entities => entities.Include(e => e.Approvar).Include(e => e.Customer).Include(e => e.UserStatus).Include(e => e.EventDetails).Include(e => e.AdminStatus).Include(e => e.ApplicationUser))).FirstOrDefault();
-                if (entity == null)
-                {
-                    return ApiResult<SchedulerEventResponseDto>.NotFound("data");
-                }
-                var eventTypes = (await _schedulerEventTypeService.Search()).Result;
-                var timesheetEventId = eventTypes.FirstOrDefault(x => x.Name.Equals("timesheet", StringComparison.InvariantCultureIgnoreCase)).Id;
-                var overtimeId = eventTypes.FirstOrDefault(x => x.Name.Equals("overtime", StringComparison.InvariantCultureIgnoreCase)).Id;
-                var mappedEntity = new SchedulerEventResponseDto
-                {
-                    Id = entity.Id,
-                    CustomerId = entity.CustomerId,
-                    CustomerName = entity.Customer?.Organizations ?? "",
-                    UserId = entity.UserId,
-                    UserName = entity.ApplicationUser?.FullName ?? "",
-                    StartDate = entity.StartDate,
-                    EndDate = entity.EndDate,
-                };
-                mappedEntity.WorkDuration = entity.EventDetails.Where(x => x.EventTypeId == timesheetEventId && !x.IsDeleted).Sum(x => x.Duration);
-                mappedEntity.Overtime = entity.EventDetails.Where(x => x.EventTypeId == overtimeId).Sum(x => x.Duration);
-                mappedEntity.Holiday = GetHolidaysCount(entity.StartDate, entity.EndDate, entity.UserId);
-                return ApiResult<SchedulerEventResponseDto>.Success(mappedEntity);
-            
-            }
-
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
-                throw;
-            }
-        }
-
         private decimal GetHolidaysCount(DateTime startDate, DateTime endDate, int employeeId)
         {
             var leaveStatuses = _leaveStatusesService.Search(null).Result.Result;
