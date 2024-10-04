@@ -212,7 +212,7 @@ namespace AddOptimization.Services.Services
             {
                 if (sort?.Name == null)
                 {
-                    entities = entities.OrderByDescending(o => o.CreatedAt);
+                    entities = entities.OrderBy(o => o.Date);
                     return entities;
                 }
                 var columnName = sort.Name.ToUpper();
