@@ -31,6 +31,20 @@ namespace AddOptimization.API.Controllers
             }
         }
 
+        [HttpGet("get-template-by-id/{id}")]
+        public async Task<IActionResult> GetTemplateById(Guid id)
+        {
+            try
+            {
+                var retVal = await _templateService.GetTemplateById(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
     }
 }
 

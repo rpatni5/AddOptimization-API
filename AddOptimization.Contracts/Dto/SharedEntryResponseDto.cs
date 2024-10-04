@@ -22,5 +22,8 @@ namespace AddOptimization.Contracts.Dto
         public DateTime? UpdatedAt { get; set; }
         public string UpdatedBy { get; set; }
         public string? SharedWithName { get; set; }
+        public string SharedTitleName { get; set; }
+        public string SharedFolderName { get; set; }
+        public List<TemplateEntryDto> TemplateEntries { get; set; }
     }
 }

@@ -22,13 +22,14 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<Template> _templateRepository;
         private readonly ILogger<TemplateService> _logger;
         private readonly IMapper _mapper;
+        private readonly IGenericRepository<TemplateEntries> _templateEntryRepository;
 
-        public TemplateService(IGenericRepository<Template> templateRepository, ILogger<TemplateService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor)
+        public TemplateService(IGenericRepository<Template> templateRepository, ILogger<TemplateService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, IGenericRepository<TemplateEntries> templateEntryRepository)
         {
             _templateRepository = templateRepository;
             _logger = logger;
             _mapper = mapper;
-        }
+            _templateEntryRepository = templateEntryRepository;}
 
         
         public async Task<ApiResult<List<TemplateDto>>> GetAllTemplate()
@@ -45,6 +46,24 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
+        public async Task<ApiResult<TemplateDto>> GetTemplateById(Guid id)
+        {
+            try
+            {
+                var templateEntry = await _templateEntryRepository.FirstOrDefaultAsync(e => e.Id == id);
+                var model = new TemplateDto();
+                var entity = await _templateRepository.FirstOrDefaultAsync(e => e.Id == templateEntry.TemplateId, ignoreGlobalFilter: true);
+                model.Id = entity.Id;
+                model.Name = entity.Name;
+                return ApiResult<TemplateDto>.Success(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
 
     }
 
