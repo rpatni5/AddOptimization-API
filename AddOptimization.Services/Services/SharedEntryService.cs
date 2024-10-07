@@ -157,7 +157,7 @@ namespace AddOptimization.Services.Services
         }
 
 
-        public async Task<ApiResult<List<SharedEntryResponseDto>>> GetByUSerId(int id)
+        public async Task<ApiResult<List<SharedEntryResponseDto>>> GetByUserId(int id)
         {
             try
             {

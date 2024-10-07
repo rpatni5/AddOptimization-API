@@ -75,11 +75,11 @@ public class SharedEntryController : CustomApiControllerBase
         }
     }
     [HttpGet("get-by-userId/{id}")]
-    public async Task<IActionResult> GetByUSerId(int id)
+    public async Task<IActionResult> GetSharedDetailsByUserId(int id)
     {
         try
         {
-            var retVal = await _sharedEntryService.GetByUSerId(id);
+            var retVal = await _sharedEntryService.GetByUserId(id);
             return HandleResponse(retVal);
         }
         catch (Exception ex)
