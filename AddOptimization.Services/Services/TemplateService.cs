@@ -51,10 +51,12 @@ namespace AddOptimization.Services.Services
             try
             {
                 var templateEntry = await _templateEntryRepository.FirstOrDefaultAsync(e => e.Id == id);
-                var model = new TemplateDto();
                 var entity = await _templateRepository.FirstOrDefaultAsync(e => e.Id == templateEntry.TemplateId, ignoreGlobalFilter: true);
-                model.Id = entity.Id;
-                model.Name = entity.Name;
+                var model = new TemplateDto() {
+                    Id = entity.Id,
+                    Name = entity.Name,
+                };
+            
                 return ApiResult<TemplateDto>.Success(model);
             }
             catch (Exception ex)
