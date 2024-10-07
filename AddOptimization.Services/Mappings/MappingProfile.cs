@@ -428,7 +428,7 @@ namespace AddOptimization.Services.Mappings
                 d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
             });
             CreateMap<GroupDto, Group>();
-
+            
             CreateMap<SharedEntry, SharedEntryResponseDto>().AfterMap((s, d) =>
             {
                 d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
@@ -455,6 +455,7 @@ namespace AddOptimization.Services.Mappings
                 d.UpdatedAt = s.UpdatedAt?.Date;
             });
             CreateMap<CombineGroupModelDto, GroupMember>();
+          
         }
     }
 }

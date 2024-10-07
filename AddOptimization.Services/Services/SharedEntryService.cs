@@ -79,7 +79,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = (await _sharedEntryRepository.QueryAsync(o => o.EntryId == id && !o.IsDeleted,include : entities => entities.Include(e => e.ApplicationUser), ignoreGlobalFilter: true));
+                var entities = (await _sharedEntryRepository.QueryAsync(o => o.EntryId == id && !o.IsDeleted, include: entities => entities.Include(e => e.ApplicationUser), ignoreGlobalFilter: true));
                 if (entities == null)
                 {
                     return ApiResult<List<SharedEntryResponseDto>>.NotFound("details");
@@ -156,9 +156,31 @@ namespace AddOptimization.Services.Services
             }
         }
 
+
+        public async Task<ApiResult<List<SharedEntryResponseDto>>> GetByUserId(int id)
+        {
+            try
+            {
+                var entities = await _sharedEntryRepository.QueryAsync((e => !e.IsDeleted && e.SharedByUserId == id), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.TemplateEntries), orderBy: x => x.OrderBy(x => x.CreatedAt));
+                var mappedEntities = entities.Select(e => new SharedEntryResponseDto
+                {
+                    Id = e.Id,
+                    EntryId = e.EntryId,
+                    SharedByUserId = e.SharedByUserId,
+                    PermissionLevel =e.PermissionLevel,
+                    SharedFolderName = e.TemplateEntries.TemplateFolder.Name,
+                    SharedTitleName = e.TemplateEntries.Title
+                }).ToList();
+                return ApiResult<List<SharedEntryResponseDto>>.Success(mappedEntities);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
     }
-
-
 
 }
 
