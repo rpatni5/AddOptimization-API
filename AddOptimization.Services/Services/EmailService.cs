@@ -97,8 +97,9 @@ public  class EmailService: IEmailService
                 }
             }
             smtpClient.Send(mailMessage);
+
         }
-        
-        
+
+
     }
 }

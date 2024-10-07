@@ -125,7 +125,7 @@ namespace AddOptimization.Services.Services
 
             return new TemplateEntryDto
             {
-                Id = x.Id,
+                Id = x.Id == null ? Guid.Empty : x.Id,
                 Title = x.Title,
                 FolderId = x.FolderId,
                 UserId = x.UserId,
