@@ -1,6 +1,7 @@
 ﻿using AddOptimization.API.Common;
 using AddOptimization.Contracts.Services;
 using AddOptimization.Services.Services;
+using AddOptimization.Utilities.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AddOptimization.API.Controllers
@@ -12,9 +13,8 @@ namespace AddOptimization.API.Controllers
         {
             _allItemsService = allItemsService;
         }
-
-        [HttpGet("get-All-Items")]
-        public async Task<IActionResult> GetAllItems()
+        [HttpPost("search")]
+        public async Task<IActionResult> GetAllItems([FromBody] PageQueryFiterBase filter)
         {
             try
             {
