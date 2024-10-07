@@ -763,3 +763,43 @@ BEGIN
     VALUES
         (NEWID(),'Passport Number','passport_number')
 END
+
+
+/* Adding Templates   data  */
+
+IF NOT EXISTS (SELECT 1 FROM Templates Where TemplateKey= 'secure_notes')
+BEGIN 
+    INSERT INTO Templates(Id,Name,TemplateKey)
+    VALUES
+        (NEWID(),'Secure Notes','secure_notes')
+END
+
+IF NOT EXISTS (SELECT 1 FROM Templates Where TemplateKey= 'personal_information')
+BEGIN 
+    INSERT INTO Templates(Id,Name,TemplateKey)
+    VALUES
+        (NEWID(),'Personal Information','personal_information')
+END
+
+
+IF NOT EXISTS (SELECT 1 FROM Templates Where TemplateKey= 'passwords')
+BEGIN 
+    INSERT INTO Templates(Id,Name,TemplateKey)
+    VALUES
+        (NEWID(),'Passwords','passwords')
+END
+
+IF NOT EXISTS (SELECT 1 FROM Templates Where TemplateKey= 'company_information')
+BEGIN 
+    INSERT INTO Templates(Id,Name,TemplateKey)
+    VALUES
+        (NEWID(),'Company Information','passwords')
+END
+
+
+IF NOT EXISTS (SELECT 1 FROM Templates Where TemplateKey= 'credit_cards')
+BEGIN 
+    INSERT INTO Templates(Id,Name,TemplateKey)
+    VALUES
+        (NEWID(),'Credit Cards','credit_cards')
+END

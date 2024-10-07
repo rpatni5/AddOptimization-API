@@ -143,6 +143,7 @@ namespace AddOptimization.Services.Services
             {
                 var entity = await _templateEntryRepository.FirstOrDefaultAsync(e => e.Id == id);
                 entity.FolderId = model.FolderId;
+                entity.Title = model.Title;
                 entity.EntryData = JsonSerializer.Serialize(model.EntryData, jsonOptions);
                 await _templateEntryRepository.UpdateAsync(entity);
                 var mappedEntity = _mapper.Map<TemplateEntryDto>(entity);
