@@ -32,7 +32,7 @@ namespace AddOptimization.Services.Services
         private readonly ICreditCardService _creditCardService;
         private readonly IGenericRepository<ApplicationUser> _applicationUserRepository;
         private readonly IGenericRepository<Group> _groupRepository;
-
+      
         public SharedEntryService(IGenericRepository<SharedEntry> sharedEntryRepository, ILogger<SharedEntryService> logger, IMapper mapper, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository)
         {
             _sharedEntryRepository = sharedEntryRepository;
@@ -161,7 +161,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _sharedEntryRepository.QueryAsync((e => !e.IsDeleted && e.SharedByUserId == id), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.TemplateEntries), orderBy: x => x.OrderBy(x => x.CreatedAt));
+                var entities = await _sharedEntryRepository.QueryAsync((e => !e.IsDeleted && e.SharedByUserId == id && !e.TemplateEntries.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.TemplateEntries), orderBy: x => x.OrderBy(x => x.CreatedAt));
                 var mappedEntities = entities.Select(e => new SharedEntryResponseDto
                 {
                     Id = e.Id,
