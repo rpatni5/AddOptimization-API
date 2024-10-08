@@ -20,7 +20,7 @@ namespace AddOptimization.Services.Services
             _templateEntryService = templateEntryService;
             _logger = logger;
         }
-        public async Task<ApiResult<List<TemplateEntryDto>>> getAllTemplates()
+        public async Task<ApiResult<List<TemplateEntryDto>>> GetAll()
         {
             try
             {

@@ -10,6 +10,6 @@ namespace AddOptimization.Contracts.Services
 {
     public interface IAllItemsService
     {
-        Task<ApiResult<List<TemplateEntryDto>>> getAllTemplates();
+        Task<ApiResult<List<TemplateEntryDto>>> GetAll();
     }
 }

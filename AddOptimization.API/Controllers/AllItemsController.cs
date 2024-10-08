@@ -18,7 +18,7 @@ namespace AddOptimization.API.Controllers
         {
             try
             {
-                var retVal = await _allItemsService.getAllTemplates();
+                var retVal = await _allItemsService.GetAll();
                 return HandleResponse(retVal);
             }
             catch (Exception ex)
