@@ -15,5 +15,6 @@ namespace AddOptimization.Contracts.Dto
         public string CreatedBy { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public string UpdatedBy { get; set; }
+        public string TemplateKey { get; set; }
     }
 }

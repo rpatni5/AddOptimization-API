@@ -7,6 +7,7 @@ namespace AddOptimization.Data.Entities
     {
         public string Name { get; set; }
         public bool IsDeleted { get; set; }
+        public string TemplateKey { get; set; }
 
     }
 
