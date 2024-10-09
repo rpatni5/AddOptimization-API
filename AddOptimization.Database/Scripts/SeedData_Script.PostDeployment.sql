@@ -803,3 +803,9 @@ BEGIN
     VALUES
         (NEWID(),'Credit Cards','credit_cards')
 END
+IF NOT EXISTS (SELECT 1 FROM Templates Where TemplateKey= 'mobile_application')
+BEGIN 
+    INSERT INTO Templates(Id,Name,TemplateKey)
+    VALUES
+        (NEWID(),'Mobile Application','mobile_application')
+END
