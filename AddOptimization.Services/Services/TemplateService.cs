@@ -55,6 +55,7 @@ namespace AddOptimization.Services.Services
                 var model = new TemplateDto() {
                     Id = entity.Id,
                     Name = entity.Name,
+                    TemplateKey=entity.TemplateKey
                 };
             
                 return ApiResult<TemplateDto>.Success(model);

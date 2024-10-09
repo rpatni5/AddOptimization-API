@@ -6,6 +6,7 @@ namespace AddOptimization.Data.Entities
     public class Template : BaseEntityNew<Guid>
     {
         public string Name { get; set; }
+        public string TemplateKey { get; set; }
         public bool IsDeleted { get; set; }
 
     }

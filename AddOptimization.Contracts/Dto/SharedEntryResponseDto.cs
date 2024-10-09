@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace AddOptimization.Contracts.Dto
 {
-    public class SharedEntryResponseDto 
+    public class SharedEntryResponseDto
     {
         public Guid Id { get; set; }
         public Guid EntryId { get; set; }
@@ -24,6 +24,7 @@ namespace AddOptimization.Contracts.Dto
         public string? SharedWithName { get; set; }
         public string SharedTitleName { get; set; }
         public string SharedFolderName { get; set; }
+        public Guid TemplateId { get; set; }
         public List<TemplateEntryDto> TemplateEntries { get; set; }
     }
 }

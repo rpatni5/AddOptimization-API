@@ -161,7 +161,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _sharedEntryRepository.QueryAsync((e => !e.IsDeleted && e.SharedByUserId == id && !e.TemplateEntries.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.TemplateEntries), orderBy: x => x.OrderBy(x => x.CreatedAt));
+                var entities = await _sharedEntryRepository.QueryAsync((e => !e.IsDeleted && e.SharedByUserId == id && !e.TemplateEntries.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.TemplateEntries), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
                 var mappedEntities = entities.Select(e => new SharedEntryResponseDto
                 {
                     Id = e.Id,
@@ -169,7 +169,8 @@ namespace AddOptimization.Services.Services
                     SharedByUserId = e.SharedByUserId,
                     PermissionLevel =e.PermissionLevel,
                     SharedFolderName = e.TemplateEntries.TemplateFolder.Name,
-                    SharedTitleName = e.TemplateEntries.Title
+                    SharedTitleName = e.TemplateEntries.Title,
+                    TemplateId = e.TemplateEntries.TemplateId,
                 }).ToList();
                 return ApiResult<List<SharedEntryResponseDto>>.Success(mappedEntities);
             }
@@ -181,6 +182,5 @@ namespace AddOptimization.Services.Services
         }
 
     }
-
 }
 

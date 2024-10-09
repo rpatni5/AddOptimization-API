@@ -125,7 +125,7 @@ namespace AddOptimization.Services.Services
 
             return new TemplateEntryDto
             {
-                Id = x.Id,
+                Id = x.Id == null ? Guid.Empty : x.Id,
                 Title = x.Title,
                 FolderId = x.FolderId,
                 UserId = x.UserId,
@@ -143,6 +143,7 @@ namespace AddOptimization.Services.Services
             {
                 var entity = await _templateEntryRepository.FirstOrDefaultAsync(e => e.Id == id);
                 entity.FolderId = model.FolderId;
+                entity.Title = model.Title;
                 entity.EntryData = JsonSerializer.Serialize(model.EntryData, jsonOptions);
                 await _templateEntryRepository.UpdateAsync(entity);
                 var mappedEntity = _mapper.Map<TemplateEntryDto>(entity);
