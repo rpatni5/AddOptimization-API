@@ -15,6 +15,7 @@ namespace AddOptimization.Contracts.Dto
         public CompanyInformationDto CompanyInfo { get; set; }
         public string Notes { get; set; } 
         public PasswordDto PasswordInfo { get; set; }
+        public MobileApplicationDto MobileAppInfo { get; set; }
         public List<CustomFieldDto> CustomFields { get; set; } 
         public bool IsValueEncrypted { get; set; }
     }
