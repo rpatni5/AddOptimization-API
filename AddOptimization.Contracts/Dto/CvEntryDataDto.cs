@@ -26,8 +26,8 @@ namespace AddOptimization.Contracts.Dto
         public string Company { get; set; }
         public string CompanyLocation { get; set; }
         public string CompanyDescription { get; set; }
-        public DateTime? CompanyStartDate { get; set; }
-        public DateTime? CompanyEndDate { get; set; }
+        public string CompanyStartDate { get; set; }
+        public string CompanyEndDate { get; set; }
     }
 
     public class EducationDto
@@ -36,19 +36,17 @@ namespace AddOptimization.Contracts.Dto
         public string Institution { get; set; }
         public string InstitutionLocation { get; set; }
         public string EducationDescription { get; set; }
-        public DateTime? EducationStartDate { get; set; }
-        public DateTime? EducationEndDate { get; set; }
+        public string EducationStartDate { get; set; }
+        public string EducationEndDate { get; set; }
     }
 
     public class ProjectDto
     {
-        [Required]
         public string ProjectTitle { get; set; }
-        [Required]
         public string ProjectOrganization { get; set; }
         public string ProjectDescription { get; set; }
-        public DateTime? ProjectStartDate { get; set; }
-        public DateTime? ProjectEndDate { get; set; }
+        public string ProjectStartDate { get; set; }
+        public string ProjectEndDate { get; set; }
     }
 
     public class LanguageDto
