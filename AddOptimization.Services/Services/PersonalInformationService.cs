@@ -124,7 +124,7 @@ namespace AddOptimization.Services.Services
             try
             {
                 var templates = (await _templateService.GetAllTemplate()).Result;
-                var personalInfoId = templates.FirstOrDefault(x => x.Name == "Personal Information".ToString()).Id;
+                var personalInfoId = templates.FirstOrDefault(x => x.TemplateKey == "personal_information".ToString()).Id;
                 var mappedEntities = (await _templateEntryService.Search(personalInfoId)).Result;
                 foreach (var entity in mappedEntities)
                 {

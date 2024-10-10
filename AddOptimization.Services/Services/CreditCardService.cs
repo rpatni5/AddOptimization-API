@@ -131,7 +131,7 @@ namespace AddOptimization.Services.Services
             try
             {
                 var templates = (await _templateService.GetAllTemplate()).Result;
-                var creditCardId = templates.FirstOrDefault(x => x.Name == "Credit Cards".ToString()).Id;
+                var creditCardId = templates.FirstOrDefault(x => x.TemplateKey == "credit_cards".ToString()).Id;
                 var mappedEntities = (await _templateEntryService.Search(creditCardId)).Result;
                 foreach (var entity in mappedEntities)
                 {
