@@ -80,7 +80,8 @@ namespace AddOptimization.Services.Services
 
                 var groupIds = (await _groupMemberRepository.QueryAsync(x => !x.IsDeleted && x.UserId == currentUserId)).Select(x => x.GroupId.ToString()).Distinct().ToList();
 
-                var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == currentUserId.ToString() || groupIds.Contains(x.SharedWithId)))).ToList();
+                var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == currentUserId.ToString() || groupIds.Contains(x.SharedWithId)),
+                include: entities => entities .Include(e => e.CreatedByUser) .Include(e => e.UpdatedByUser))).ToList();
 
                 var entryIds = sharedEntries.Select(x => x.EntryId).Distinct().ToList();
 
@@ -131,6 +132,7 @@ namespace AddOptimization.Services.Services
                 UserId = x.UserId,
                 TemplateId = x.TemplateId,
                 IsDeleted = x.IsDeleted,
+                CreatedBy =  x.CreatedByUser.FullName,
                 CreatedAt = x.CreatedAt,
                 EntryData = x.EntryData == null ? new EntryDataDto() : JsonSerializer.Deserialize<EntryDataDto>(x.EntryData, options),
                 Permission = entry != null ? entry.PermissionLevel : PermissionLevel.FullAccess.ToString()
@@ -181,12 +183,15 @@ namespace AddOptimization.Services.Services
         {
             try
             {
+                var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value.ToString();
+                var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => x.SharedWithId == currentUserId &&
+            (x.EntryId == id))).ToList();
                 var entity = (await _templateEntryRepository.QueryAsync(o => o.Id == id && !o.IsDeleted, ignoreGlobalFilter: true)).FirstOrDefault();
                 if (entity == null)
                 {
                     return ApiResult<TemplateEntryDto>.NotFound("Data");
                 }
-                var mappedEntity = _mapper.Map<TemplateEntryDto>(entity);
+                var mappedEntity = SelectTemplate(entity, sharedEntries);
                 return ApiResult<TemplateEntryDto>.Success(mappedEntity);
             }
 
