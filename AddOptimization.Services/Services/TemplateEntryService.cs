@@ -181,12 +181,15 @@ namespace AddOptimization.Services.Services
         {
             try
             {
+                var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value.ToString();
+                var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => x.SharedWithId == currentUserId &&
+            (x.EntryId == id))).ToList();
                 var entity = (await _templateEntryRepository.QueryAsync(o => o.Id == id && !o.IsDeleted, ignoreGlobalFilter: true)).FirstOrDefault();
                 if (entity == null)
                 {
                     return ApiResult<TemplateEntryDto>.NotFound("Data");
                 }
-                var mappedEntity = _mapper.Map<TemplateEntryDto>(entity);
+                var mappedEntity = SelectTemplate(entity, sharedEntries);
                 return ApiResult<TemplateEntryDto>.Success(mappedEntity);
             }
 
