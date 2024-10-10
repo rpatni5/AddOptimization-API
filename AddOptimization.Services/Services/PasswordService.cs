@@ -122,7 +122,7 @@ namespace AddOptimization.Services.Services
             try
             {
                 var templates = (await _templateService.GetAllTemplate()).Result;
-                var passwordId = templates.FirstOrDefault(x => x.Name == "Passwords".ToString()).Id;
+                var passwordId = templates.FirstOrDefault(x => x.TemplateKey == "passwords".ToString()).Id;
                 var mappedEntities = (await _templateEntryService.Search(passwordId)).Result;
                 foreach (var entity in mappedEntities)
                 {
