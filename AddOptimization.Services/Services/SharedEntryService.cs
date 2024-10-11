@@ -181,7 +181,7 @@ namespace AddOptimization.Services.Services
                     SharedByUserId = e.SharedByUserId,
                     SharedWithId = e.SharedWithId,
                     PermissionLevel = e.PermissionLevel,
-                    SharedFolderName = e.TemplateEntries.TemplateFolder.Name == null ? string.Empty : e.TemplateEntries.TemplateFolder.Name,
+                    SharedFolderName = e.TemplateEntries?.TemplateFolder?.Name,
                     SharedTitleName = e.TemplateEntries.Title,
                     CreatedBy = e.CreatedByUser != null ? e.CreatedByUser.FullName : string.Empty,
                     TemplateId = e.TemplateEntries.TemplateId,
