@@ -170,8 +170,8 @@ namespace AddOptimization.Services.Services
                     PermissionLevel =e.PermissionLevel,
                     SharedFolderName = e.TemplateEntries.TemplateFolder.Name,
                     SharedTitleName = e.TemplateEntries.Title,
-                    CreatedBy=e.CreatedByUser.FullName,
-                    TemplateId = e.TemplateEntries.TemplateId,
+                    CreatedBy = e.CreatedByUser != null ? e.CreatedByUser.FullName : string.Empty,
+                TemplateId = e.TemplateEntries.TemplateId,
                 }).ToList();
                 return ApiResult<List<SharedEntryResponseDto>>.Success(mappedEntities);
             }

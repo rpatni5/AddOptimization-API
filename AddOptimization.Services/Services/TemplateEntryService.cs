@@ -132,7 +132,7 @@ namespace AddOptimization.Services.Services
                 UserId = x.UserId,
                 TemplateId = x.TemplateId,
                 IsDeleted = x.IsDeleted,
-                CreatedBy =  x.CreatedByUser.FullName,
+                CreatedBy =  x.CreatedByUser != null ? x.CreatedByUser.FullName : string.Empty,
                 CreatedAt = x.CreatedAt,
                 EntryData = x.EntryData == null ? new EntryDataDto() : JsonSerializer.Deserialize<EntryDataDto>(x.EntryData, options),
                 Permission = entry != null ? entry.PermissionLevel : PermissionLevel.FullAccess.ToString()
