@@ -20,6 +20,8 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 
 namespace AddOptimization.Services.Services
@@ -32,7 +34,7 @@ namespace AddOptimization.Services.Services
         private readonly ICreditCardService _creditCardService;
         private readonly IGenericRepository<ApplicationUser> _applicationUserRepository;
         private readonly IGenericRepository<Group> _groupRepository;
-      
+
         public SharedEntryService(IGenericRepository<SharedEntry> sharedEntryRepository, ILogger<SharedEntryService> logger, IMapper mapper, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository)
         {
             _sharedEntryRepository = sharedEntryRepository;
@@ -157,21 +159,33 @@ namespace AddOptimization.Services.Services
         }
 
 
-        public async Task<ApiResult<List<SharedEntryResponseDto>>> GetByUserId(int id)
+        public async Task<ApiResult<List<SharedEntryResponseDto>>> GetByUserId(int id, string filterType)
         {
             try
             {
-                var entities = await _sharedEntryRepository.QueryAsync((e => !e.IsDeleted && e.SharedByUserId == id && !e.TemplateEntries.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.TemplateEntries), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
+                IQueryable<SharedEntry> query = await _sharedEntryRepository.QueryAsync(e => !e.IsDeleted && !e.TemplateEntries.IsDeleted, include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.TemplateEntries), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
+                if (filterType == "SharedByMe")
+                {
+                    query = query.Where(e => e.SharedByUserId == id);
+                }
+                else if (filterType == "SharedToMe")
+                {
+                    query = query.Where(e => e.SharedWithId == id.ToString());
+                }
+                query = query.OrderByDescending(e => e.CreatedAt);
+                var entities = await query.ToListAsync();
                 var mappedEntities = entities.Select(e => new SharedEntryResponseDto
                 {
                     Id = e.Id,
                     EntryId = e.EntryId,
                     SharedByUserId = e.SharedByUserId,
-                    PermissionLevel =e.PermissionLevel,
-                    SharedFolderName = e.TemplateEntries.TemplateFolder.Name,
+                    SharedWithId = e.SharedWithId,
+                    PermissionLevel = e.PermissionLevel,
+                    SharedFolderName = e.TemplateEntries.TemplateFolder.Name == null ? string.Empty : e.TemplateEntries.TemplateFolder.Name,
                     SharedTitleName = e.TemplateEntries.Title,
                     CreatedBy = e.CreatedByUser != null ? e.CreatedByUser.FullName : string.Empty,
-                TemplateId = e.TemplateEntries.TemplateId,
+                    TemplateId = e.TemplateEntries.TemplateId,
+                    CreatedByUserId = e.CreatedByUserId,
                 }).ToList();
                 return ApiResult<List<SharedEntryResponseDto>>.Success(mappedEntities);
             }
