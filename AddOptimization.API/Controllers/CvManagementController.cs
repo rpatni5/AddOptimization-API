@@ -33,4 +33,31 @@ public class CvManagementController : CustomApiControllerBase
         }
     }
 
+    [HttpPost("search")]
+    public async Task<IActionResult> Search([FromBody] PageQueryFiterBase filters)
+    {
+        try
+        {
+            var retVal = await _cvManagementService.Search(filters);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        try
+        {
+            var retVal = await _cvManagementService.Delete(id);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
 }

@@ -4,7 +4,10 @@ using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
 using AddOptimization.Services.Constants;
 using AddOptimization.Utilities.Common;
+using AddOptimization.Utilities.Enums;
 using AddOptimization.Utilities.Extensions;
+using AddOptimization.Utilities.Helpers;
+using AddOptimization.Utilities.Models;
 using AutoMapper;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -89,6 +92,61 @@ namespace AddOptimization.Services.Services
             return downloadUrls;
         }
 
+        private IQueryable<CvEntry> ApplyFilters(IQueryable<CvEntry> entities, PageQueryFiterBase filter)
+        {
+
+            filter.GetValue<int>("userId", (v) =>
+            {
+                entities = entities.Where(e => e.UserId == v);
+            });
+
+            filter.GetValue<string>("title", (v) =>
+            {
+                entities = entities.Where(e => e.Title != null && (e.Title.ToLower().Contains(v.ToLower())));
+            });
+
+            return entities;
+        }
+
+
+        private IQueryable<CvEntry> ApplySorting(IQueryable<CvEntry> entities, SortModel sort)
+        {
+            try
+            {
+                if (sort?.Name == null)
+                {
+                    entities = entities.OrderByDescending(o => o.CreatedAt);
+                    return entities;
+                }
+                var columnName = sort.Name.ToUpper();
+                if (sort.Direction == SortDirection.ascending.ToString())
+                {
+                    if (columnName.ToUpper() == nameof(CvEntryDto.Title).ToUpper())
+                    {
+                        entities = entities.OrderBy(o => o.Title); ;
+                    }
+
+                }
+
+                else
+                {
+                    if (columnName.ToUpper() == nameof(CvEntryDto.Title).ToUpper())
+                    {
+                        entities = entities.OrderByDescending(o => o.Title); ;
+                    }
+                }
+                return entities;
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return entities;
+            }
+
+        }
+
+
         public async Task<ApiResult<bool>> Save(CvEntryDto model)
         {
             try
@@ -117,8 +175,59 @@ namespace AddOptimization.Services.Services
         }
 
 
+        public async Task<PagedApiResult<CvEntryDto>> Search(PageQueryFiterBase filters)
+        {
+            try
+            {
+                var entities = await _cvEntryRepository.QueryAsync(e => !e.IsDeleted, include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
+                entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
+                entities = ApplyFilters(entities, filters);
+                var pagedResult = PageHelper<CvEntry, CvEntryDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new CvEntryDto
+                {
+                    Id = e.Id,
+                    Title = e.Title,
+                    UserId = e.UserId,
+                    EntryData = e.EntryData != null ? JsonSerializer.Deserialize<CvEntryDataDto>(e.EntryData.ToString(), jsonOptions) : null,
+                    
+                }).ToList());
+
+                var result = pagedResult;
+                return PagedApiResult<CvEntryDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+
+        public async Task<ApiResult<bool>> Delete(Guid id)
+        {
+            try
+            {
+                var entity = await _cvEntryRepository.FirstOrDefaultAsync(t => t.Id == id, ignoreGlobalFilter: true);
+                if (entity == null)
+                {
+                    return ApiResult<bool>.NotFound("Data");
+                }
+
+                entity.IsDeleted = true;
+                await _cvEntryRepository.UpdateAsync(entity);
+                return ApiResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+
+
+
     }
-      
+
 
 }
 

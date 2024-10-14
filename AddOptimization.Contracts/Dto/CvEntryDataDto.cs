@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace AddOptimization.Contracts.Dto
@@ -75,6 +76,7 @@ namespace AddOptimization.Contracts.Dto
     {
         public string CertificateName { get; set; }
         public string CertificatePath { get; set; }
+        [JsonIgnore]
         public IFormFile File { get; set; }
     }
 }
