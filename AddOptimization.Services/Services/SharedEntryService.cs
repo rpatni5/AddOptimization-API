@@ -175,7 +175,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                IQueryable<SharedEntry> query = await _sharedEntryRepository.QueryAsync(e => !e.IsDeleted && !e.TemplateEntries.IsDeleted, include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.TemplateEntries), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
+                IQueryable<SharedEntry> query = await _sharedEntryRepository.QueryAsync(e => !e.IsDeleted && !e.TemplateEntries.IsDeleted, include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.TemplateEntries).Include(e => e.TemplateEntries.TemplateFolder), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
                 if (filterType == "SharedByMe")
                 {
                     query = query.Where(e => e.SharedByUserId == id);
