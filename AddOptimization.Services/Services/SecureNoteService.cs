@@ -85,7 +85,7 @@ namespace AddOptimization.Services.Services
             try
             {
                 var templates = (await _templateService.GetAllTemplate()).Result;
-                var secureNoteId = templates.FirstOrDefault(x => x.Name == "Secure Notes".ToString()).Id;
+                var secureNoteId = templates.FirstOrDefault(x => x.TemplateKey == "secure_notes".ToString()).Id;
                 var searchResult = (await _templateEntryService.Search(secureNoteId)).Result;
                 foreach (var entity in searchResult)
                 {

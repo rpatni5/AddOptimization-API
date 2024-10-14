@@ -25,6 +25,7 @@ namespace AddOptimization.Contracts.Dto
         public string SharedTitleName { get; set; }
         public string SharedFolderName { get; set; }
         public Guid TemplateId { get; set; }
+        public int? CreatedByUserId { get; set; }
         public List<TemplateEntryDto> TemplateEntries { get; set; }
     }
 }

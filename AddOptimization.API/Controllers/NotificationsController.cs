@@ -44,5 +44,21 @@ public class NotificationsController : CustomApiControllerBase
         }
     }
 
+    [HttpPut("refreshReadCount/{id?}")]
+    public async Task<IActionResult> RefreshReadCount(int? id)
+    {
+        try
+        {
+
+            await _notificationService.NotifyUser(id, "notification refreshed");
+
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
 }
 
