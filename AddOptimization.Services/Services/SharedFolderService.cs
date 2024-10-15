@@ -2,6 +2,7 @@
 using AddOptimization.Contracts.Services;
 using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
+using AddOptimization.Services.Constants;
 using AddOptimization.Utilities.Common;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
@@ -91,12 +92,12 @@ namespace AddOptimization.Services.Services
 
                 foreach (var entry in mappedEntity)
                 {
-                    if (entry.SharedWithType == "user")
+                    if (entry.SharedWithType == SharedWithTypeEnum.USER)
                     {
                         var user = users.FirstOrDefault(u => u.Id.ToString() == entry.SharedWithId);
                         entry.SharedWithName = user?.FullName ?? "Unknown User";
                     }
-                    else if (entry.SharedWithType == "group")
+                    else if (entry.SharedWithType == SharedWithTypeEnum.GROUP)
                     {
                         var group = groups.FirstOrDefault(g => g.Id.ToString() == entry.SharedWithId);
                         entry.SharedWithName = group?.Name ?? "Unknown Group";
