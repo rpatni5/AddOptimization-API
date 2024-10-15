@@ -2,8 +2,8 @@
 {
     public class SharedWithTypeEnum
     {
-        public const string USER = "User";
-        public const string GROUP = "Group";
+        public const string USER = "user";
+        public const string GROUP = "group";
        
     }
 }
