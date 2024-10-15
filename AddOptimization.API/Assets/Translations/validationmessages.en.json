@@ -34,5 +34,6 @@
   "OrderLineItemRequired": "Atleast one line item is required",
   "OnlyInvoicedOrdersCopy": "Only orders with invoiced tag can be copied",
   "OrderThresholdReached": "This order can not be saved. The total amount exceeds the configured threshold price of $[ThreasholdAmount]. Please adjust the amount and try again.",
-  "OrderInprogressRequiredFields": "Please complete required fields (i.e Account Manager,Payable amount,Shipping Address,Due Date,Referred By) before moving order to In Progress status"
+  "OrderInprogressRequiredFields": "Please complete required fields (i.e Account Manager,Payable amount,Shipping Address,Due Date,Referred By) before moving order to In Progress status",
+  "DataNoLongerExist": "Data you are trying to access no longer exist."
 }
