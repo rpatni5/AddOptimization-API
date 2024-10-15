@@ -31,12 +31,13 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<SharedFolder> _sharedFolderRepository;
         private readonly IGenericRepository<GroupMember> _groupMemberRepository;
         private readonly IGenericRepository<TemplateEntries> _templateEntryRepository;
+        private readonly IGenericRepository<SharedEntry> _sharedEntryRepository;
 
         JsonSerializerOptions options = new()
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
-        public TemplateFolderService(IGenericRepository<TemplateFolder> folderRepository, ILogger<TemplateFolderService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, IGenericRepository<SharedFolder> sharedFolderRepository, IGenericRepository<GroupMember> groupMemberRepository, IGenericRepository<TemplateEntries> templateEntryRepository)
+        public TemplateFolderService(IGenericRepository<TemplateFolder> folderRepository, ILogger<TemplateFolderService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, IGenericRepository<SharedFolder> sharedFolderRepository, IGenericRepository<GroupMember> groupMemberRepository, IGenericRepository<TemplateEntries> templateEntryRepository, IGenericRepository<SharedEntry> sharedEntryRepository)
         {
             _folderRepository = folderRepository;
             _logger = logger;
@@ -45,6 +46,31 @@ namespace AddOptimization.Services.Services
             _sharedFolderRepository = sharedFolderRepository;
             _groupMemberRepository = groupMemberRepository;
             _templateEntryRepository = templateEntryRepository;
+            _sharedEntryRepository = sharedEntryRepository;
+        }
+
+        private static TemplateEntryDto SelectEntityTemplate(TemplateEntries x, List<SharedEntry> sharedEntries, List<SharedFolder> sharedFolders)
+        {
+            var entry = sharedEntries.FirstOrDefault(e => e.EntryId == x.Id);
+            var sharedFolder = x.FolderId != null ? sharedFolders.FirstOrDefault(f => f.FolderId == x.FolderId) : null;
+            JsonSerializerOptions options = new()
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+
+            return new TemplateEntryDto
+            {
+                Id = x.Id == null ? Guid.Empty : x.Id,
+                Title = x.Title,
+                FolderId = x.FolderId,
+                UserId = x.UserId,
+                TemplateId = x.TemplateId,
+                IsDeleted = x.IsDeleted,
+                CreatedBy = x.CreatedByUser != null ? x.CreatedByUser.FullName : string.Empty,
+                CreatedAt = x.CreatedAt,
+                EntryData = x.EntryData == null ? new EntryDataDto() : JsonSerializer.Deserialize<EntryDataDto>(x.EntryData, options),
+                Permission = entry != null ? entry.PermissionLevel : sharedFolder != null ? sharedFolder.PermissionLevel : PermissionLevel.FullAccess.ToString()
+            };
         }
 
         private static TemplateFolderDto SelectTemplate(TemplateFolder x, List<SharedFolder> sharedFolders)
@@ -155,26 +181,21 @@ namespace AddOptimization.Services.Services
             try
             {
                 var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
-                var entities = await _templateEntryRepository.QueryAsync(o => o.FolderId == folderId && o.UserId == currentUserId && !o.IsDeleted , include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.TemplateFolder).Include(e => e.Template) .Include(e => e.UpdatedByUser).Include(e => e.ApplicationUser),  orderBy: x => x.OrderByDescending(x => x.CreatedAt) );
-                
+
+                var groupIds = (await _groupMemberRepository.QueryAsync(x => !x.IsDeleted && x.UserId == currentUserId)).Select(x => x.GroupId.ToString()).Distinct().ToList();
+                var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == currentUserId.ToString() || groupIds.Contains(x.SharedWithId)), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser))).ToList();
+                var entryIds = sharedEntries.Select(x => x.EntryId).Distinct().ToList();
+
+                var sharedFolders = (await _sharedFolderRepository.QueryAsync(x => !x.IsDeleted && x.FolderId == folderId && (x.SharedWithId == currentUserId.ToString() || groupIds.Contains(x.SharedWithId)), include: entities => entities.Include(e => e.TemplateFolder))).ToList();
+                var folderIds = sharedFolders.Select(x => x.FolderId).Distinct().ToList();
+
+                var entities = await _templateEntryRepository.QueryAsync(o => o.FolderId == folderId && (o.UserId == currentUserId || entryIds.Contains(o.Id) || folderIds.Contains(o.FolderId)) && !o.IsDeleted, include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.TemplateFolder).Include(e => e.Template).Include(e => e.UpdatedByUser).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
+
                 if (entities == null || !entities.Any())
                 {
                     return null;
                 }
-                var mappedEntities = entities.Select(entity => new TemplateEntryDto
-                {
-                    Id = entity.Id,
-                    UserId = entity.UserId,
-                    TemplateId = entity.TemplateId,
-                    FolderId = entity.FolderId,
-                    Title = entity.Title,
-                    EntryData = entity.EntryData == null ? new EntryDataDto() : JsonSerializer.Deserialize<EntryDataDto>(entity.EntryData, options),
-                    CreatedAt = entity.CreatedAt,
-                    UpdatedAt = entity.UpdatedAt,
-                    IsDeleted = entity.IsDeleted,
-                    CreatedBy = entity.CreatedByUser != null ? entity.CreatedByUser.FullName : string.Empty,
-            }).ToList();
-
+                var mappedEntities = entities.Select(x => SelectEntityTemplate(x, sharedEntries, sharedFolders)).ToList();
                 return ApiResult<List<TemplateEntryDto>>.Success(mappedEntities);
             }
             catch (Exception ex)
