@@ -14,7 +14,7 @@ namespace AddOptimization.Contracts.Dto
         public int UserId { get; set; }
         [Required]
         public Guid TemplateId { get; set; }
-        public Guid FolderId { get; set; }
+        public Guid? FolderId { get; set; }
         public string Title { get; set; }
         public string EntryDataEncrypted { get; set; }
 

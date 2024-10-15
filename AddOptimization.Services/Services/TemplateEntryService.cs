@@ -91,7 +91,7 @@ namespace AddOptimization.Services.Services
                 var folderIds = sharedFolders.Select(x => x.FolderId).Distinct().ToList();
 
                 var entities = await _templateEntryRepository.QueryAsync(
-                    e => !e.IsDeleted && (e.UserId == currentUserId || entryIds.Contains(e.Id) || folderIds.Contains(e.FolderId)),
+                    e => !e.IsDeleted && (e.UserId == currentUserId || entryIds.Contains(e.Id) || (e.FolderId.HasValue && folderIds.Contains(e.FolderId.Value))),
                     include: entities => entities
                         .Include(e => e.CreatedByUser).Include(e => e.TemplateFolder).Include(e => e.Template)
                         .Include(e => e.UpdatedByUser)

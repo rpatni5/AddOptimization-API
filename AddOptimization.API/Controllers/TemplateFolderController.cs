@@ -88,11 +88,11 @@ namespace AddOptimization.API.Controllers
         }
 
         [HttpGet("get-by-folderId/{id}")]
-        public async Task<IActionResult> GetByFolderIdForCurrentUser(Guid id)
+        public async Task<IActionResult> GetTemplates(Guid id)
         {
             try
             {
-                var retVal = await _folderService.GetByFolderIdForCurrentUser(id);
+                var retVal = await _folderService.GetTemplates(id);
                 return HandleResponse(retVal);
             }
             catch (Exception ex)

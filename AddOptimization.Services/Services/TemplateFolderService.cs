@@ -176,7 +176,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        public async Task<ApiResult<List<TemplateEntryDto>>> GetByFolderIdForCurrentUser(Guid folderId)
+        public async Task<ApiResult<List<TemplateEntryDto>>> GetTemplates(Guid folderId)
         {
             try
             {
@@ -187,9 +187,10 @@ namespace AddOptimization.Services.Services
                 var entryIds = sharedEntries.Select(x => x.EntryId).Distinct().ToList();
 
                 var sharedFolders = (await _sharedFolderRepository.QueryAsync(x => !x.IsDeleted && x.FolderId == folderId && (x.SharedWithId == currentUserId.ToString() || groupIds.Contains(x.SharedWithId)), include: entities => entities.Include(e => e.TemplateFolder))).ToList();
+
                 var folderIds = sharedFolders.Select(x => x.FolderId).Distinct().ToList();
 
-                var entities = await _templateEntryRepository.QueryAsync(o => o.FolderId == folderId && (o.UserId == currentUserId || entryIds.Contains(o.Id) || folderIds.Contains(o.FolderId)) && !o.IsDeleted, include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.TemplateFolder).Include(e => e.Template).Include(e => e.UpdatedByUser).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
+                var entities = await _templateEntryRepository.QueryAsync(o => o.FolderId == folderId && !o.IsDeleted && (o.UserId == currentUserId || entryIds.Contains(o.Id) || (o.FolderId.HasValue && folderIds.Contains(o.FolderId.Value))) , include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.TemplateFolder).Include(e => e.Template).Include(e => e.UpdatedByUser).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
 
                 if (entities == null || !entities.Any())
                 {
