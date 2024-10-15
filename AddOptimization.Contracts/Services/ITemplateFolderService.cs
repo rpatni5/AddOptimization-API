@@ -9,6 +9,7 @@ namespace AddOptimization.Contracts.Services
         Task<ApiResult<bool>> Create(TemplateFolderDto model);
         Task<ApiResult<TemplateFolderDto>> Update(Guid id, TemplateFolderDto model);
         Task<ApiResult<bool>> Delete(Guid id);
+        Task<ApiResult<List<TemplateEntryDto>>> GetTemplates(Guid folderId);
     }
 }
 

@@ -119,6 +119,7 @@
     <Build Include="dbo\Tables\Group.sql" />
     <Build Include="dbo\Tables\GroupMembers.sql" />
     <Build Include="dbo\Tables\SharedEntries.sql" />
+    <Build Include="dbo\Tables\SharedFolders.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Scripts\SeedData_Script.PostDeployment.sql" />
