@@ -13,6 +13,7 @@ using AddOptimization.Utilities.Interface;
 using AddOptimization.Utilities.Models;
 using AddOptimization.Utilities.Services;
 using AutoMapper;
+using iText.Kernel.Pdf.Canvas.Parser;
 using iText.Layout.Element;
 using iText.StyledXmlParser.Jsoup.Nodes;
 using Microsoft.AspNet.Identity;
@@ -105,20 +106,16 @@ IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository, ISche
                     IsCustomerApprovalPending = e.AdminStatus.StatusKey.ToString() == SchedulerStatusesEnum.PENDING_CUSTOMER_APPROVAL.ToString(),
                 }).ToList());
 
-                pagedResult.Result.ForEach(e =>
-                       {
-                           e.Holiday = GetHolidaysCount(e.StartDate, e.EndDate, e.UserId);
-                       });
-                //filters.GetValue<bool>("includeHoliday", (v) =>                
-                //{
-                //    if (v)
-                //    {
-                //        pagedResult.Result.ForEach(e =>
-                //        {
-                //            e.Holiday = GetHolidaysCount(e.StartDate, e.EndDate, e.UserId);
-                //        });
-                //    }
-                //});
+                filters.GetValue<bool>("includeHoliday", (v) =>                
+                {
+                    if (v)
+                    {
+                        pagedResult.Result.ForEach(e =>
+                        {
+                            e.Holiday = GetHolidaysCount(e.StartDate, e.EndDate, e.UserId);
+                        });
+                    }
+                });
 
                 var retVal = pagedResult;
                 return PagedApiResult<SchedulerEventResponseDto>.Success(retVal);
@@ -530,7 +527,7 @@ IGenericRepository<SchedulerEventHistory> schedulerEventHistoryRepository, ISche
         }
 
 
-
+     
         private IQueryable<SchedulerEvent> ApplyFilters(IQueryable<SchedulerEvent> entities, PageQueryFiterBase filter)
         {
 

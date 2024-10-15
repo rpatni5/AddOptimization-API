@@ -381,16 +381,81 @@ namespace AddOptimization.Services.Mappings
 
             });
             CreateMap<InvoiceCreditPaymentDto, InvoiceCreditNotes>();
+            CreateMap<TemplateFolder, TemplateFolderDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+            });
+            CreateMap<TemplateFolderDto, TemplateFolder>();
+
+            CreateMap<Template, TemplateDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+            });
+            CreateMap<TemplateDto, Template>();
 
             CreateMap<SavedSearch, SavedSearchDto>().AfterMap((s, d) =>
             {
             });
             CreateMap<SavedSearchDto, SavedSearch>();
             CreateMap<Notification, NotificationDto>().AfterMap((s, d) => d.Meta = s.Meta ?? "{}");
+            CreateMap<string, EntryDataDto>().ConvertUsing(json => JsonSerializer.Deserialize<EntryDataDto>(json, jsonOptions));
+
+
+            CreateMap<TemplateEntries, TemplateEntryDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.CreatedAt = s.CreatedAt?.Date;
+                d.UpdatedAt = s.UpdatedAt?.Date;
+                d.EntryData = s.EntryData == null ? new EntryDataDto() : JsonSerializer.Deserialize<EntryDataDto>(s.EntryData, jsonOptions);
+            });
 
             CreateMap<NotificationDto, Notification>();
             CreateMap<NotificationUserDto, ApplicationUser>();
             CreateMap<ApplicationUser, NotificationUserDto>();
+            CreateMap<TemplateEntryDto, TemplateEntries>().AfterMap((s, d) =>
+            {
+                d.EntryData = s.EntryData != null ? JsonSerializer.Serialize(s.EntryData, jsonOptions) : string.Empty;
+            });
+
+            CreateMap<CreditCardDto, EntryDataDto>();
+
+            CreateMap<Group, GroupDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+            });
+            CreateMap<GroupDto, Group>();
+            
+            CreateMap<SharedEntry, SharedEntryResponseDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.CreatedAt = s.CreatedAt?.Date;
+                d.UpdatedAt = s.UpdatedAt?.Date;
+            });
+            CreateMap<SharedEntryRequestDto, SharedEntry>();
+
+            CreateMap<Group, GroupDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.CreatedAt = s.CreatedAt?.Date;
+                d.UpdatedAt = s.UpdatedAt?.Date;
+            });
+            CreateMap<CombineGroupModelDto, Group>();
+
+            CreateMap<GroupMember, GroupMemberDto>().AfterMap((s, d) =>
+            {
+                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                d.CreatedAt = s.CreatedAt?.Date;
+                d.UpdatedAt = s.UpdatedAt?.Date;
+            });
+            CreateMap<CombineGroupModelDto, GroupMember>();
+          
         }
     }
 }

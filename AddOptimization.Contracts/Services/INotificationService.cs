@@ -16,5 +16,7 @@ namespace AddOptimization.Contracts.Services
         Task<ApiResult<bool>> ToggleRead(int? id);
         Task<PagedApiResult<NotificationDto>> Search(PageQueryFiterBase filters);
 
+        Task NotifyUser(int? userId, string message);
+
     }
 }

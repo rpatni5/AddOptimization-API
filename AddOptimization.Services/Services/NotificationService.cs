@@ -2,11 +2,13 @@
 using AddOptimization.Contracts.Services;
 using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
+using AddOptimization.Services.NotificationHelpers;
 using AddOptimization.Utilities.Common;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Models;
 using AutoMapper;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
@@ -24,12 +26,14 @@ namespace AddOptimization.Services.Services
         private readonly IMapper _mapper;
         private readonly IGenericRepository<Notification> _notificationRepository;
         private readonly int? _currentUserId;
-        public NotificationService(ILogger<NotificationService> logger, IMapper mapper, IGenericRepository<Notification> notificationRepository)
+        private readonly IHubContext<NotificationHub> _hubContext;
+        public NotificationService(ILogger<NotificationService> logger, IMapper mapper, IGenericRepository<Notification> notificationRepository, IHubContext<NotificationHub> hubContext)
         {
             _logger = logger;
             _mapper = mapper;
             _notificationRepository = notificationRepository;
             _currentUserId = notificationRepository.CurrentUserId;
+            _hubContext = hubContext;
         }
         public async Task<ApiResult<bool>> CreateAsync(NotificationDto model)
         {
@@ -37,6 +41,7 @@ namespace AddOptimization.Services.Services
             {
                 var entity = _mapper.Map<Notification>(model);
                 await _notificationRepository.InsertAsync(entity);
+                await NotifyUser(model.AppplicationUserId, model.Subject);
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -52,6 +57,10 @@ namespace AddOptimization.Services.Services
             {
                 var entities = _mapper.Map<List<Notification>>(model);
                 await _notificationRepository.BulkInsertAsync(entities);
+                foreach (var user in model)
+                {
+                    await NotifyUser(user.AppplicationUserId, user.Subject);
+                }
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -107,6 +116,29 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
+
+        public async Task NotifyUser(int? userId, string message)
+        {
+            try
+            {
+                if (userId.HasValue)
+                {
+                    var connectionIds = NotificationHub.GetConnections(userId.ToString());
+                    if (connectionIds != null && connectionIds.Count > 0)
+                    {
+                        foreach (var connectionId in connectionIds)
+                        {
+                            await _hubContext.Clients.Client(connectionId).SendAsync("ReceiveNotification", message);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+            }
+        }
+
     }
 
 }
