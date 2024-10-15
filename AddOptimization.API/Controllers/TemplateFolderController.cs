@@ -86,6 +86,20 @@ namespace AddOptimization.API.Controllers
                 return HandleException(ex);
             }
         }
+
+        [HttpGet("get-by-folderId/{id}")]
+        public async Task<IActionResult> GetByFolderIdForCurrentUser(Guid id)
+        {
+            try
+            {
+                var retVal = await _folderService.GetByFolderIdForCurrentUser(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
     }
 }
 

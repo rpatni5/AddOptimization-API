@@ -30,8 +30,13 @@ namespace AddOptimization.Services.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IGenericRepository<SharedFolder> _sharedFolderRepository;
         private readonly IGenericRepository<GroupMember> _groupMemberRepository;
+        private readonly IGenericRepository<TemplateEntries> _templateEntryRepository;
 
-        public TemplateFolderService(IGenericRepository<TemplateFolder> folderRepository, ILogger<TemplateFolderService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, IGenericRepository<SharedFolder> sharedFolderRepository, IGenericRepository<GroupMember> groupMemberRepository)
+        JsonSerializerOptions options = new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+        public TemplateFolderService(IGenericRepository<TemplateFolder> folderRepository, ILogger<TemplateFolderService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, IGenericRepository<SharedFolder> sharedFolderRepository, IGenericRepository<GroupMember> groupMemberRepository, IGenericRepository<TemplateEntries> templateEntryRepository)
         {
             _folderRepository = folderRepository;
             _logger = logger;
@@ -39,6 +44,7 @@ namespace AddOptimization.Services.Services
             _httpContextAccessor = httpContextAccessor;
             _sharedFolderRepository = sharedFolderRepository;
             _groupMemberRepository = groupMemberRepository;
+            _templateEntryRepository = templateEntryRepository;
         }
 
         private static TemplateFolderDto SelectTemplate(TemplateFolder x, List<SharedFolder> sharedFolders)
@@ -136,6 +142,40 @@ namespace AddOptimization.Services.Services
                 await _folderRepository.UpdateAsync(entity);
 
                 return ApiResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
+        }
+
+        public async Task<ApiResult<List<TemplateEntryDto>>> GetByFolderIdForCurrentUser(Guid folderId)
+        {
+            try
+            {
+                var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
+                var entities = await _templateEntryRepository.QueryAsync(o => o.FolderId == folderId && o.UserId == currentUserId && !o.IsDeleted , include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.TemplateFolder).Include(e => e.Template) .Include(e => e.UpdatedByUser).Include(e => e.ApplicationUser),  orderBy: x => x.OrderByDescending(x => x.CreatedAt) );
+                
+                if (entities == null || !entities.Any())
+                {
+                    return null;
+                }
+                var mappedEntities = entities.Select(entity => new TemplateEntryDto
+                {
+                    Id = entity.Id,
+                    UserId = entity.UserId,
+                    TemplateId = entity.TemplateId,
+                    FolderId = entity.FolderId,
+                    Title = entity.Title,
+                    EntryData = entity.EntryData == null ? new EntryDataDto() : JsonSerializer.Deserialize<EntryDataDto>(entity.EntryData, options),
+                    CreatedAt = entity.CreatedAt,
+                    UpdatedAt = entity.UpdatedAt,
+                    IsDeleted = entity.IsDeleted,
+                    CreatedBy = entity.CreatedByUser != null ? entity.CreatedByUser.FullName : string.Empty,
+            }).ToList();
+
+                return ApiResult<List<TemplateEntryDto>>.Success(mappedEntities);
             }
             catch (Exception ex)
             {
