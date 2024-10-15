@@ -3,9 +3,11 @@ using AddOptimization.Contracts.Services;
 using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
 using AddOptimization.Utilities.Common;
+using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
@@ -26,12 +28,16 @@ namespace AddOptimization.Services.Services
         private readonly ITemplatesService _templateService;
         private readonly ITemplateEntryService _templateEntryService;
         private readonly ICountryService _countryService;
+        private readonly IGenericRepository<SharedEntry> _sharedEntryRepository;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IGenericRepository<TemplateEntries> _templateEntryRepository;
+
         JsonSerializerOptions jsonOptions = new()
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
 
-        public CompanyInformationService(ILogger<CompanyInformationService> logger, IMapper mapper, IConfiguration configuration, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, ITemplatesService templateService, ITemplateEntryService templateEntryService, ICountryService countryService)
+        public CompanyInformationService(ILogger<CompanyInformationService> logger, IMapper mapper, IConfiguration configuration, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, ITemplatesService templateService, ITemplateEntryService templateEntryService, ICountryService countryService, IGenericRepository<SharedEntry> sharedEntryRepository, IHttpContextAccessor httpContextAccessor, IGenericRepository<TemplateEntries> templateEntryRepository)
         {
             _logger = logger;
             _mapper = mapper;
@@ -40,6 +46,9 @@ namespace AddOptimization.Services.Services
             _templateService = templateService;
             _templateEntryService = templateEntryService;
             _countryService = countryService;
+            _sharedEntryRepository = sharedEntryRepository;
+            _httpContextAccessor = httpContextAccessor;
+            _templateEntryRepository = templateEntryRepository;
         }
 
         private void Decrypt(TemplateEntryDto model)
@@ -101,14 +110,34 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var mappedEntity = (await _templateEntryService.Get(id)).Result;
-                if (mappedEntity.EntryData != null)
+                var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value.ToString();
+                var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => x.EntryId == id)).ToList();
+                var templateEntries = (await _templateEntryRepository.QueryAsync(te => te.Id == id)).ToList();
+                bool isAnySharedEntryDeleted = sharedEntries.Any(se => se.IsDeleted);
+                bool isAnyTemplateEntryDeleted = templateEntries.Any(te => te.IsDeleted);
+                bool hasAccessToSharedEntries = sharedEntries.Any(se => se.SharedWithId == currentUserId);
+                bool hasAccessToTemplateEntries = templateEntries.Any(te => te.CreatedByUserId.ToString() == currentUserId);
+                bool hasAccess = hasAccessToSharedEntries || hasAccessToTemplateEntries;
+
+                if (isAnySharedEntryDeleted || isAnyTemplateEntryDeleted)
                 {
-                    string entryDataJson = JsonSerializer.Serialize(mappedEntity.EntryData, jsonOptions);
-                    mappedEntity.EntryDataEncrypted = DecryptionHelper.Encrypt(entryDataJson);
-                    mappedEntity.EntryData = null;
+                    return ApiResult<TemplateEntryDto>.Failure(ValidationCodes.DataNoLongerExist);
                 }
-                return ApiResult<TemplateEntryDto>.Success(mappedEntity);
+                else if (hasAccess)
+                {
+                    var mappedEntity = (await _templateEntryService.Get(id)).Result;
+                    if (mappedEntity.EntryData != null)
+                    {
+                        string entryDataJson = JsonSerializer.Serialize(mappedEntity.EntryData, jsonOptions);
+                        mappedEntity.EntryDataEncrypted = DecryptionHelper.Encrypt(entryDataJson);
+                        mappedEntity.EntryData = null;
+                    }
+                    return ApiResult<TemplateEntryDto>.Success(mappedEntity);
+                }
+                else
+                {
+                    return ApiResult<TemplateEntryDto>.Failure(ValidationCodes.PermissionDenied);
+                }
             }
 
             catch (Exception ex)

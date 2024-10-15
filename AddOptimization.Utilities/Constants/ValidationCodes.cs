@@ -47,4 +47,5 @@ public class ValidationCodes
     public const string GroupAlreadyExists = "GroupAlreadyExists";
     public const string EmailNotificationSettingIsDisabled = "EmailNotificationSettingIsDisabled";
     public const string UnpaidInvoiceDoesNotExists = "UnpaidInvoiceDoesNotExists";
+    public const string DataNoLongerExist = "DataNoLongerExist";
 }
