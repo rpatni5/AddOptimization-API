@@ -16,5 +16,6 @@ namespace AddOptimization.Contracts.Dto
         public DateTime? UpdatedAt { get; set; }
         public string UpdatedBy { get; set; }
         public string Description { get; set; }
+        public string Permission { get; set; }
     }
 }
