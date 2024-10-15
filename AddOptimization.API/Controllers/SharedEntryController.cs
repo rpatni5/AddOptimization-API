@@ -6,6 +6,7 @@ using AddOptimization.Contracts.Constants;
 using AddOptimization.Contracts.Dto;
 using AddOptimization.Services.Services;
 using AddOptimization.Utilities.Models;
+using Stripe;
 
 namespace AddOptimization.API.Controllers;
 [Authorize]
@@ -75,11 +76,11 @@ public class SharedEntryController : CustomApiControllerBase
         }
     }
     [HttpGet("get-by-userId/{id}")]
-    public async Task<IActionResult> GetSharedDetailsByUserId(int id)
+    public async Task<IActionResult> GetSharedDetailsByUserId(int id , [FromQuery]  string filterType)
     {
         try
         {
-            var retVal = await _sharedEntryService.GetByUserId(id);
+            var retVal = await _sharedEntryService.GetByUserId(id ,filterType);
             return HandleResponse(retVal);
         }
         catch (Exception ex)
@@ -87,6 +88,4 @@ public class SharedEntryController : CustomApiControllerBase
             return HandleException(ex);
         }
     }
-
-
 }

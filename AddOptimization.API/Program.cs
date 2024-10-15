@@ -8,6 +8,7 @@ using AddOptimization.Utilities;
 using AddOptimization.Data;
 using AddOptimization.API.HostedService.BackgroundServices;
 using AddOptimization.Contracts.Services;
+using AddOptimization.Services.NotificationHelpers;
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 var builder = WebApplication.CreateBuilder(args);
@@ -44,6 +45,13 @@ services.AddHostedService<GenerateInvoiceBackgroundService>();
 services.AddHostedService<UnpaidInvoiceReminderToCustomerBackgroundService>();
 services.AddHostedService<OverdueNotificationBackgroundService>();
 services.AddLoggingService();
+services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = true;
+    options.KeepAliveInterval = TimeSpan.FromSeconds(10);
+    options.ClientTimeoutInterval = TimeSpan.FromMinutes(60);
+    options.HandshakeTimeout = TimeSpan.FromMinutes(2);
+});
 #endregion
 #region configure
 var app = builder.Build();
@@ -73,6 +81,7 @@ app.Use(async (context, next) =>
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.MapControllers();
+app.MapHub<NotificationHub>("/notificationHub");
 app.Use((ctx, next) => {
     ctx.Response.Headers.Add("Access-Control-Expose-Headers", "*");
     return next();
