@@ -51,7 +51,7 @@ namespace AddOptimization.Services.Services
                 {
                     passwordInfo.Password = AesEncryptionDecryptionHelper.Encrypt(passwordInfo.Password);
                     model.EntryData.IsValueEncrypted = true;
-                }              
+                }
             }
 
         }
@@ -66,7 +66,7 @@ namespace AddOptimization.Services.Services
                 {
                     var cipherBytes = Convert.FromBase64String(passwordInfo.Password);
                     passwordInfo.Password = AesEncryptionDecryptionHelper.Decrypt(cipherBytes);
-                }             
+                }
             }
         }
         private void Decrypt(TemplateEntryDto model)
@@ -154,23 +154,14 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value.ToString();
-                var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => x.EntryId == id)).ToList();
-                var templateEntries = (await _templateEntryRepository.QueryAsync(te => te.Id == id)).ToList();
-                bool isAnySharedEntryDeleted = sharedEntries.Any(se => se.IsDeleted);
-                bool isAnyTemplateEntryDeleted = templateEntries.Any(te => te.IsDeleted);
-                bool hasAccessToSharedEntries = sharedEntries.Any(se =>se.SharedWithId == currentUserId);
-                bool hasAccessToTemplateEntries = templateEntries.Any(te =>te.CreatedByUserId.ToString() == currentUserId);
-                bool hasAccess = hasAccessToSharedEntries || hasAccessToTemplateEntries;
-
-                if (isAnySharedEntryDeleted || isAnyTemplateEntryDeleted)
+                var mappedEntity = (await _templateEntryService.Get(id)).Result;
+                if (mappedEntity == null)
                 {
-                    return ApiResult<TemplateEntryDto>.Failure(ValidationCodes.DataNoLongerExist);
+                    return ApiResult<TemplateEntryDto>.Failure(ValidationCodes.PermissionDenied);
                 }
-                else if (hasAccess)
-                 
+
+                else
                 {
-                    var mappedEntity = (await _templateEntryService.Get(id)).Result;
                     DecryptPasswordInfo(mappedEntity);
                     if (mappedEntity.EntryData != null)
                     {
@@ -179,10 +170,6 @@ namespace AddOptimization.Services.Services
                         mappedEntity.EntryData = null;
                     }
                     return ApiResult<TemplateEntryDto>.Success(mappedEntity);
-                }
-                else
-                {
-                    return ApiResult<TemplateEntryDto>.Failure(ValidationCodes.PermissionDenied);
                 }
             }
 

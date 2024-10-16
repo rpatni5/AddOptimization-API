@@ -160,22 +160,14 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value.ToString();
-                var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => x.EntryId == id)).ToList();
-                var templateEntries = (await _templateEntryRepository.QueryAsync(te => te.Id == id)).ToList();
-                bool isAnySharedEntryDeleted = sharedEntries.Any(se => se.IsDeleted);
-                bool isAnyTemplateEntryDeleted = templateEntries.Any(te => te.IsDeleted);
-                bool hasAccessToSharedEntries = sharedEntries.Any(se => se.SharedWithId == currentUserId);
-                bool hasAccessToTemplateEntries = templateEntries.Any(te => te.CreatedByUserId.ToString() == currentUserId);
-                bool hasAccess = hasAccessToSharedEntries || hasAccessToTemplateEntries;
-
-                if (isAnySharedEntryDeleted || isAnyTemplateEntryDeleted)
-                {
-                    return ApiResult<TemplateEntryDto>.Failure(ValidationCodes.DataNoLongerExist);
-                }
-                else if (hasAccess)
-                {
                     var mappedEntity = (await _templateEntryService.Get(id)).Result;
+                if (mappedEntity == null)
+                {
+                    return ApiResult<TemplateEntryDto>.Failure(ValidationCodes.PermissionDenied);
+                }
+
+                else
+                {
                     DecryptMobileAppInfo(mappedEntity);
                     if (mappedEntity.EntryData != null)
                     {
@@ -185,10 +177,6 @@ namespace AddOptimization.Services.Services
                     }
                     return ApiResult<TemplateEntryDto>.Success(mappedEntity);
                 }
-                else
-                {
-                    return ApiResult<TemplateEntryDto>.Failure(ValidationCodes.PermissionDenied);
-                }            
             }
 
             catch (Exception ex)
