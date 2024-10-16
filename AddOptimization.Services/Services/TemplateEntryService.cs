@@ -4,6 +4,7 @@ using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
 using AddOptimization.Services.Constants;
 using AddOptimization.Utilities.Common;
+using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
@@ -39,7 +40,7 @@ namespace AddOptimization.Services.Services
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
 
-        public TemplateEntryService(IGenericRepository<TemplateEntries> templateEntryRepository, ILogger<TemplateEntryService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, ITemplatesService templateService, IGenericRepository<SharedEntry> sharedEntryRepository, IGenericRepository<SharedFolder> sharedFolderRepository ,IGenericRepository<GroupMember> groupMemberRepository)
+        public TemplateEntryService(IGenericRepository<TemplateEntries> templateEntryRepository, ILogger<TemplateEntryService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, ITemplatesService templateService, IGenericRepository<SharedEntry> sharedEntryRepository, IGenericRepository<SharedFolder> sharedFolderRepository, IGenericRepository<GroupMember> groupMemberRepository)
         {
             _templateEntryRepository = templateEntryRepository;
             _logger = logger;
@@ -82,7 +83,7 @@ namespace AddOptimization.Services.Services
 
                 var groupIds = (await _groupMemberRepository.QueryAsync(x => !x.IsDeleted && x.UserId == currentUserId)).Select(x => x.GroupId.ToString()).Distinct().ToList();
 
-                var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == currentUserId.ToString() || groupIds.Contains(x.SharedWithId)), include: entities => entities .Include(e => e.CreatedByUser) .Include(e => e.UpdatedByUser))).ToList();
+                var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == currentUserId.ToString() || groupIds.Contains(x.SharedWithId)), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser))).ToList();
 
                 var entryIds = sharedEntries.Select(x => x.EntryId).Distinct().ToList();
 
@@ -109,7 +110,7 @@ namespace AddOptimization.Services.Services
                     entities = entities.Where(x => x.Title.ToLower().Contains(textSearch.ToLower()));
                 }
 
-                var mappedEntities = entities.Select(x => SelectTemplate(x, sharedEntries , sharedFolders)).ToList();
+                var mappedEntities = entities.Select(x => SelectTemplate(x, sharedEntries, sharedFolders)).ToList();
 
                 return ApiResult<List<TemplateEntryDto>>.Success(mappedEntities);
             }
@@ -120,7 +121,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private static TemplateEntryDto SelectTemplate(TemplateEntries x, List<SharedEntry> sharedEntries , List<SharedFolder> sharedFolders)
+        private static TemplateEntryDto SelectTemplate(TemplateEntries x, List<SharedEntry> sharedEntries, List<SharedFolder> sharedFolders)
         {
             var entry = sharedEntries.FirstOrDefault(e => e.EntryId == x.Id);
             var sharedFolder = x.FolderId != null ? sharedFolders.FirstOrDefault(f => f.FolderId == x.FolderId) : null;
@@ -137,10 +138,10 @@ namespace AddOptimization.Services.Services
                 UserId = x.UserId,
                 TemplateId = x.TemplateId,
                 IsDeleted = x.IsDeleted,
-                CreatedBy =  x.CreatedByUser != null ? x.CreatedByUser.FullName : string.Empty,
+                CreatedBy = x.CreatedByUser != null ? x.CreatedByUser.FullName : string.Empty,
                 CreatedAt = x.CreatedAt,
                 EntryData = x.EntryData == null ? new EntryDataDto() : JsonSerializer.Deserialize<EntryDataDto>(x.EntryData, options),
-                Permission = entry != null ? entry.PermissionLevel : sharedFolder != null ? sharedFolder.PermissionLevel :  PermissionLevel.FullAccess.ToString()
+                Permission = entry != null ? entry.PermissionLevel : sharedFolder != null ? sharedFolder.PermissionLevel : PermissionLevel.FullAccess.ToString()
             };
         }
 
@@ -183,24 +184,40 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-
         public async Task<ApiResult<TemplateEntryDto>> Get(Guid id)
         {
             try
             {
                 var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value.ToString();
-                var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => x.SharedWithId == currentUserId &&
-            (x.EntryId == id))).ToList();
+                var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => x.EntryId == id)).ToList();
+                var templateEntries = (await _templateEntryRepository.QueryAsync(te => te.Id == id)).ToList();
                 var sharedFolders = (await _sharedFolderRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == currentUserId), include: entities => entities.Include(e => e.TemplateFolder))).ToList();
-
-
                 var entity = (await _templateEntryRepository.QueryAsync(o => o.Id == id && !o.IsDeleted, ignoreGlobalFilter: true)).FirstOrDefault();
-                if (entity == null)
+                bool isAnySharedEntryDeleted = sharedEntries.Any(se => se.IsDeleted);
+                bool isAnyTemplateEntryDeleted = templateEntries.Any(te => te.IsDeleted);
+                bool hasAccessToSharedEntries = sharedEntries.Any(se => se.SharedWithId == currentUserId);
+                bool hasAccessToTemplateEntries = templateEntries.Any(te => te.CreatedByUserId.ToString() == currentUserId);
+                bool hasAccessToSharedFolders = sharedFolders.Any(s => s.SharedWithId == currentUserId || (s.CreatedByUserId).ToString() == currentUserId);
+                bool hasAccess = hasAccessToSharedEntries || hasAccessToTemplateEntries || hasAccessToSharedFolders;
+                if (isAnySharedEntryDeleted || isAnyTemplateEntryDeleted)
                 {
-                    return ApiResult<TemplateEntryDto>.NotFound("Data");
+                    return ApiResult<TemplateEntryDto>.Failure(ValidationCodes.DataNoLongerExist);
                 }
-                var mappedEntity = SelectTemplate(entity, sharedEntries, sharedFolders);
-                return ApiResult<TemplateEntryDto>.Success(mappedEntity);
+                else if (hasAccess)
+                {
+                    if (entity == null)
+                    {
+                        return ApiResult<TemplateEntryDto>.NotFound("Data");
+                    }
+                    var mappedEntity = SelectTemplate(entity, sharedEntries, sharedFolders);
+                    return ApiResult<TemplateEntryDto>.Success(mappedEntity);
+                }
+                else
+                {
+                    return ApiResult<TemplateEntryDto>.Failure(ValidationCodes.PermissionDenied);
+                }
+
+
             }
 
             catch (Exception ex)
@@ -210,7 +227,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-
+      
 
     }
 

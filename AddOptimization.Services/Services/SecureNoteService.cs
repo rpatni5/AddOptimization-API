@@ -4,6 +4,7 @@ using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
 using AddOptimization.Services.Constants;
 using AddOptimization.Utilities.Common;
+using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Models;
@@ -124,13 +125,21 @@ namespace AddOptimization.Services.Services
             try
             {
                 var mappedEntity = (await _templateEntryService.Get(id)).Result;
-                if (mappedEntity.EntryData != null)
+                if (mappedEntity == null)
                 {
-                    string entryDataJson = JsonSerializer.Serialize(mappedEntity.EntryData, jsonOptions);
-                    mappedEntity.EntryDataEncrypted = DecryptionHelper.Encrypt(entryDataJson);
-                    mappedEntity.EntryData = null;
+                    return ApiResult<TemplateEntryDto>.Failure(ValidationCodes.PermissionDenied);
                 }
-                return ApiResult<TemplateEntryDto>.Success(mappedEntity);
+
+                else
+                {
+                    if (mappedEntity.EntryData != null)
+                    {
+                        string entryDataJson = JsonSerializer.Serialize(mappedEntity.EntryData, jsonOptions);
+                        mappedEntity.EntryDataEncrypted = DecryptionHelper.Encrypt(entryDataJson);
+                        mappedEntity.EntryData = null;
+                    }
+                    return ApiResult<TemplateEntryDto>.Success(mappedEntity);
+                }
             }
 
             catch (Exception ex)

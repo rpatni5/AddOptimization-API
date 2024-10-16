@@ -31,13 +31,15 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<SharedEntry> _sharedEntryRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IGenericRepository<TemplateEntries> _templateEntryRepository;
+        private readonly IGenericRepository<SharedFolder> _sharedFolderRepository;
+
 
         JsonSerializerOptions jsonOptions = new()
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
 
-        public PersonalInformationService(ILogger<PersonalInformationService> logger, IMapper mapper, IConfiguration configuration, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, ITemplatesService templateService, ITemplateEntryService templateEntryService, ICountryService countryService,IGenericRepository<SharedEntry> sharedEntryRepository, IHttpContextAccessor httpContextAccessor, IGenericRepository<TemplateEntries> templateEntryRepository)
+        public PersonalInformationService(ILogger<PersonalInformationService> logger, IMapper mapper, IConfiguration configuration, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, ITemplatesService templateService, ITemplateEntryService templateEntryService, ICountryService countryService,IGenericRepository<SharedEntry> sharedEntryRepository, IHttpContextAccessor httpContextAccessor, IGenericRepository<TemplateEntries> templateEntryRepository, IGenericRepository<SharedFolder> sharedFolderRepository)
         {
             _logger = logger;
             _mapper = mapper;
@@ -49,6 +51,7 @@ namespace AddOptimization.Services.Services
             _sharedEntryRepository = sharedEntryRepository;
             _httpContextAccessor = httpContextAccessor;
             _templateEntryRepository = templateEntryRepository;
+            _sharedFolderRepository = sharedFolderRepository;
         }
 
 
@@ -110,23 +113,15 @@ namespace AddOptimization.Services.Services
         public async Task<ApiResult<TemplateEntryDto>> GetInfoDetailsById(Guid id)
         {
             try
-            {
-                var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value.ToString();
-                var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => x.EntryId == id)).ToList();
-                var templateEntries = (await _templateEntryRepository.QueryAsync(te => te.Id == id)).ToList();
-                bool isAnySharedEntryDeleted = sharedEntries.Any(se => se.IsDeleted);
-                bool isAnyTemplateEntryDeleted = templateEntries.Any(te => te.IsDeleted);
-                bool hasAccessToSharedEntries = sharedEntries.Any(se => se.SharedWithId == currentUserId);
-                bool hasAccessToTemplateEntries = templateEntries.Any(te => te.CreatedByUserId.ToString() == currentUserId);
-                bool hasAccess = hasAccessToSharedEntries || hasAccessToTemplateEntries;
-
-                if (isAnySharedEntryDeleted || isAnyTemplateEntryDeleted)
-                {
-                    return ApiResult<TemplateEntryDto>.Failure(ValidationCodes.DataNoLongerExist);
-                }
-                else if (hasAccess)
-                {
+            {                
                     var mappedEntity = (await _templateEntryService.Get(id)).Result;
+                if (mappedEntity == null)
+                {
+                    return ApiResult<TemplateEntryDto>.Failure(ValidationCodes.PermissionDenied);
+                }
+
+                else
+                {
                     if (mappedEntity.EntryData != null)
                     {
                         string entryDataJson = JsonSerializer.Serialize(mappedEntity.EntryData, jsonOptions);
@@ -134,10 +129,6 @@ namespace AddOptimization.Services.Services
                         mappedEntity.EntryData = null;
                     }
                     return ApiResult<TemplateEntryDto>.Success(mappedEntity);
-                }
-                else
-                {
-                    return ApiResult<TemplateEntryDto>.Failure(ValidationCodes.PermissionDenied);
                 }
             }
 

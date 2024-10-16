@@ -30,6 +30,7 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<SharedEntry> _sharedEntryRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IGenericRepository<TemplateEntries> _templateEntryRepository;
+        private readonly IGenericRepository<SharedFolder> _sharedFolderRepository;
 
 
         JsonSerializerOptions jsonOptions = new()
@@ -37,7 +38,7 @@ namespace AddOptimization.Services.Services
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
 
-        public CreditCardService(ILogger<CreditCardService> logger, IMapper mapper, IConfiguration configuration, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, ITemplatesService templateService, ITemplateEntryService templateEntryService, IGenericRepository<SharedEntry> sharedEntryRepository, IHttpContextAccessor httpContextAccessor, IGenericRepository<TemplateEntries> templateEntryRepository)
+        public CreditCardService(ILogger<CreditCardService> logger, IMapper mapper, IConfiguration configuration, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, ITemplatesService templateService, ITemplateEntryService templateEntryService, IGenericRepository<SharedEntry> sharedEntryRepository, IHttpContextAccessor httpContextAccessor, IGenericRepository<TemplateEntries> templateEntryRepository, IGenericRepository<SharedFolder> sharedFolderRepository)
         {
             _logger = logger;
             _mapper = mapper;
@@ -48,6 +49,7 @@ namespace AddOptimization.Services.Services
             _sharedEntryRepository = sharedEntryRepository;
             _httpContextAccessor = httpContextAccessor;
             _templateEntryRepository = templateEntryRepository;
+            _sharedFolderRepository = sharedFolderRepository;
         }
 
 
@@ -166,22 +168,14 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value.ToString();
-                var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => x.EntryId == id)).ToList();
-                var templateEntries = (await _templateEntryRepository.QueryAsync(te => te.Id == id)).ToList();
-                bool isAnySharedEntryDeleted = sharedEntries.Any(se => se.IsDeleted);
-                bool isAnyTemplateEntryDeleted = templateEntries.Any(te => te.IsDeleted);
-                bool hasAccessToSharedEntries = sharedEntries.Any(se => se.SharedWithId == currentUserId);
-                bool hasAccessToTemplateEntries = templateEntries.Any(te => te.CreatedByUserId.ToString() == currentUserId);
-                bool hasAccess = hasAccessToSharedEntries || hasAccessToTemplateEntries;
-
-                if (isAnySharedEntryDeleted || isAnyTemplateEntryDeleted)
+                var mappedEntity = (await _templateEntryService.Get(id)).Result;
+                if (mappedEntity == null)
                 {
-                    return ApiResult<TemplateEntryDto>.Failure(ValidationCodes.DataNoLongerExist);
+                    return ApiResult<TemplateEntryDto>.Failure(ValidationCodes.PermissionDenied);
                 }
-                else if (hasAccess)
+
+                else
                 {
-                    var mappedEntity = (await _templateEntryService.Get(id)).Result;
                     DecryptCreditCardInfo(mappedEntity);
                     if (mappedEntity.EntryData != null)
                     {
@@ -191,10 +185,8 @@ namespace AddOptimization.Services.Services
                     }
                     return ApiResult<TemplateEntryDto>.Success(mappedEntity);
                 }
-                else
-                {
-                    return ApiResult<TemplateEntryDto>.Failure(ValidationCodes.PermissionDenied);
-                }
+
+
             }
 
             catch (Exception ex)
