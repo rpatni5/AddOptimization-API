@@ -4,6 +4,7 @@ using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
 using AddOptimization.Services.Constants;
 using AddOptimization.Utilities.Common;
+using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Models;
@@ -35,14 +36,18 @@ namespace AddOptimization.Services.Services
         private readonly ICreditCardService _creditCardService;
         private readonly IGenericRepository<ApplicationUser> _applicationUserRepository;
         private readonly IGenericRepository<Group> _groupRepository;
+        private readonly IConfiguration _configuration;
+        private readonly INotificationService _notificationService;
 
-        public SharedFolderService(IGenericRepository<SharedFolder> sharedFolderRepository, ILogger<SharedFolderService> logger, IMapper mapper, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository)
+        public SharedFolderService(IGenericRepository<SharedFolder> sharedFolderRepository, ILogger<SharedFolderService> logger, IMapper mapper, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, IConfiguration configuration, INotificationService notificationService)
         {
             _sharedFolderRepository = sharedFolderRepository;
             _logger = logger;
             _mapper = mapper;
             _applicationUserRepository = applicationUserRepository;
             _groupRepository = groupRepository;
+            _configuration = configuration;
+            _notificationService = notificationService;
         }
 
         public async Task<ApiResult<bool>> Create(SharedFolderRequestDto model)
@@ -68,6 +73,7 @@ namespace AddOptimization.Services.Services
                 }
 
                 await _sharedFolderRepository.BulkInsertAsync(sharedFolders);
+                await SendNotificationToAccountAdmin(sharedFolders);
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -155,6 +161,31 @@ namespace AddOptimization.Services.Services
             {
                 _logger.LogException(ex);
                 throw;
+            }
+        }
+        private async Task SendNotificationToAccountAdmin(List<SharedFolder> sharedFolders)
+        {
+            var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);         
+            foreach (var item in sharedFolders)
+            {
+                var entities = (await _sharedFolderRepository.QueryAsync(o => o.FolderId == item.FolderId && !o.IsDeleted, include: entities => entities.Include(e => e.ApplicationUser), ignoreGlobalFilter: true)).ToList();
+                var sharedFolder = entities.FirstOrDefault();
+                var sharedByUser = sharedFolder?.ApplicationUser;
+                var notifications = new List<NotificationDto>();
+                var subject = $"New folder shared by {sharedByUser.FullName}";
+                var bodyContent = $"New folder shared by {sharedByUser.FullName}";
+                var link = $"{baseUrl}admin/password-vault/folders/folder-items";
+                var model = new NotificationDto
+                {
+                    Subject = subject,
+                    Content = bodyContent,
+                    Link = link,
+                    AppplicationUserId = Convert.ToInt32(item.SharedWithId),
+                    GroupKey = $"New Folder shared by #{sharedByUser.FullName}",
+                };
+                notifications.Add(model);
+
+                await _notificationService.BulkCreateAsync(notifications);
             }
         }
     }
