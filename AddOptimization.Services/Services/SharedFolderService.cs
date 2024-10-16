@@ -168,12 +168,12 @@ namespace AddOptimization.Services.Services
             var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);         
             foreach (var item in sharedFolders)
             {
-                var entities = (await _sharedFolderRepository.QueryAsync(o => o.FolderId == item.FolderId && !o.IsDeleted, include: entities => entities.Include(e => e.ApplicationUser), ignoreGlobalFilter: true)).ToList();
+                var entities = (await _sharedFolderRepository.QueryAsync(o => o.FolderId == item.FolderId && !o.IsDeleted, include: entities => entities.Include(e => e.ApplicationUser).Include(e=>e.TemplateFolder), ignoreGlobalFilter: true)).ToList();
                 var sharedFolder = entities.FirstOrDefault();
                 var sharedByUser = sharedFolder?.ApplicationUser;
                 var notifications = new List<NotificationDto>();
-                var subject = $"New folder shared by {sharedByUser.FullName}";
-                var bodyContent = $"New folder shared by {sharedByUser.FullName}";
+                var subject = $"{sharedFolder?.TemplateFolder?.Name} folder shared by {sharedByUser.FullName}";
+                var bodyContent = $"{sharedFolder?.TemplateFolder?.Name} folder shared by {sharedByUser.FullName}";
                 var link = $"{baseUrl}admin/password-vault/folders/folder-items";
                 var model = new NotificationDto
                 {
@@ -181,7 +181,7 @@ namespace AddOptimization.Services.Services
                     Content = bodyContent,
                     Link = link,
                     AppplicationUserId = Convert.ToInt32(item.SharedWithId),
-                    GroupKey = $"New Folder shared by #{sharedByUser.FullName}",
+                    GroupKey = $"{sharedFolder?.TemplateFolder?.Name} folder shared by #{sharedByUser.FullName}",
                 };
                 notifications.Add(model);
 
