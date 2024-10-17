@@ -51,7 +51,8 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var isExists = await _groupRepository.IsExist(t => t.Name == model.group.Name, ignoreGlobalFilter: true);
+                var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
+                var isExists = await _groupRepository.IsExist(t => t.Name == model.group.Name && t.CreatedByUserId == currentUserId, ignoreGlobalFilter: true);
 
                 if (isExists)
                 {

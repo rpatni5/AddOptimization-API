@@ -81,8 +81,7 @@ namespace AddOptimization.Services.Services
             try
             {
                 Decrypt(model);
-                await _templateEntryService.Save(model);
-                return ApiResult<bool>.Success(true);
+                return await _templateEntryService.Save(model);
             }
             catch (Exception ex)
             {
@@ -96,8 +95,7 @@ namespace AddOptimization.Services.Services
             try
             {
                 Decrypt(model);
-                var mappedEntity = (await _templateEntryService.Update(id, model)).Result;
-                return ApiResult<TemplateEntryDto>.Success(mappedEntity);
+                return await _templateEntryService.Update(id, model);
             }
             catch (Exception ex)
             {
