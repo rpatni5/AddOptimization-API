@@ -63,8 +63,9 @@ namespace AddOptimization.Services.Services
                 var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
                 var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == userId.ToString()))).ToList();
                 var sharedEntriesIds = sharedEntries.Select(x => x.EntryId).Distinct().ToList();
-
-                var isExists = await _templateEntryRepository.IsExist(t => (t.Title == model.Title && t.CreatedByUserId == userId) || (sharedEntriesIds.Contains(t.Id) && t.Title == model.Title), ignoreGlobalFilter: true);
+                var sharedFolder = (await _sharedFolderRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == userId.ToString()))).ToList();
+                var sharedFolderIds = sharedFolder.Select(x => x.FolderId).Distinct().ToList();
+                var isExists = await _templateEntryRepository.IsExist(t => (t.Title == model.Title && t.CreatedByUserId == userId) || (sharedEntriesIds.Contains(t.Id) && t.Title == model.Title) || (sharedFolderIds.Contains(t.Id) && t.Title == model.Title), ignoreGlobalFilter: true);
 
                 if (isExists)
                 {
@@ -163,7 +164,11 @@ namespace AddOptimization.Services.Services
                 var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
                 var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == userId.ToString()))).ToList();
                 var sharedEntriesIds = sharedEntries.Select(x => x.EntryId).Distinct().ToList();
-                var isExists = await _templateEntryRepository.IsExist(t => ((t.Title == model.Title && t.CreatedByUserId == userId) || (sharedEntriesIds.Contains(t.Id) && t.Title == model.Title)) && t.Id != id, ignoreGlobalFilter: true);
+
+                var sharedFolder = (await _sharedFolderRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == userId.ToString()))).ToList();
+                var sharedFolderIds = sharedFolder.Select(x => x.FolderId).Distinct().ToList();
+
+                var isExists = await _templateEntryRepository.IsExist(t => ((t.Title == model.Title && t.CreatedByUserId == userId) || (sharedEntriesIds.Contains(t.Id) && t.Title == model.Title) || (sharedFolderIds.Contains(t.Id) && t.Title == model.Title) ) && t.Id != id, ignoreGlobalFilter: true);
                
                 if (isExists)
                 {
