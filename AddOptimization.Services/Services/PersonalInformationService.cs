@@ -86,7 +86,12 @@ namespace AddOptimization.Services.Services
             try
             {
                 Decrypt(model);
-                await _templateEntryService.Save(model);
+                var res = await _templateEntryService.Save(model);
+                if (!res.IsSuccess && res.Code == "TemplateAlreadyExist")
+                {
+                    var errorMessage = "Template already exists.";
+                    return ApiResult<bool>.Failure(ValidationCodes.FolderAlreadyExists, errorMessage);
+                }
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -100,8 +105,13 @@ namespace AddOptimization.Services.Services
             try
             {
                 Decrypt(model);
-                var mappedEntity = (await _templateEntryService.Update(id, model)).Result;
-                return ApiResult<TemplateEntryDto>.Success(mappedEntity);
+                var result = await _templateEntryService.Update(id, model);
+                if (!result.IsSuccess && result.Code == "TemplateAlreadyExist")
+                {
+                    var errorMessage = "Template already exists.";
+                    return ApiResult<TemplateEntryDto>.Failure(ValidationCodes.TemplateAlreadyExists, errorMessage);
+                }
+                return ApiResult<TemplateEntryDto>.Success(result.Result);
             }
             catch (Exception ex)
             {

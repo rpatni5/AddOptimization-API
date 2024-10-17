@@ -61,6 +61,17 @@ namespace AddOptimization.Services.Services
             try
             {
                 var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
+                var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == userId.ToString()))).ToList();
+                var sharedEntriesIds = sharedEntries.Select(x => x.EntryId).Distinct().ToList();
+
+                var isExists = await _templateEntryRepository.IsExist(t => (t.Title == model.Title && t.CreatedByUserId == userId) || (sharedEntriesIds.Contains(t.Id) && t.Title == model.Title), ignoreGlobalFilter: true);
+
+                if (isExists)
+                {
+                    var errorMessage = "Template already exists.";
+                    return ApiResult<bool>.Failure(ValidationCodes.TemplateAlreadyExists, errorMessage);
+                }
+
                 var entity = _mapper.Map<TemplateEntries>(model);
                 entity.UserId = userId;
                 entity.FolderId = model.FolderId;
@@ -149,6 +160,15 @@ namespace AddOptimization.Services.Services
         {
             try
             {
+                var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
+                var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == userId.ToString()))).ToList();
+                var sharedEntriesIds = sharedEntries.Select(x => x.EntryId).Distinct().ToList();
+                var isExists = await _templateEntryRepository.IsExist(t => ((t.Title == model.Title && t.CreatedByUserId == userId) || (sharedEntriesIds.Contains(t.Id) && t.Title == model.Title)),ignoreGlobalFilter: true);
+                if (isExists)
+                {
+                    var errorMessage = "Template already exists.";
+                    return ApiResult<TemplateEntryDto>.Failure(ValidationCodes.TemplateAlreadyExists, errorMessage);
+                }
                 var entity = await _templateEntryRepository.FirstOrDefaultAsync(e => e.Id == id);
                 entity.FolderId = model.FolderId;
                 entity.Title = model.Title;

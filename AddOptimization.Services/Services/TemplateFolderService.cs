@@ -11,6 +11,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using NPOI.SS.Formula.Functions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -117,7 +118,9 @@ namespace AddOptimization.Services.Services
             try
             {
                 var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
-                var isExists = await _folderRepository.IsExist(t => t.Name == model.Name && t.CreatedByUserId == currentUserId, ignoreGlobalFilter: true);
+                var sharedFolders = (await _sharedFolderRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == currentUserId.ToString()))).ToList();
+                var sharedFolderIds = sharedFolders.Select(x => x.FolderId).Distinct().ToList();
+                var isExists = await _folderRepository.IsExist(t => (t.Name == model.Name && t.CreatedByUserId == currentUserId) || (sharedFolderIds.Contains(t.Id) && t.Name == model.Name), ignoreGlobalFilter: true);
 
                 if (isExists)
                 {
@@ -143,6 +146,16 @@ namespace AddOptimization.Services.Services
                 if (entity == null)
                 {
                     return ApiResult<TemplateFolderDto>.NotFound("Folder not found");
+                }
+                var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
+                var sharedFolders = (await _sharedFolderRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == currentUserId.ToString()))).ToList();
+                var sharedFolderIds = sharedFolders.Select(x => x.FolderId).Distinct().ToList();
+                var isExists = await _folderRepository.IsExist(t => (t.Name == model.Name && t.CreatedByUserId == currentUserId) || (sharedFolderIds.Contains(t.Id) && t.Name == model.Name), ignoreGlobalFilter: true);
+
+                if (isExists)
+                {
+                    var errorMessage = "Folder already exists.";
+                    return ApiResult<TemplateFolderDto>.Failure(ValidationCodes.FolderAlreadyExists, errorMessage);
                 }
                 _mapper.Map(model, entity);
                 await _folderRepository.UpdateAsync(entity);
