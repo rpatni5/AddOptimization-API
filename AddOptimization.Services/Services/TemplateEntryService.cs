@@ -122,7 +122,7 @@ namespace AddOptimization.Services.Services
                     entities = entities.Where(x => x.Title.ToLower().Contains(textSearch.ToLower()));
                 }
 
-                var mappedEntities = entities.Select(x => SelectTemplate(x, sharedEntries, sharedFolders , currentUserId)).ToList();
+                var mappedEntities = entities.Select(x => SelectTemplate(x, sharedEntries, sharedFolders, currentUserId)).ToList();
 
                 return ApiResult<List<TemplateEntryDto>>.Success(mappedEntities);
             }
@@ -133,7 +133,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-        private static TemplateEntryDto SelectTemplate(TemplateEntries x, List<SharedEntry> sharedEntries, List<SharedFolder> sharedFolders ,string currentUserId)
+        private static TemplateEntryDto SelectTemplate(TemplateEntries x, List<SharedEntry> sharedEntries, List<SharedFolder> sharedFolders, string currentUserId)
         {
             var entry = sharedEntries.FirstOrDefault(e => e.EntryId == x.Id);
             var sharedFolder = x.FolderId != null ? sharedFolders.FirstOrDefault(f => f.FolderId == x.FolderId) : null;
@@ -168,8 +168,8 @@ namespace AddOptimization.Services.Services
                 var sharedFolder = (await _sharedFolderRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == userId.ToString()))).ToList();
                 var sharedFolderIds = sharedFolder.Select(x => x.FolderId).Distinct().ToList();
 
-                var isExists = await _templateEntryRepository.IsExist(t => ((t.Title == model.Title && t.CreatedByUserId == userId) || (sharedEntriesIds.Contains(t.Id) && t.Title == model.Title) || (sharedFolderIds.Contains(t.Id) && t.Title == model.Title) ) && t.Id != id, ignoreGlobalFilter: true);
-               
+                var isExists = await _templateEntryRepository.IsExist(t => ((t.Title == model.Title && t.CreatedByUserId == userId) || (sharedEntriesIds.Contains(t.Id) && t.Title == model.Title) || (sharedFolderIds.Contains(t.Id) && t.Title == model.Title)) && t.Id != id, ignoreGlobalFilter: true);
+
                 if (isExists)
                 {
                     var errorMessage = "Template already exists.";
@@ -215,21 +215,36 @@ namespace AddOptimization.Services.Services
             try
             {
                 var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value.ToString();
-                var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => x.EntryId == id)).ToList();
+
+                var groupIds = (await _groupMemberRepository.QueryAsync(x => !x.IsDeleted && x.UserId.ToString() == currentUserId)).Select(x => x.GroupId.ToString()).Distinct().ToList();
+
+                var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => !x.IsDeleted && x.EntryId == id || (groupIds.Contains(x.SharedWithId)), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser))).ToList();
+
                 var templateEntries = (await _templateEntryRepository.QueryAsync(te => te.Id == id)).ToList();
-                var sharedFolders = (await _sharedFolderRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == currentUserId), include: entities => entities.Include(e => e.TemplateFolder))).ToList();
+
+                var sharedFolders = (await _sharedFolderRepository.QueryAsync(x => !x.IsDeleted && x.SharedWithId == currentUserId, include: entities => entities.Include(e => e.TemplateFolder))).ToList();
+
                 var entity = (await _templateEntryRepository.QueryAsync(o => o.Id == id && !o.IsDeleted, ignoreGlobalFilter: true)).FirstOrDefault();
-                bool isAnySharedEntryDeleted = sharedEntries.Any(se => se.IsDeleted);
-                bool isAnyTemplateEntryDeleted = templateEntries.Any(te => te.IsDeleted);
+
+                bool isAnySharedEntryDeleted = sharedEntries.Where(se => se.EntryId == id).Any(se => se.IsDeleted);
+
+                bool isAnyTemplateEntryDeleted = templateEntries.Where(se => se.Id == id).Any(te => te.IsDeleted);
+
                 bool hasAccessToSharedEntries = sharedEntries.Any(se => se.SharedWithId == currentUserId);
+
                 bool hasAccessToTemplateEntries = templateEntries.Any(te => te.CreatedByUserId.ToString() == currentUserId);
+
                 bool hasAccessToSharedFolders = sharedFolders.Any(s => s.SharedWithId == currentUserId || (s.CreatedByUserId).ToString() == currentUserId);
+
                 bool hasAccess = hasAccessToSharedEntries || hasAccessToTemplateEntries || hasAccessToSharedFolders;
+
+                bool IsCreatedByCurrentUser = entity?.CreatedByUserId?.ToString() == currentUserId;
+
                 if (isAnySharedEntryDeleted || isAnyTemplateEntryDeleted)
                 {
                     return ApiResult<TemplateEntryDto>.Failure(ValidationCodes.DataNoLongerExist);
                 }
-                else if (hasAccess)
+                else if (hasAccess || IsCreatedByCurrentUser)
                 {
                     if (entity == null)
                     {
@@ -253,7 +268,7 @@ namespace AddOptimization.Services.Services
             }
         }
 
-      
+
 
     }
 
