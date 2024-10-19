@@ -9,7 +9,7 @@ namespace AddOptimization.Services.Constants
     public enum PermissionLevel
     {
        Read,
-       Write,
+       Edit,
        FullAccess,
     }
 }
