@@ -81,8 +81,7 @@ namespace AddOptimization.Services.Services
             try
             {
                 Decrypt(model);
-                await _templateEntryService.Save(model);
-                return ApiResult<bool>.Success(true);
+                return await _templateEntryService.Save(model);
             }
             catch (Exception ex)
             {
@@ -96,8 +95,7 @@ namespace AddOptimization.Services.Services
             try
             {
                 Decrypt(model);
-                var mappedEntity = (await _templateEntryService.Update(id, model)).Result;
-                return ApiResult<TemplateEntryDto>.Success(mappedEntity);
+                return await _templateEntryService.Update(id, model);
             }
             catch (Exception ex)
             {
@@ -110,22 +108,14 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value.ToString();
-                var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => x.EntryId == id)).ToList();
-                var templateEntries = (await _templateEntryRepository.QueryAsync(te => te.Id == id)).ToList();
-                bool isAnySharedEntryDeleted = sharedEntries.Any(se => se.IsDeleted);
-                bool isAnyTemplateEntryDeleted = templateEntries.Any(te => te.IsDeleted);
-                bool hasAccessToSharedEntries = sharedEntries.Any(se => se.SharedWithId == currentUserId);
-                bool hasAccessToTemplateEntries = templateEntries.Any(te => te.CreatedByUserId.ToString() == currentUserId);
-                bool hasAccess = hasAccessToSharedEntries || hasAccessToTemplateEntries;
+                var mappedEntity = (await _templateEntryService.Get(id)).Result;
+                if (mappedEntity == null)
+                {
+                    return ApiResult<TemplateEntryDto>.Failure(ValidationCodes.PermissionDenied);
 
-                if (isAnySharedEntryDeleted || isAnyTemplateEntryDeleted)
-                {
-                    return ApiResult<TemplateEntryDto>.Failure(ValidationCodes.DataNoLongerExist);
                 }
-                else if (hasAccess)
+                else
                 {
-                    var mappedEntity = (await _templateEntryService.Get(id)).Result;
                     if (mappedEntity.EntryData != null)
                     {
                         string entryDataJson = JsonSerializer.Serialize(mappedEntity.EntryData, jsonOptions);
@@ -133,10 +123,6 @@ namespace AddOptimization.Services.Services
                         mappedEntity.EntryData = null;
                     }
                     return ApiResult<TemplateEntryDto>.Success(mappedEntity);
-                }
-                else
-                {
-                    return ApiResult<TemplateEntryDto>.Failure(ValidationCodes.PermissionDenied);
                 }
             }
 

@@ -44,6 +44,19 @@ namespace AddOptimization.API.Controllers
                 return HandleException(ex);
             }
         }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            try
+            {
+                var retVal = await _templateService.Delete(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
 
     }
 }

@@ -7,6 +7,7 @@ namespace AddOptimization.Contracts.Services
     {
         Task<ApiResult<List<TemplateDto>>> GetAllTemplate();
         Task<ApiResult<TemplateDto>> GetTemplateById(Guid id);
+        Task<ApiResult<bool>> Delete(Guid id);
     }
 }
 
