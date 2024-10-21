@@ -70,9 +70,7 @@ namespace AddOptimization.Services.Services
                 CreatedBy = x.CreatedByUser != null ? x.CreatedByUser.FullName : string.Empty,
                 CreatedAt = x.CreatedAt,
                 EntryData = x.EntryData == null ? new EntryDataDto() : JsonSerializer.Deserialize<EntryDataDto>(x.EntryData, options),
-                Permission = x.UserId == currentUserId
-    ? PermissionLevel.FullAccess.ToString(): entry != null ? (entry.PermissionLevel == PermissionLevel.Edit.ToString() ? PermissionLevel.Edit.ToString() : (sharedFolder.PermissionLevel)):sharedFolder.PermissionLevel,
-            };
+                Permission = x.UserId == currentUserId ? PermissionLevel.FullAccess.ToString(): entry != null ? (entry.PermissionLevel == PermissionLevel.Edit.ToString() ? PermissionLevel.Edit.ToString() : (sharedFolder.PermissionLevel)):sharedFolder.PermissionLevel, };
         }
 
         private static TemplateFolderDto SelectTemplate(TemplateFolder x, List<SharedFolder> sharedFolders)
@@ -121,7 +119,7 @@ namespace AddOptimization.Services.Services
                 var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
                 var sharedFolders = (await _sharedFolderRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == currentUserId.ToString()))).ToList();
                 var sharedFolderIds = sharedFolders.Select(x => x.FolderId).Distinct().ToList();
-                var isExists = await _folderRepository.IsExist(t => (t.Name == model.Name && t.CreatedByUserId == currentUserId) || (sharedFolderIds.Contains(t.Id) && t.Name == model.Name), ignoreGlobalFilter: true);
+                var isExists = await _folderRepository.IsExist(t => !t.IsDeleted && (t.Name == model.Name && t.CreatedByUserId == currentUserId) || (sharedFolderIds.Contains(t.Id) && t.Name == model.Name), ignoreGlobalFilter: true);
 
                 if (isExists)
                 {

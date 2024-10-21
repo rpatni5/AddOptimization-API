@@ -216,7 +216,7 @@ namespace AddOptimization.Services.Services
             {
                 var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value.ToString();
 
-                var groupIds = (await _groupMemberRepository.QueryAsync(x => !x.IsDeleted && x.UserId.ToString() == currentUserId)).Select(x => x.GroupId.ToString()).Distinct().ToList();
+                var groupIds = (await _groupMemberRepository.QueryAsync(x =>!x.IsDeleted && x.UserId.ToString().ToLower() == currentUserId)).Select(x =>x.GroupId.ToString().ToLower()).Distinct().ToList();
 
                 var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => !x.IsDeleted && x.EntryId == id || (groupIds.Contains(x.SharedWithId)), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser))).ToList();
 
@@ -230,7 +230,7 @@ namespace AddOptimization.Services.Services
 
                 bool isAnyTemplateEntryDeleted = templateEntries.Where(se => se.Id == id).Any(te => te.IsDeleted);
 
-                bool hasAccessToSharedEntries = sharedEntries.Any(se => se.SharedWithId == currentUserId);
+                bool hasAccessToSharedEntries = sharedEntries.Any(se => se.SharedWithId == currentUserId || groupIds.Contains(se.SharedWithId.ToLower())) ;
 
                 bool hasAccessToTemplateEntries = templateEntries.Any(te => te.CreatedByUserId.ToString() == currentUserId);
 

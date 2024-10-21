@@ -43,7 +43,10 @@ namespace AddOptimization.Services.Services
         private readonly ITemplateEntryService _templateEntryService;
         private readonly IConfiguration _configuration;
         private readonly IGroupService _groupService;
-        public SharedEntryService(IGenericRepository<SharedEntry> sharedEntryRepository, ILogger<SharedEntryService> logger, IMapper mapper, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, INotificationService notificationService, ITemplatesService templateService, IEmployeeService employeeService, ITemplateEntryService templateEntryService, IConfiguration configuration, IGroupService groupService)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IGenericRepository<GroupMember> _groupMemberRepository;
+
+        public SharedEntryService(IGenericRepository<SharedEntry> sharedEntryRepository, ILogger<SharedEntryService> logger, IMapper mapper, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, INotificationService notificationService, ITemplatesService templateService, IEmployeeService employeeService, ITemplateEntryService templateEntryService, IConfiguration configuration, IGroupService groupService, IHttpContextAccessor httpContextAccessor, IGenericRepository<GroupMember> groupMemberRepository)
         {
             _sharedEntryRepository = sharedEntryRepository;
             _logger = logger;
@@ -56,6 +59,8 @@ namespace AddOptimization.Services.Services
             _templateEntryService = templateEntryService;
             _configuration = configuration;
             _groupService = groupService;
+            _httpContextAccessor = httpContextAccessor;
+            _groupMemberRepository = groupMemberRepository;
         }
 
         public async Task<ApiResult<bool>> Create(SharedEntryRequestDto model)
@@ -178,6 +183,9 @@ namespace AddOptimization.Services.Services
         {
             try
             {
+                var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value.ToString();
+                var groupIds = (await _groupMemberRepository.QueryAsync(x => !x.IsDeleted && x.UserId.ToString() == currentUserId)).Select(x => x.GroupId.ToString()).Distinct().ToList();
+
                 IQueryable<SharedEntry> query = await _sharedEntryRepository.QueryAsync(e => !e.IsDeleted && !e.TemplateEntries.IsDeleted, include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.TemplateEntries).Include(e => e.TemplateEntries.TemplateFolder), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
                 if (filterType == "SharedByMe")
                 {
@@ -185,7 +193,7 @@ namespace AddOptimization.Services.Services
                 }
                 else if (filterType == "SharedToMe")
                 {
-                    query = query.Where(e => e.SharedWithId == id.ToString());
+                    query = query.Where(e => e.SharedWithId == id.ToString() || groupIds.Contains(e.SharedWithId));
                 }
                 query = query.OrderByDescending(e => e.CreatedAt);
                 var entities = await query.ToListAsync();
@@ -195,8 +203,8 @@ namespace AddOptimization.Services.Services
                     EntryId = e.EntryId,
                     SharedByUserId = e.SharedByUserId,
                     SharedWithId = e.SharedWithId,
-                    PermissionLevel = e.PermissionLevel,
-                    SharedFolderName = e.TemplateEntries?.TemplateFolder?.Name ?? string.Empty,
+                    PermissionLevel = e.SharedByUserId.ToString() == currentUserId ? PermissionLevel.FullAccess.ToString() : e != null ? (e.PermissionLevel == PermissionLevel.Edit.ToString() ? PermissionLevel.Edit.ToString() : (e.PermissionLevel)) : e.PermissionLevel,
+                SharedFolderName = e.TemplateEntries?.TemplateFolder?.Name ?? string.Empty,
                     SharedTitleName = e.TemplateEntries.Title,
                     CreatedBy = e.CreatedByUser != null ? e.CreatedByUser.FullName : string.Empty,
                     TemplateId = e.TemplateEntries.TemplateId,
