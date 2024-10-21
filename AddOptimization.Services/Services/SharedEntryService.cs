@@ -42,7 +42,8 @@ namespace AddOptimization.Services.Services
         private readonly IEmployeeService _employeeService;
         private readonly ITemplateEntryService _templateEntryService;
         private readonly IConfiguration _configuration;
-        public SharedEntryService(IGenericRepository<SharedEntry> sharedEntryRepository, ILogger<SharedEntryService> logger, IMapper mapper, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, INotificationService notificationService, ITemplatesService templateService, IEmployeeService employeeService, ITemplateEntryService templateEntryService, IConfiguration configuration)
+        private readonly IGroupService _groupService;
+        public SharedEntryService(IGenericRepository<SharedEntry> sharedEntryRepository, ILogger<SharedEntryService> logger, IMapper mapper, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, INotificationService notificationService, ITemplatesService templateService, IEmployeeService employeeService, ITemplateEntryService templateEntryService, IConfiguration configuration, IGroupService groupService)
         {
             _sharedEntryRepository = sharedEntryRepository;
             _logger = logger;
@@ -54,6 +55,7 @@ namespace AddOptimization.Services.Services
             _employeeService = employeeService;
             _templateEntryService = templateEntryService;
             _configuration = configuration;
+            _groupService = groupService;
         }
 
         public async Task<ApiResult<bool>> Create(SharedEntryRequestDto model)
@@ -221,7 +223,7 @@ namespace AddOptimization.Services.Services
             };
             foreach (var item in sharedEntries)
             {
-                var entities = (await _sharedEntryRepository.QueryAsync(o => o.EntryId == item.EntryId && !o.IsDeleted, include: entities => entities.Include(e => e.TemplateEntries).Include(e=>e.ApplicationUser), ignoreGlobalFilter: true)).ToList();
+                var entities = (await _sharedEntryRepository.QueryAsync(o => o.EntryId == item.EntryId && !o.IsDeleted, include: entities => entities.Include(e => e.TemplateEntries).Include(e => e.ApplicationUser), ignoreGlobalFilter: true)).ToList();
                 var tempalteId = entities.Select(e => e.EntryId).FirstOrDefault();
                 var template = (await _templateService.GetTemplateById(tempalteId)).Result;
                 var sharedEntry = entities.FirstOrDefault();
@@ -230,16 +232,45 @@ namespace AddOptimization.Services.Services
                 var subject = $"{template.Name} shared by {sharedByUser.FullName}";
                 var bodyContent = $"{template.Name} shared by {sharedByUser.FullName}";
                 var link = templateRoutes.TryGetValue(template.TemplateKey, out var route) ? $"{route}{tempalteId}?sidenav=collapsed" : "";
-                var model = new NotificationDto
+                if (item.SharedWithType == SharedWithTypeEnum.GROUP)
                 {
-                    Subject = subject,
-                    Content = bodyContent,
-                    Link = link,
-                    AppplicationUserId = Convert.ToInt32(item.SharedWithId),
-                    GroupKey = $"{template.Name} shared by #{sharedByUser.FullName}",
-                };
-                notifications.Add(model);
-
+                    Guid groupId;
+                    if (Guid.TryParse(item.SharedWithId, out groupId))
+                    {
+                        var groupResult = await _groupService.GetGroupAndMembersByGroupId(groupId);
+                        if (groupResult != null && groupResult.Result != null && groupResult.Result.groupMembers != null)
+                        {
+                            foreach (var member in groupResult.Result.groupMembers)
+                            {
+                                var model = new NotificationDto
+                                {
+                                    Subject = subject,
+                                    Content = bodyContent,
+                                    Link = link,
+                                    AppplicationUserId = member.UserId,
+                                    GroupKey = $"{template.Name} shared by #{sharedByUser?.FullName}",
+                                };
+                                notifications.Add(model);
+                            }
+                        }
+                        else
+                        {
+                            throw new Exception("Invalid Group.");
+                        }
+                    }
+                }
+                else if (item.SharedWithType == SharedWithTypeEnum.USER)
+                {
+                    var model = new NotificationDto
+                    {
+                        Subject = subject,
+                        Content = bodyContent,
+                        Link = link,
+                        AppplicationUserId = Convert.ToInt32(item.SharedWithId),
+                        GroupKey = $"{template.Name} shared by #{sharedByUser.FullName}",
+                    };
+                    notifications.Add(model);
+                }
                 await _notificationService.BulkCreateAsync(notifications);
             }
         }

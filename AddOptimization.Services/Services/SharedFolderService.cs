@@ -174,7 +174,7 @@ namespace AddOptimization.Services.Services
                 var notifications = new List<NotificationDto>();
                 var subject = $"{sharedFolder?.TemplateFolder?.Name} folder shared by {sharedByUser.FullName}";
                 var bodyContent = $"{sharedFolder?.TemplateFolder?.Name} folder shared by {sharedByUser.FullName}";
-                var link = $"{baseUrl}admin/password-vault/folders/folder-items";
+                var link = $"{baseUrl}admin/password-vault/folders/folder-items?sidenav=collapsed";
                 var model = new NotificationDto
                 {
                     Subject = subject,
