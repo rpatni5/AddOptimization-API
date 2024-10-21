@@ -252,13 +252,6 @@ namespace AddOptimization.Services.Services
                     CreatedBy = entity.CreatedByUser?.FullName ?? string.Empty,
                     UpdatedAt = entity.UpdatedAt,
                     UpdatedBy = entity.UpdatedByUser?.FullName ?? string.Empty,
-                    Certificates = entryData.Certificate?.Select(c => new CertificateDto
-                    {
-                        CertificateName = c.CertificateName,
-                        CertificatePath = c.CertificatePath,
-                        DownloadUrl = c.DownloadUrl,
-
-                    }).ToList()
                 };
 
                 return ApiResult<CvEntryDto>.Success(cvEntryDto);
