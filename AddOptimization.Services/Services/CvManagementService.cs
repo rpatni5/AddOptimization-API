@@ -51,20 +51,29 @@ namespace AddOptimization.Services.Services
         private async Task<List<string>> SaveVersionAndGenerateDownloadUrls(CvEntryDataDto request)
         {
             string path = Path.Combine(_hostingEnvironment.WebRootPath, "services", "certificates");
+
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
-
             var downloadUrls = new List<string>();
+
+            var existingCertificateFilenames = new HashSet<string>(
+                request.Certificate
+                    .Where(c => !string.IsNullOrEmpty(c.DownloadUrl))
+                    .Select(c => Path.GetFileName(c.DownloadUrl))
+            );
 
             foreach (var certificate in request.Certificate)
             {
-                if (certificate.File != null && certificate.File.Length > 0) 
+                if (!string.IsNullOrEmpty(certificate.DownloadUrl) && existingCertificateFilenames.Contains(Path.GetFileName(certificate.DownloadUrl)))
+                {
+                    downloadUrls.Add(certificate.DownloadUrl);
+                    continue;
+                }
+
+                if (certificate.File != null && certificate.File.Length > 0)
                 {
                     string fileName = $"CERT_{Guid.NewGuid()}{Path.GetExtension(certificate.File.FileName)}";
                     string filePath = Path.Combine(path, fileName);
-
-                    if (File.Exists(filePath))
-                        File.Delete(filePath);
 
                     using (var stream = new FileStream(filePath, FileMode.Create))
                     {
@@ -79,72 +88,39 @@ namespace AddOptimization.Services.Services
                         Path = $"/services/certificates/{fileName}"
                     }.ToString();
 
-                    certificate.CertificatePath = downloadUrl;
+                    certificate.DownloadUrl = downloadUrl;
+
                     downloadUrls.Add(downloadUrl);
                 }
                 else
                 {
-                    _logger.LogError("File is null or empty for certificate.");
-                    throw new Exception("File is null or empty.");
+                    _logger.LogError("File is null or empty for certificate and no DownloadUrl exists.");
+                    throw new Exception("File is null or empty, and no DownloadUrl exists.");
                 }
             }
 
             return downloadUrls;
         }
 
+
+
+
         private IQueryable<CvEntry> ApplyFilters(IQueryable<CvEntry> entities, PageQueryFiterBase filter)
         {
+            var query = entities.Where(e => !e.IsDeleted).ToList();
 
-            filter.GetValue<int>("userId", (v) =>
-            {
-                entities = entities.Where(e => e.UserId == v);
-            });
+
 
             filter.GetValue<string>("title", (v) =>
             {
-                entities = entities.Where(e => e.Title != null && (e.Title.ToLower().Contains(v.ToLower())));
+                query = query.Where(e => e.EntryData != null &&
+                    JsonSerializer.Deserialize<CvEntryDataDto>(e.EntryData.ToString(), jsonOptions)
+                    ?.Contact.Any(c => c.Title.ToLower().Contains(v.ToLower())) == true).ToList();
             });
 
-            return entities;
+            return query.AsQueryable();
         }
 
-
-        private IQueryable<CvEntry> ApplySorting(IQueryable<CvEntry> entities, SortModel sort)
-        {
-            try
-            {
-                if (sort?.Name == null)
-                {
-                    entities = entities.OrderByDescending(o => o.CreatedAt);
-                    return entities;
-                }
-                var columnName = sort.Name.ToUpper();
-                if (sort.Direction == SortDirection.ascending.ToString())
-                {
-                    if (columnName.ToUpper() == nameof(CvEntryDto.Title).ToUpper())
-                    {
-                        entities = entities.OrderBy(o => o.Title); ;
-                    }
-
-                }
-
-                else
-                {
-                    if (columnName.ToUpper() == nameof(CvEntryDto.Title).ToUpper())
-                    {
-                        entities = entities.OrderByDescending(o => o.Title); ;
-                    }
-                }
-                return entities;
-
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
-                return entities;
-            }
-
-        }
 
 
         public async Task<ApiResult<bool>> Save(CvEntryDto model)
@@ -158,7 +134,7 @@ namespace AddOptimization.Services.Services
                     downloadUrls = await SaveVersionAndGenerateDownloadUrls(model.EntryData);
                     for (int i = 0; i < model.EntryData.Certificate.Count; i++)
                     {
-                        model.EntryData.Certificate[i].CertificatePath = downloadUrls[i];
+                        model.EntryData.Certificate[i].DownloadUrl = downloadUrls[i];
                     }
                 }
                 var entity = _mapper.Map<CvEntry>(model);
@@ -174,25 +150,47 @@ namespace AddOptimization.Services.Services
             }
         }
 
-
         public async Task<PagedApiResult<CvEntryDto>> Search(PageQueryFiterBase filters)
         {
             try
             {
-                var entities = await _cvEntryRepository.QueryAsync(e => !e.IsDeleted, include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
-                entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
-                entities = ApplyFilters(entities, filters);
-                var pagedResult = PageHelper<CvEntry, CvEntryDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new CvEntryDto
-                {
-                    Id = e.Id,
-                    Title = e.Title,
-                    UserId = e.UserId,
-                    EntryData = e.EntryData != null ? JsonSerializer.Deserialize<CvEntryDataDto>(e.EntryData.ToString(), jsonOptions) : null,
-                    
-                }).ToList());
+                var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value.ToString();
 
-                var result = pagedResult;
-                return PagedApiResult<CvEntryDto>.Success(result);
+                var entities = await _cvEntryRepository.QueryAsync(
+                    e => !e.IsDeleted,
+                    include: entities => entities
+                        .Include(e => e.CreatedByUser)
+                        .Include(e => e.UpdatedByUser)
+                        .Include(e => e.ApplicationUser),
+                    orderBy: x => x.OrderByDescending(x => x.CreatedAt)
+                );
+
+                var filteredEntities = entities
+                    .AsEnumerable()
+                    .Where(e => e.EntryData != null &&
+                                (
+                                    e.UserId.ToString() == userId ||
+                                    JsonSerializer.Deserialize<CvEntryDataDto>(e.EntryData, jsonOptions)
+                                        ?.Contact?.Any(c => c.EmployeeId != null && c.EmployeeId.Equals(userId, StringComparison.OrdinalIgnoreCase)) == true
+                                ))
+                    .AsQueryable();
+
+
+                entities = ApplyFilters(entities, filters);
+                var pagedResult = PageHelper<CvEntry, CvEntryDto>.ApplyPaging(
+                    filteredEntities,
+                    filters,
+                    entities => entities.Select(e => new CvEntryDto
+                    {
+                        Id = e.Id,
+                        UserId = e.UserId,
+                        CreatedBy = e.CreatedByUser.FullName,
+                        EntryData = e.EntryData != null
+                            ? JsonSerializer.Deserialize<CvEntryDataDto>(e.EntryData, jsonOptions)
+                            : null,
+                    }).ToList());
+
+                return PagedApiResult<CvEntryDto>.Success(pagedResult);
             }
             catch (Exception ex)
             {
@@ -200,6 +198,7 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
+
 
 
         public async Task<ApiResult<bool>> Delete(Guid id)
@@ -224,10 +223,95 @@ namespace AddOptimization.Services.Services
         }
 
 
+        public async Task<ApiResult<CvEntryDto>> GetById(Guid id)
+        {
+            try
+            {
+                var entity = await _cvEntryRepository.FirstOrDefaultAsync(
+                    e => e.Id == id,
+                    ignoreGlobalFilter: true
+                );
+
+                if (entity == null)
+                {
+                    return ApiResult<CvEntryDto>.Failure("CV entry not found or access denied.");
+                }
+
+
+                var entryData = string.IsNullOrWhiteSpace(entity.EntryData)
+                    ? new CvEntryDataDto()
+                    : JsonSerializer.Deserialize<CvEntryDataDto>(entity.EntryData, jsonOptions);
+
+                var cvEntryDto = new CvEntryDto
+                {
+                    Id = entity.Id,
+                    UserId = entity.UserId,
+                    IsDeleted = entity.IsDeleted,
+                    EntryData = entryData,
+                    CreatedAt = entity.CreatedAt,
+                    CreatedBy = entity.CreatedByUser?.FullName ?? string.Empty,
+                    UpdatedAt = entity.UpdatedAt,
+                    UpdatedBy = entity.UpdatedByUser?.FullName ?? string.Empty,
+                };
+
+                return ApiResult<CvEntryDto>.Success(cvEntryDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return ApiResult<CvEntryDto>.Failure("An error occurred while retrieving the CV entry.");
+            }
+        }
+
+
+        public async Task<ApiResult<CvEntryDto>> Update(Guid id, CvEntryDto model)
+        {
+            try
+            {
+                var entity = await _cvEntryRepository.FirstOrDefaultAsync(e => e.Id == id);
+                if (entity == null)
+                {
+                    return ApiResult<CvEntryDto>.Failure("CV entry not found.");
+                }
+
+                var existingEntryData = JsonSerializer.Deserialize<CvEntryDataDto>(entity.EntryData, jsonOptions);
+                if (existingEntryData == null)
+                {
+                    return ApiResult<CvEntryDto>.Failure("Existing entry data could not be deserialized.");
+                }
+
+                if (model.EntryData?.Certificate != null)
+                {
+                    existingEntryData.Certificate = model.EntryData.Certificate.ToList(); 
+
+                }
+                else
+                {
+                    existingEntryData.Certificate = null; 
+                }
+
+                existingEntryData.Contact = model.EntryData.Contact ?? existingEntryData.Contact;
+                existingEntryData.Education = model.EntryData.Education == null || !model.EntryData.Education.Any() ? null : model.EntryData.Education;
+                existingEntryData.Experience = model.EntryData.Experience == null || !model.EntryData.Experience.Any() ? null : model.EntryData.Experience;
+                existingEntryData.Project = model.EntryData.Project == null || !model.EntryData.Project.Any() ? null : model.EntryData.Project;
+                existingEntryData.Language = model.EntryData.Language == null || !model.EntryData.Language.Any() ? null : model.EntryData.Language;
+                existingEntryData.TechnicalKnowledge = model.EntryData.TechnicalKnowledge == null || !model.EntryData.TechnicalKnowledge.Any() ? null : model.EntryData.TechnicalKnowledge;
+
+                entity.EntryData = JsonSerializer.Serialize(existingEntryData, jsonOptions);
+                await _cvEntryRepository.UpdateAsync(entity);
+
+                var mappedEntity = _mapper.Map<CvEntryDto>(entity);
+                return ApiResult<CvEntryDto>.Success(mappedEntity);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return ApiResult<CvEntryDto>.Failure("An error occurred while updating the CV entry.");
+            }
+        }
 
 
     }
-
 
 }
 

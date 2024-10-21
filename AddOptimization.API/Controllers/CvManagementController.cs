@@ -6,6 +6,7 @@ using AddOptimization.Contracts.Constants;
 using AddOptimization.Contracts.Dto;
 using AddOptimization.Services.Services;
 using AddOptimization.Utilities.Models;
+using AddOptimization.Utilities.Common;
 
 namespace AddOptimization.API.Controllers;
 [Authorize]
@@ -60,4 +61,34 @@ public class CvManagementController : CustomApiControllerBase
             return HandleException(ex);
         }
     }
+
+    [HttpGet("get-cv-details/{id}")]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        try
+        {
+            var retVal = await _cvManagementService.GetById(id);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+   
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(Guid id,[FromForm] CvEntryDto model)
+    {
+        try
+        {
+            var retVal = await _cvManagementService.Update(id, model);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
 }
