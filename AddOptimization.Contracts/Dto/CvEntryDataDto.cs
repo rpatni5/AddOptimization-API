@@ -66,6 +66,7 @@ namespace AddOptimization.Contracts.Dto
     {
         public string Title { get; set; }
         public string FullName { get; set; }
+        public string EmployeeId { get; set; }
         public string Dob { get; set; }
         public string State { get; set; }
         public string Country { get; set; }
@@ -78,5 +79,6 @@ namespace AddOptimization.Contracts.Dto
         public string CertificatePath { get; set; }
         [JsonIgnore]
         public IFormFile File { get; set; }
+        public string DownloadUrl {  get; set; }
     }
 }

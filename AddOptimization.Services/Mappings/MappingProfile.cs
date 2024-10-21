@@ -428,7 +428,7 @@ namespace AddOptimization.Services.Mappings
                 d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
             });
             CreateMap<GroupDto, Group>();
-            
+
             CreateMap<SharedEntry, SharedEntryResponseDto>().AfterMap((s, d) =>
             {
                 d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
@@ -456,18 +456,28 @@ namespace AddOptimization.Services.Mappings
             });
             CreateMap<CombineGroupModelDto, GroupMember>();
 
-            CreateMap<CvEntry, CvEntryDto>().AfterMap((s, d) =>
-            {
-                d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
-                d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
-                d.CreatedAt = s.CreatedAt?.Date;
-                d.UpdatedAt = s.UpdatedAt?.Date;
-                d.EntryData = s.EntryData == null ? new CvEntryDataDto() : JsonSerializer.Deserialize<CvEntryDataDto>(s.EntryData, jsonOptions);
-            });
-            CreateMap<CvEntryDto, CvEntry>().AfterMap((s, d) =>
-            {
-                d.EntryData = s.EntryData != null ? JsonSerializer.Serialize(s.EntryData, jsonOptions) : string.Empty;
-            });
+            CreateMap<CvEntry, CvEntryDto>()
+                .AfterMap((s, d) =>
+                {
+                    d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                    d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                    d.CreatedAt = s.CreatedAt?.Date;
+                    d.UpdatedAt = s.UpdatedAt?.Date;
+                    d.EntryData = string.IsNullOrEmpty(s.EntryData)
+                        ? new CvEntryDataDto()
+                        : JsonSerializer.Deserialize<CvEntryDataDto>(s.EntryData, jsonOptions);
+                });
+
+            CreateMap<CvEntryDto, CvEntry>()
+                .AfterMap((s, d) =>
+                {
+                    d.EntryData = s.EntryData != null
+                        ? JsonSerializer.Serialize(s.EntryData, jsonOptions)
+                        : string.Empty;
+                });
+
+            CreateMap<string, CvEntryDataDto>()
+                .ConvertUsing(json => JsonSerializer.Deserialize<CvEntryDataDto>(json, jsonOptions));
 
         }
     }
