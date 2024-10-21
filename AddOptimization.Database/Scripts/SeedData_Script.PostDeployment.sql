@@ -793,7 +793,7 @@ IF NOT EXISTS (SELECT 1 FROM Templates Where TemplateKey= 'company_information')
 BEGIN 
     INSERT INTO Templates(Id,Name,TemplateKey)
     VALUES
-        (NEWID(),'Company Information','passwords')
+        (NEWID(),'Company Information','company_information')
 END
 
 
