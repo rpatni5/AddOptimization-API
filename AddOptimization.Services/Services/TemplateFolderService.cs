@@ -149,7 +149,7 @@ namespace AddOptimization.Services.Services
                 var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
                 var sharedFolders = (await _sharedFolderRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == currentUserId.ToString()))).ToList();
                 var sharedFolderIds = sharedFolders.Select(x => x.FolderId).Distinct().ToList();
-                var isExists = await _folderRepository.IsExist(t => (t.Name == model.Name && t.CreatedByUserId == currentUserId) || (sharedFolderIds.Contains(t.Id) && t.Name == model.Name), ignoreGlobalFilter: true);
+                var isExists = await _folderRepository.IsExist(t =>(!t.IsDeleted) && t.Id != id  && (t.Name == model.Name && t.CreatedByUserId == currentUserId) || (sharedFolderIds.Contains(t.Id) && t.Name == model.Name) , ignoreGlobalFilter: true);
 
                 if (isExists)
                 {
