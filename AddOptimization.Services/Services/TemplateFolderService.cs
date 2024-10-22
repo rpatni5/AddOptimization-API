@@ -50,6 +50,22 @@ namespace AddOptimization.Services.Services
             _sharedEntryRepository = sharedEntryRepository;
         }
 
+        private static string DeterminePermission(int? userId, int currentUserId, SharedEntry entry, SharedFolder sharedFolder)
+        {
+            if (userId == currentUserId)
+                return PermissionLevel.FullAccess.ToString();
+
+            var permissions = new List<string>
+            {
+                entry?.PermissionLevel,sharedFolder?.PermissionLevel
+            }.Where(p => p != null).ToList();
+
+            if (permissions.Contains(PermissionLevel.FullAccess.ToString()))
+                return PermissionLevel.FullAccess.ToString();
+            if (permissions.Contains(PermissionLevel.Edit.ToString()))
+                return PermissionLevel.Edit.ToString();
+            return PermissionLevel.Read.ToString();
+        }
         private static TemplateEntryDto SelectEntityTemplate(TemplateEntries x, List<SharedEntry> sharedEntries, List<SharedFolder> sharedFolders, int currentUserId)
         {
             var entry = sharedEntries.FirstOrDefault(e => e.EntryId == x.Id);
@@ -58,7 +74,7 @@ namespace AddOptimization.Services.Services
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
-
+            string permission = DeterminePermission(x.UserId, currentUserId, entry, sharedFolder);
             return new TemplateEntryDto
             {
                 Id = x.Id == null ? Guid.Empty : x.Id,
@@ -70,7 +86,8 @@ namespace AddOptimization.Services.Services
                 CreatedBy = x.CreatedByUser != null ? x.CreatedByUser.FullName : string.Empty,
                 CreatedAt = x.CreatedAt,
                 EntryData = x.EntryData == null ? new EntryDataDto() : JsonSerializer.Deserialize<EntryDataDto>(x.EntryData, options),
-                Permission = x.UserId == currentUserId ? PermissionLevel.FullAccess.ToString(): entry != null ? (entry.PermissionLevel == PermissionLevel.Edit.ToString() ? PermissionLevel.Edit.ToString() : (sharedFolder.PermissionLevel)):sharedFolder.PermissionLevel, };
+                Permission = permission
+            };
         }
 
         private static TemplateFolderDto SelectTemplate(TemplateFolder x, List<SharedFolder> sharedFolders)
@@ -149,7 +166,7 @@ namespace AddOptimization.Services.Services
                 var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
                 var sharedFolders = (await _sharedFolderRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == currentUserId.ToString()))).ToList();
                 var sharedFolderIds = sharedFolders.Select(x => x.FolderId).Distinct().ToList();
-                var isExists = await _folderRepository.IsExist(t => (t.Name == model.Name && t.CreatedByUserId == currentUserId) || (sharedFolderIds.Contains(t.Id) && t.Name == model.Name), ignoreGlobalFilter: true);
+                var isExists = await _folderRepository.IsExist(t =>(!t.IsDeleted) && t.Id != id  && (t.Name == model.Name && t.CreatedByUserId == currentUserId) || (sharedFolderIds.Contains(t.Id) && t.Name == model.Name) , ignoreGlobalFilter: true);
 
                 if (isExists)
                 {
@@ -208,12 +225,9 @@ namespace AddOptimization.Services.Services
                 var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => !x.IsDeleted && x.TemplateEntries.FolderId == folderId || (groupIds.Contains(x.SharedWithId)), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser))).ToList();
                 var entryIds = sharedEntries.Select(x => x.EntryId).Distinct().ToList();
 
-                var sharedFolders = (await _sharedFolderRepository.QueryAsync(x => !x.IsDeleted && x.FolderId == folderId, include: entities => entities.Include(e => e.TemplateFolder))).ToList();
+                var sharedFolders = (await _sharedFolderRepository.QueryAsync(x => !x.IsDeleted && x.FolderId == folderId && x.SharedWithId == currentUserId.ToString(), include: entities => entities.Include(e => e.TemplateFolder))).ToList();
 
                 var folderIds = sharedFolders.Select(x => x.FolderId).Distinct().ToList();
-
-
-
                 var entities = await _templateEntryRepository.QueryAsync(o => o.FolderId == folderId && !o.IsDeleted, include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.TemplateFolder).Include(e => e.Template).Include(e => e.UpdatedByUser).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
 
                 if (entities == null || !entities.Any())

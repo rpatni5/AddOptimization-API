@@ -65,7 +65,7 @@ namespace AddOptimization.Services.Services
                 var sharedEntriesIds = sharedEntries.Select(x => x.EntryId).Distinct().ToList();
                 var sharedFolder = (await _sharedFolderRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == userId.ToString()))).ToList();
                 var sharedFolderIds = sharedFolder.Select(x => x.FolderId).Distinct().ToList();
-                var isExists = await _templateEntryRepository.IsExist(t => (t.Title == model.Title && t.CreatedByUserId == userId) || (sharedEntriesIds.Contains(t.Id) && t.Title == model.Title) || (sharedFolderIds.Contains(t.Id) && t.Title == model.Title), ignoreGlobalFilter: true);
+                var isExists = await _templateEntryRepository.IsExist(t => (!t.IsDeleted) && (t.Title == model.Title && t.CreatedByUserId == userId) || (sharedEntriesIds.Contains(t.Id) && t.Title == model.Title) || (sharedFolderIds.Contains(t.Id) && t.Title == model.Title), ignoreGlobalFilter: true);
 
                 if (isExists)
                 {
@@ -141,6 +141,7 @@ namespace AddOptimization.Services.Services
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
+            string permission = DeterminePermission(x.UserId, currentUserId, entry, sharedFolder);
 
             return new TemplateEntryDto
             {
@@ -153,10 +154,26 @@ namespace AddOptimization.Services.Services
                 CreatedBy = x.CreatedByUser != null ? x.CreatedByUser.FullName : string.Empty,
                 CreatedAt = x.CreatedAt,
                 EntryData = x.EntryData == null ? new EntryDataDto() : JsonSerializer.Deserialize<EntryDataDto>(x.EntryData, options),
-                Permission = x.UserId.ToString() == currentUserId ? PermissionLevel.FullAccess.ToString() : entry != null ? entry.PermissionLevel : sharedFolder != null ? sharedFolder.PermissionLevel : PermissionLevel.FullAccess.ToString()
+                Permission = permission
             };
         }
 
+        private static string DeterminePermission(int? userId, string currentUserId, SharedEntry entry, SharedFolder sharedFolder)
+        {
+            if (userId.ToString() == currentUserId)
+                return PermissionLevel.FullAccess.ToString();
+
+            var permissions = new List<string>
+            {
+                entry?.PermissionLevel,sharedFolder?.PermissionLevel
+            }.Where(p => p != null).ToList();
+
+            if (permissions.Contains(PermissionLevel.FullAccess.ToString()))
+                return PermissionLevel.FullAccess.ToString();
+            if (permissions.Contains(PermissionLevel.Edit.ToString()))
+                return PermissionLevel.Edit.ToString();
+            return PermissionLevel.Read.ToString();
+        }
         public async Task<ApiResult<TemplateEntryDto>> Update(Guid id, TemplateEntryDto model)
         {
             try
@@ -216,7 +233,7 @@ namespace AddOptimization.Services.Services
             {
                 var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value.ToString();
 
-                var groupIds = (await _groupMemberRepository.QueryAsync(x =>!x.IsDeleted && x.UserId.ToString().ToLower() == currentUserId)).Select(x =>x.GroupId.ToString().ToLower()).Distinct().ToList();
+                var groupIds = (await _groupMemberRepository.QueryAsync(x => !x.IsDeleted && x.UserId.ToString().ToLower() == currentUserId)).Select(x => x.GroupId.ToString().ToLower()).Distinct().ToList();
 
                 var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => !x.IsDeleted && x.EntryId == id || (groupIds.Contains(x.SharedWithId)), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser))).ToList();
 
@@ -230,7 +247,7 @@ namespace AddOptimization.Services.Services
 
                 bool isAnyTemplateEntryDeleted = templateEntries.Where(se => se.Id == id).Any(te => te.IsDeleted);
 
-                bool hasAccessToSharedEntries = sharedEntries.Any(se => se.SharedWithId == currentUserId || groupIds.Contains(se.SharedWithId.ToLower())) ;
+                bool hasAccessToSharedEntries = sharedEntries.Any(se => se.SharedWithId == currentUserId || groupIds.Contains(se.SharedWithId.ToLower()));
 
                 bool hasAccessToTemplateEntries = templateEntries.Any(te => te.CreatedByUserId.ToString() == currentUserId);
 

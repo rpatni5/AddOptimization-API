@@ -92,7 +92,8 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _groupRepository.QueryAsync((e => !e.IsDeleted), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser));
+                var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
+                var entities = await _groupRepository.QueryAsync((e => (!e.IsDeleted) && (e.CreatedByUserId == currentUserId)), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser));
                 var mappedEntities = _mapper.Map<List<GroupDto>>(entities);
                 return ApiResult<List<GroupDto>>.Success(mappedEntities);
             }
@@ -176,12 +177,21 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-
+                var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
                 var groupEntity = await _groupRepository.FirstOrDefaultAsync(t => t.Id == id, ignoreGlobalFilter: true);
                 if (groupEntity == null)
                 {
                     return ApiResult<bool>.NotFound("Group not found.");
                 }
+                var isExists = await _groupRepository.IsExist(t => !t.IsDeleted && (t.Name == model.group.Name && t.CreatedByUserId == currentUserId), ignoreGlobalFilter: true);
+
+                if (isExists)
+                {
+                    var errorMessage = "Group already exists.";
+                    return ApiResult<bool>.Failure(ValidationCodes.GroupAlreadyExists, errorMessage);
+                }
+
+
                 _mapper.Map(model.group, groupEntity);
                 await _groupRepository.UpdateAsync(groupEntity);
 
