@@ -2,7 +2,9 @@
 using AddOptimization.Contracts.Services;
 using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
+using AddOptimization.Services.Constants;
 using AddOptimization.Utilities.Common;
+using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
 using AddOptimization.Utilities.Models;
@@ -19,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
@@ -34,14 +37,32 @@ namespace AddOptimization.Services.Services
         private readonly ICreditCardService _creditCardService;
         private readonly IGenericRepository<ApplicationUser> _applicationUserRepository;
         private readonly IGenericRepository<Group> _groupRepository;
+        private readonly INotificationService _notificationService;
+        private readonly ITemplatesService _templateService;
+        private readonly IEmployeeService _employeeService;
+        private readonly ITemplateEntryService _templateEntryService;
+        private readonly IConfiguration _configuration;
+        private readonly IGroupService _groupService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IGenericRepository<GroupMember> _groupMemberRepository;
+        private readonly IGenericRepository<SharedFolder> _sharedFolderRepository;
 
-        public SharedEntryService(IGenericRepository<SharedEntry> sharedEntryRepository, ILogger<SharedEntryService> logger, IMapper mapper, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository)
+        public SharedEntryService(IGenericRepository<SharedEntry> sharedEntryRepository, ILogger<SharedEntryService> logger, IMapper mapper, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, INotificationService notificationService, ITemplatesService templateService, IEmployeeService employeeService, ITemplateEntryService templateEntryService, IConfiguration configuration, IGroupService groupService, IHttpContextAccessor httpContextAccessor, IGenericRepository<GroupMember> groupMemberRepository, IGenericRepository<SharedFolder> sharedFolderRepository)
         {
             _sharedEntryRepository = sharedEntryRepository;
             _logger = logger;
             _mapper = mapper;
             _applicationUserRepository = applicationUserRepository;
             _groupRepository = groupRepository;
+            _notificationService = notificationService;
+            _templateService = templateService;
+            _employeeService = employeeService;
+            _templateEntryService = templateEntryService;
+            _configuration = configuration;
+            _groupService = groupService;
+            _httpContextAccessor = httpContextAccessor;
+            _groupMemberRepository = groupMemberRepository;
+            _sharedFolderRepository = sharedFolderRepository;
         }
 
         public async Task<ApiResult<bool>> Create(SharedEntryRequestDto model)
@@ -67,6 +88,7 @@ namespace AddOptimization.Services.Services
                 }
 
                 await _sharedEntryRepository.BulkInsertAsync(sharedEntries);
+                await SendNotificationToAccountAdmin(sharedEntries);
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -92,12 +114,12 @@ namespace AddOptimization.Services.Services
 
                 foreach (var entry in mappedEntity)
                 {
-                    if (entry.SharedWithType == "user")
+                    if (entry.SharedWithType == SharedWithTypeEnum.USER)
                     {
                         var user = users.FirstOrDefault(u => u.Id.ToString() == entry.SharedWithId);
                         entry.SharedWithName = user?.FullName ?? "Unknown User";
                     }
-                    else if (entry.SharedWithType == "group")
+                    else if (entry.SharedWithType == SharedWithTypeEnum.GROUP)
                     {
                         var group = groups.FirstOrDefault(g => g.Id.ToString() == entry.SharedWithId);
                         entry.SharedWithName = group?.Name ?? "Unknown Group";
@@ -163,14 +185,20 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                IQueryable<SharedEntry> query = await _sharedEntryRepository.QueryAsync(e => !e.IsDeleted && !e.TemplateEntries.IsDeleted, include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.TemplateEntries), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
+                var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value.ToString();
+                var groupIds = (await _groupMemberRepository.QueryAsync(x => !x.IsDeleted && x.UserId.ToString() == currentUserId)).Select(x => x.GroupId.ToString()).Distinct().ToList();
+                var sharedFolders = (await _sharedFolderRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == currentUserId || groupIds.Contains(x.SharedWithId)), include: entities => entities.Include(e => e.TemplateFolder))).ToList();
+
+                var folderIds = sharedFolders.Select(x => x.FolderId).Distinct().ToList();
+
+                IQueryable<SharedEntry> query = await _sharedEntryRepository.QueryAsync(e => !e.IsDeleted && !e.TemplateEntries.IsDeleted, include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.TemplateEntries).Include(e => e.TemplateEntries.TemplateFolder), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
                 if (filterType == "SharedByMe")
                 {
                     query = query.Where(e => e.SharedByUserId == id);
                 }
                 else if (filterType == "SharedToMe")
                 {
-                    query = query.Where(e => e.SharedWithId == id.ToString());
+                    query = query.Where(e => e.SharedWithId == id.ToString() || groupIds.Contains(e.SharedWithId) || (e.TemplateEntries.FolderId.HasValue && folderIds.Contains(e.TemplateEntries.FolderId.Value)));
                 }
                 query = query.OrderByDescending(e => e.CreatedAt);
                 var entities = await query.ToListAsync();
@@ -180,8 +208,8 @@ namespace AddOptimization.Services.Services
                     EntryId = e.EntryId,
                     SharedByUserId = e.SharedByUserId,
                     SharedWithId = e.SharedWithId,
-                    PermissionLevel = e.PermissionLevel,
-                    SharedFolderName = e.TemplateEntries?.TemplateFolder?.Name,
+                    PermissionLevel = DeterminePermissionLevel(e, sharedFolders, currentUserId),
+                    SharedFolderName = e.TemplateEntries?.TemplateFolder?.Name ?? string.Empty,
                     SharedTitleName = e.TemplateEntries.Title,
                     CreatedBy = e.CreatedByUser != null ? e.CreatedByUser.FullName : string.Empty,
                     TemplateId = e.TemplateEntries.TemplateId,
@@ -193,6 +221,88 @@ namespace AddOptimization.Services.Services
             {
                 _logger.LogException(ex);
                 throw;
+            }
+        }
+
+        private static string DeterminePermissionLevel(SharedEntry entry, List<SharedFolder> sharedFolders, string currentUserId)
+        {
+            if (entry.SharedByUserId.ToString() == currentUserId)
+                return PermissionLevel.FullAccess.ToString();
+            var folderPermission = sharedFolders.FirstOrDefault(f => f.FolderId == entry.TemplateEntries.FolderId)?.PermissionLevel;
+            var permissions = new List<string>
+            {
+                entry?.PermissionLevel,folderPermission
+            }.Where(p => !string.IsNullOrEmpty(p)).ToList();
+
+            if (permissions.Contains(PermissionLevel.FullAccess.ToString()))
+                return PermissionLevel.FullAccess.ToString();
+            if (permissions.Contains(PermissionLevel.Edit.ToString()))
+                return PermissionLevel.Edit.ToString();
+
+            return PermissionLevel.Read.ToString();
+        }
+        private async Task SendNotificationToAccountAdmin(List<SharedEntry> sharedEntries)
+        {
+            var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
+            var templateRoutes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase){
+            { "credit_cards",  $"{baseUrl}admin/password-vault/credit-cards/view-credit-card/"},
+            { "secure_notes", $"{baseUrl}admin/password-vault/secure-notes/view-secure-note/"},
+            { "passwords",    $"{baseUrl}admin/password-vault/passwords/view-password/"},
+            { "personal_information",$"{baseUrl}admin/password-vault/personal-information/view-personal-information/"},
+            { "company_information", $"{baseUrl}admin/password-vault/company-information/view-company-information/"},
+            { "mobile_application",$"{baseUrl}admin/password-vault/mobile-application/view-mobile-application/" }
+            };
+            foreach (var item in sharedEntries)
+            {
+                var entities = (await _sharedEntryRepository.QueryAsync(o => o.EntryId == item.EntryId && !o.IsDeleted, include: entities => entities.Include(e => e.TemplateEntries).Include(e => e.ApplicationUser), ignoreGlobalFilter: true)).ToList();
+                var tempalteId = entities.Select(e => e.EntryId).FirstOrDefault();
+                var template = (await _templateService.GetTemplateById(tempalteId)).Result;
+                var sharedEntry = entities.FirstOrDefault();
+                var sharedByUser = sharedEntry?.ApplicationUser;
+                var notifications = new List<NotificationDto>();
+                var subject = $"{template.Name} shared by {sharedByUser.FullName}";
+                var bodyContent = $"{template.Name} shared by {sharedByUser.FullName}";
+                var link = templateRoutes.TryGetValue(template.TemplateKey, out var route) ? $"{route}{tempalteId}?sidenav=collapsed" : "";
+                if (item.SharedWithType == SharedWithTypeEnum.GROUP)
+                {
+                    Guid groupId;
+                    if (Guid.TryParse(item.SharedWithId, out groupId))
+                    {
+                        var groupResult = await _groupService.GetGroupAndMembersByGroupId(groupId);
+                        if (groupResult != null && groupResult.Result != null && groupResult.Result.groupMembers != null)
+                        {
+                            foreach (var member in groupResult.Result.groupMembers)
+                            {
+                                var model = new NotificationDto
+                                {
+                                    Subject = subject,
+                                    Content = bodyContent,
+                                    Link = link,
+                                    AppplicationUserId = member.UserId,
+                                    GroupKey = $"{template.Name} shared by #{sharedByUser?.FullName}",
+                                };
+                                notifications.Add(model);
+                            }
+                        }
+                        else
+                        {
+                            throw new Exception("Invalid Group.");
+                        }
+                    }
+                }
+                else if (item.SharedWithType == SharedWithTypeEnum.USER)
+                {
+                    var model = new NotificationDto
+                    {
+                        Subject = subject,
+                        Content = bodyContent,
+                        Link = link,
+                        AppplicationUserId = Convert.ToInt32(item.SharedWithId),
+                        GroupKey = $"{template.Name} shared by #{sharedByUser.FullName}",
+                    };
+                    notifications.Add(model);
+                }
+                await _notificationService.BulkCreateAsync(notifications);
             }
         }
 

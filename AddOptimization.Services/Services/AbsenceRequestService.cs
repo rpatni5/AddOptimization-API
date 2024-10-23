@@ -344,7 +344,7 @@ namespace AddOptimization.Services.Services
         {
             var subject = "New absence request submitted";
             var startDate = LocaleHelper.FormatDate(absenceRequest.StartDate.Value);
-            var endDate = LocaleHelper.FormatDate(absenceRequest.EndDate.Value);
+            var endDate = absenceRequest.EndDate.HasValue ? LocaleHelper.FormatDate(absenceRequest.EndDate.Value) : string.Empty;
             var bodyContent = $"{user.FullName} has requested absence request " + (endDate == null? $"for {startDate}" : $"from {startDate} to {endDate}");
             var linkUrl = GetAbsenceApprovalLinkForAccountAdmin(absenceRequest.Id);
             var notifications = new List<NotificationDto>();

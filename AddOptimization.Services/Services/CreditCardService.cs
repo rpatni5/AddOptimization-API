@@ -3,6 +3,7 @@ using AddOptimization.Contracts.Services;
 using AddOptimization.Data.Contracts;
 using AddOptimization.Data.Entities;
 using AddOptimization.Utilities.Common;
+using AddOptimization.Utilities.Constants;
 using AddOptimization.Utilities.Enums;
 using AddOptimization.Utilities.Extensions;
 using AddOptimization.Utilities.Helpers;
@@ -26,13 +27,18 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<Group> _groupRepository;
         private readonly ITemplatesService _templateService;
         private readonly ITemplateEntryService _templateEntryService;
+        private readonly IGenericRepository<SharedEntry> _sharedEntryRepository;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IGenericRepository<TemplateEntries> _templateEntryRepository;
+        private readonly IGenericRepository<SharedFolder> _sharedFolderRepository;
+
 
         JsonSerializerOptions jsonOptions = new()
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
 
-        public CreditCardService( ILogger<CreditCardService> logger, IMapper mapper, IConfiguration configuration, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, ITemplatesService templateService, ITemplateEntryService templateEntryService)
+        public CreditCardService(ILogger<CreditCardService> logger, IMapper mapper, IConfiguration configuration, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, ITemplatesService templateService, ITemplateEntryService templateEntryService, IGenericRepository<SharedEntry> sharedEntryRepository, IHttpContextAccessor httpContextAccessor, IGenericRepository<TemplateEntries> templateEntryRepository, IGenericRepository<SharedFolder> sharedFolderRepository)
         {
             _logger = logger;
             _mapper = mapper;
@@ -40,24 +46,29 @@ namespace AddOptimization.Services.Services
             _groupRepository = groupRepository;
             _templateService = templateService;
             _templateEntryService = templateEntryService;
+            _sharedEntryRepository = sharedEntryRepository;
+            _httpContextAccessor = httpContextAccessor;
+            _templateEntryRepository = templateEntryRepository;
+            _sharedFolderRepository = sharedFolderRepository;
         }
 
-       
-        private void EncryptCreditCardInfo(TemplateEntryDto model)       {
-           
+
+        private void EncryptCreditCardInfo(TemplateEntryDto model)
+        {
+
 
             if (model.EntryData?.CreditCardInfo != null)
             {
                 var creditCardInfo = model.EntryData.CreditCardInfo;
                 if (!string.IsNullOrEmpty(creditCardInfo.Cvv))
                 {
-                    creditCardInfo.Cvv =AesEncryptionDecryptionHelper.Encrypt(creditCardInfo.Cvv);
+                    creditCardInfo.Cvv = AesEncryptionDecryptionHelper.Encrypt(creditCardInfo.Cvv);
                     model.EntryData.IsValueEncrypted = true;
                 }
 
                 if (!string.IsNullOrEmpty(creditCardInfo.CardPin))
                 {
-                    creditCardInfo.CardPin =AesEncryptionDecryptionHelper.Encrypt(creditCardInfo.CardPin);
+                    creditCardInfo.CardPin = AesEncryptionDecryptionHelper.Encrypt(creditCardInfo.CardPin);
                     model.EntryData.IsValueEncrypted = true;
                 }
             }
@@ -90,16 +101,16 @@ namespace AddOptimization.Services.Services
             {
                 try
                 {
-                    string encryptedData = model.EntryDataEncrypted; 
+                    string encryptedData = model.EntryDataEncrypted;
                     string decryptedJson = DecryptionHelper.Decrypt(encryptedData);
 
-                    var decryptedEntryData = JsonSerializer.Deserialize<EntryDataDto>(decryptedJson , jsonOptions);
+                    var decryptedEntryData = JsonSerializer.Deserialize<EntryDataDto>(decryptedJson, jsonOptions);
 
                     model.EntryData = decryptedEntryData ?? new EntryDataDto();
 
                     if (decryptedEntryData != null)
                     {
-                        model.EntryData.CreditCardInfo = decryptedEntryData.CreditCardInfo; 
+                        model.EntryData.CreditCardInfo = decryptedEntryData.CreditCardInfo;
                     }
                 }
                 catch (Exception ex)
@@ -116,8 +127,7 @@ namespace AddOptimization.Services.Services
             {
                 Decrypt(model);
                 EncryptCreditCardInfo(model);
-                await _templateEntryService.Save(model);
-                return ApiResult<bool>.Success(true);
+                return await _templateEntryService.Save(model);
             }
             catch (Exception ex)
             {
@@ -158,14 +168,24 @@ namespace AddOptimization.Services.Services
             try
             {
                 var mappedEntity = (await _templateEntryService.Get(id)).Result;
-                DecryptCreditCardInfo(mappedEntity);
-                if (mappedEntity.EntryData != null)
+                if (mappedEntity == null)
                 {
-                    string entryDataJson = JsonSerializer.Serialize(mappedEntity.EntryData, jsonOptions);
-                    mappedEntity.EntryDataEncrypted = DecryptionHelper.Encrypt(entryDataJson);
-                    mappedEntity.EntryData = null;
+                    return ApiResult<TemplateEntryDto>.Failure(ValidationCodes.PermissionDenied);
                 }
-                return ApiResult<TemplateEntryDto>.Success(mappedEntity);
+
+                else
+                {
+                    DecryptCreditCardInfo(mappedEntity);
+                    if (mappedEntity.EntryData != null)
+                    {
+                        string entryDataJson = JsonSerializer.Serialize(mappedEntity.EntryData, jsonOptions);
+                        mappedEntity.EntryDataEncrypted = DecryptionHelper.Encrypt(entryDataJson);
+                        mappedEntity.EntryData = null;
+                    }
+                    return ApiResult<TemplateEntryDto>.Success(mappedEntity);
+                }
+
+
             }
 
             catch (Exception ex)
@@ -181,8 +201,7 @@ namespace AddOptimization.Services.Services
             {
                 Decrypt(model);
                 EncryptCreditCardInfo(model);
-                var mappedEntity = (await _templateEntryService.Update(id, model)).Result;
-                return ApiResult<TemplateEntryDto>.Success(mappedEntity);
+                return await _templateEntryService.Update(id, model);
             }
             catch (Exception ex)
             {

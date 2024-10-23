@@ -117,7 +117,7 @@ namespace AddOptimization.Services.Services
                 entity.Comment = model.Comment;
                 var result = await _absenceApprovalRepository.UpdateAsync(entity);
                 var accountAdminResult = await _applicationUserService.GetAccountAdmins();
-                var accountAdmin = accountAdminResult.Result.FirstOrDefault();
+                var accountAdmin = accountAdminResult.Result.FirstOrDefault(admin => admin.Id == result.UpdatedByUserId);
                 var user = await _applicationUserRepository.FirstOrDefaultAsync(x => x.Id == entity.UserId);
                 if (model.IsApproved)
                 {
