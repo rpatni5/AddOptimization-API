@@ -90,7 +90,7 @@ namespace AddOptimization.Services.Services
             };
         }
 
-        private static TemplateFolderDto SelectTemplate(TemplateFolder x, List<SharedFolder> sharedFolders)
+        private static TemplateFolderDto SelectTemplate(TemplateFolder x, List<SharedFolder> sharedFolders, int currentUserId)
         {
             var entry = sharedFolders.FirstOrDefault(e => e.FolderId == x.Id);
 
@@ -98,7 +98,7 @@ namespace AddOptimization.Services.Services
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
-
+            string permission = DeterminePermission(x.CreatedByUserId, currentUserId, null, entry);
             return new TemplateFolderDto
             {
                 Id = x.Id == null ? Guid.Empty : x.Id,
@@ -107,7 +107,7 @@ namespace AddOptimization.Services.Services
                 CreatedAt = x.CreatedAt,
                 Name = x.Name,
                 Description = x.Description,
-                Permission = entry != null ? entry.PermissionLevel : PermissionLevel.FullAccess.ToString()
+                Permission = permission,
             };
         }
         public async Task<ApiResult<List<TemplateFolderDto>>> GetAllTemplateFolders()
@@ -120,7 +120,7 @@ namespace AddOptimization.Services.Services
 
                 var entryIds = sharedFolders.Select(x => x.FolderId).Distinct().ToList();
                 var entities = await _folderRepository.QueryAsync((e => !e.IsDeleted && (e.CreatedByUserId == currentUserId || entryIds.Contains(e.Id))), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.CreatedAt));
-                var mappedEntities = entities.Select(x => SelectTemplate(x, sharedFolders)).ToList();
+                var mappedEntities = entities.Select(x => SelectTemplate(x, sharedFolders,currentUserId)).ToList();
                 return ApiResult<List<TemplateFolderDto>>.Success(mappedEntities);
             }
             catch (Exception ex)
