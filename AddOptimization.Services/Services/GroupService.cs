@@ -183,7 +183,7 @@ namespace AddOptimization.Services.Services
                 {
                     return ApiResult<bool>.NotFound("Group not found.");
                 }
-                var isExists = await _groupRepository.IsExist(t => !t.IsDeleted && (t.Name == model.group.Name && t.CreatedByUserId == currentUserId), ignoreGlobalFilter: true);
+                var isExists = await _groupRepository.IsExist(t => (!t.IsDeleted) && t.Id != id && (t.Name == model.group.Name && t.CreatedByUserId == currentUserId), ignoreGlobalFilter: true);
 
                 if (isExists)
                 {
