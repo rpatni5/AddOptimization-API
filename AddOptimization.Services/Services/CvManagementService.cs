@@ -104,23 +104,87 @@ namespace AddOptimization.Services.Services
             return downloadUrls;
         }
 
+        //private IQueryable<CvEntry> ApplyFilters(IQueryable<CvEntry> entities, PageQueryFiterBase filter)
+        //{
+        //    var query = entities.Where(e => !e.IsDeleted).ToList();
+        //    filter.GetValue<string>("title", (v) =>
+        //    {
+        //        query = query.Where(e => e.EntryData != null &&
+        //            JsonSerializer.Deserialize<CvEntryDataDto>(e.EntryData.ToString(), jsonOptions)
+        //            ?.Contact.Any(c => c.Title.ToLower().Contains(v.ToLower())) == true).ToList();
+        //    });
 
+        //    return query.AsQueryable();
+        //}
 
+        //public async Task<PagedApiResult<CvEntryDto>> Search(PageQueryFiterBase filters)
+        //{
+        //    try
+        //    {
+        //        var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value.ToString();
+        //        var entities = await _cvEntryRepository.QueryAsync(e => !e.IsDeleted, include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
+
+        //        entities = entities.AsEnumerable().Where(e => e.EntryData != null && (e.UserId.ToString() == userId || JsonSerializer.Deserialize<CvEntryDataDto>(e.EntryData, jsonOptions)?.Contact?.Any(c => c.EmployeeId != null && c.EmployeeId.Equals(userId, StringComparison.OrdinalIgnoreCase)) == true)).AsQueryable();
+
+        //        entities = ApplyFilters(entities, filters);
+        //        var pagedResult = PageHelper<CvEntry, CvEntryDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new CvEntryDto
+        //        {
+        //            Id = e.Id,
+        //            UserId = e.UserId,
+        //            CreatedBy = e.CreatedByUser.FullName,
+        //            EntryData = e.EntryData != null ?  JsonSerializer.Deserialize<CvEntryDataDto>(e.EntryData, jsonOptions) : null,
+        //        }).ToList());
+        //        return PagedApiResult<CvEntryDto>.Success(pagedResult);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogException(ex);
+        //        throw;
+        //    }
+        //}
 
         private IQueryable<CvEntry> ApplyFilters(IQueryable<CvEntry> entities, PageQueryFiterBase filter)
         {
-            var query = entities.Where(e => !e.IsDeleted).ToList();
-
-
 
             filter.GetValue<string>("title", (v) =>
             {
-                query = query.Where(e => e.EntryData != null &&
-                    JsonSerializer.Deserialize<CvEntryDataDto>(e.EntryData.ToString(), jsonOptions)
-                    ?.Contact.Any(c => c.Title.ToLower().Contains(v.ToLower())) == true).ToList();
+                entities = entities.Where(e => e.Title == v);
             });
 
-            return query.AsQueryable();
+            return entities;
+        }
+
+        public async Task<PagedApiResult<CvEntryDto>> Search(PageQueryFiterBase filters)
+        {
+            try
+            {
+                var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value.ToString();
+                var entities = await _cvEntryRepository.QueryAsync(e => !e.IsDeleted, include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
+
+                var filteredEntities = entities.AsEnumerable().Where(e =>
+                    {
+                        var entryData = e.EntryData != null ? JsonSerializer.Deserialize<List<ContactDto>>(JsonDocument.Parse(e.EntryData).RootElement.GetProperty("contact").GetRawText(), jsonOptions):null;
+
+                        return entryData != null && (e.UserId.ToString() == userId || entryData.Any(c => c.EmployeeId != null && c.EmployeeId.Equals(userId, StringComparison.OrdinalIgnoreCase)));
+                    }).AsQueryable();
+
+                filteredEntities = ApplyFilters(filteredEntities, filters);
+
+                var pagedResult = PageHelper<CvEntry, CvEntryDto>.ApplyPaging(filteredEntities, filters, entities => entities.Select(e => new CvEntryDto
+                {
+                    Id = e.Id,
+                    UserId = e.UserId,
+                    Title = e.Title,
+                    CreatedBy = e.CreatedByUser.FullName,
+                }).ToList()
+                );
+                return PagedApiResult<CvEntryDto>.Success(pagedResult);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                throw;
+            }
         }
 
 
@@ -158,57 +222,6 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-
-        public async Task<PagedApiResult<CvEntryDto>> Search(PageQueryFiterBase filters)
-        {
-            try
-            {
-                var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value.ToString();
-
-                var entities = await _cvEntryRepository.QueryAsync(
-                    e => !e.IsDeleted,
-                    include: entities => entities
-                        .Include(e => e.CreatedByUser)
-                        .Include(e => e.UpdatedByUser)
-                        .Include(e => e.ApplicationUser),
-                    orderBy: x => x.OrderByDescending(x => x.CreatedAt)
-                );
-
-                var filteredEntities = entities
-                    .AsEnumerable()
-                    .Where(e => e.EntryData != null &&
-                                (
-                                    e.UserId.ToString() == userId ||
-                                    JsonSerializer.Deserialize<CvEntryDataDto>(e.EntryData, jsonOptions)
-                                        ?.Contact?.Any(c => c.EmployeeId != null && c.EmployeeId.Equals(userId, StringComparison.OrdinalIgnoreCase)) == true
-                                ))
-                    .AsQueryable();
-
-
-                entities = ApplyFilters(entities, filters);
-                var pagedResult = PageHelper<CvEntry, CvEntryDto>.ApplyPaging(
-                    filteredEntities,
-                    filters,
-                    entities => entities.Select(e => new CvEntryDto
-                    {
-                        Id = e.Id,
-                        UserId = e.UserId,
-                        CreatedBy = e.CreatedByUser.FullName,
-                        EntryData = e.EntryData != null
-                            ? JsonSerializer.Deserialize<CvEntryDataDto>(e.EntryData, jsonOptions)
-                            : null,
-                    }).ToList());
-
-                return PagedApiResult<CvEntryDto>.Success(pagedResult);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
-                throw;
-            }
-        }
-
-
 
         public async Task<ApiResult<bool>> Delete(Guid id)
         {
@@ -291,12 +304,12 @@ namespace AddOptimization.Services.Services
 
                 if (model.EntryData?.Certificate != null)
                 {
-                    existingEntryData.Certificate = model.EntryData.Certificate.ToList(); 
+                    existingEntryData.Certificate = model.EntryData.Certificate.ToList();
 
                 }
                 else
                 {
-                    existingEntryData.Certificate = null; 
+                    existingEntryData.Certificate = null;
                 }
 
                 existingEntryData.Contact = model.EntryData.Contact ?? existingEntryData.Contact;
