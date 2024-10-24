@@ -163,9 +163,9 @@ namespace AddOptimization.Services.Services
 
                 var filteredEntities = entities.AsEnumerable().Where(e =>
                     {
-                        var entryData = e.EntryData != null ? JsonSerializer.Deserialize<List<ContactDto>>(JsonDocument.Parse(e.EntryData).RootElement.GetProperty("contact").GetRawText(), jsonOptions):null;
+                        var entryData = e.EntryData != null ? JsonSerializer.Deserialize<CvEntryDataDto>(e.EntryData, jsonOptions) : null;
 
-                        return entryData != null && (e.UserId.ToString() == userId || entryData.Any(c => c.EmployeeId != null && c.EmployeeId.Equals(userId, StringComparison.OrdinalIgnoreCase)));
+                        return entryData != null && (e.UserId.ToString() == userId || entryData.Contact.Any(c => c.EmployeeId != null && c.EmployeeId.Equals(userId, StringComparison.OrdinalIgnoreCase)));
                     }).AsQueryable();
 
                 filteredEntities = ApplyFilters(filteredEntities, filters);
