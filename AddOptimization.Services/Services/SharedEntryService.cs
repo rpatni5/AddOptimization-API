@@ -210,7 +210,7 @@ namespace AddOptimization.Services.Services
                 }
                 else if (filterType == "SharedToMe")
                 {
-                    combinedTemplateEntries = combinedTemplateEntries.Where(te =>sharedEntries.Any(se => ((!se.IsDeleted && se.SharedWithId == id.ToString() && se.EntryId == te.Id ) || groupIds.Contains(se.SharedWithId))) || sharedFolders.Any(sf => !sf.IsDeleted && sf.FolderId == te.FolderId && (sf.SharedWithId == id.ToString() || groupIds.Contains(sf.SharedWithId)))).ToList();
+                    combinedTemplateEntries = combinedTemplateEntries.Where(te =>sharedEntries.Any(se => !se.IsDeleted && se.EntryId == te.Id  && (se.SharedWithId == id.ToString() || groupIds.Contains(se.SharedWithId))) || sharedFolders.Any(sf => !sf.IsDeleted && sf.FolderId == te.FolderId && (sf.SharedWithId == id.ToString() || groupIds.Contains(sf.SharedWithId)))).ToList();
                 }
 
                 var mappedEntities = combinedTemplateEntries.Select(x => SelectTemplate(x, sharedEntries, sharedFolders, currentUserId)).ToList();
