@@ -21,11 +21,26 @@ public class CvHistoryManagementController : CustomApiControllerBase
     }
 
     [HttpGet("get-cv-history/{id}")]
-    public async Task<IActionResult> Get(Guid cvEntryId)
+    public async Task<IActionResult> Get(Guid id)
     {
         try
         {
-            var retVal = await _cvHistoryManagementService.GetCvHistory(cvEntryId);
+            var retVal = await _cvHistoryManagementService.GetCvHistory(id);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+
+    [HttpGet("get-cv-history-details/{id}")]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        try
+        {
+            var retVal = await _cvHistoryManagementService.GetHistoryDetailsById(id);
             return HandleResponse(retVal);
         }
         catch (Exception ex)

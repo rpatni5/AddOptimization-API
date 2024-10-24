@@ -9,6 +9,7 @@ namespace AddOptimization.Contracts.Dto
 {
     public class CvEntryHistoryDto
     {
+        public Guid Id { get; set; }
         public Guid CVEntryId { get; set; }
         public string EntryData { get; set; }
         public bool IsDeleted { get; set; }
