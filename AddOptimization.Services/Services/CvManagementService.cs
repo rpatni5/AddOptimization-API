@@ -27,6 +27,7 @@ namespace AddOptimization.Services.Services
     public class CvManagementService : ICvManagementService
     {
         private readonly IGenericRepository<CvEntry> _cvEntryRepository;
+        private readonly IGenericRepository<CvEntryHistory> _cvEntryHistoryRepository;
         private readonly ILogger<CvManagementService> _logger;
         private readonly IMapper _mapper;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -38,7 +39,7 @@ namespace AddOptimization.Services.Services
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
 
-        public CvManagementService(IGenericRepository<CvEntry> cvEntryRepository, ILogger<CvManagementService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, IHostingEnvironment hostingEnvironment, IConfiguration configuration)
+        public CvManagementService(IGenericRepository<CvEntry> cvEntryRepository, ILogger<CvManagementService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, IHostingEnvironment hostingEnvironment, IConfiguration configuration, IGenericRepository<CvEntryHistory> cvEntryHistoryRepository)
         {
             _cvEntryRepository = cvEntryRepository;
             _logger = logger;
@@ -46,6 +47,7 @@ namespace AddOptimization.Services.Services
             _httpContextAccessor = httpContextAccessor;
             _configuration = configuration;
             _hostingEnvironment = hostingEnvironment;
+            _cvEntryHistoryRepository = cvEntryHistoryRepository;
         }
 
         private async Task<List<string>> SaveVersionAndGenerateDownloadUrls(CvEntryDataDto request)
@@ -141,6 +143,13 @@ namespace AddOptimization.Services.Services
                 entity.UserId = userId;
                 entity.EntryData = JsonSerializer.Serialize(model.EntryData, jsonOptions);
                 await _cvEntryRepository.InsertAsync(entity);
+                var entityHistory = new CvEntryHistory
+                {
+                    CVEntryId = entity.Id,
+                    EntryData = entity.EntryData,
+                };
+
+                await _cvEntryHistoryRepository.InsertAsync(entityHistory);
                 return ApiResult<bool>.Success(true);
             }
             catch (Exception ex)
@@ -299,6 +308,15 @@ namespace AddOptimization.Services.Services
 
                 entity.EntryData = JsonSerializer.Serialize(existingEntryData, jsonOptions);
                 await _cvEntryRepository.UpdateAsync(entity);
+
+                var entityHistory = new CvEntryHistory
+                {
+                    CVEntryId = entity.Id,
+                    EntryData = entity.EntryData,
+                };
+
+                await _cvEntryHistoryRepository.InsertAsync(entityHistory);
+
 
                 var mappedEntity = _mapper.Map<CvEntryDto>(entity);
                 return ApiResult<CvEntryDto>.Success(mappedEntity);

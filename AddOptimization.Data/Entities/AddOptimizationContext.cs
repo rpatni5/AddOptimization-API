@@ -90,6 +90,7 @@ public partial class AddOptimizationContext : DbContext
     public virtual DbSet<SharedEntry> SharedEntries { get; set; }
     public virtual DbSet<SharedFolder> SharedFolders { get; set; }
     public virtual DbSet<CvEntry> CvEntries { get; set; }
+    public virtual DbSet<CvEntryHistory> CvEntryHistory { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -489,6 +489,24 @@ namespace AddOptimization.Services.Mappings
             CreateMap<string, CvEntryDataDto>()
                 .ConvertUsing(json => JsonSerializer.Deserialize<CvEntryDataDto>(json, jsonOptions));
 
+
+            CreateMap<CvEntryHistory, CvEntryHistoryDto>()
+              .AfterMap((s, d) =>
+              {
+                  d.CreatedBy = s.CreatedByUser != null ? s.CreatedByUser.FullName : string.Empty;
+                  d.UpdatedBy = s.UpdatedByUser != null ? s.UpdatedByUser.FullName : string.Empty;
+                  d.CreatedAt = s.CreatedAt?.Date;
+                  d.UpdatedAt = s.UpdatedAt?.Date;
+                  d.EntryHistoryData = string.IsNullOrEmpty(s.EntryData) ? new CvEntryDataDto() : JsonSerializer.Deserialize<CvEntryDataDto>(s.EntryData, jsonOptions);
+              });
+
+            CreateMap<CvEntryHistoryDto, CvEntryHistory>()
+                .AfterMap((s, d) =>
+                {
+                    d.EntryData = s.EntryHistoryData != null
+                        ? JsonSerializer.Serialize(s.EntryHistoryData, jsonOptions)
+                        : string.Empty;
+                });
         }
     }
 }
