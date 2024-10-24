@@ -205,11 +205,11 @@ namespace AddOptimization.Services.Services
 
                 if (filterType == "SharedByMe")
                 {
-                    combinedTemplateEntries = combinedTemplateEntries.Where(te =>sharedEntries.Any(se => (!se.IsDeleted && se.SharedByUserId == id )) || sharedFolders.Any(sf => !sf.IsDeleted && sf.FolderId == te.FolderId && (sf.SharedByUserId == id ))).ToList();
+                    combinedTemplateEntries = combinedTemplateEntries.Where(te =>sharedEntries.Any(se => !se.IsDeleted && se.SharedByUserId == id && se.EntryId == te.Id) || sharedFolders.Any(sf => !sf.IsDeleted && sf.FolderId == te.FolderId && sf.SharedByUserId == id)).ToList();
                 }
                 else if (filterType == "SharedToMe")
                 {
-                    combinedTemplateEntries = combinedTemplateEntries.Where(te =>sharedEntries.Any(se => (!se.IsDeleted && se.SharedWithId == id.ToString() || groupIds.Contains(se.SharedWithId))) || sharedFolders.Any(sf => !sf.IsDeleted && sf.FolderId == te.FolderId && (sf.SharedWithId == id.ToString() || groupIds.Contains(sf.SharedWithId)))).ToList();
+                    combinedTemplateEntries = combinedTemplateEntries.Where(te =>sharedEntries.Any(se => ((!se.IsDeleted && se.SharedWithId == id.ToString() && se.EntryId == te.Id ) || groupIds.Contains(se.SharedWithId))) || sharedFolders.Any(sf => !sf.IsDeleted && sf.FolderId == te.FolderId && (sf.SharedWithId == id.ToString() || groupIds.Contains(sf.SharedWithId)))).ToList();
                 }
 
                 var mappedEntities = combinedTemplateEntries.Select(x => SelectTemplate(x, sharedEntries, sharedFolders, currentUserId)).ToList();
