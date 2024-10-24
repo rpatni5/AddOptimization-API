@@ -41,16 +41,24 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-                var entities = await _cvEntryHistoryRepository.QueryAsync(x => x.CVEntryId == id && !x.IsDeleted, orderBy: q => q.OrderByDescending(e => e.CreatedAt), include: entities => entities.Include(e => e.CvEntry));
+                var entities = await _cvEntryHistoryRepository
+                    .QueryAsync(
+                        x => x.CVEntryId == id && !x.IsDeleted,
+                        orderBy: q => q.OrderByDescending(e => e.CreatedAt),
+                        include: entities => entities
+                            .Include(e => e.CvEntry)
+                            .Include(e => e.CreatedByUser));
 
-                if (entities == null)
+                if (entities == null || !entities.Any())
                 {
                     return ApiResult<List<CvEntryHistoryDto>>.NotFound("CV History");
                 }
 
+                var latestEntities = entities.Take(5).ToList(); 
+
                 var cvHistoryDtos = new List<CvEntryHistoryDto>();
 
-                foreach (var entity in entities)
+                foreach (var entity in latestEntities)
                 {
                     CvEntryDataDto entryData;
                     try
@@ -61,12 +69,14 @@ namespace AddOptimization.Services.Services
                     }
                     catch (JsonException ex)
                     {
-                        entryData = new CvEntryDataDto();  
+                        entryData = new CvEntryDataDto();
                     }
                     cvHistoryDtos.Add(new CvEntryHistoryDto
                     {
+                        Id = entity.Id,
                         CVEntryId = entity.CVEntryId,
                         EntryData = entity.EntryData,
+                        EntryHistoryData = entryData,
                         IsDeleted = entity.IsDeleted,
                         CreatedAt = entity.CreatedAt,
                         CreatedBy = entity.CreatedByUser?.FullName ?? string.Empty,
@@ -83,6 +93,49 @@ namespace AddOptimization.Services.Services
                 return ApiResult<List<CvEntryHistoryDto>>.Failure("An error occurred while retrieving the CV entry.");
             }
         }
+
+
+        public async Task<ApiResult<CvEntryHistoryDto>> GetHistoryDetailsById(Guid id)
+        {
+            try
+            {
+              
+                var entity = await _cvEntryHistoryRepository.FirstOrDefaultAsync(
+                    e => e.Id == id,
+                    ignoreGlobalFilter: true
+                );
+
+                if (entity == null)
+                {
+                    return ApiResult<CvEntryHistoryDto>.Failure("CV entry not found or access denied.");
+                }
+
+
+                var entryData = string.IsNullOrWhiteSpace(entity.EntryData)
+                    ? new CvEntryDataDto()
+                    : JsonSerializer.Deserialize<CvEntryDataDto>(entity.EntryData, jsonOptions);
+
+                var cvEntryDto = new CvEntryHistoryDto
+                {
+                    Id = entity.Id,
+                    CVEntryId = entity.CVEntryId,
+                    IsDeleted = entity.IsDeleted,
+                    EntryHistoryData = entryData,
+                    CreatedAt = entity.CreatedAt,
+                    CreatedBy = entity.CreatedByUser?.FullName ?? string.Empty,
+                    UpdatedAt = entity.UpdatedAt,
+                    UpdatedBy = entity.UpdatedByUser?.FullName ?? string.Empty,
+                };
+
+                return ApiResult<CvEntryHistoryDto>.Success(cvEntryDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return ApiResult<CvEntryHistoryDto>.Failure("An error occurred while retrieving the CV history entry.");
+            }
+        }
+
     }
 
 }
