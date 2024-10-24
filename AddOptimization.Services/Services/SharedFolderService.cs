@@ -38,8 +38,9 @@ namespace AddOptimization.Services.Services
         private readonly IGenericRepository<Group> _groupRepository;
         private readonly IConfiguration _configuration;
         private readonly INotificationService _notificationService;
+        private readonly IGroupService _groupService;
 
-        public SharedFolderService(IGenericRepository<SharedFolder> sharedFolderRepository, ILogger<SharedFolderService> logger, IMapper mapper, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, IConfiguration configuration, INotificationService notificationService)
+        public SharedFolderService(IGenericRepository<SharedFolder> sharedFolderRepository, ILogger<SharedFolderService> logger, IMapper mapper, IGenericRepository<ApplicationUser> applicationUserRepository, IGenericRepository<Group> groupRepository, IConfiguration configuration, INotificationService notificationService, IGroupService groupService)
         {
             _sharedFolderRepository = sharedFolderRepository;
             _logger = logger;
@@ -48,6 +49,7 @@ namespace AddOptimization.Services.Services
             _groupRepository = groupRepository;
             _configuration = configuration;
             _notificationService = notificationService;
+            _groupService = groupService;
         }
 
         public async Task<ApiResult<bool>> Create(SharedFolderRequestDto model)
@@ -87,6 +89,7 @@ namespace AddOptimization.Services.Services
         {
             try
             {
+
                 var entities = (await _sharedFolderRepository.QueryAsync(o => o.FolderId == id && !o.IsDeleted, include: entities => entities.Include(e => e.ApplicationUser), ignoreGlobalFilter: true));
                 if (entities == null)
                 {
@@ -165,29 +168,61 @@ namespace AddOptimization.Services.Services
         }
         private async Task SendNotificationToAccountAdmin(List<SharedFolder> sharedFolders)
         {
-            var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);         
+            var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
             foreach (var item in sharedFolders)
             {
-                var entities = (await _sharedFolderRepository.QueryAsync(o => o.FolderId == item.FolderId && !o.IsDeleted, include: entities => entities.Include(e => e.ApplicationUser).Include(e=>e.TemplateFolder), ignoreGlobalFilter: true)).ToList();
+                var entities = (await _sharedFolderRepository.QueryAsync(o => o.FolderId == item.FolderId && !o.IsDeleted, include: entities => entities.Include(e => e.ApplicationUser).Include(e => e.TemplateFolder), ignoreGlobalFilter: true)).ToList();
                 var sharedFolder = entities.FirstOrDefault();
                 var sharedByUser = sharedFolder?.ApplicationUser;
                 var notifications = new List<NotificationDto>();
                 var subject = $"{sharedFolder?.TemplateFolder?.Name} folder shared by {sharedByUser.FullName}";
                 var bodyContent = $"{sharedFolder?.TemplateFolder?.Name} folder shared by {sharedByUser.FullName}";
-                var link = $"{baseUrl}admin/password-vault/folders/folder-items";
-                var model = new NotificationDto
-                {
-                    Subject = subject,
-                    Content = bodyContent,
-                    Link = link,
-                    AppplicationUserId = Convert.ToInt32(item.SharedWithId),
-                    GroupKey = $"{sharedFolder?.TemplateFolder?.Name} folder shared by #{sharedByUser.FullName}",
-                };
-                notifications.Add(model);
+                var link = $"{baseUrl}admin/password-vault/folders/folder-items?sidenav=collapsed";
 
+                if (item.SharedWithType == SharedWithTypeEnum.GROUP)
+                {
+                    Guid groupId;
+                    if (Guid.TryParse(item.SharedWithId, out groupId))
+                    {
+                        var groupResult = await _groupService.GetGroupAndMembersByGroupId(groupId);
+                        if (groupResult != null && groupResult.Result != null && groupResult.Result.groupMembers != null)
+                        {
+                            foreach (var member in groupResult.Result.groupMembers)
+                            {
+                                var model = new NotificationDto
+                                {
+                                    Subject = subject,
+                                    Content = bodyContent,
+                                    Link = link,
+                                    AppplicationUserId = member.UserId,
+                                    GroupKey = $"{sharedFolder?.TemplateFolder?.Name} folder shared by #{sharedByUser.FullName}",
+                                };
+                                notifications.Add(model);
+                            }
+                        }
+                        else
+                        {
+                            throw new Exception("Invalid Group.");
+                        }
+                    }
+                }
+                else if (item.SharedWithType == SharedWithTypeEnum.USER)
+                {
+                    var model = new NotificationDto
+                    {
+                        Subject = subject,
+                        Content = bodyContent,
+                        Link = link,
+                        AppplicationUserId = Convert.ToInt32(item.SharedWithId),
+                        GroupKey = $"{sharedFolder?.TemplateFolder?.Name} folder shared by #{sharedByUser.FullName}",
+                    };
+                    notifications.Add(model);
+                }
                 await _notificationService.BulkCreateAsync(notifications);
             }
+
         }
     }
 }
+
 
