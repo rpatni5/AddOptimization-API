@@ -190,11 +190,12 @@ namespace AddOptimization.Services.Services
                 var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value.ToString();
                 var groupIds = (await _groupMemberRepository.QueryAsync(x => !x.IsDeleted && x.UserId.ToString() == currentUserId)).Select(x => x.GroupId.ToString().ToLower()).Distinct().ToList();
 
-                var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => !x.IsDeleted && !x.TemplateEntries.IsDeleted , include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser))).ToList();
+                var sharedEntries = (await _sharedEntryRepository.QueryAsync(x => !x.IsDeleted && !x.TemplateEntries.IsDeleted && (x.SharedWithId == currentUserId.ToString() || x.SharedByUserId.ToString() == currentUserId || groupIds.Contains(x.SharedWithId)), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser))).ToList();
 
                 var entryIds = sharedEntries.Select(x => x.EntryId).Distinct().ToList();
 
-                var sharedFolders = (await _sharedFolderRepository.QueryAsync(x => !x.IsDeleted , include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser))).ToList();
+                var sharedFolders = (await _sharedFolderRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == currentUserId.ToString() || x.SharedByUserId.ToString() == currentUserId || groupIds.Contains(x.SharedWithId)) , include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.TemplateFolder))).ToList();
+
                 var folderIds = sharedFolders.Select(x => x.FolderId).Distinct().ToList();
 
                 var templateEntriesByFolder = await _templateEntryRepository.QueryAsync(te => te.FolderId.HasValue && folderIds.Contains(te.FolderId.Value), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.TemplateFolder).Include(e => e.Template).Include(e => e.UpdatedByUser).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
