@@ -65,7 +65,7 @@ namespace AddOptimization.Services.Services
                 var sharedEntriesIds = sharedEntries.Select(x => x.EntryId).Distinct().ToList();
                 var sharedFolder = (await _sharedFolderRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == userId.ToString()))).ToList();
                 var sharedFolderIds = sharedFolder.Select(x => x.FolderId).Distinct().ToList();
-                var isExists = await _templateEntryRepository.IsExist(t => (!t.IsDeleted) && (t.Title == model.Title && t.CreatedByUserId == userId) || (sharedEntriesIds.Contains(t.Id) && t.Title == model.Title) || (sharedFolderIds.Contains(t.Id) && t.Title == model.Title), ignoreGlobalFilter: true);
+                var isExists = await _templateEntryRepository.IsExist(t => t.TemplateId == model.TemplateId && (!t.IsDeleted) && (t.Title == model.Title && t.CreatedByUserId == userId) || (sharedEntriesIds.Contains(t.Id) && t.Title == model.Title) || (sharedFolderIds.Contains(t.Id) && t.Title == model.Title) , ignoreGlobalFilter: true);
 
                 if (isExists)
                 {
