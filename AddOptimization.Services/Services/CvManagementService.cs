@@ -103,48 +103,17 @@ namespace AddOptimization.Services.Services
 
             return downloadUrls;
         }
-
-        //private IQueryable<CvEntry> ApplyFilters(IQueryable<CvEntry> entities, PageQueryFiterBase filter)
-        //{
-        //    var query = entities.Where(e => !e.IsDeleted).ToList();
-        //    filter.GetValue<string>("title", (v) =>
-        //    {
-        //        query = query.Where(e => e.EntryData != null &&
-        //            JsonSerializer.Deserialize<CvEntryDataDto>(e.EntryData.ToString(), jsonOptions)
-        //            ?.Contact.Any(c => c.Title.ToLower().Contains(v.ToLower())) == true).ToList();
-        //    });
-
-        //    return query.AsQueryable();
-        //}
-
-        //public async Task<PagedApiResult<CvEntryDto>> Search(PageQueryFiterBase filters)
-        //{
-        //    try
-        //    {
-        //        var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value.ToString();
-        //        var entities = await _cvEntryRepository.QueryAsync(e => !e.IsDeleted, include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
-
-        //        entities = entities.AsEnumerable().Where(e => e.EntryData != null && (e.UserId.ToString() == userId || JsonSerializer.Deserialize<CvEntryDataDto>(e.EntryData, jsonOptions)?.Contact?.Any(c => c.EmployeeId != null && c.EmployeeId.Equals(userId, StringComparison.OrdinalIgnoreCase)) == true)).AsQueryable();
-
-        //        entities = ApplyFilters(entities, filters);
-        //        var pagedResult = PageHelper<CvEntry, CvEntryDto>.ApplyPaging(entities, filters, entities => entities.Select(e => new CvEntryDto
-        //        {
-        //            Id = e.Id,
-        //            UserId = e.UserId,
-        //            CreatedBy = e.CreatedByUser.FullName,
-        //            EntryData = e.EntryData != null ?  JsonSerializer.Deserialize<CvEntryDataDto>(e.EntryData, jsonOptions) : null,
-        //        }).ToList());
-        //        return PagedApiResult<CvEntryDto>.Success(pagedResult);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogException(ex);
-        //        throw;
-        //    }
-        //}
-
+   
         private IQueryable<CvEntry> ApplyFilters(IQueryable<CvEntry> entities, PageQueryFiterBase filter)
         {
+
+           
+
+            filter.GetValue<string>("employeeId", (v) =>
+            {
+                var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
+                entities = entities.Where(e => e.UserId == userId);
+            });
 
             filter.GetValue<string>("title", (v) =>
             {
@@ -159,24 +128,32 @@ namespace AddOptimization.Services.Services
             try
             {
                 var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value.ToString();
-                var entities = await _cvEntryRepository.QueryAsync(e => !e.IsDeleted, include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
 
-                var filteredEntities = entities.AsEnumerable().Where(e =>
-                    {
-                        var entryData = e.EntryData != null ? JsonSerializer.Deserialize<CvEntryDataDto>(e.EntryData, jsonOptions) : null;
+                var entities = await _cvEntryRepository.QueryAsync(
+                    e => !e.IsDeleted,
+                    include: entities => entities.Include(e => e.CreatedByUser)
+                                                 .Include(e => e.UpdatedByUser)
+                                                 .Include(e => e.ApplicationUser),
+                    orderBy: x => x.OrderByDescending(x => x.CreatedAt)
+                );
 
-                        return entryData != null && (e.UserId.ToString() == userId || entryData.Contact.Any(c => c.EmployeeId != null && c.EmployeeId.Equals(userId, StringComparison.OrdinalIgnoreCase)));
-                    }).AsQueryable();
+                var filteredEntities = entities.AsQueryable().Where(e =>
+                    e.CreatedByUserId.ToString() == userId ||
+                    e.UserId.ToString() == userId
+                );
 
                 filteredEntities = ApplyFilters(filteredEntities, filters);
 
-                var pagedResult = PageHelper<CvEntry, CvEntryDto>.ApplyPaging(filteredEntities, filters, entities => entities.Select(e => new CvEntryDto
-                {
-                    Id = e.Id,
-                    UserId = e.UserId,
-                    Title = e.Title,
-                    CreatedBy = e.CreatedByUser.FullName,
-                }).ToList()
+                var pagedResult = PageHelper<CvEntry, CvEntryDto>.ApplyPaging(
+                    filteredEntities,
+                    filters,
+                    entities => entities.Select(e => new CvEntryDto
+                    {
+                        Id = e.Id,
+                        UserId = e.UserId,
+                        Title = e.Title,
+                        CreatedBy = e.CreatedByUser.FullName,
+                    }).ToList()
                 );
                 return PagedApiResult<CvEntryDto>.Success(pagedResult);
             }
@@ -188,12 +165,21 @@ namespace AddOptimization.Services.Services
         }
 
 
-
         public async Task<ApiResult<bool>> Save(CvEntryDto model)
         {
             try
             {
-                var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
+           
+                var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value.ToString();
+                int userId;
+
+                
+                if (string.IsNullOrWhiteSpace(model.EntryData.Contact[0].EmployeeId) ||
+                    !int.TryParse(model.EntryData.Contact[0].EmployeeId, out userId))
+                {
+                    userId = int.Parse(currentUserId); 
+                }
+
                 List<string> downloadUrls = null;
                 if (model.EntryData.Certificate != null && model.EntryData.Certificate.Count > 0)
                 {
