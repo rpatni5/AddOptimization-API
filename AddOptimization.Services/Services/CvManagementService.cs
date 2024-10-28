@@ -107,12 +107,16 @@ namespace AddOptimization.Services.Services
         private IQueryable<CvEntry> ApplyFilters(IQueryable<CvEntry> entities, PageQueryFiterBase filter)
         {
 
-           
+                var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
 
             filter.GetValue<string>("employeeId", (v) =>
             {
-                var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
                 entities = entities.Where(e => e.UserId == userId);
+            });
+
+            filter.GetValue<string>("createdByUserId", (v) =>
+            {
+                entities = entities.Where(e => e.CreatedByUserId == userId);
             });
 
             filter.GetValue<string>("title", (v) =>
@@ -137,12 +141,7 @@ namespace AddOptimization.Services.Services
                     orderBy: x => x.OrderByDescending(x => x.CreatedAt)
                 );
 
-                var filteredEntities = entities.AsQueryable().Where(e =>
-                    e.CreatedByUserId.ToString() == userId ||
-                    e.UserId.ToString() == userId
-                );
-
-                filteredEntities = ApplyFilters(filteredEntities, filters);
+                var filteredEntities = ApplyFilters(entities.AsQueryable(), filters);
 
                 var pagedResult = PageHelper<CvEntry, CvEntryDto>.ApplyPaging(
                     filteredEntities,
@@ -163,7 +162,6 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-
 
         public async Task<ApiResult<bool>> Save(CvEntryDto model)
         {
