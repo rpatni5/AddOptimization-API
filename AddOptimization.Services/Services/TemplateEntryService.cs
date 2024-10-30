@@ -99,7 +99,7 @@ namespace AddOptimization.Services.Services
 
                 var entryIds = sharedEntries.Select(x => x.EntryId).Distinct().ToList();
 
-                var sharedFolders = (await _sharedFolderRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == currentUserId.ToString() || groupIds.Contains(x.SharedWithId)), include: entities => entities.Include(e => e.TemplateFolder))).ToList();
+                var sharedFolders = (await _sharedFolderRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == currentUserId.ToString() || x.SharedByUserId.ToString() == currentUserId || groupIds.Contains(x.SharedWithId)), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser).Include(e => e.TemplateFolder))).ToList();
 
                 var folderIds = sharedFolders.Select(x => x.FolderId).Distinct().ToList();
 
