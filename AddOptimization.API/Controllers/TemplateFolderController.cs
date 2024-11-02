@@ -86,6 +86,20 @@ namespace AddOptimization.API.Controllers
                 return HandleException(ex);
             }
         }
+
+        [HttpGet("get-by-folderId/{id}")]
+        public async Task<IActionResult> GetTemplates(Guid id)
+        {
+            try
+            {
+                var retVal = await _folderService.GetTemplates(id);
+                return HandleResponse(retVal);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
     }
 }
 
