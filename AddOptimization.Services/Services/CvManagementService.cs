@@ -114,6 +114,12 @@ namespace AddOptimization.Services.Services
                 entities = entities.Where(e => e.UserId == userId);
             });
 
+
+            filter.GetValue<string>("createdBy", (v) =>
+            {
+                entities = entities.Where(e => e.CreatedByUser.FullName.ToLower().Contains(v.ToLower()));
+            });
+
             filter.GetValue<string>("createdByUserId", (v) =>
             {
                 entities = entities.Where(e => e.CreatedByUserId == userId);
