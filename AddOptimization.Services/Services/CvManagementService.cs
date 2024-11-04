@@ -17,6 +17,8 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Mail;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -150,6 +152,7 @@ namespace AddOptimization.Services.Services
                     {
                         Id = e.Id,
                         UserId = e.UserId,
+                        EmployeeName = e.ApplicationUser.FullName,
                         Title = e.Title,
                         CreatedBy = e.CreatedByUser.FullName,
                     }).ToList()
