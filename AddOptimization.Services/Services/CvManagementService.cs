@@ -116,6 +116,12 @@ namespace AddOptimization.Services.Services
                 entities = entities.Where(e => e.UserId == userId);
             });
 
+
+            filter.GetValue<string>("createdBy", (v) =>
+            {
+                entities = entities.Where(e => e.CreatedByUser.FullName.ToLower().Contains(v.ToLower()));
+            });
+
             filter.GetValue<string>("createdByUserId", (v) =>
             {
                 entities = entities.Where(e => e.CreatedByUserId == userId);
@@ -305,6 +311,16 @@ namespace AddOptimization.Services.Services
                 existingEntryData.Project = model.EntryData.Project == null || !model.EntryData.Project.Any() ? null : model.EntryData.Project;
                 existingEntryData.Language = model.EntryData.Language == null || !model.EntryData.Language.Any() ? null : model.EntryData.Language;
                 existingEntryData.TechnicalKnowledge = model.EntryData.TechnicalKnowledge == null || !model.EntryData.TechnicalKnowledge.Any() ? null : model.EntryData.TechnicalKnowledge;
+
+                if (!string.IsNullOrEmpty(model.Title))
+                {
+                    entity.Title = model.Title;
+
+                    if (existingEntryData.Contact != null && existingEntryData.Contact.Any())
+                    {
+                        existingEntryData.Contact[0].Title = model.Title;
+                    }
+                }
 
                 entity.EntryData = JsonSerializer.Serialize(existingEntryData, jsonOptions);
                 await _cvEntryRepository.UpdateAsync(entity);
