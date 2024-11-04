@@ -49,4 +49,19 @@ public class CvHistoryManagementController : CustomApiControllerBase
         }
     }
 
+    [HttpPut("{historyEntryId}")]
+    public async Task<IActionResult> RestoreFromHistory(Guid historyEntryId)
+    {
+        try
+        {
+            var result = await _cvHistoryManagementService.RestoreFromHistory(historyEntryId);
+
+            return HandleResponse(result);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
 }
