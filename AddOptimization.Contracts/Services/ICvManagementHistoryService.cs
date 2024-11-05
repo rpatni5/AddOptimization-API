@@ -7,6 +7,8 @@ namespace AddOptimization.Contracts.Services
     {
         Task<ApiResult<List<CvEntryHistoryDto>>> GetCvHistory(Guid id);
         Task<ApiResult<CvEntryHistoryDto>> GetHistoryDetailsById(Guid id);
+        Task<ApiResult<bool>> RestoreFromHistory(Guid historyEntryId);
+
     }
 }
 
