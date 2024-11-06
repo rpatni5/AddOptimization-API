@@ -121,7 +121,7 @@ namespace AddOptimization.Services.Services
             {
                 entities = entities.Where(e => e.CreatedByUser.FullName.ToLower().Contains(v.ToLower()));
             });
-
+           
             filter.GetValue<string>("createdByUserId", (v) =>
             {
                 entities = entities.Where(e => e.CreatedByUserId == userId);
@@ -129,7 +129,10 @@ namespace AddOptimization.Services.Services
 
             filter.GetValue<string>("title", (v) =>
             {
-                entities = entities.Where(e => e.Title == v);
+                if (!string.IsNullOrEmpty(v))
+                {
+                    entities = entities.Where(e => e.Title.ToLower().Contains(v.ToLower())); 
+                }
             });
 
             return entities;
