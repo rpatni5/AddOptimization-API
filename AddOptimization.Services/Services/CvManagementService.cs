@@ -17,6 +17,8 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Mail;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -107,17 +109,30 @@ namespace AddOptimization.Services.Services
         private IQueryable<CvEntry> ApplyFilters(IQueryable<CvEntry> entities, PageQueryFiterBase filter)
         {
 
-           
+                var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
 
             filter.GetValue<string>("employeeId", (v) =>
             {
-                var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
                 entities = entities.Where(e => e.UserId == userId);
+            });
+
+
+            filter.GetValue<string>("createdBy", (v) =>
+            {
+                entities = entities.Where(e => e.CreatedByUser.FullName.ToLower().Contains(v.ToLower()));
+            });
+           
+            filter.GetValue<string>("createdByUserId", (v) =>
+            {
+                entities = entities.Where(e => e.CreatedByUserId == userId);
             });
 
             filter.GetValue<string>("title", (v) =>
             {
-                entities = entities.Where(e => e.Title == v);
+                if (!string.IsNullOrEmpty(v))
+                {
+                    entities = entities.Where(e => e.Title.ToLower().Contains(v.ToLower())); 
+                }
             });
 
             return entities;
@@ -137,12 +152,7 @@ namespace AddOptimization.Services.Services
                     orderBy: x => x.OrderByDescending(x => x.CreatedAt)
                 );
 
-                var filteredEntities = entities.AsQueryable().Where(e =>
-                    e.CreatedByUserId.ToString() == userId ||
-                    e.UserId.ToString() == userId
-                );
-
-                filteredEntities = ApplyFilters(filteredEntities, filters);
+                var filteredEntities = ApplyFilters(entities.AsQueryable(), filters);
 
                 var pagedResult = PageHelper<CvEntry, CvEntryDto>.ApplyPaging(
                     filteredEntities,
@@ -151,6 +161,7 @@ namespace AddOptimization.Services.Services
                     {
                         Id = e.Id,
                         UserId = e.UserId,
+                        EmployeeName = e.ApplicationUser.FullName,
                         Title = e.Title,
                         CreatedBy = e.CreatedByUser.FullName,
                     }).ToList()
@@ -163,7 +174,6 @@ namespace AddOptimization.Services.Services
                 throw;
             }
         }
-
 
         public async Task<ApiResult<bool>> Save(CvEntryDto model)
         {
@@ -304,6 +314,16 @@ namespace AddOptimization.Services.Services
                 existingEntryData.Project = model.EntryData.Project == null || !model.EntryData.Project.Any() ? null : model.EntryData.Project;
                 existingEntryData.Language = model.EntryData.Language == null || !model.EntryData.Language.Any() ? null : model.EntryData.Language;
                 existingEntryData.TechnicalKnowledge = model.EntryData.TechnicalKnowledge == null || !model.EntryData.TechnicalKnowledge.Any() ? null : model.EntryData.TechnicalKnowledge;
+
+                if (!string.IsNullOrEmpty(model.Title))
+                {
+                    entity.Title = model.Title;
+
+                    if (existingEntryData.Contact != null && existingEntryData.Contact.Any())
+                    {
+                        existingEntryData.Contact[0].Title = model.Title;
+                    }
+                }
 
                 entity.EntryData = JsonSerializer.Serialize(existingEntryData, jsonOptions);
                 await _cvEntryRepository.UpdateAsync(entity);

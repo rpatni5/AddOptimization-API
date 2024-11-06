@@ -22,6 +22,7 @@ namespace AddOptimization.Services.Services
     public class CvManagementHistoryService : ICvManagementHistoryService
     {
         private readonly IGenericRepository<CvEntryHistory> _cvEntryHistoryRepository;
+        private readonly IGenericRepository<CvEntry> _cvEntryRepository;
         private readonly ILogger<CvManagementHistoryService> _logger;
         private readonly IMapper _mapper;
 
@@ -30,9 +31,10 @@ namespace AddOptimization.Services.Services
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
 
-        public CvManagementHistoryService(IGenericRepository<CvEntryHistory> cvEntryHistoryRepository, ILogger<CvManagementHistoryService> logger, IMapper mapper)
+        public CvManagementHistoryService(IGenericRepository<CvEntryHistory> cvEntryHistoryRepository, IGenericRepository<CvEntry> cvEntryRepository ,ILogger<CvManagementHistoryService> logger, IMapper mapper)
         {
             _cvEntryHistoryRepository = cvEntryHistoryRepository;
+            _cvEntryRepository = cvEntryRepository;
             _logger = logger;
             _mapper = mapper;
         }
@@ -46,30 +48,38 @@ namespace AddOptimization.Services.Services
                         x => x.CVEntryId == id && !x.IsDeleted,
                         orderBy: q => q.OrderByDescending(e => e.CreatedAt),
                         include: entities => entities
-                            .Include(e => e.CvEntry)
-                            .Include(e => e.CreatedByUser));
+                          
+                            .Include(e => e.CreatedByUser)
+                    );
 
-                if (entities == null || !entities.Any())
+                var entityList = entities.ToList();
+
+                if (entityList.Count > 5)
                 {
-                    return ApiResult<List<CvEntryHistoryDto>>.NotFound("CV History");
+                    var entitiesToDelete = entityList.Skip(5).ToList();
+                    foreach (var entity in entitiesToDelete)
+                    {
+                        await _cvEntryHistoryRepository.DeleteAsync(entity);
+                    }
                 }
 
-                var latestEntities = entities.Take(5).ToList(); 
+                var latestEntities = entityList.Take(5).ToList();
 
                 var cvHistoryDtos = new List<CvEntryHistoryDto>();
 
                 foreach (var entity in latestEntities)
                 {
-                    CvEntryDataDto entryData;
-                    try
+                    CvEntryDataDto entryData = new CvEntryDataDto(); 
+
+                    if (!string.IsNullOrWhiteSpace(entity.EntryData))
                     {
-                        entryData = string.IsNullOrWhiteSpace(entity.EntryData)
-                            ? new CvEntryDataDto()
-                            : JsonSerializer.Deserialize<CvEntryDataDto>(entity.EntryData, jsonOptions);
-                    }
-                    catch (JsonException ex)
-                    {
-                        entryData = new CvEntryDataDto();
+                        try
+                        {
+                            entryData = JsonSerializer.Deserialize<CvEntryDataDto>(entity.EntryData, jsonOptions);
+                        }
+                        catch (JsonException)
+                        {
+                        }
                     }
                     cvHistoryDtos.Add(new CvEntryHistoryDto
                     {
@@ -93,7 +103,6 @@ namespace AddOptimization.Services.Services
                 return ApiResult<List<CvEntryHistoryDto>>.Failure("An error occurred while retrieving the CV entry.");
             }
         }
-
 
         public async Task<ApiResult<CvEntryHistoryDto>> GetHistoryDetailsById(Guid id)
         {
@@ -133,6 +142,49 @@ namespace AddOptimization.Services.Services
             {
                 _logger.LogException(ex);
                 return ApiResult<CvEntryHistoryDto>.Failure("An error occurred while retrieving the CV history entry.");
+            }
+        }
+
+
+        public async Task<ApiResult<bool>> RestoreFromHistory(Guid historyEntryId)
+        {
+            try
+            {
+                var historyEntry = await _cvEntryHistoryRepository.FirstOrDefaultAsync(e => e.Id == historyEntryId);
+                if (historyEntry == null)
+                {
+                    return ApiResult<bool>.NotFound("History entry not found.");
+                }
+
+                var entryData = JsonSerializer.Deserialize<CvEntryDataDto>(historyEntry.EntryData, jsonOptions);
+                if (entryData == null)
+                {
+                    return ApiResult<bool>.Failure("Failed to deserialize entry data from history.");
+                }
+
+                var cvEntry = await _cvEntryRepository.FirstOrDefaultAsync(e => e.Id == historyEntry.CVEntryId);
+                if (cvEntry == null)
+                {
+                    return ApiResult<bool>.NotFound("CV entry not found.");
+                }
+
+                cvEntry.EntryData = JsonSerializer.Serialize(entryData, jsonOptions);
+                await _cvEntryRepository.UpdateAsync(cvEntry);
+
+                var newHistoryEntry = new CvEntryHistory
+                {
+                    CVEntryId = cvEntry.Id,
+                    EntryData = cvEntry.EntryData,
+                };
+
+                await _cvEntryHistoryRepository.InsertAsync(newHistoryEntry);
+
+                return ApiResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return ApiResult<bool>.Failure("An error occurred while restoring data from history.");
             }
         }
 
