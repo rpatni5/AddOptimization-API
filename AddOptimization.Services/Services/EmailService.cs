@@ -46,7 +46,7 @@ public  class EmailService: IEmailService
             }
             SmtpClient smtpClient;
             MailMessage mailMessage;
-            Task.Run(()=> Send(recipientEmails, subject, body, cc, hasHtml, out smtpClient, out mailMessage));
+            Task.Run(() => Send(recipientEmails, subject, body, cc, hasHtml, out smtpClient, out mailMessage));
             return true;
         }
         catch (Exception ex)
@@ -56,12 +56,12 @@ public  class EmailService: IEmailService
         }
     }
 
-    private void Send(string recipientEmails, string subject, string body, string cc, bool hasHtml, out SmtpClient smtpClient, out MailMessage mailMessage)
+    private void Send(string recipientEmails, string subject, string body, string cc, bool hasHtml, out SmtpClient smtpClient, out MailMessage mailMessage, string fromEmail = null)
     {
         var emailSettings = _configuration.ReadSection<EmailSettings>(AppSettingsSections.EmailSettings);
         string smtpServer = emailSettings.SMTPServer;
         int smtpPort = emailSettings.SMTPPort;
-        string senderEmail = emailSettings.SenderEmail;
+        string senderEmail =  emailSettings.SenderEmail;
         string senderPassword = emailSettings.SenderPassword;
         smtpClient = new SmtpClient(smtpServer, smtpPort)
         {
@@ -74,7 +74,7 @@ public  class EmailService: IEmailService
         {
             Subject = subject,
             Body = body,
-            From = new MailAddress(senderEmail),
+            From = new MailAddress(fromEmail ?? senderEmail),
             IsBodyHtml = hasHtml
         };
         if(!string.IsNullOrEmpty(recipientEmails))
@@ -99,7 +99,29 @@ public  class EmailService: IEmailService
             smtpClient.Send(mailMessage);
 
         }
+    }
 
 
+
+    public async Task<bool> SendEmailSync(string recipientEmails, string subject, string body, string cc = null, bool hasHtml = true, string fromEmail = null)
+    {
+        try
+        {
+            var isEmailNotificationsEnabled = await _settingService.GetSettingByCode(SettingCodes.EMAIL_NOTIFICATIONS);
+            if (isEmailNotificationsEnabled != null && !isEmailNotificationsEnabled.Result.IsEnabled)
+            {
+                _logger.LogInformation($"Email notification setting is disabled. Details : Email recipient : {recipientEmails}, Subject: {subject},   Body : {body}.");
+                return false;
+            }
+            SmtpClient smtpClient;
+            MailMessage mailMessage;
+            Send(recipientEmails, subject, body, cc, hasHtml, out smtpClient, out mailMessage, fromEmail);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            return false;
+        }
     }
 }
