@@ -93,7 +93,7 @@ public class CvManagementController : CustomApiControllerBase
     }
 
 
-    [HttpPost("sendCv")]
+    [HttpPost("send-cv")]
     public async Task<IActionResult> SendCvEmail([FromBody] SendCvDto model)
     {
         try

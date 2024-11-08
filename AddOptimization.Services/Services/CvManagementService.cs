@@ -376,7 +376,7 @@ namespace AddOptimization.Services.Services
                                .Replace("[EmployeeName]", model.EmployeeName)
                                .Replace("[UserName]", model.UserName)
                                .Replace("[LinkToCv]", link);
-            var emailResult = await _emailService.SendEmail(model.SendTo,subject,emailTemplate, fromEmail: model.Sender);
+            var emailResult = await _emailService.SendEmailSync(model.SendTo,subject,emailTemplate, fromEmail: model.Sender);
 
             return ApiResult<bool>.Success(emailResult);
         }

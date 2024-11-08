@@ -34,7 +34,7 @@ public  class EmailService: IEmailService
     /// <param name="body"></param>
     /// <param name="hasHtml"></param>
     /// <returns></returns>
-    public async Task<bool> SendEmail(string recipientEmails,string subject,string body,string cc=null,bool hasHtml= true, string fromEmail = null)
+    public async Task<bool> SendEmail(string recipientEmails,string subject,string body,string cc=null,bool hasHtml= true)
     {
         try
         {
@@ -46,7 +46,7 @@ public  class EmailService: IEmailService
             }
             SmtpClient smtpClient;
             MailMessage mailMessage;
-            Task.Run(() => Send(recipientEmails, subject, body, cc, hasHtml, out smtpClient, out mailMessage, fromEmail));
+            Task.Run(() => Send(recipientEmails, subject, body, cc, hasHtml, out smtpClient, out mailMessage));
             return true;
         }
         catch (Exception ex)
@@ -99,7 +99,29 @@ public  class EmailService: IEmailService
             smtpClient.Send(mailMessage);
 
         }
+    }
 
 
+
+    public async Task<bool> SendEmailSync(string recipientEmails, string subject, string body, string cc = null, bool hasHtml = true, string fromEmail = null)
+    {
+        try
+        {
+            var isEmailNotificationsEnabled = await _settingService.GetSettingByCode(SettingCodes.EMAIL_NOTIFICATIONS);
+            if (isEmailNotificationsEnabled != null && !isEmailNotificationsEnabled.Result.IsEnabled)
+            {
+                _logger.LogInformation($"Email notification setting is disabled. Details : Email recipient : {recipientEmails}, Subject: {subject},   Body : {body}.");
+                return false;
+            }
+            SmtpClient smtpClient;
+            MailMessage mailMessage;
+            Send(recipientEmails, subject, body, cc, hasHtml, out smtpClient, out mailMessage, fromEmail);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            return false;
+        }
     }
 }
