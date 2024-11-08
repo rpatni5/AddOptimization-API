@@ -34,7 +34,7 @@ public  class EmailService: IEmailService
     /// <param name="body"></param>
     /// <param name="hasHtml"></param>
     /// <returns></returns>
-    public async Task<bool> SendEmail(string recipientEmails,string subject,string body,string cc=null,bool hasHtml= true)
+    public async Task<bool> SendEmail(string recipientEmails,string subject,string body,string cc=null,bool hasHtml= true, string fromEmail = null)
     {
         try
         {
@@ -46,7 +46,7 @@ public  class EmailService: IEmailService
             }
             SmtpClient smtpClient;
             MailMessage mailMessage;
-            Task.Run(()=> Send(recipientEmails, subject, body, cc, hasHtml, out smtpClient, out mailMessage));
+            Task.Run(() => Send(recipientEmails, subject, body, cc, hasHtml, out smtpClient, out mailMessage, fromEmail));
             return true;
         }
         catch (Exception ex)
@@ -56,12 +56,12 @@ public  class EmailService: IEmailService
         }
     }
 
-    private void Send(string recipientEmails, string subject, string body, string cc, bool hasHtml, out SmtpClient smtpClient, out MailMessage mailMessage)
+    private void Send(string recipientEmails, string subject, string body, string cc, bool hasHtml, out SmtpClient smtpClient, out MailMessage mailMessage, string fromEmail = null)
     {
         var emailSettings = _configuration.ReadSection<EmailSettings>(AppSettingsSections.EmailSettings);
         string smtpServer = emailSettings.SMTPServer;
         int smtpPort = emailSettings.SMTPPort;
-        string senderEmail = emailSettings.SenderEmail;
+        string senderEmail =  emailSettings.SenderEmail;
         string senderPassword = emailSettings.SenderPassword;
         smtpClient = new SmtpClient(smtpServer, smtpPort)
         {
@@ -74,7 +74,7 @@ public  class EmailService: IEmailService
         {
             Subject = subject,
             Body = body,
-            From = new MailAddress(senderEmail),
+            From = new MailAddress(fromEmail ?? senderEmail),
             IsBodyHtml = hasHtml
         };
         if(!string.IsNullOrEmpty(recipientEmails))

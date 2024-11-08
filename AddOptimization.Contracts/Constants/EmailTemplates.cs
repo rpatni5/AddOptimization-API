@@ -30,5 +30,6 @@ public class EmailTemplates
     public const string UnpaidInvoiceReminderAccountAdmin = "unpaid_invoice_reminder_accountadmin.html";
     public const string UnpaidInvoice = "unpaid_invoice.html";
     public const string QuoteActions = "quote_actions.html";
+    public const string SendCvToClient = "send_cv_to_client.html";
 
 }

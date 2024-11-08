@@ -7,6 +7,7 @@ using AddOptimization.Contracts.Dto;
 using AddOptimization.Services.Services;
 using AddOptimization.Utilities.Models;
 using AddOptimization.Utilities.Common;
+using Stripe;
 
 namespace AddOptimization.API.Controllers;
 [Authorize]
@@ -91,4 +92,18 @@ public class CvManagementController : CustomApiControllerBase
         }
     }
 
+
+    [HttpPost("sendCv")]
+    public async Task<IActionResult> SendCvEmail([FromBody] SendCvDto model)
+    {
+        try
+        {
+            var retVal = await _cvManagementService.SendCv(model);
+            return HandleResponse(retVal);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
 }

@@ -11,6 +11,8 @@ namespace AddOptimization.Contracts.Services
         Task<ApiResult<bool>> Delete(Guid id);
         Task<ApiResult<CvEntryDto>> GetById(Guid id);
         Task<ApiResult<CvEntryDto>> Update(Guid id, CvEntryDto model);
+        Task<ApiResult<bool>> SendCv(SendCvDto model);
+
     }
 }
 

@@ -22,6 +22,12 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Stripe;
+using AddOptimization.Utilities.Constants;
+using AddOptimization.Utilities.Services;
+using AddOptimization.Contracts.Constants;
+using AddOptimization.Utilities.Interface;
+using System.Globalization;
 
 
 namespace AddOptimization.Services.Services
@@ -35,13 +41,16 @@ namespace AddOptimization.Services.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration;
         private readonly IHostingEnvironment _hostingEnvironment;
+        private readonly CustomDataProtectionService _protectionService;
+        private readonly ITemplateService _templateService;
+        private readonly IEmailService _emailService;
 
         JsonSerializerOptions jsonOptions = new()
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
 
-        public CvManagementService(IGenericRepository<CvEntry> cvEntryRepository, ILogger<CvManagementService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, IHostingEnvironment hostingEnvironment, IConfiguration configuration, IGenericRepository<CvEntryHistory> cvEntryHistoryRepository)
+        public CvManagementService(IGenericRepository<CvEntry> cvEntryRepository, ILogger<CvManagementService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, IHostingEnvironment hostingEnvironment, IConfiguration configuration, IGenericRepository<CvEntryHistory> cvEntryHistoryRepository, CustomDataProtectionService protectionService, ITemplateService templateService, IEmailService emailService)
         {
             _cvEntryRepository = cvEntryRepository;
             _logger = logger;
@@ -50,6 +59,9 @@ namespace AddOptimization.Services.Services
             _configuration = configuration;
             _hostingEnvironment = hostingEnvironment;
             _cvEntryHistoryRepository = cvEntryHistoryRepository;
+            _protectionService = protectionService;
+            _templateService = templateService;
+            _emailService = emailService;
         }
 
         private async Task<List<string>> SaveVersionAndGenerateDownloadUrls(CvEntryDataDto request)
@@ -105,11 +117,11 @@ namespace AddOptimization.Services.Services
 
             return downloadUrls;
         }
-   
+
         private IQueryable<CvEntry> ApplyFilters(IQueryable<CvEntry> entities, PageQueryFiterBase filter)
         {
 
-                var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
+            var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
 
             filter.GetValue<string>("employeeId", (v) =>
             {
@@ -121,7 +133,7 @@ namespace AddOptimization.Services.Services
             {
                 entities = entities.Where(e => e.CreatedByUser.FullName.ToLower().Contains(v.ToLower()));
             });
-           
+
             filter.GetValue<string>("createdByUserId", (v) =>
             {
                 entities = entities.Where(e => e.CreatedByUserId == userId);
@@ -131,7 +143,7 @@ namespace AddOptimization.Services.Services
             {
                 if (!string.IsNullOrEmpty(v))
                 {
-                    entities = entities.Where(e => e.Title.ToLower().Contains(v.ToLower())); 
+                    entities = entities.Where(e => e.Title.ToLower().Contains(v.ToLower()));
                 }
             });
 
@@ -179,15 +191,15 @@ namespace AddOptimization.Services.Services
         {
             try
             {
-           
+
                 var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value.ToString();
                 int userId;
 
-                
+
                 if (string.IsNullOrWhiteSpace(model.EntryData.Contact[0].EmployeeId) ||
                     !int.TryParse(model.EntryData.Contact[0].EmployeeId, out userId))
                 {
-                    userId = int.Parse(currentUserId); 
+                    userId = int.Parse(currentUserId);
                 }
 
                 List<string> downloadUrls = null;
@@ -348,6 +360,33 @@ namespace AddOptimization.Services.Services
         }
 
 
+        public async Task<ApiResult<bool>> SendCv(SendCvDto model)
+        {
+            if (string.IsNullOrWhiteSpace(model.Sender))
+            {
+                _logger.LogError(" Sender Email is missing.");
+                return ApiResult<bool>.Success(false);
+            }
+            var cvEntry = (await GetById(model.CvEntryId)).Result;
+            var subject = $"CV {model.EmployeeName}";
+            var link = GetCvLinkForClient(cvEntry.Id);
+            var emailTemplate = _templateService.ReadTemplate(EmailTemplates.SendCvToClient);
+            emailTemplate = emailTemplate
+                               .Replace("[ClientName]", model.ClientName)
+                               .Replace("[EmployeeName]", model.EmployeeName)
+                               .Replace("[UserName]", model.UserName)
+                               .Replace("[LinkToCv]", link);
+            var emailResult = await _emailService.SendEmail(model.SendTo,subject,emailTemplate, fromEmail: model.Sender);
+
+            return ApiResult<bool>.Success(emailResult);
+        }
+
+
+        public string GetCvLinkForClient(Guid cvEntryId)
+        {
+            var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
+            return $"{baseUrl}admin/cv-management/view-cv/{cvEntryId}?sidenav=collapsed&type=cv";
+        }
     }
 
 }
