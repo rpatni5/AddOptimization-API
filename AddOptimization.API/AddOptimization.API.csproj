@@ -97,6 +97,9 @@
     <None Update="Assets\Templates\quote_actions.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Assets\Templates\send_cv_to_client.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Assets\Templates\unpaid_invoice.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

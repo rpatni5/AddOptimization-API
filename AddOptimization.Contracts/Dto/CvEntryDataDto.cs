@@ -71,6 +71,7 @@ namespace AddOptimization.Contracts.Dto
         public string State { get; set; }
         public string Country { get; set; }
         public string PhoneNumber { get; set; }
+        public string DialCode { get; set; }
     }
 
     public class CertificateDto

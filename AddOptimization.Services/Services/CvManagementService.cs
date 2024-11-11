@@ -17,9 +17,17 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Mail;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Stripe;
+using AddOptimization.Utilities.Constants;
+using AddOptimization.Utilities.Services;
+using AddOptimization.Contracts.Constants;
+using AddOptimization.Utilities.Interface;
+using System.Globalization;
 
 
 namespace AddOptimization.Services.Services
@@ -33,13 +41,16 @@ namespace AddOptimization.Services.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration;
         private readonly IHostingEnvironment _hostingEnvironment;
+        private readonly CustomDataProtectionService _protectionService;
+        private readonly ITemplateService _templateService;
+        private readonly IEmailService _emailService;
 
         JsonSerializerOptions jsonOptions = new()
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
 
-        public CvManagementService(IGenericRepository<CvEntry> cvEntryRepository, ILogger<CvManagementService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, IHostingEnvironment hostingEnvironment, IConfiguration configuration, IGenericRepository<CvEntryHistory> cvEntryHistoryRepository)
+        public CvManagementService(IGenericRepository<CvEntry> cvEntryRepository, ILogger<CvManagementService> logger, IMapper mapper, IHttpContextAccessor httpContextAccessor, IHostingEnvironment hostingEnvironment, IConfiguration configuration, IGenericRepository<CvEntryHistory> cvEntryHistoryRepository, CustomDataProtectionService protectionService, ITemplateService templateService, IEmailService emailService)
         {
             _cvEntryRepository = cvEntryRepository;
             _logger = logger;
@@ -48,6 +59,9 @@ namespace AddOptimization.Services.Services
             _configuration = configuration;
             _hostingEnvironment = hostingEnvironment;
             _cvEntryHistoryRepository = cvEntryHistoryRepository;
+            _protectionService = protectionService;
+            _templateService = templateService;
+            _emailService = emailService;
         }
 
         private async Task<List<string>> SaveVersionAndGenerateDownloadUrls(CvEntryDataDto request)
@@ -103,25 +117,113 @@ namespace AddOptimization.Services.Services
 
             return downloadUrls;
         }
-   
+
         private IQueryable<CvEntry> ApplyFilters(IQueryable<CvEntry> entities, PageQueryFiterBase filter)
         {
 
-           
+            var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
 
             filter.GetValue<string>("employeeId", (v) =>
             {
-                var userId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
                 entities = entities.Where(e => e.UserId == userId);
+            });
+
+            filter.GetValue<string>("employeeName", (v) =>
+            {
+                entities = entities.Where(e => e.ApplicationUser.FullName.ToLower().Contains(v.ToLower()));
+            });
+
+            filter.GetValue<string>("createdBy", (v) =>
+            {
+                entities = entities.Where(e => e.CreatedByUser.FullName.ToLower().Contains(v.ToLower()));
+            });
+
+            filter.GetValue<string>("createdByUserId", (v) =>
+            {
+                entities = entities.Where(e => e.CreatedByUserId == userId);
             });
 
             filter.GetValue<string>("title", (v) =>
             {
-                entities = entities.Where(e => e.Title == v);
+                if (!string.IsNullOrEmpty(v))
+                {
+                    entities = entities.Where(e => e.Title.ToLower().Contains(v.ToLower()));
+                }
             });
+
+            filter.GetValue<DateTime>("updatedAt", (v) =>
+            {
+                entities = entities.Where(e =>(e.UpdatedAt.HasValue && e.UpdatedAt < v) ||(!e.UpdatedAt.HasValue && e.CreatedAt != null && e.CreatedAt < v));
+            }, OperatorType.lessthan, true);
+            filter.GetValue<DateTime>("updatedAt", (v) =>
+            {
+                entities = entities.Where(e => (e.UpdatedAt.HasValue && e.UpdatedAt > v) || (!e.UpdatedAt.HasValue && e.CreatedAt != null && e.CreatedAt > v));
+            }, OperatorType.greaterthan, true);
 
             return entities;
         }
+
+        private IQueryable<CvEntry> ApplySorting(IQueryable<CvEntry> orders, SortModel sort)
+        {
+            try
+            {
+               if (sort?.Name == null)
+                {
+                    orders = orders.OrderByDescending(o => o.CreatedAt);
+                    return orders;
+                }
+                var columnName = sort.Name.ToUpper();
+                if (sort.Direction == SortDirection.ascending.ToString())
+                {
+
+                    if (columnName.ToUpper() == nameof(CvEntryDto.EmployeeName).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.ApplicationUser.FullName);
+                    }
+                    if (columnName.ToUpper() == nameof(CvEntryDto.Title).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.Title);
+                    }
+                    if (columnName.ToUpper() == nameof(CvEntryDto.CreatedBy).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.CreatedByUser.FullName);
+                    }
+                    if (columnName.ToUpper() == nameof(CvEntryDto.UpdatedAt).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.UpdatedAt);
+                    }
+
+                }
+                else
+                {
+                    if (columnName.ToUpper() == nameof(CvEntryDto.EmployeeName).ToUpper())
+                    {
+                        orders = orders.OrderByDescending(o => o.ApplicationUser.FullName);
+                    }
+                    if (columnName.ToUpper() == nameof(CvEntryDto.Title).ToUpper())
+                    {
+                        orders = orders.OrderByDescending(o => o.Title);
+                    }
+                    if (columnName.ToUpper() == nameof(CvEntryDto.CreatedBy).ToUpper())
+                    {
+                        orders = orders.OrderByDescending(o => o.CreatedByUser.FullName);
+                    }
+                    if (columnName.ToUpper() == nameof(CvEntryDto.CreatedBy).ToUpper())
+                    {
+                        orders = orders.OrderByDescending(o => o.UpdatedAt);
+                    }
+
+                }
+                return orders;
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return orders;
+            }
+        }
+
 
         public async Task<PagedApiResult<CvEntryDto>> Search(PageQueryFiterBase filters)
         {
@@ -136,13 +238,8 @@ namespace AddOptimization.Services.Services
                                                  .Include(e => e.ApplicationUser),
                     orderBy: x => x.OrderByDescending(x => x.CreatedAt)
                 );
-
-                var filteredEntities = entities.AsQueryable().Where(e =>
-                    e.CreatedByUserId.ToString() == userId ||
-                    e.UserId.ToString() == userId
-                );
-
-                filteredEntities = ApplyFilters(filteredEntities, filters);
+                entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
+                var filteredEntities = ApplyFilters(entities.AsQueryable(), filters);
 
                 var pagedResult = PageHelper<CvEntry, CvEntryDto>.ApplyPaging(
                     filteredEntities,
@@ -151,8 +248,11 @@ namespace AddOptimization.Services.Services
                     {
                         Id = e.Id,
                         UserId = e.UserId,
+                        EmployeeName = e.ApplicationUser.FullName,
                         Title = e.Title,
                         CreatedBy = e.CreatedByUser.FullName,
+                        CreatedAt = e.CreatedAt,
+                        UpdatedAt = e.UpdatedAt,
                     }).ToList()
                 );
                 return PagedApiResult<CvEntryDto>.Success(pagedResult);
@@ -164,20 +264,19 @@ namespace AddOptimization.Services.Services
             }
         }
 
-
         public async Task<ApiResult<bool>> Save(CvEntryDto model)
         {
             try
             {
-           
+
                 var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value.ToString();
                 int userId;
 
-                
+
                 if (string.IsNullOrWhiteSpace(model.EntryData.Contact[0].EmployeeId) ||
                     !int.TryParse(model.EntryData.Contact[0].EmployeeId, out userId))
                 {
-                    userId = int.Parse(currentUserId); 
+                    userId = int.Parse(currentUserId);
                 }
 
                 List<string> downloadUrls = null;
@@ -305,6 +404,16 @@ namespace AddOptimization.Services.Services
                 existingEntryData.Language = model.EntryData.Language == null || !model.EntryData.Language.Any() ? null : model.EntryData.Language;
                 existingEntryData.TechnicalKnowledge = model.EntryData.TechnicalKnowledge == null || !model.EntryData.TechnicalKnowledge.Any() ? null : model.EntryData.TechnicalKnowledge;
 
+                if (!string.IsNullOrEmpty(model.Title))
+                {
+                    entity.Title = model.Title;
+
+                    if (existingEntryData.Contact != null && existingEntryData.Contact.Any())
+                    {
+                        existingEntryData.Contact[0].Title = model.Title;
+                    }
+                }
+
                 entity.EntryData = JsonSerializer.Serialize(existingEntryData, jsonOptions);
                 await _cvEntryRepository.UpdateAsync(entity);
 
@@ -328,6 +437,33 @@ namespace AddOptimization.Services.Services
         }
 
 
+        public async Task<ApiResult<bool>> SendCv(SendCvDto model)
+        {
+            if (string.IsNullOrWhiteSpace(model.Sender))
+            {
+                _logger.LogError(" Sender Email is missing.");
+                return ApiResult<bool>.Success(false);
+            }
+            var cvEntry = (await GetById(model.CvEntryId)).Result;
+            var subject = $"CV {model.EmployeeName}";
+            var link = GetCvLinkForClient(cvEntry.Id);
+            var emailTemplate = _templateService.ReadTemplate(EmailTemplates.SendCvToClient);
+            emailTemplate = emailTemplate
+                               .Replace("[ClientName]", model.ClientName)
+                               .Replace("[EmployeeName]", model.EmployeeName)
+                               .Replace("[UserName]", model.UserName)
+                               .Replace("[LinkToCv]", link);
+            var emailResult = await _emailService.SendEmailSync(model.SendTo,subject,emailTemplate, fromEmail: model.Sender);
+
+            return ApiResult<bool>.Success(emailResult);
+        }
+
+
+        public string GetCvLinkForClient(Guid cvEntryId)
+        {
+            var baseUrl = (_configuration.ReadSection<AppUrls>(AppSettingsSections.AppUrls).BaseUrl);
+            return $"{baseUrl}admin/cv-management/view-cv/{cvEntryId}?sidenav=collapsed&type=cv";
+        }
     }
 
 }
