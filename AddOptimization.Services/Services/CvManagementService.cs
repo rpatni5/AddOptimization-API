@@ -128,6 +128,10 @@ namespace AddOptimization.Services.Services
                 entities = entities.Where(e => e.UserId == userId);
             });
 
+            filter.GetValue<string>("employeeName", (v) =>
+            {
+                entities = entities.Where(e => e.ApplicationUser.FullName.ToLower().Contains(v.ToLower()));
+            });
 
             filter.GetValue<string>("createdBy", (v) =>
             {
@@ -147,8 +151,79 @@ namespace AddOptimization.Services.Services
                 }
             });
 
+            filter.GetValue<DateTime>("updatedAt", (v) =>
+            {
+                entities = entities.Where(e =>(e.UpdatedAt.HasValue && e.UpdatedAt < v) ||(!e.UpdatedAt.HasValue && e.CreatedAt != null && e.CreatedAt < v));
+            }, OperatorType.lessthan, true);
+            filter.GetValue<DateTime>("updatedAt", (v) =>
+            {
+                entities = entities.Where(e => (e.UpdatedAt.HasValue && e.UpdatedAt > v) || (!e.UpdatedAt.HasValue && e.CreatedAt != null && e.CreatedAt > v));
+            }, OperatorType.greaterthan, true);
+
             return entities;
         }
+
+        private IQueryable<CvEntry> ApplySorting(IQueryable<CvEntry> orders, SortModel sort)
+        {
+            try
+            {
+               if (sort?.Name == null)
+                {
+                    orders = orders.OrderByDescending(o => o.CreatedAt);
+                    return orders;
+                }
+                var columnName = sort.Name.ToUpper();
+                if (sort.Direction == SortDirection.ascending.ToString())
+                {
+
+                    if (columnName.ToUpper() == nameof(CvEntryDto.EmployeeName).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.ApplicationUser.FullName);
+                    }
+                    if (columnName.ToUpper() == nameof(CvEntryDto.Title).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.Title);
+                    }
+                    if (columnName.ToUpper() == nameof(CvEntryDto.CreatedBy).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.CreatedByUser.FullName);
+                    }
+                    if (columnName.ToUpper() == nameof(CvEntryDto.UpdatedAt).ToUpper())
+                    {
+                        orders = orders.OrderBy(o => o.UpdatedAt);
+                    }
+
+                }
+                else
+                {
+                    if (columnName.ToUpper() == nameof(CvEntryDto.EmployeeName).ToUpper())
+                    {
+                        orders = orders.OrderByDescending(o => o.ApplicationUser.FullName);
+                    }
+                    if (columnName.ToUpper() == nameof(CvEntryDto.Title).ToUpper())
+                    {
+                        orders = orders.OrderByDescending(o => o.Title);
+                    }
+                    if (columnName.ToUpper() == nameof(CvEntryDto.CreatedBy).ToUpper())
+                    {
+                        orders = orders.OrderByDescending(o => o.CreatedByUser.FullName);
+                    }
+                    if (columnName.ToUpper() == nameof(CvEntryDto.CreatedBy).ToUpper())
+                    {
+                        orders = orders.OrderByDescending(o => o.UpdatedAt);
+                    }
+
+                }
+                return orders;
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return orders;
+            }
+        }
+
 
         public async Task<PagedApiResult<CvEntryDto>> Search(PageQueryFiterBase filters)
         {
@@ -163,7 +238,7 @@ namespace AddOptimization.Services.Services
                                                  .Include(e => e.ApplicationUser),
                     orderBy: x => x.OrderByDescending(x => x.CreatedAt)
                 );
-
+                entities = ApplySorting(entities, filters?.Sorted?.FirstOrDefault());
                 var filteredEntities = ApplyFilters(entities.AsQueryable(), filters);
 
                 var pagedResult = PageHelper<CvEntry, CvEntryDto>.ApplyPaging(
@@ -176,6 +251,8 @@ namespace AddOptimization.Services.Services
                         EmployeeName = e.ApplicationUser.FullName,
                         Title = e.Title,
                         CreatedBy = e.CreatedByUser.FullName,
+                        CreatedAt = e.CreatedAt,
+                        UpdatedAt = e.UpdatedAt,
                     }).ToList()
                 );
                 return PagedApiResult<CvEntryDto>.Success(pagedResult);
