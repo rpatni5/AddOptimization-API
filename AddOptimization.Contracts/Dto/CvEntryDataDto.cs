@@ -26,12 +26,12 @@ namespace AddOptimization.Contracts.Dto
         public string Role { get; set; }
         public string Company { get; set; }
         public string CompanyLocation { get; set; }
-        public string CompanyDescription { get; set; }
+        public List<ExperinceCustomFieldDto> CustomFields { get; set; }
         public string CompanyStartDate { get; set; }
         public string CompanyEndDate { get; set; }
     }
 
-    public class EducationDto
+        public class EducationDto
     {
         public string Degree { get; set; }
         public string Institution { get; set; }
@@ -81,5 +81,11 @@ namespace AddOptimization.Contracts.Dto
         [JsonIgnore]
         public IFormFile File { get; set; }
         public string DownloadUrl {  get; set; }
+    }
+
+    public class ExperinceCustomFieldDto
+    {
+        public string InformationType { get; set; }
+        public string Value { get; set; }
     }
 }
