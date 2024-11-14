@@ -26,6 +26,11 @@ namespace AddOptimization.Contracts.Dto
         public string UpdatedBy { get; set; }
         public string Permission {  get; set; }
         public string FolderName { get; set; }
+        public string SharedWithUserId { get; set; }
+        public string SharedWithName { get; set; }
+        public Guid? SharedIds { get; set; }
+        public string SharedWithType { get; set; }
+
 
     }
 }

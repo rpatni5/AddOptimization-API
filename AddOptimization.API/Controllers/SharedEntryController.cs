@@ -38,7 +38,7 @@ public class SharedEntryController : CustomApiControllerBase
     {
         try
         {
-            var retVal = await _sharedEntryService.GetSharedDataBySharedId(id);
+            var retVal = await _sharedEntryService.GetSharedData(id);
             return HandleResponse(retVal);
         }
         catch (Exception ex)

@@ -119,7 +119,7 @@ namespace AddOptimization.Services.Services
                 var sharedFolders = (await _sharedFolderRepository.QueryAsync(x => !x.IsDeleted && (x.SharedWithId == currentUserId.ToString() || groupIds.Contains(x.SharedWithId)), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser))).ToList();
 
                 var entryIds = sharedFolders.Select(x => x.FolderId).Distinct().ToList();
-                var entities = await _folderRepository.QueryAsync((e => !e.IsDeleted && (e.CreatedByUserId == currentUserId || entryIds.Contains(e.Id))), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.CreatedAt));
+                var entities = await _folderRepository.QueryAsync((e => !e.IsDeleted && (e.CreatedByUserId == currentUserId || entryIds.Contains(e.Id))), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Name));
                 var mappedEntities = entities.Select(x => SelectTemplate(x, sharedFolders,currentUserId)).ToList();
                 return ApiResult<List<TemplateFolderDto>>.Success(mappedEntities);
             }

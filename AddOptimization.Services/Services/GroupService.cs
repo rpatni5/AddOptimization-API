@@ -93,7 +93,7 @@ namespace AddOptimization.Services.Services
             try
             {
                 var currentUserId = _httpContextAccessor.HttpContext.GetCurrentUserId().Value;
-                var entities = await _groupRepository.QueryAsync((e => (!e.IsDeleted) && (e.CreatedByUserId == currentUserId)), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser));
+                var entities = await _groupRepository.QueryAsync((e => (!e.IsDeleted) && (e.CreatedByUserId == currentUserId)), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.UpdatedByUser), orderBy: x => x.OrderBy(x => x.Name));
                 var mappedEntities = _mapper.Map<List<GroupDto>>(entities);
                 return ApiResult<List<GroupDto>>.Success(mappedEntities);
             }
