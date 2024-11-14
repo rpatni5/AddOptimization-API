@@ -109,7 +109,7 @@ namespace AddOptimization.Services.Services
                         .Include(e => e.CreatedByUser).Include(e => e.TemplateFolder).Include(e => e.Template)
                         .Include(e => e.UpdatedByUser)
                         .Include(e => e.ApplicationUser),
-                    orderBy: x => x.OrderByDescending(x => x.CreatedAt)
+                    orderBy: x => x.OrderBy(x => x.Title)
                 );
 
                 if (templateId.HasValue)

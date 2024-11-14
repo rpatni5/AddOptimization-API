@@ -278,9 +278,9 @@ namespace AddOptimization.Services.Services
 
                 var folderIds = sharedFolders.Select(x => x.FolderId).Distinct().ToList();
 
-                var templateEntriesByFolder = await _templateEntryRepository.QueryAsync(te => te.FolderId.HasValue && folderIds.Contains(te.FolderId.Value), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.TemplateFolder).Include(e => e.Template).Include(e => e.UpdatedByUser).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
+                var templateEntriesByFolder = await _templateEntryRepository.QueryAsync(te => te.FolderId.HasValue && folderIds.Contains(te.FolderId.Value), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.TemplateFolder).Include(e => e.Template).Include(e => e.UpdatedByUser).Include(e => e.ApplicationUser), orderBy: x => x.OrderBy(x => x.Title));
 
-                var templateEntriesByEntryId = await _templateEntryRepository.QueryAsync(te => entryIds.Contains(te.Id), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.TemplateFolder).Include(e => e.Template).Include(e => e.UpdatedByUser).Include(e => e.ApplicationUser), orderBy: x => x.OrderByDescending(x => x.CreatedAt));
+                var templateEntriesByEntryId = await _templateEntryRepository.QueryAsync(te => entryIds.Contains(te.Id), include: entities => entities.Include(e => e.CreatedByUser).Include(e => e.TemplateFolder).Include(e => e.Template).Include(e => e.UpdatedByUser).Include(e => e.ApplicationUser), orderBy: x => x.OrderBy(x => x.Title));
 
                 var combinedTemplateEntries = templateEntriesByFolder.ToList().Union(templateEntriesByEntryId.ToList()).DistinctBy(e => e.Id).ToList();
 
