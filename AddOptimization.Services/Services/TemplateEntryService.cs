@@ -135,7 +135,7 @@ namespace AddOptimization.Services.Services
 
         private static TemplateEntryDto SelectTemplate(TemplateEntries x, List<SharedEntry> sharedEntries, List<SharedFolder> sharedFolders, string currentUserId)
         {
-            var entry = sharedEntries.FirstOrDefault(e => e.EntryId == x.Id);
+            var entry = sharedEntries.Where(e => e.EntryId == x.Id).ToList();
             var sharedFolder = x.FolderId != null ? sharedFolders.FirstOrDefault(f => f.FolderId == x.FolderId) : null;
             JsonSerializerOptions options = new()
             {
@@ -158,15 +158,12 @@ namespace AddOptimization.Services.Services
             };
         }
 
-        private static string DeterminePermission(int? userId, string currentUserId, SharedEntry entry, SharedFolder sharedFolder)
+        private static string DeterminePermission(int? userId, string currentUserId, List<SharedEntry> entries, SharedFolder sharedFolder)
         {
             if (userId.ToString() == currentUserId)
                 return PermissionLevel.FullAccess.ToString();
 
-            var permissions = new List<string>
-            {
-                entry?.PermissionLevel,sharedFolder?.PermissionLevel
-            }.Where(p => p != null).ToList();
+            var permissions = entries.Select(e => e.PermissionLevel).Concat(new[] { sharedFolder?.PermissionLevel }).Where(p => p != null).ToList();
 
             if (permissions.Contains(PermissionLevel.FullAccess.ToString()))
                 return PermissionLevel.FullAccess.ToString();
@@ -267,7 +264,7 @@ namespace AddOptimization.Services.Services
                     {
                         return ApiResult<TemplateEntryDto>.NotFound("Data");
                     }
-                    var mappedEntity = SelectTemplate(entity, sharedEntries, sharedFolders, currentUserId);
+                    var mappedEntity = SelectParticularTemplate(entity, sharedEntries, sharedFolders, currentUserId, groupIds);
                     return ApiResult<TemplateEntryDto>.Success(mappedEntity);
                 }
                 else
@@ -286,6 +283,32 @@ namespace AddOptimization.Services.Services
         }
 
 
+        private static TemplateEntryDto SelectParticularTemplate(TemplateEntries x, List<SharedEntry> sharedEntries, List<SharedFolder> sharedFolders, string currentUserId,List<string> groupIds)
+        {
+            var entry = sharedEntries.Where(e => e.EntryId == x.Id && (e.SharedWithId == currentUserId || groupIds.Contains(e.SharedWithId.ToLower()))).ToList();
+            var sharedFolder = x.FolderId != null ? sharedFolders.FirstOrDefault(f => f.FolderId == x.FolderId) : null;
+            JsonSerializerOptions options = new()
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+            string permission = DeterminePermission(x.UserId, currentUserId, entry, sharedFolder);
+
+            return new TemplateEntryDto
+            {
+                Id = x.Id == null ? Guid.Empty : x.Id,
+                Title = x.Title,
+                FolderId = x.FolderId,
+                UserId = x.UserId,
+                TemplateId = x.TemplateId,
+                IsDeleted = x.IsDeleted,
+                CreatedBy = x.CreatedByUser != null ? x.CreatedByUser.FullName : string.Empty,
+                CreatedAt = x.CreatedAt,
+                EntryData = x.EntryData == null ? new EntryDataDto() : JsonSerializer.Deserialize<EntryDataDto>(x.EntryData, options),
+                Permission = permission
+            };
+        }
+
+       
 
     }
 
