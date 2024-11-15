@@ -244,12 +244,12 @@ namespace AddOptimization.Services.Services
                     var sharedFolder = sharedFolderEntities?.FirstOrDefault(e => e.Id == item.Id);
                     if (sharedEntry != null)
                     {
-                        sharedEntry.PermissionLevel = item.PermissionLevel;
+                        sharedEntry.PermissionLevel = item?.PermissionLevel;
                         await _sharedEntryRepository.UpdateAsync(sharedEntry);
                     }
-                    if (sharedFolderEntities != null)
+                    if (sharedFolder != null && item != null)
                     {
-                        sharedFolder.PermissionLevel = item.PermissionLevel;
+                        sharedFolder.PermissionLevel = item?.PermissionLevel;
                         await _sharedFolderRepository.UpdateAsync(sharedFolder);
                     }
                 }
@@ -286,11 +286,11 @@ namespace AddOptimization.Services.Services
 
                 if (filterType == "SharedByMe")
                 {
-                    combinedTemplateEntries = combinedTemplateEntries.Where(te => sharedEntries.Any(se => !se.IsDeleted && se.SharedByUserId == id && se.EntryId == te.Id) || sharedFolders.Any(sf => !sf.IsDeleted && sf.FolderId == te.FolderId && sf.SharedByUserId == id)).ToList();
+                    combinedTemplateEntries = combinedTemplateEntries.Where(te => sharedEntries.Any(se => !se.IsDeleted && se.SharedByUserId == id && se.EntryId == te.Id) || sharedFolders.Any(sf => !sf.IsDeleted && sf.FolderId == te.FolderId && sf.SharedByUserId == id)).OrderBy(te => te.Title, StringComparer.OrdinalIgnoreCase).ToList();
                 }
                 else if (filterType == "SharedToMe")
                 {
-                    combinedTemplateEntries = combinedTemplateEntries.Where(te => sharedEntries.Any(se => !se.IsDeleted && se.EntryId == te.Id && (se.SharedWithId == id.ToString() || groupIds.Contains(se.SharedWithId))) || sharedFolders.Any(sf => !sf.IsDeleted && sf.FolderId == te.FolderId && (sf.SharedWithId == id.ToString() || groupIds.Contains(sf.SharedWithId)))).ToList();
+                    combinedTemplateEntries = combinedTemplateEntries.Where(te => sharedEntries.Any(se => !se.IsDeleted && se.EntryId == te.Id && (se.SharedWithId == id.ToString() || groupIds.Contains(se.SharedWithId))) || sharedFolders.Any(sf => !sf.IsDeleted && sf.FolderId == te.FolderId && (sf.SharedWithId == id.ToString() || groupIds.Contains(sf.SharedWithId)))).OrderBy(te => te.Title, StringComparer.OrdinalIgnoreCase).ToList();
                 }
 
                 var mappedEntities = combinedTemplateEntries.Select(x => SelectTemplate(x, sharedEntries, sharedFolders, currentUserId)).ToList();
@@ -305,7 +305,7 @@ namespace AddOptimization.Services.Services
 
         private static TemplateEntryDto SelectTemplate(TemplateEntries x, List<SharedEntry> sharedEntries, List<SharedFolder> sharedFolders, string currentUserId)
         {
-            var entry = sharedEntries.FirstOrDefault(e => e.EntryId == x.Id);
+            var entry = sharedEntries.Where(e => e.EntryId == x.Id).ToList();
             var sharedFolder = x.FolderId != null ? sharedFolders.FirstOrDefault(f => f.FolderId == x.FolderId) : null;
             JsonSerializerOptions options = new()
             {
@@ -330,15 +330,12 @@ namespace AddOptimization.Services.Services
         }
 
 
-        private static string DeterminePermission(int? userId, string currentUserId, SharedEntry entry, SharedFolder sharedFolder)
+        private static string DeterminePermission(int? userId, string currentUserId, List<SharedEntry> entries, SharedFolder sharedFolder)
         {
             if (userId.ToString() == currentUserId)
                 return PermissionLevel.FullAccess.ToString();
 
-            var permissions = new List<string>
-            {
-                entry?.PermissionLevel,sharedFolder?.PermissionLevel
-            }.Where(p => p != null).ToList();
+            var permissions = entries.Select(e => e.PermissionLevel).Concat(new[] { sharedFolder?.PermissionLevel }).Where(p => p != null).ToList();
 
             if (permissions.Contains(PermissionLevel.FullAccess.ToString()))
                 return PermissionLevel.FullAccess.ToString();
